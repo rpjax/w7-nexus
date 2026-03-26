@@ -25,22 +25,26 @@ public sealed class PaymentGatewayOrchestratorTests
     [Fact]
     public async Task CreatePixPaymentAsync_SingleServiceSucceeds_ReturnsPayment()
     {
-        string? seenUser = null;
+        string? seenOperation = null;
         decimal seenAmount = 0;
         var stub = new StubPaymentGatewayService
         {
-            OnCreate = (userId, amount) =>
+            OnCreate = request =>
             {
-                seenUser = userId;
-                seenAmount = amount;
-                return Task.FromResult(new PixPayment { Id = "gw-1", Code = "pix-code" + amount });
+                seenOperation = request.OperationId;
+                seenAmount = request.Amount;
+                return Task.FromResult(new PixPayment { Id = "gw-1", Code = "pix-code" + request.Amount });
             }
         };
         var sut = new PaymentGatewayOrchestrator(new IPaymentGatewayService[] { stub }, _ => 0);
 
-        var result = await sut.CreatePixPaymentAsync("user-1", 10m);
+        var result = await sut.CreatePixPaymentAsync(new CreateGatewayPixPaymentRequest
+        {
+            OperationId = "op-1",
+            Amount = 10m
+        });
 
-        Assert.Equal("user-1", seenUser);
+        Assert.Equal("op-1", seenOperation);
         Assert.Equal(10m, seenAmount);
         Assert.Equal("gw-1", result.Id);
         Assert.Equal("pix-code10", result.Code);
@@ -51,17 +55,17 @@ public sealed class PaymentGatewayOrchestratorTests
     {
         var failing = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => throw new InvalidOperationException("gateway down")
+            OnCreate = _ => throw new InvalidOperationException("gateway down")
         };
         var succeeding = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => Task.FromResult(new PixPayment { Id = "ok", Code = "code" })
+            OnCreate = _ => Task.FromResult(new PixPayment { Id = "ok", Code = "code" })
         };
         var sut = new PaymentGatewayOrchestrator(
             new IPaymentGatewayService[] { failing, succeeding },
             _ => 0);
 
-        var result = await sut.CreatePixPaymentAsync("u", 1m);
+        var result = await sut.CreatePixPaymentAsync(new CreateGatewayPixPaymentRequest { OperationId = "op-1", Amount = 1m });
 
         Assert.Equal("ok", result.Id);
         Assert.Equal("code", result.Code);
@@ -72,13 +76,13 @@ public sealed class PaymentGatewayOrchestratorTests
     {
         var stub = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => throw new TimeoutException("timeout")
+            OnCreate = _ => throw new TimeoutException("timeout")
         };
         var sut = new PaymentGatewayOrchestrator(
             new IPaymentGatewayService[] { stub, stub },
             _ => 0);
 
-        var ex = await Assert.ThrowsAsync<Exception>(() => sut.CreatePixPaymentAsync("u", 1m));
+        var ex = await Assert.ThrowsAsync<Exception>(() => sut.CreatePixPaymentAsync(new CreateGatewayPixPaymentRequest { OperationId = "op-1", Amount = 1m }));
         Assert.Contains("All available payment services failed", ex.Message, StringComparison.OrdinalIgnoreCase);
     }
 
@@ -87,13 +91,13 @@ public sealed class PaymentGatewayOrchestratorTests
     {
         var stub = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => Task.FromResult(new PixPayment { Id = "x", Code = "y" })
+            OnCreate = _ => Task.FromResult(new PixPayment { Id = "x", Code = "y" })
         };
         var sut = new PaymentGatewayOrchestrator(
             new IPaymentGatewayService[] { stub },
             _ => 5);
 
-        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => sut.CreatePixPaymentAsync("u", 1m));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(() => sut.CreatePixPaymentAsync(new CreateGatewayPixPaymentRequest { OperationId = "op-1", Amount = 1m }));
     }
 
     [Theory]
@@ -104,21 +108,21 @@ public sealed class PaymentGatewayOrchestratorTests
     {
         var g0 = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => Task.FromResult(new PixPayment { Id = "g0", Code = "" })
+            OnCreate = _ => Task.FromResult(new PixPayment { Id = "g0", Code = "" })
         };
         var g1 = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => Task.FromResult(new PixPayment { Id = "g1", Code = "" })
+            OnCreate = _ => Task.FromResult(new PixPayment { Id = "g1", Code = "" })
         };
         var g2 = new StubPaymentGatewayService
         {
-            OnCreate = (_, _) => Task.FromResult(new PixPayment { Id = "g2", Code = "" })
+            OnCreate = _ => Task.FromResult(new PixPayment { Id = "g2", Code = "" })
         };
         var sut = new PaymentGatewayOrchestrator(
             new IPaymentGatewayService[] { g0, g1, g2 },
             count => pickIndex >= count ? count - 1 : pickIndex);
 
-        var result = await sut.CreatePixPaymentAsync("u", 1m);
+        var result = await sut.CreatePixPaymentAsync(new CreateGatewayPixPaymentRequest { OperationId = "op-1", Amount = 1m });
 
         Assert.Equal($"g{pickIndex}", result.Id);
     }

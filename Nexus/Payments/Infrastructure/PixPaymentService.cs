@@ -24,7 +24,7 @@ public sealed class PixPaymentService : IPixPaymentService
         _operationRepository = operationRepository;
     }
 
-    public Task<IResult<PixPayment>> CreatePixPaymentAsync(CreatePixPaymentRequest request)
+    public async Task<IResult<PixPayment>> CreatePixPaymentAsync(CreatePixPaymentRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
@@ -75,7 +75,7 @@ public sealed class PixPaymentService : IPixPaymentService
                 .Build());
 
         if (builder.ContainsError)
-            return Task.FromResult<IResult<PixPayment>>(builder.Build());
+            return builder.Build();
 
         var operationExists = _operationRepository.AsQueryable()
             .Any(o => o.Id == operationId);
@@ -108,7 +108,7 @@ public sealed class PixPaymentService : IPixPaymentService
         }
 
         if (builder.ContainsError)
-            return Task.FromResult<IResult<PixPayment>>(builder.Build());
+            return builder.Build();
 
         // At this point, gatewayPaymentId is validated (not null/empty/whitespace).
         var validatedGatewayPaymentId = gatewayPaymentId!;
@@ -120,17 +120,18 @@ public sealed class PixPaymentService : IPixPaymentService
         {
             var bindStrawManResult = payment.BindToStrawMan(strawManAccountId);
             if (bindStrawManResult.IsFailure)
-                return Task.FromResult<IResult<PixPayment>>(Result.Create<PixPayment>().WithErrors(bindStrawManResult.Errors).Build());
+                return Result.Create<PixPayment>().WithErrors(bindStrawManResult.Errors).Build();
         }
 
         if (operatorAccountId is not null)
         {
             var bindOperatorResult = payment.BindToOperator(operatorAccountId);
             if (bindOperatorResult.IsFailure)
-                return Task.FromResult<IResult<PixPayment>>(Result.Create<PixPayment>().WithErrors(bindOperatorResult.Errors).Build());
+                return Result.Create<PixPayment>().WithErrors(bindOperatorResult.Errors).Build();
         }
 
-        return Task.FromResult<IResult<PixPayment>>(builder.WithValue(payment).Build());
+        await _pixPaymentRepository.CreateAsync(payment);
+        return builder.WithValue(payment).Build();
     }
 
     public async Task<IResult> PayAsync(string paymentId)

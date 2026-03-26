@@ -28,10 +28,9 @@ public class PaymentGatewayOrchestrator : IPaymentGatewayOrchestrator
         _pickServiceIndex = pickServiceIndex ?? (count => Random.Shared.Next(count));
     }
 
-    public async Task<PixPayment> CreatePixPaymentAsync(
-        string userId,
-        decimal amount)
+    public async Task<PixPayment> CreatePixPaymentAsync(CreateGatewayPixPaymentRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
         var availableServices = _services.ToList();
 
         while (availableServices.Count > 0)
@@ -40,7 +39,7 @@ public class PaymentGatewayOrchestrator : IPaymentGatewayOrchestrator
 
             try
             {
-                return await service.CreatePixPaymentAsync(userId, amount);
+                return await service.CreatePixPaymentAsync(request);
             }
             catch (Exception e)
             {
