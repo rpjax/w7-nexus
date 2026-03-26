@@ -1,0 +1,362 @@
+using Aidan.Core.Linq;
+using Aidan.Mongo.Linq;
+using Nexus.Accounts.Aggregates;
+using Nexus.Accounts.Application;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
+using Nexus.Payments.Application;
+using Nexus.Payments.Aggregates;
+using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Infrastructure;
+using Xunit;
+
+namespace Nexus.Tests.Payments;
+
+public sealed class PixPaymentServiceTests
+{
+    private sealed class StubPixPaymentRepository : IPixPaymentRepository
+    {
+        public IAsyncQueryable<PixPayment> AsQueryable()
+            => new MongoAsyncQueryable<PixPayment>(Array.Empty<PixPayment>().AsQueryable());
+
+        public Task CreateAsync(PixPayment entity) => Task.CompletedTask;
+
+        public Task CreateAsync(IEnumerable<PixPayment> entities) => Task.CompletedTask;
+
+        public Task DeleteAsync(PixPayment entity) => Task.CompletedTask;
+
+        public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<PixPayment, bool>> predicate) =>
+            Task.FromResult(0L);
+
+        public Task UpdateAsync(PixPayment entity) => Task.CompletedTask;
+
+        public Task<long> UpdateAsync(System.Linq.Expressions.Expression expression) =>
+            Task.FromResult(0L);
+    }
+
+    private sealed class StubOperationRepository : IOperationRepository
+    {
+        private readonly Operation[] _operations;
+
+        public StubOperationRepository(params string[] operationIds)
+        {
+            _operations = operationIds
+                .Select(id => new Operation(id, $"Operation {id}", "desc", Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow))
+                .ToArray();
+        }
+
+        public IAsyncQueryable<Operation> AsQueryable()
+            => new MongoAsyncQueryable<Operation>(_operations.AsQueryable());
+
+        public Task CreateAsync(Operation entity) => Task.CompletedTask;
+        public Task CreateAsync(IEnumerable<Operation> entities) => Task.CompletedTask;
+        public Task DeleteAsync(Operation entity) => Task.CompletedTask;
+        public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<Operation, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(Operation entity) => Task.CompletedTask;
+        public Task<long> UpdateAsync(System.Linq.Expressions.Expression expression) => Task.FromResult(0L);
+    }
+
+    private sealed class StubAccountRepository : IAccountRepository
+    {
+        private readonly Account[] _accounts;
+
+        public StubAccountRepository(params string[] accountIds)
+        {
+            _accounts = accountIds
+                .Select(id => new Account(id, $"user-{id}", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow))
+                .ToArray();
+        }
+
+        public IAsyncQueryable<Account> AsQueryable()
+            => new MongoAsyncQueryable<Account>(_accounts.AsQueryable());
+
+        public Task CreateAsync(Account entity) => Task.CompletedTask;
+        public Task CreateAsync(IEnumerable<Account> entities) => Task.CompletedTask;
+        public Task DeleteAsync(Account entity) => Task.CompletedTask;
+        public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<Account, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(Account entity) => Task.CompletedTask;
+        public Task<long> UpdateAsync(System.Linq.Expressions.Expression expression) => Task.FromResult(0L);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_GatewayNone_ReturnsGatewayInvalid()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.None,
+            Amount = 10m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.GatewayInvalid);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    [InlineData(-0.01)]
+    public async Task CreatePixPaymentAsync_InvalidAmount_ReturnsAmountInvalid(decimal amount)
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.FusionPay,
+            Amount = amount,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.AmountInvalid);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreatePixPaymentAsync_InvalidGatewayPaymentId_ReturnsGatewayPaymentIdInvalid(string? gatewayPaymentId)
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.Frendz,
+            Amount = 10m,
+            GatewayPaymentId = gatewayPaymentId
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.GatewayPaymentIdInvalid);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_OperatorProvidedAsEmpty_ReturnsOperatorInvalid()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "  ",
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 10m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperatorInvalid);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_StrawManProvidedAsEmpty_ReturnsStrawManInvalid()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = " \t ",
+            Gateway = PaymentGateway.SuitPay,
+            Amount = 10m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.StrawManInvalid);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_ValidMinimal_ReturnsPendingPaymentWithoutBindings()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 19.90m,
+            GatewayPaymentId = "ext-pay-99"
+        });
+
+        Assert.True(result.IsSuccess);
+        var payment = result.Value!;
+        Assert.Equal(PaymentGateway.FusionPay, payment.Gateway);
+        Assert.Equal("ext-pay-99", payment.GatewayPaymentId);
+        Assert.Equal("op-1", payment.OperationId);
+        Assert.Equal(19.90m, payment.Amount);
+        Assert.Equal(PaymentStatus.Pending, payment.Status);
+        Assert.Null(payment.OperatorAccountId);
+        Assert.Null(payment.StrawManAccountId);
+        Assert.False(string.IsNullOrEmpty(payment.Id));
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_OperatorNotFound_ReturnsOperatorAccountNotFound()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "missing-operator",
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.Frendz,
+            Amount = 5m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperatorAccountNotFound);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_StrawManNotFound_ReturnsStrawManAccountNotFound()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository("op-1"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = "missing-straw",
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 5m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.StrawManAccountNotFound);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_OperatorExists_BindsOperator()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository("op-42"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "op-42",
+            StrawManAccountId = null,
+            Gateway = PaymentGateway.SigiloPay,
+            Amount = 100m,
+            GatewayPaymentId = "gw-abc"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("op-42", result.Value!.OperatorAccountId);
+        Assert.Null(result.Value.StrawManAccountId);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_StrawManExists_BindsStrawMan()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository("sm-7"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = null,
+            StrawManAccountId = "sm-7",
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 2m,
+            GatewayPaymentId = "gw-x"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("sm-7", result.Value!.StrawManAccountId);
+        Assert.Null(result.Value.OperatorAccountId);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_OperatorAndStrawMan_BindsBoth()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository("op", "sm"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "op",
+            StrawManAccountId = "sm",
+            Gateway = PaymentGateway.Frendz,
+            Amount = 3m,
+            GatewayPaymentId = "gw-dual"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("op", result.Value!.OperatorAccountId);
+        Assert.Equal("sm", result.Value.StrawManAccountId);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_MultipleValidationErrors_AccumulatesErrors()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = " ",
+            StrawManAccountId = " ",
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 0m,
+            GatewayPaymentId = ""
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.True(result.Errors.Count() >= 2);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    public async Task CreatePixPaymentAsync_InvalidOperationId_ReturnsOperationIdInvalid(string? operationId)
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = operationId,
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 10m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperationIdInvalid);
+    }
+
+    [Fact]
+    public async Task CreatePixPaymentAsync_OperationNotFound_ReturnsOperationNotFound()
+    {
+        var sut = new PixPaymentService(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+
+        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        {
+            OperationId = "missing-operation",
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 10m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperationNotFound);
+    }
+}
