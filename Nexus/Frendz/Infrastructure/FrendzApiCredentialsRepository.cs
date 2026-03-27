@@ -18,7 +18,8 @@ public sealed class FrendzApiCredentialsRepository : IFrendzApiCredentialsReposi
             Id = r.Id.ToString(),
             StrawManId = r.StrawManId,
             Name = r.Name,
-            Token = r.Token
+            Token = r.Token,
+            Enabled = r.Enabled
         };
 
     public FrendzApiCredentialsRepository(IMongoCollection<FrendzApiCredentialsRecord> collection)

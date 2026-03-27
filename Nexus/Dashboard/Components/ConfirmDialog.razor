@@ -1,12 +1,12 @@
 @if (IsOpen)
 {
-    <div class="dialog-backdrop">
-        <div class="dialog-card">
+    <div class="dialog-backdrop dialog-backdrop--confirm">
+        <div class="dialog-card dialog-card--confirm">
             <h3>@Title</h3>
             <p>@Message</p>
             <div class="dialog-actions">
-                <button class="btn btn-ghost" @onclick="OnCancel">Cancelar</button>
-                <button class="btn btn-danger" @onclick="OnConfirm">Confirmar</button>
+                <button type="button" class="btn btn-ghost" @onclick="OnCancel">Cancelar</button>
+                <button type="button" class="btn btn-danger" @onclick="OnConfirm">Confirmar</button>
             </div>
         </div>
     </div>

@@ -1,8 +1,94 @@
 @inherits LayoutComponentBase
+@inject NavigationManager Nav
+@implements IDisposable
 
-<div class="app-shell">
-    <NavMenu />
-    <main class="app-main">
-        @Body
-    </main>
+<div class="app-root">
+    @if (drawerOpen)
+    {
+        <button type="button" class="drawer-scrim" aria-label="Fechar menu" @onclick="CloseDrawer"></button>
+    }
+
+    <aside class="app-sidebar @(drawerOpen ? "is-drawer-open" : "")" aria-label="Navegação principal">
+        <NavMenu />
+    </aside>
+
+    <div class="app-main-column">
+        <header class="app-topbar">
+            <button type="button"
+                    class="icon-btn icon-btn-ghost app-menu-btn"
+                    @onclick="ToggleDrawer"
+                    aria-label="Menu"
+                    aria-expanded="@drawerOpen">
+                <svg class="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                    <path d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+            </button>
+            <h1 class="app-topbar-title">@ResolvePageTitle()</h1>
+            <div class="app-topbar-actions">
+                <button type="button" class="icon-btn icon-btn-ghost" aria-label="Notificações">
+                    <svg class="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+                    </svg>
+                </button>
+                <button type="button" class="icon-btn icon-btn-ghost" aria-label="Conta">
+                    <svg class="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                        <circle cx="12" cy="7" r="4" />
+                    </svg>
+                </button>
+            </div>
+        </header>
+        <main class="app-main" id="main-content">
+            @Body
+        </main>
+    </div>
 </div>
+
+@code {
+    private bool drawerOpen;
+
+    protected override void OnInitialized()
+    {
+        Nav.LocationChanged += OnLocationChanged;
+    }
+
+    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
+    {
+        drawerOpen = false;
+        _ = InvokeAsync(StateHasChanged);
+    }
+
+    private void ToggleDrawer()
+    {
+        drawerOpen = !drawerOpen;
+    }
+
+    private void CloseDrawer()
+    {
+        drawerOpen = false;
+    }
+
+    private string ResolvePageTitle()
+    {
+        var relative = Nav.ToBaseRelativePath(Nav.Uri).TrimEnd('/').ToLowerInvariant();
+        if (string.IsNullOrEmpty(relative) || relative == "dashboard")
+            return "Visão geral";
+        return relative switch
+        {
+            "dashboard/operations" => "Operações",
+            "dashboard/payments" => "Pagamentos PIX",
+            "dashboard/gateways" => "Gateways",
+            "dashboard/gateways/frendz" => "Frendz",
+            "dashboard/gateways/sigilopay" => "SigiloPay",
+            "dashboard/gateways/gateway-2" => "GATEWAY2",
+            "dashboard/gateways/gateway-3" => "GATEWAY3",
+            _ => relative.StartsWith("dashboard/", StringComparison.Ordinal) ? "Websete Nexus" : "Websete Nexus"
+        };
+    }
+
+    public void Dispose()
+    {
+        Nav.LocationChanged -= OnLocationChanged;
+    }
+}

@@ -1,4 +1,4 @@
-@page "/dashboard/gateways/frendz"
+@page "/dashboard/gateways/sigilopay"
 @layout MainLayout
 @using System.Net.Http.Json
 @using System.Text.Json
@@ -6,8 +6,8 @@
 @inject HttpClient Http
 
 <section class="page-header">
-    <h1>Frendz</h1>
-    <p class="muted page-lead">Credenciais de API com token mascarado; opcionalmente vincule um laranja (conta) à credencial.</p>
+    <h1>SigiloPay</h1>
+    <p class="muted page-lead">Credenciais com chave pública e secreta mascaradas; opcionalmente vincule um laranja (conta).</p>
 </section>
 
 @if (!string.IsNullOrWhiteSpace(feedback))
@@ -18,18 +18,22 @@
 <section class="card ops-card">
     <div class="card-title-row">
         <h2>Adicionar credencial</h2>
-        <span class="post-badge">POST /api/frendz/credentials</span>
+        <span class="post-badge">POST /api/sigilopay/credentials</span>
     </div>
     <div class="form-grid">
         <div class="field">
-            <label for="credName">Nome</label>
-            <input id="credName" class="nexus-input" @bind="addModel.Name" @bind:event="oninput" placeholder="Ex.: token dev" />
+            <label for="spCredName">Nome</label>
+            <input id="spCredName" class="nexus-input" @bind="addModel.Name" @bind:event="oninput" placeholder="Ex.: produção loja A" />
         </div>
         <div class="field">
-            <label for="credToken">Token</label>
-            <input id="credToken" class="nexus-input" type="password" @bind="addModel.Token" @bind:event="oninput" placeholder="Cole o token" />
+            <label for="spPublicKey">Chave pública</label>
+            <input id="spPublicKey" class="nexus-input" type="password" @bind="addModel.PublicKey" @bind:event="oninput" placeholder="x-public-key" />
         </div>
         <div class="field">
+            <label for="spSecretKey">Chave secreta</label>
+            <input id="spSecretKey" class="nexus-input" type="password" @bind="addModel.SecretKey" @bind:event="oninput" placeholder="x-secret-key" />
+        </div>
+        <div class="field span-2">
             <label class="checkbox-field">
                 <input type="checkbox" @bind="addModel.Enabled" />
                 <span>Habilitada para cobrança</span>
@@ -58,8 +62,8 @@
 <section class="card ops-card">
     <div class="toolbar toolbar-tight">
         <div class="field grow">
-            <label for="credSearch">Buscar credenciais</label>
-            <input id="credSearch" class="nexus-input" @bind="search" @bind:event="oninput" placeholder="Nome, ID ou token…" />
+            <label for="spCredSearch">Buscar credenciais</label>
+            <input id="spCredSearch" class="nexus-input" @bind="search" @bind:event="oninput" placeholder="Nome, ID ou chaves…" />
         </div>
         <button type="button" class="btn btn-ghost" @onclick="SearchAsync">Buscar</button>
         <button type="button" class="btn btn-ghost" @onclick="RefreshAsync">Atualizar</button>
@@ -78,7 +82,8 @@
                 <thead>
                     <tr>
                         <th>Nome</th>
-                        <th>Token</th>
+                        <th>Chave pública</th>
+                        <th>Chave secreta</th>
                         <th>Laranja</th>
                         <th>Ativa</th>
                         <th class="th-actions" scope="col">Ações</th>
@@ -89,7 +94,8 @@
                     {
                         <tr>
                             <td data-label="Nome">@cred.Name</td>
-                            <td data-label="Token"><span class="mono token-mask" title="Mascarado">@MaskToken(cred.Token)</span></td>
+                            <td data-label="Chave pública"><span class="mono token-mask" title="Mascarado">@MaskKey(cred.PublicKey)</span></td>
+                            <td data-label="Chave secreta"><span class="mono token-mask" title="Mascarado">@MaskKey(cred.SecretKey)</span></td>
                             <td data-label="Laranja" class="muted">@FormatStraw(cred.StrawManId)</td>
                             <td data-label="Ativa">
                                 <label class="toggle-inline">
@@ -104,7 +110,7 @@
                                 <div class="row-actions">
                                     <button type="button"
                                             class="icon-action"
-                                            title="Ver token"
+                                            title="Ver chaves"
                                             aria-label="Ver credencial"
                                             @onclick="() => ViewAsync(cred)">
                                         👁
@@ -140,19 +146,23 @@
             <div class="modal-stack">
                 <div class="modal-stack-header">
                     <div>
-                        <h2 class="manage-ids-title">Editar credencial</h2>
-                        <p class="muted small">PUT /api/frendz/credentials</p>
+                        <h2 class="manage-ids-title">Editar credencial SigiloPay</h2>
+                        <p class="muted small">PUT /api/sigilopay/credentials</p>
                     </div>
                     <button type="button" class="btn btn-ghost btn-small" @onclick="CancelEditAsync">Fechar</button>
                 </div>
                 <div class="form-grid">
                     <div class="field">
-                        <label for="editCredName">Nome</label>
-                        <input id="editCredName" class="nexus-input" @bind="editing.Name" @bind:event="oninput" />
+                        <label for="spEditCredName">Nome</label>
+                        <input id="spEditCredName" class="nexus-input" @bind="editing.Name" @bind:event="oninput" />
                     </div>
                     <div class="field">
-                        <label for="editCredToken">Token</label>
-                        <input id="editCredToken" class="nexus-input" type="password" @bind="editing.Token" @bind:event="oninput" />
+                        <label for="spEditPublicKey">Chave pública</label>
+                        <input id="spEditPublicKey" class="nexus-input" type="password" @bind="editing.PublicKey" @bind:event="oninput" />
+                    </div>
+                    <div class="field">
+                        <label for="spEditSecretKey">Chave secreta</label>
+                        <input id="spEditSecretKey" class="nexus-input" type="password" @bind="editing.SecretKey" @bind:event="oninput" />
                     </div>
                     <div class="field span-2">
                         <label>Laranja (conta)</label>
@@ -195,7 +205,7 @@
 
 <ConfirmDialog IsOpen="@deleteDialogOpen"
                 Title="Confirmar exclusão"
-                Message="Tem certeza que deseja excluir esta credencial?"
+                Message="Tem certeza que deseja excluir esta credencial SigiloPay?"
                 OnCancel="CancelDeleteAsync"
                 OnConfirm="ConfirmDeleteAsync" />
 
@@ -205,15 +215,19 @@
         <div class="dialog-card dialog-card--wide" @onclick:stopPropagation="true">
             <div class="modal-stack">
                 <div class="modal-stack-header">
-                    <h2 class="manage-ids-title">Credencial</h2>
+                    <h2 class="manage-ids-title">Credencial SigiloPay</h2>
                     <button type="button" class="btn btn-ghost btn-small" @onclick="CloseViewAsync">Fechar</button>
                 </div>
                 <p class="muted stack-tight"><strong>ID:</strong> <span class="mono">@viewingCredential.Id</span></p>
                 <p class="muted stack-tight"><strong>Nome:</strong> @viewingCredential.Name</p>
                 <p class="muted stack-tight"><strong>Cobrança:</strong> @(viewingCredential.Enabled ? "Habilitada" : "Desabilitada")</p>
                 <div class="field">
-                    <label>Token</label>
-                    <textarea readonly rows="5" class="nexus-input">@viewingCredential.Token</textarea>
+                    <label>Chave pública</label>
+                    <textarea readonly rows="3" class="nexus-input">@viewingCredential.PublicKey</textarea>
+                </div>
+                <div class="field">
+                    <label>Chave secreta</label>
+                    <textarea readonly rows="3" class="nexus-input">@viewingCredential.SecretKey</textarea>
                 </div>
             </div>
         </div>
@@ -227,7 +241,8 @@
     {
         public string Id { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string Token { get; set; } = string.Empty;
+        public string PublicKey { get; set; } = string.Empty;
+        public string SecretKey { get; set; } = string.Empty;
         public string? StrawManId { get; set; }
         public bool Enabled { get; set; } = true;
     }
@@ -282,7 +297,7 @@
         feedbackIsError = false;
         feedback = string.Empty;
 
-        var response = await Http.PostAsJsonAsync("/api/frendz/search", new
+        var response = await Http.PostAsJsonAsync("/api/sigilopay/search", new
         {
             Limit = 999,
             Offset = 0,
@@ -320,7 +335,8 @@
             .Where(c =>
                 c.Name.ToLowerInvariant().Contains(term) ||
                 c.Id.ToLowerInvariant().Contains(term) ||
-                c.Token.ToLowerInvariant().Contains(term) ||
+                c.PublicKey.ToLowerInvariant().Contains(term) ||
+                c.SecretKey.ToLowerInvariant().Contains(term) ||
                 (c.StrawManId != null && c.StrawManId.ToLowerInvariant().Contains(term)))
             .ToList();
     }
@@ -375,17 +391,18 @@
         feedbackIsError = false;
         try
         {
-            if (string.IsNullOrWhiteSpace(addModel.Token))
+            if (string.IsNullOrWhiteSpace(addModel.PublicKey) || string.IsNullOrWhiteSpace(addModel.SecretKey))
             {
                 feedbackIsError = true;
-                feedback = "O token é obrigatório.";
+                feedback = "Chave pública e chave secreta são obrigatórias.";
                 return;
             }
 
-            var response = await Http.PostAsJsonAsync("/api/frendz/credentials", new
+            var response = await Http.PostAsJsonAsync("/api/sigilopay/credentials", new
             {
                 Name = addModel.Name,
-                Token = addModel.Token,
+                PublicKey = addModel.PublicKey,
+                SecretKey = addModel.SecretKey,
                 StrawManId = addModel.StrawManId,
                 Enabled = addModel.Enabled
             });
@@ -399,7 +416,8 @@
 
             feedback = "Credencial adicionada com sucesso.";
             addModel.Name = string.Empty;
-            addModel.Token = string.Empty;
+            addModel.PublicKey = string.Empty;
+            addModel.SecretKey = string.Empty;
             addModel.StrawManId = null;
             addModel.Enabled = true;
             addStrawLabel = null;
@@ -411,15 +429,15 @@
         }
     }
 
-    private static string MaskToken(string token)
+    private static string MaskKey(string key)
     {
-        if (string.IsNullOrWhiteSpace(token))
+        if (string.IsNullOrWhiteSpace(key))
             return string.Empty;
 
-        if (token.Length <= 10)
-            return new string('*', token.Length);
+        if (key.Length <= 10)
+            return new string('*', key.Length);
 
-        return $"{token[..4]}…{token[^4..]}";
+        return $"{key[..4]}…{key[^4..]}";
     }
 
     private void ViewAsync(CredentialVm cred)
@@ -440,7 +458,7 @@
         StateHasChanged();
         try
         {
-            var response = await Http.PatchAsJsonAsync("/api/frendz/credentials/enabled", new { id = cred.Id, enabled = newEnabled });
+            var response = await Http.PatchAsJsonAsync("/api/sigilopay/credentials/enabled", new { id = cred.Id, enabled = newEnabled });
             if (!response.IsSuccessStatusCode)
             {
                 feedbackIsError = true;
@@ -466,7 +484,8 @@
         {
             Id = cred.Id,
             Name = cred.Name,
-            Token = cred.Token,
+            PublicKey = cred.PublicKey,
+            SecretKey = cred.SecretKey,
             StrawManId = cred.StrawManId,
             Enabled = cred.Enabled
         };
@@ -492,18 +511,19 @@
         feedbackIsError = false;
         try
         {
-            if (string.IsNullOrWhiteSpace(editing.Token))
+            if (string.IsNullOrWhiteSpace(editing.PublicKey) || string.IsNullOrWhiteSpace(editing.SecretKey))
             {
                 feedbackIsError = true;
-                feedback = "O token é obrigatório.";
+                feedback = "Chave pública e chave secreta são obrigatórias.";
                 return;
             }
 
-            var response = await Http.PutAsJsonAsync("/api/frendz/credentials", new
+            var response = await Http.PutAsJsonAsync("/api/sigilopay/credentials", new
             {
                 Id = editing.Id,
                 StrawManId = editing.StrawManId,
-                Token = editing.Token,
+                PublicKey = editing.PublicKey,
+                SecretKey = editing.SecretKey,
                 Name = editing.Name,
                 Enabled = editing.Enabled
             });
@@ -550,7 +570,7 @@
 
         try
         {
-            var response = await Http.DeleteAsync($"/api/frendz/credentials?id={Uri.EscapeDataString(deleteId)}");
+            var response = await Http.DeleteAsync($"/api/sigilopay/credentials?id={Uri.EscapeDataString(deleteId)}");
             feedbackIsError = !response.IsSuccessStatusCode;
             feedback = response.IsSuccessStatusCode
                 ? "Credencial excluída com sucesso."

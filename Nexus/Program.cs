@@ -1,4 +1,5 @@
 using Aidan.Mongo.Extensions;
+using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using MongoDB.Bson;
@@ -9,6 +10,8 @@ using Nexus.Accounts.Application;
 using Nexus.Database.Models;
 using Nexus.Frendz.Application;
 using Nexus.Frendz.Infrastructure;
+using Nexus.SigiloPay.Application;
+using Nexus.SigiloPay.Infrastructure;
 using Nexus.Operations.Application;
 using Nexus.Operations.Infrastructure;
 using Nexus.Dashboard;
@@ -17,6 +20,13 @@ using Nexus.Payments.Application;
 using Nexus.Charges.Application;
 using Nexus.Charges.Infrastructure;
 
+/*
+    ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
+    # DEV NOTES:
+
+    Frendz API Key: od2a0mTnD3EyBJw7qFbF4DPhC14rZOLG0EZjYzcRbRDOIGO16HBNGE4NtjNA
+*/
+
 var builder = WebApplication.CreateBuilder(args);
 ConfigureDevelopmentKestrelWithLocalCertificate(builder);
 
@@ -24,6 +34,12 @@ builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddScoped(sp =>
+{
+    var navigationManager = sp.GetRequiredService<NavigationManager>();
+    return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+});
 
 // Database
 var mongo = builder.Configuration.GetSection("MongoDB");
@@ -39,6 +55,7 @@ if (string.IsNullOrWhiteSpace(mongoDatabaseName))
 builder.Services.AddMongoDatabase(mongoConnectionString, mongoDatabaseName);
 builder.Services.AddMongoCollection<AccountRecord>("accounts");
 builder.Services.AddMongoCollection<FrendzApiCredentialsRecord>("frendz_api_credentials");
+builder.Services.AddMongoCollection<SigiloPayApiCredentialsRecord>("sigilopay_api_credentials");
 builder.Services.AddMongoCollection<PaymentRecord>("payments");
 builder.Services.AddMongoCollection<OperationRecord>("operations");
 
@@ -49,10 +66,14 @@ builder.Services.AddScoped<IAccountIdValidator, AccountIdValidator>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, FrendzApiCredentialsRepository>();
+builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, SigiloPayApiCredentialsRepository>();
 builder.Services.AddScoped<IFrendzChargeServiceFactory, FrendzChargeServiceFactory>();
+builder.Services.AddScoped<ISigiloPayChargeServiceFactory, SigiloPayChargeServiceFactory>();
 builder.Services.AddScoped<IChargeOrchestrator, ChargeOrchestrator>();
 builder.Services.AddScoped<IFrendzClient, FrendzClient>();
 builder.Services.AddHttpClient<FrendzClient>();
+builder.Services.AddScoped<ISigiloPayClient, SigiloPayClient>();
+builder.Services.AddHttpClient<SigiloPayClient>();
 
 // Account services
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -64,8 +85,11 @@ builder.Services.AddScoped<IAccountCreator, AccountCreator>();
 builder.Services.AddScoped<IAccountUpdater, AccountUpdater>();
 
 builder.Services.AddScoped<IFrendzApiKeysService, FrendzApiKeysService>();
+builder.Services.AddScoped<ISigiloPayApiKeysService, SigiloPayApiKeysService>();
 
 var app = builder.Build();
+
+await BackfillGatewayCredentialEnabledFieldsAsync(app.Services);
 
 if (app.Environment.IsDevelopment())
 {
@@ -81,8 +105,20 @@ app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
-await SeedFrendzApiCredentialsAsync(app.Services);
 app.Run();
+
+static async Task BackfillGatewayCredentialEnabledFieldsAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var frendz = scope.ServiceProvider.GetRequiredService<IMongoCollection<FrendzApiCredentialsRecord>>();
+    var sigilo = scope.ServiceProvider.GetRequiredService<IMongoCollection<SigiloPayApiCredentialsRecord>>();
+    await frendz.UpdateManyAsync(
+        Builders<FrendzApiCredentialsRecord>.Filter.Exists("enabled", false),
+        Builders<FrendzApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
+    await sigilo.UpdateManyAsync(
+        Builders<SigiloPayApiCredentialsRecord>.Filter.Exists("enabled", false),
+        Builders<SigiloPayApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
+}
 
 static void ConfigureDevelopmentKestrelWithLocalCertificate(WebApplicationBuilder builder)
 {
@@ -131,24 +167,4 @@ static X509Certificate2 LoadCertificateFromPem(string certificatePath, string pr
     // Re-import as PFX so Kestrel on Windows gets a cert object with an associated private key handle.
     var pfxBytes = certWithKey.Export(X509ContentType.Pkcs12);
     return X509CertificateLoader.LoadPkcs12(pfxBytes, password: null);
-}
-
-static async Task SeedFrendzApiCredentialsAsync(IServiceProvider services)
-{
-    const string seedName = "default-dev-token";
-    const string seedToken = "od2a0mTnD3EyBJw7qFbF4DPhC14rZOLG0EZjYzcRbRDOIGO16HBNGE4NtjNA";
-
-    using var scope = services.CreateScope();
-    var collection = scope.ServiceProvider.GetRequiredService<IMongoCollection<FrendzApiCredentialsRecord>>();
-
-    var exists = await collection.Find(r => r.Token == seedToken).AnyAsync();
-    if (exists)
-        return;
-
-    await collection.InsertOneAsync(new FrendzApiCredentialsRecord
-    {
-        Id = ObjectId.GenerateNewId(),
-        Name = seedName,
-        Token = seedToken
-    });
 }

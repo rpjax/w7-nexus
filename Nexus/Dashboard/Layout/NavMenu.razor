@@ -1,19 +1,50 @@
 <nav class="nav-shell">
-    <div class="brand">Painel Nexus</div>
+    <div class="brand-wrap">
+        <div class="brand-mark" aria-hidden="true"></div>
+        <div>
+            <p class="brand">Websete Nexus</p>
+            <p class="brand-subtitle">Operações e pagamentos</p>
+        </div>
+    </div>
+
     <div class="nav-links">
         <NavLink href="/dashboard" Match="NavLinkMatch.All">Visão geral</NavLink>
         <NavLink href="/dashboard/operations">Operações</NavLink>
         <NavLink href="/dashboard/payments">Pagamentos</NavLink>
-        <div class="nav-group">
-            <button type="button" class="nav-dropdown" @onclick="ToggleGateways" aria-expanded="@gatewaysOpen">
-                <span>Gateways</span>
+
+        <div class="nav-group nav-group-gateways">
+            <button type="button"
+                    class="nav-dropdown nav-dropdown-full"
+                    @onclick="ToggleGateways"
+                    @onclick:stopPropagation="true"
+                    aria-expanded="@gatewaysOpen"
+                    aria-controls="gateway-submenu">
+                <span class="nav-dropdown-label">Gateways</span>
                 <span class="nav-caret" aria-hidden="true">@(gatewaysOpen ? "▲" : "▼")</span>
             </button>
 
-            @if (gatewaysOpen)
-            {
-                <NavLink class="nav-sublink" href="/dashboard/gateways/frendz">Frendz</NavLink>
-            }
+            <div id="gateway-submenu"
+                 class="submenu-tree @(gatewaysOpen ? "is-open" : "is-collapsed")"
+                 aria-hidden="@(!gatewaysOpen)">
+                <div class="submenu-tree-inner">
+                    <NavLink class="nav-sublink" href="/dashboard/gateways" @onclick="OnSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        Visão geral
+                    </NavLink>
+                    <NavLink class="nav-sublink" href="/dashboard/gateways/frendz" @onclick="OnSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        Frendz
+                    </NavLink>
+                    <NavLink class="nav-sublink" href="/dashboard/gateways/sigilopay" @onclick="OnSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        SigiloPay
+                    </NavLink>
+                    <NavLink class="nav-sublink nav-sublink-muted" href="/dashboard/gateways/gateway-3" @onclick="OnSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        GATEWAY3
+                    </NavLink>
+                </div>
+            </div>
         </div>
     </div>
 </nav>
@@ -24,5 +55,10 @@
     private void ToggleGateways()
     {
         gatewaysOpen = !gatewaysOpen;
+    }
+
+    private void OnSubnavNavigate()
+    {
+        gatewaysOpen = true;
     }
 }

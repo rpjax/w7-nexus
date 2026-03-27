@@ -361,3 +361,30 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+
+# -----------------------------------------------------------------------------
+# Nexus / local tooling (temp builds, IDE, OS)
+# -----------------------------------------------------------------------------
+
+# Ad-hoc build / verify output (keep repo clean)
+.tmp-build/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+
+# Local secrets / environment (do not commit)
+.env
+.env.local
+.env.*.local
+*.local.json
+appsettings.*.local.json
+
+# dotnet user-secrets id file sometimes copied by mistake (optional noise)
+secrets.json

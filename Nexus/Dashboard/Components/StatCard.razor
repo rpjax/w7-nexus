@@ -1,6 +1,12 @@
 <section class="stat-card">
     <p class="stat-label">@Label</p>
-    <p class="stat-value">@Value</p>
+    <p class="stat-value">
+        @if (!string.IsNullOrWhiteSpace(Tone))
+        {
+            <span class="status-dot @($"tone-{Tone}")" aria-hidden="true"></span>
+        }
+        @Value
+    </p>
     @if (!string.IsNullOrWhiteSpace(Caption))
     {
         <p class="stat-caption">@Caption</p>
@@ -11,4 +17,5 @@
     [Parameter] public string Label { get; set; } = string.Empty;
     [Parameter] public string Value { get; set; } = string.Empty;
     [Parameter] public string? Caption { get; set; }
+    [Parameter] public string? Tone { get; set; }
 }

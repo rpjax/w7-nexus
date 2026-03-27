@@ -1,3 +1,7 @@
+@using static Microsoft.AspNetCore.Components.Web.RenderMode
+
+@rendermode InteractiveServer
+
 <Router AppAssembly="typeof(App).Assembly">
     <Found Context="routeData">
         <RouteView RouteData="routeData" DefaultLayout="typeof(MainLayout)" />

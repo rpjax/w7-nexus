@@ -4,6 +4,7 @@ using Aidan.Core.Patterns;
 using Nexus.Charges.Application;
 using Nexus.Charges.Application.Models;
 using Nexus.Frendz.Application;
+using Nexus.SigiloPay.Application;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Payments.Aggregates;
@@ -20,19 +21,25 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private IPaymentRepository _paymentRepository { get; }
     private IFrendzApiCredentialsRepository _frendzApiCredentialsRepository { get; }
     private IFrendzChargeServiceFactory _frendzChargeServiceFactory { get; }
+    private ISigiloPayApiCredentialsRepository _sigiloPayApiCredentialsRepository { get; }
+    private ISigiloPayChargeServiceFactory _sigiloPayChargeServiceFactory { get; }
 
     public ChargeOrchestrator(
         IOperationRepository operationRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
         IFrendzApiCredentialsRepository frendzApiCredentialsRepository,
-        IFrendzChargeServiceFactory frendzChargeServiceFactory)
+        IFrendzChargeServiceFactory frendzChargeServiceFactory,
+        ISigiloPayApiCredentialsRepository sigiloPayApiCredentialsRepository,
+        ISigiloPayChargeServiceFactory sigiloPayChargeServiceFactory)
     {
         _operationRepository = operationRepository;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
         _frendzApiCredentialsRepository = frendzApiCredentialsRepository;
         _frendzChargeServiceFactory = frendzChargeServiceFactory;
+        _sigiloPayApiCredentialsRepository = sigiloPayApiCredentialsRepository;
+        _sigiloPayChargeServiceFactory = sigiloPayChargeServiceFactory;
     }
 
     public async Task<IResult<PixCharge>> CreatePixChargeAsync(CreatePixChargeRequest request)
@@ -67,14 +74,14 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                     .Build())
                 .Build();
 
-        var providers = await GetFrendzChargeProvidersAsync(operation);
+        var providers = await GetChargeProvidersAsync(operation);
 
         if (providers.Length == 0)
         {
             return Result.Create<PixCharge>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.NoChargeServicesAvailable)
-                    .WithMessage("No Frendz credentials are available for this operation.")
+                    .WithMessage("No gateway credentials are available for this operation.")
                     .Build())
                 .Build();
         }
@@ -173,12 +180,24 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .Build();
     }
 
+    /// <summary>
+    /// Reúne todos os provedores de cobrança elegíveis (por gateway) e embaralha a ordem de tentativa.
+    /// </summary>
+    private async Task<ChargeServiceProvider[]> GetChargeProvidersAsync(Operation operation)
+    {
+        var frendzProviders = await GetFrendzChargeProvidersAsync(operation);
+        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(operation);
+        var merged = frendzProviders.Concat(sigiloPayProviders).ToArray();
+        Random.Shared.Shuffle(merged);
+        return merged;
+    }
+
     private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
 
         var credentials = await _frendzApiCredentialsRepository.AsQueryable()
-            .Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId))
+            .Where(x => x.Enabled && (x.StrawManId == null || strawmanIds.Contains(x.StrawManId)))
             .ToArrayAsync();
 
         var providers = new List<ChargeServiceProvider>();
@@ -188,6 +207,29 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             var service = _frendzChargeServiceFactory.Create(credential);
             var provider = new ChargeServiceProvider(
                 gateway: PaymentGateway.Frendz,
+                strawManId: credential.StrawManId,
+                service: service);
+            providers.Add(provider);
+        }
+
+        return providers.ToArray();
+    }
+
+    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Operation operation)
+    {
+        var strawmanIds = operation.StrawManIds.ToArray();
+
+        var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
+            .Where(x => x.Enabled && (x.StrawManId == null || strawmanIds.Contains(x.StrawManId)))
+            .ToArrayAsync();
+
+        var providers = new List<ChargeServiceProvider>();
+
+        foreach (var credential in credentials)
+        {
+            var service = _sigiloPayChargeServiceFactory.Create(credential);
+            var provider = new ChargeServiceProvider(
+                gateway: PaymentGateway.SigiloPay,
                 strawManId: credential.StrawManId,
                 service: service);
             providers.Add(provider);
