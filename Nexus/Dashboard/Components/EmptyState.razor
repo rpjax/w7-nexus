@@ -1,0 +1,9 @@
+<div class="empty-state">
+    <h3>@Title</h3>
+    <p>@Message</p>
+</div>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Sem dados";
+    [Parameter] public string Message { get; set; } = "Tente ajustar os filtros ou crie um novo registro.";
+}

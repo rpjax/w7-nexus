@@ -1,9 +1,10 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Nexus.Payments.Aggregates;
 
 namespace Nexus.Database.Models;
 
-public sealed class PixPaymentRecord
+public sealed class PaymentRecord
 {
     [BsonId]
     public ObjectId Id { get; set; }
@@ -13,12 +14,12 @@ public sealed class PixPaymentRecord
     public string OperationId { get; set; } = string.Empty;
 
     // Gateway references
-    public int Gateway { get; set; }
+    public PaymentGateway Gateway { get; set; }
     public string GatewayPaymentId { get; set; } = string.Empty;
 
     // Payment details
     public decimal Amount { get; set; }
-    public int Status { get; set; }
+    public PaymentStatus Status { get; set; }
 
     // Binding details
     public string? OperatorAccountId { get; set; }

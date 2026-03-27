@@ -19,39 +19,39 @@ public sealed class Account
 
     /// <summary>Constructor for creation. The creator service enforces invariants before calling.</summary>
     internal Account(
-        string id,
-        string username,
-        string passwordHash,
-        IEnumerable<string> roles,
-        IEnumerable<string> permissions)
+        string Id,
+        string Username,
+        string PasswordHash,
+        IReadOnlyList<string> Roles,
+        IReadOnlyList<string> Permissions)
     {
         var now = DateTime.UtcNow;
-        Id = id;
-        Username = username;
-        PasswordHash = passwordHash;
-        _roles = roles.ToList();
-        _permissions = permissions.ToList();
-        CreatedAt = now;
-        LastUpdatedAt = now;
+        this.Id = Id;
+        this.Username = Username;
+        this.PasswordHash = PasswordHash;
+        _roles = Roles.ToList();
+        _permissions = Permissions.ToList();
+        this.CreatedAt = now;
+        this.LastUpdatedAt = now;
     }
 
     /// <summary>Constructor for rehydration from persistence.</summary>
     internal Account(
-        string id,
-        string username,
-        string passwordHash,
-        IEnumerable<string> roles,
-        IEnumerable<string> permissions,
-        DateTime createdAt,
-        DateTime lastUpdatedAt)
+        string Id,
+        string Username,
+        string PasswordHash,
+        IReadOnlyList<string> Roles,
+        IReadOnlyList<string> Permissions,
+        DateTime CreatedAt,
+        DateTime LastUpdatedAt)
     {
-        Id = id;
-        Username = username;
-        PasswordHash = passwordHash;
-        _roles = roles.ToList();
-        _permissions = permissions.ToList();
-        CreatedAt = createdAt;
-        LastUpdatedAt = lastUpdatedAt;
+        this.Id = Id;
+        this.Username = Username;
+        this.PasswordHash = PasswordHash;
+        _roles = Roles.ToList();
+        _permissions = Permissions.ToList();
+        this.CreatedAt = CreatedAt;
+        this.LastUpdatedAt = LastUpdatedAt;
     }
 
     public IResult ChangeUsername(string newUsername)

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Nexus.Frendz.Application.Models;
 
 namespace Nexus.Frendz.Infrastructure;
 
@@ -32,14 +33,22 @@ internal static class FrendzPixResponseParser
 
     private static string? ResolveTransactionId(JsonElement root)
     {
+        // Pagar.me / Frendz: root "transaction" is often the gateway id string (e.g. ch_...).
+        if (root.TryGetProperty("transaction", out var tx) && tx.ValueKind == JsonValueKind.String)
+        {
+            var s = tx.GetString();
+            if (!string.IsNullOrWhiteSpace(s))
+                return s;
+        }
+
         if (root.TryGetProperty("hash", out var hash) && hash.ValueKind == JsonValueKind.String)
             return hash.GetString();
 
-        if (root.TryGetProperty("transaction", out var tx) && tx.ValueKind == JsonValueKind.Object)
+        if (root.TryGetProperty("transaction", out var txObj) && txObj.ValueKind == JsonValueKind.Object)
         {
-            if (tx.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
+            if (txObj.TryGetProperty("id", out var id) && id.ValueKind == JsonValueKind.String)
                 return id.GetString();
-            if (tx.TryGetProperty("hash", out var txHash) && txHash.ValueKind == JsonValueKind.String)
+            if (txObj.TryGetProperty("hash", out var txHash) && txHash.ValueKind == JsonValueKind.String)
                 return txHash.GetString();
         }
 
@@ -68,6 +77,9 @@ internal static class FrendzPixResponseParser
     {
         if (pix.TryGetProperty("code", out var code) && code.ValueKind == JsonValueKind.String)
             return code.GetString();
+        // Pagar.me–style payload under Frendz: EMV BR Code string.
+        if (pix.TryGetProperty("pix_qr_code", out var pixQr) && pixQr.ValueKind == JsonValueKind.String)
+            return pixQr.GetString();
         if (pix.TryGetProperty("qr_code", out var qr) && qr.ValueKind == JsonValueKind.String)
             return qr.GetString();
         return null;

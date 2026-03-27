@@ -1,5 +1,7 @@
+using Aidan.Core.Linq.Extensions;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Frendz.Application;
+using Nexus.Frendz.Application.Models;
 
 namespace Nexus.Frendz.Presentation;
 
@@ -8,20 +10,29 @@ namespace Nexus.Frendz.Presentation;
 public class FrendzController : ControllerBase
 {
     private IFrendzApiKeysService _credentialsService { get; }
+    private IFrendzApiCredentialsRepository _credentialsRepository { get; }
 
-    public FrendzController(IFrendzApiKeysService credentialsService)
+    public FrendzController(
+        IFrendzApiKeysService credentialsService,
+        IFrendzApiCredentialsRepository credentialsRepository)
     {
         _credentialsService = credentialsService;
+        _credentialsRepository = credentialsRepository;
     }
 
     [HttpGet("credentials")]
     public async Task<IActionResult> GetCredentialsAsync()
     {
-        var credentials = await _credentialsService.GetRandomCredentialsAsync();
-        if (credentials is null)
-            return NotFound();
+        var items = await _credentialsRepository.AsQueryable()
+            .OrderBy(c => c.Name)
+            .ToArrayAsync();
+        var total = items.Length;
 
-        return Ok(credentials);
+        return Ok(new
+        {
+            Total = total,
+            Items = items,
+        });
     }
 
     [HttpPost("credentials")]
@@ -30,7 +41,10 @@ public class FrendzController : ControllerBase
         if (string.IsNullOrWhiteSpace(request.Token))
             return BadRequest("Token is required.");
 
-        var credentials = await _credentialsService.AddCredentialsAsync(request.Token, request.Name ?? string.Empty);
+        var credentials = await _credentialsService.AddCredentialsAsync(
+            null,
+            request.Token,
+            request.Name ?? string.Empty);
         return Ok(credentials);
     }
 
@@ -46,11 +60,4 @@ public class FrendzController : ControllerBase
 
         return NoContent();
     }
-}
-
-public class AddCredentialsRequest
-{
-    public string Token { get; set; } = string.Empty;
-
-    public string Name { get; set; } = string.Empty;
 }

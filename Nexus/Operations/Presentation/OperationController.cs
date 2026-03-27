@@ -1,31 +1,19 @@
-using Aidan.Core.Patterns;
 using Aidan.Core.Linq.Extensions;
+using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Operations.Application.Models;
 using Nexus.Operations.ErrorCodes;
-using System.Linq.Expressions;
+
+using Aidan.Web.Controllers;
 
 namespace Nexus.Operations.Presentation;
 
-[ApiController]
 [Route("api/operations")]
-public sealed class OperationController : ControllerBase
+public class OperationController : WebController
 {
-    private static readonly Expression<Func<Operation, OperationResponse>> ToResponseProjection = o =>
-        new OperationResponse
-        {
-            Id = o.Id,
-            Name = o.Name,
-            Description = o.Description,
-            Operators = o.Operators.ToArray(),
-            CreatedAt = o.CreatedAt,
-            UpdatedAt = o.UpdatedAt
-        };
-
-    private readonly IOperationService _operationService;
-    private readonly IOperationRepository _operationRepository;
+    private IOperationService _operationService { get; }
+    private IOperationRepository _operationRepository { get; }
 
     public OperationController(
         IOperationService operationService,
@@ -35,145 +23,262 @@ public sealed class OperationController : ControllerBase
         _operationRepository = operationRepository;
     }
 
-    [HttpGet]
-    public async Task<ActionResult> ListAsync(
-        [FromQuery] string? search = null,
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20)
+    private static Error RequestBodyRequiredError() =>
+        Error.Create()
+            .WithCode(OperationErrorCodes.RequestBodyRequired)
+            .WithMessage("Request body is required.")
+            .Build();
+
+    [HttpPost("search")]
+    public async Task<ActionResult> GetOperations([FromBody] SearchOperationsRequest? request)
     {
-        if (page <= 0)
-            return BadRequest("page must be greater than 0.");
-        if (pageSize <= 0 || pageSize > 100)
-            return BadRequest("pageSize must be between 1 and 100.");
+        request ??= new SearchOperationsRequest();
+
+        var limit = request.Limit <= 0 ? 20 : request.Limit;
+        var offset = request.Offset;
+        var keyword = request.Keyword?.Trim();
+
+        if (limit < 0 || limit >= 1000)
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode("Operation.SEARCH_LIMIT_INVALID")
+                .WithMessage("Limit must be between 1 and 999.")
+                .Build());
+        }
+
+        if (offset < 0)
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode("Operation.SEARCH_OFFSET_INVALID")
+                .WithMessage("Offset cannot be negative.")
+                .Build());
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > 200)
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode("Operation.SEARCH_KEYWORD_TOO_LONG")
+                .WithMessage("Keyword can have at most 200 characters.")
+                .Build());
+        }
 
         var query = _operationRepository.AsQueryable();
-        if (!string.IsNullOrWhiteSpace(search))
+
+        if (!string.IsNullOrWhiteSpace(keyword))
         {
-            var term = search.Trim().ToLowerInvariant();
+            var term = keyword.ToLowerInvariant();
             query = query.Where(o =>
                 o.Id.ToLower().Contains(term) ||
                 o.Name.ToLower().Contains(term) ||
-                o.Description.ToLower().Contains(term) ||
-                o.Operators.Any(op => op.ToLower().Contains(term)));
+                (o.Description != null && o.Description.ToLower().Contains(term)));
         }
 
         var total = await query.CountAsync();
-        var skip = (page - 1) * pageSize;
 
         var items = await query
             .OrderByDescending(o => o.UpdatedAt)
-            .Skip(skip)
-            .Take(pageSize)
-            .Select(ToResponseProjection)
+            .Skip(offset)
+            .Take(limit)
             .ToArrayAsync();
 
-        return Ok(new PagedOperationResponse
+        return Ok(new
         {
-            Page = page,
-            PageSize = pageSize,
             Total = total,
-            Items = items
+            Items = items,
         });
     }
 
     [HttpPost]
-    public async Task<IActionResult> CreateAsync([FromBody] CreateOperationHttpRequest request)
+    public async Task<ActionResult> CreateOperation([FromBody] CreateOperationRequest? request)
     {
-        var result = await _operationService.CreateOperationAsync(new CreateOperationRequest
+        if (request is null)
         {
-            Name = request.Name,
-            Description = request.Description,
-            Operators = request.Operators
-        });
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var result = await _operationService.CreateOperationAsync(request);
 
         if (result.IsFailure)
-            return ToFailureResponse(result);
+        {
+            return ProblemResponse(422, result.Errors);
+        }
 
-        var operation = result.Value!;
-        return CreatedAtAction(
-            nameof(CreateAsync),
-            new { operationId = operation.Id },
-            ToResponse(operation));
+        return Created();
     }
 
-    [HttpPost("operators/{operatorId}")]
-    public async Task<IActionResult> AddOperatorAsync([FromQuery] string operationId, string operatorId)
+    [HttpPost("operators")]
+    public async Task<ActionResult> AddOperatorAsync(
+        [FromBody] AddOperatorRequest? request)
     {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        var operatorId = request.OperatorId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        if (string.IsNullOrWhiteSpace(operatorId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperatorInvalid)
+                .WithMessage("Operator ID is required.")
+                .Build());
+        }
+
         var result = await _operationService.AddOperatorAsync(operationId, operatorId);
+
         if (result.IsFailure)
-            return ToFailureResponse(result);
-
-        return NoContent();
-    }
-
-    [HttpDelete("operators/{operatorId}")]
-    public async Task<IActionResult> RemoveOperatorAsync([FromQuery] string operationId, string operatorId)
-    {
-        var result = await _operationService.RemoveOperatorAsync(operationId, operatorId);
-        if (result.IsFailure)
-            return ToFailureResponse(result);
-
-        return NoContent();
-    }
-
-    [HttpDelete]
-    public async Task<IActionResult> DeleteAsync([FromQuery] string operationId)
-    {
-        var result = await _operationService.DeleteOperationAsync(operationId);
-        if (result.IsFailure)
-            return ToFailureResponse(result);
-
-        return NoContent();
-    }
-
-    private IActionResult ToFailureResponse(IResult result)
-    {
-        var errors = result.Errors.ToArray();
-        if (errors.Length == 0)
-            return BadRequest("Operation request failed.");
-
-        var first = errors[0];
-        if (first.Code == OperationErrorCodes.OperationNotFound)
-            return NotFound(errors);
-
-        return BadRequest(errors);
-    }
-
-    private static OperationResponse ToResponse(Operation operation)
-    {
-        return new OperationResponse
         {
-            Id = operation.Id,
-            Name = operation.Name,
-            Description = operation.Description,
-            Operators = operation.Operators.ToArray(),
-            CreatedAt = operation.CreatedAt,
-            UpdatedAt = operation.UpdatedAt
-        };
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
     }
-}
 
-public sealed class CreateOperationHttpRequest
-{
-    public string? Name { get; set; }
-    public string? Description { get; set; }
-    public IEnumerable<string>? Operators { get; set; }
-}
+    [HttpDelete("operators")]
+    public async Task<ActionResult> RemoveOperatorAsync(
+        [FromBody] RemoveOperatorRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
 
-public sealed class OperationResponse
-{
-    public string Id { get; set; } = string.Empty;
-    public string Name { get; set; } = string.Empty;
-    public string Description { get; set; } = string.Empty;
-    public string[] Operators { get; set; } = Array.Empty<string>();
-    public DateTime CreatedAt { get; set; }
-    public DateTime UpdatedAt { get; set; }
-}
+        var operationId = request.OperationId;
+        var operatorId = request.OperatorId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
 
-public sealed class PagedOperationResponse
-{
-    public int Page { get; set; }
-    public int PageSize { get; set; }
-    public int Total { get; set; }
-    public OperationResponse[] Items { get; set; } = Array.Empty<OperationResponse>();
+        if (string.IsNullOrWhiteSpace(operatorId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperatorInvalid)
+                .WithMessage("Operator ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.RemoveOperatorAsync(operationId, operatorId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("strawman")]
+    public async Task<ActionResult> AddStrawManAsync(
+        [FromBody] AddStrawManRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        var strawManId = request.StrawManId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        if (string.IsNullOrWhiteSpace(strawManId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.StrawManInvalid)
+                .WithMessage("Straw man ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.AddStrawManAsync(operationId, strawManId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("strawman")]
+    public async Task<ActionResult> RemoveStrawManAsync(
+        [FromBody] RemoveStrawManRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        var strawManId = request.StrawManId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        if (string.IsNullOrWhiteSpace(strawManId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.StrawManInvalid)
+                .WithMessage("Straw man ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.RemoveStrawManAsync(operationId, strawManId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("operations")]
+    public async Task<ActionResult> DeleteOperationAsync(
+        [FromBody] DeleteOperationRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.DeleteOperationAsync(operationId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
 }

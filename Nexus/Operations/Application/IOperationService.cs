@@ -9,5 +9,7 @@ public interface IOperationService
     Task<IResult<Operation>> CreateOperationAsync(CreateOperationRequest request);
     Task<IResult> AddOperatorAsync(string operationId, string operatorId);
     Task<IResult> RemoveOperatorAsync(string operationId, string operatorId);
+    Task<IResult> AddStrawManAsync(string operationId, string strawManId);
+    Task<IResult> RemoveStrawManAsync(string operationId, string strawManId);
     Task<IResult> DeleteOperationAsync(string operationId);
 }

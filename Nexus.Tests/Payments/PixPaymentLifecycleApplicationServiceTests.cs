@@ -7,6 +7,7 @@ using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
+using Nexus.Payments.Application.Models;
 using Nexus.Payments.ErrorCodes;
 using Nexus.Payments.Infrastructure;
 using Xunit;
@@ -15,39 +16,39 @@ namespace Nexus.Tests.Payments;
 
 public sealed class PixPaymentLifecycleApplicationServiceTests
 {
-    private sealed class InMemoryPixPaymentRepository : IPixPaymentRepository
+    private sealed class InMemoryPixPaymentRepository : IPaymentRepository
     {
-        private readonly List<PixPayment> _store = new();
+        private readonly List<Payment> _store = new();
 
-        public IAsyncQueryable<PixPayment> AsQueryable()
-            => new MongoAsyncQueryable<PixPayment>(_store.AsQueryable());
+        public IAsyncQueryable<Payment> AsQueryable()
+            => new MongoAsyncQueryable<Payment>(_store.AsQueryable());
 
-        public Task CreateAsync(PixPayment entity)
+        public Task CreateAsync(Payment entity)
         {
             _store.Add(entity);
             return Task.CompletedTask;
         }
 
-        public Task CreateAsync(IEnumerable<PixPayment> entities)
+        public Task CreateAsync(IEnumerable<Payment> entities)
         {
             _store.AddRange(entities);
             return Task.CompletedTask;
         }
 
-        public Task DeleteAsync(PixPayment entity)
+        public Task DeleteAsync(Payment entity)
         {
             _store.RemoveAll(p => p.Id == entity.Id);
             return Task.CompletedTask;
         }
 
-        public Task<long> DeleteAsync(Expression<Func<PixPayment, bool>> predicate)
+        public Task<long> DeleteAsync(Expression<Func<Payment, bool>> predicate)
         {
             var compiled = predicate.Compile();
             var removed = _store.RemoveAll(p => compiled(p));
             return Task.FromResult((long)removed);
         }
 
-        public Task UpdateAsync(PixPayment entity)
+        public Task UpdateAsync(Payment entity)
         {
             var index = _store.FindIndex(p => p.Id == entity.Id);
             if (index >= 0)
@@ -151,16 +152,16 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
 
-        var operation = new Operation("operation-1", "Main operation", "pix flow", Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var operation = new Operation("operation-1", "Main operation", "pix flow", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-1", "operator", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         var strawAccount = new Account("straw-1", "straw", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(new[] { operatorAccount, strawAccount });
 
-        var sut = new PixPaymentService(accounts, payments, operations);
+        var sut = new PaymentService(accounts, payments, operations);
 
-        var created = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
             OperatorAccountId = operatorAccount.Id,
@@ -194,15 +195,15 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
 
-        var operation = new Operation("operation-2", "Second operation", "pix flow", Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var operation = new Operation("operation-2", "Second operation", "pix flow", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-2", "operator2", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(operatorAccount);
 
-        var sut = new PixPaymentService(accounts, payments, operations);
+        var sut = new PaymentService(accounts, payments, operations);
 
-        var created = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
+        var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
             OperatorAccountId = operatorAccount.Id,

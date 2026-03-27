@@ -6,12 +6,25 @@ namespace Nexus.Tests.Payments;
 
 public sealed class PixPaymentAggregateTests
 {
-    private static PixPayment CreateSut(
+    private static Payment CreateSut(
         string operationId = "operation-1",
         PaymentGateway gateway = PaymentGateway.FusionPay,
         string gatewayPaymentId = "gw-1",
         decimal amount = 10m) =>
-        new(Guid.NewGuid().ToString("N"), operationId, gateway, gatewayPaymentId, amount);
+        new Payment(
+            Guid.NewGuid().ToString("N"),
+            operationId,
+            gateway,
+            gatewayPaymentId,
+            amount,
+            PaymentStatus.Pending,
+            operatorAccountId: null,
+            strawManAccountId: null,
+            DateTime.UtcNow,
+            paidAt: null,
+            refundedAt: null,
+            diedAt: null,
+            deathReason: null);
 
     [Fact]
     public void Constructor_SetsPendingStateAndGatewayFields()
@@ -20,7 +33,7 @@ public sealed class PixPaymentAggregateTests
 
         Assert.Equal(PaymentStatus.Pending, p.Status);
         Assert.Equal(PaymentGateway.Frendz, p.Gateway);
-        Assert.Equal("ext-1", p.GatewayPaymentId);
+        Assert.Equal("ext-1", p.GatewayTransactionId);
         Assert.Equal(55.5m, p.Amount);
         Assert.Equal("operation-1", p.OperationId);
         Assert.Null(p.PaidAt);
@@ -208,6 +221,32 @@ public sealed class PixPaymentAggregateTests
 
         Assert.True(second.IsFailure);
         Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.AlreadyDead);
+    }
+
+    [Fact]
+    public void BindToGateway_ValidInput_UpdatesGatewayTransactionId()
+    {
+        var p = CreateSut(gateway: PaymentGateway.Frendz, gatewayPaymentId: "placeholder");
+
+        var result = p.BindToGateway(PaymentGateway.Frendz, "frendz-trx-99");
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentGateway.Frendz, p.Gateway);
+        Assert.Equal("frendz-trx-99", p.GatewayTransactionId);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("  ")]
+    public void BindToGateway_EmptyTransactionId_Fails(string? tx)
+    {
+        var p = CreateSut();
+
+        var result = p.BindToGateway(PaymentGateway.Frendz, tx!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.GatewayPaymentIdInvalid);
     }
 
     [Fact]

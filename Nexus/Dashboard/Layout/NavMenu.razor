@@ -1,0 +1,28 @@
+<nav class="nav-shell">
+    <div class="brand">Painel Nexus</div>
+    <div class="nav-links">
+        <NavLink href="/dashboard" Match="NavLinkMatch.All">Visão geral</NavLink>
+        <NavLink href="/dashboard/operations">Operações</NavLink>
+        <NavLink href="/dashboard/payments">Pagamentos</NavLink>
+        <div class="nav-group">
+            <button type="button" class="nav-dropdown" @onclick="ToggleGateways" aria-expanded="@gatewaysOpen">
+                <span>Gateways</span>
+                <span class="nav-caret" aria-hidden="true">@(gatewaysOpen ? "▲" : "▼")</span>
+            </button>
+
+            @if (gatewaysOpen)
+            {
+                <NavLink class="nav-sublink" href="/dashboard/gateways/frendz">Frendz</NavLink>
+            }
+        </div>
+    </div>
+</nav>
+
+@code {
+    private bool gatewaysOpen = true;
+
+    private void ToggleGateways()
+    {
+        gatewaysOpen = !gatewaysOpen;
+    }
+}

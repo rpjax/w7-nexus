@@ -1,0 +1,90 @@
+@page "/dashboard/payments"
+@layout MainLayout
+@using Nexus.Charges.Application
+@using Nexus.Charges.Application.Models
+@inject IChargeOrchestrator ChargeOrchestrator
+
+<section class="page-header">
+    <h1>Pagamentos PIX</h1>
+    <p>Gere cobranças PIX vinculadas a uma operação.</p>
+</section>
+
+<section class="card">
+    <h2>Gerar PIX</h2>
+    <EditForm Model="@model" OnValidSubmit="@GeneratePixAsync" class="form-grid" FormName="generatePixForm">
+        <div class="field">
+            <label for="pixOpId">ID da operação</label>
+            <InputText id="pixOpId" @bind-Value="model.OperationId" placeholder="Ex: operation-1" />
+        </div>
+        <div class="field">
+            <label for="pixAmount">Valor</label>
+            <InputNumber id="pixAmount" @bind-Value="model.Amount" placeholder="Ex: 10,00" />
+        </div>
+        <div class="field">
+            <label for="pixOperator">Conta do operador (opcional)</label>
+            <InputText id="pixOperator" @bind-Value="model.OperatorAccountId" placeholder="Ex: operator-1" />
+        </div>
+        <div class="field">
+            <label for="pixStrawMan">Conta straw man (opcional)</label>
+            <InputText id="pixStrawMan" @bind-Value="model.StrawManAccountId" placeholder="Ex: straw-1" />
+        </div>
+        <button type="submit" class="btn btn-primary">Gerar PIX</button>
+    </EditForm>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(error))
+{
+    <p class="feedback error">@error</p>
+}
+
+@if (lastResult is not null)
+{
+    <section class="card">
+        <h3>Cobrança gerada</h3>
+        <p><strong>ID do pagamento:</strong> @lastResult.Id</p>
+        <p><strong>Código PIX:</strong></p>
+        <textarea readonly rows="6">@lastResult.Code</textarea>
+    </section>
+}
+
+@code {
+    private sealed class GeneratePixVm
+    {
+        public string OperationId { get; set; } = string.Empty;
+        public decimal Amount { get; set; }
+        public string? OperatorAccountId { get; set; }
+        public string? StrawManAccountId { get; set; }
+    }
+
+    private readonly GeneratePixVm model = new();
+    private PixCharge? lastResult;
+    private string error = string.Empty;
+
+    private async Task GeneratePixAsync()
+    {
+        error = string.Empty;
+        lastResult = null;
+        try
+        {
+            var result = await ChargeOrchestrator.CreatePixChargeAsync(new CreatePixChargeRequest
+            {
+                OperationId = model.OperationId,
+                Amount = model.Amount,
+                OperatorAccountId = model.OperatorAccountId,
+                StrawManAccountId = model.StrawManAccountId
+            });
+            if (result.IsFailure)
+            {
+                error = string.Join("; ", result.Errors.Select(e => e.Message));
+                return;
+            }
+
+            lastResult = result.Value
+                ?? throw new InvalidOperationException("Charge succeeded without a result payload.");
+        }
+        catch (Exception ex)
+        {
+            error = ex.Message;
+        }
+    }
+}

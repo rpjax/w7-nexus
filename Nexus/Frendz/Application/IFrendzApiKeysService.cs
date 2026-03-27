@@ -1,10 +1,12 @@
+using System.Collections.Generic;
+using Nexus.Frendz.Application.Models;
+
 namespace Nexus.Frendz.Application;
 
 public interface IFrendzApiKeysService
 {
-    Task<FredzApiCredentials?> GetRandomCredentialsAsync();
-
-    Task<FredzApiCredentials> AddCredentialsAsync(string token, string name);
-
+    Task<FrendzApiCredentials?> GetRandomCredentialsAsync();
+    Task<FrendzApiCredentials> AddCredentialsAsync(string? strawManId, string token, string name);
+    Task<bool> UpdateCredentialsAsync(string id, string? strawManId, string token, string name);
     Task<bool> DeleteCredentialsAsync(string id);
 }

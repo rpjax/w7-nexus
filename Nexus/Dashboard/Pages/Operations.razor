@@ -1,0 +1,223 @@
+@page "/dashboard/operations"
+@layout MainLayout
+@using Aidan.Core.Linq.Extensions
+@using Nexus.Operations.Application
+@using Nexus.Operations.Application.Models
+@inject IOperationRepository OperationRepository
+@inject IOperationService OperationService
+
+<section class="page-header">
+    <h1>Operações</h1>
+    <p>Busque, crie e gerencie a associação de operadores às operações.</p>
+</section>
+
+<section class="card">
+    <h2>Nova operação</h2>
+    <EditForm Model="@createModel" OnValidSubmit="@CreateAsync" class="form-grid" FormName="createOperationForm">
+        <div class="field">
+            <label for="opName">Nome</label>
+            <InputText id="opName" @bind-Value="createModel.Name" placeholder="Ex: Pix do mês" />
+        </div>
+        <div class="field">
+            <label for="opDesc">Descrição</label>
+            <InputText id="opDesc" @bind-Value="createModel.Description" placeholder="Ex: pagamentos do mês" />
+        </div>
+        <button type="submit" class="btn btn-primary">Criar operação</button>
+    </EditForm>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(feedback))
+{
+    <p class="feedback @(feedbackIsError ? "error" : string.Empty)">@feedback</p>
+}
+
+<section class="card">
+    <div class="toolbar">
+        <div class="field" style="min-width: 220px;">
+            <label for="opSearch">Buscar</label>
+            <InputText id="opSearch" @bind-Value="search" placeholder="Ex: op-1, Pix, pagamentos..." />
+        </div>
+        <button class="btn btn-ghost" @onclick="SearchAsync">Buscar</button>
+        <button class="btn btn-ghost" @onclick="RefreshAsync">Atualizar</button>
+    </div>
+
+    @if (items.Length == 0)
+    {
+        <EmptyState Title="Nenhuma operação encontrada" Message="Crie uma acima ou ajuste sua busca." />
+    }
+    else
+    {
+        <div class="table-wrap">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Nome</th>
+                        <th>Descrição</th>
+                        <th>Operadores</th>
+                        <th>Atualizado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var op in items)
+                    {
+                        <tr>
+                            <td>@op.Name</td>
+                            <td>@op.Description</td>
+                            <td>@string.Join(", ", op.OperatorIds)</td>
+                            <td>@op.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
+                            <td><button class="btn btn-danger" @onclick="() => PromptDelete(op.Id)">Excluir</button></td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (totalItems > 0)
+        {
+            <div class="pagination">
+                <button class="btn btn-ghost" type="button" @onclick="PrevPage" disabled="@(currentPage <= 1)">Anterior</button>
+                <span>Página @currentPage de @totalPages</span>
+                <button class="btn btn-ghost" type="button" @onclick="NextPage" disabled="@(currentPage >= totalPages)">Próxima</button>
+            </div>
+        }
+    }
+</section>
+
+<ConfirmDialog IsOpen="@deleteDialogOpen"
+                Title="Confirmar exclusão"
+                Message="Tem certeza que deseja excluir esta operação?"
+                OnCancel="CancelDelete"
+                OnConfirm="ConfirmDeleteAsync" />
+
+@code {
+    private sealed class CreateOperationVm
+    {
+        public string Name { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+    }
+
+    private readonly CreateOperationVm createModel = new();
+    private string search = string.Empty;
+    private string feedback = string.Empty;
+    private bool feedbackIsError;
+    private Nexus.Operations.Aggregates.Operation[] items = Array.Empty<Nexus.Operations.Aggregates.Operation>();
+
+    private int currentPage = 1;
+    private int pageSize = 20;
+    private int totalItems;
+    private int totalPages => totalItems == 0 ? 1 : (int)Math.Ceiling(totalItems / (double)pageSize);
+
+    private bool deleteDialogOpen;
+    private string deleteOperationId = string.Empty;
+
+    protected override async Task OnInitializedAsync() => await LoadAsync();
+
+    private async Task LoadAsync()
+    {
+        var query = OperationRepository.AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim().ToLowerInvariant();
+            query = query.Where(o =>
+                o.Id.ToLower().Contains(term) ||
+                o.Name.ToLower().Contains(term) ||
+                (o.Description != null && o.Description.ToLower().Contains(term)));
+        }
+
+        totalItems = await query.CountAsync();
+        var skip = (currentPage - 1) * pageSize;
+
+        items = await query
+            .OrderByDescending(o => o.UpdatedAt)
+            .Skip(skip)
+            .Take(pageSize)
+            .ToArrayAsync();
+    }
+
+    private async Task RefreshAsync()
+    {
+        await LoadAsync();
+    }
+
+    private async Task SearchAsync()
+    {
+        currentPage = 1;
+        await LoadAsync();
+    }
+
+    private async Task CreateAsync()
+    {
+        var result = await OperationService.CreateOperationAsync(new CreateOperationRequest
+        {
+            Name = createModel.Name,
+            Description = createModel.Description
+        });
+
+        if (result.IsSuccess)
+        {
+            feedbackIsError = false;
+            feedback = "Operação criada com sucesso.";
+            createModel.Name = string.Empty;
+            createModel.Description = string.Empty;
+            currentPage = 1;
+            await LoadAsync();
+        }
+        else
+        {
+            feedbackIsError = true;
+            var firstError = result.Errors.FirstOrDefault();
+            feedback = firstError?.Message ?? "Falha ao criar operação.";
+        }
+    }
+
+    private void PromptDelete(string operationId)
+    {
+        deleteOperationId = operationId;
+        deleteDialogOpen = true;
+    }
+
+    private void CancelDelete()
+    {
+        deleteDialogOpen = false;
+        deleteOperationId = string.Empty;
+    }
+
+    private async Task ConfirmDeleteAsync()
+    {
+        deleteDialogOpen = false;
+        if (string.IsNullOrWhiteSpace(deleteOperationId))
+            return;
+
+        var result = await OperationService.DeleteOperationAsync(deleteOperationId);
+        if (result.IsSuccess)
+        {
+            feedbackIsError = false;
+            feedback = "Operação excluída com sucesso.";
+            currentPage = 1;
+            await LoadAsync();
+        }
+        else
+        {
+            feedbackIsError = true;
+            var firstError = result.Errors.FirstOrDefault();
+            feedback = firstError?.Message ?? "Falha ao excluir operação.";
+        }
+    }
+
+    private async Task PrevPage()
+    {
+        if (currentPage <= 1)
+            return;
+        currentPage -= 1;
+        await LoadAsync();
+    }
+
+    private async Task NextPage()
+    {
+        if (currentPage >= totalPages)
+            return;
+        currentPage += 1;
+        await LoadAsync();
+    }
+}

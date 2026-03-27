@@ -9,3 +9,5 @@ POST {{Nexus_HostAddress}}/prototype/profit-split
 Accept: application/json
 
 ###
+
+POST {{Nexus_HostAddress}}/api/charges/pix

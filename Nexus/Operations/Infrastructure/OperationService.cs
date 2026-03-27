@@ -30,23 +30,36 @@ public sealed class OperationService : IOperationService
                 .WithMessage("Operation name is required")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(description))
+        if (!string.IsNullOrWhiteSpace(name) && name.Length > Operation.MaxNameLength)
             builder.WithError(Error.Create()
-                .WithCode(OperationErrorCodes.DescriptionInvalid)
-                .WithMessage("Operation description is required")
+                .WithCode(OperationErrorCodes.NameTooLong)
+                .WithMessage($"Operation name must be at most {Operation.MaxNameLength} characters")
                 .Build());
 
         if (builder.ContainsError)
             return builder.Build();
 
+        var normalizedName = name!.ToLowerInvariant();
+        var nameTaken = _operations.AsQueryable()
+            .Any(o => o.Name.ToLower() == normalizedName);
+        if (nameTaken)
+        {
+            builder.WithError(Error.Create()
+                .WithCode(OperationErrorCodes.NameAlreadyExists)
+                .WithMessage($"Operation name '{name}' is already in use")
+                .Build());
+            return builder.Build();
+        }
+
         var now = DateTime.UtcNow;
         var operation = new Operation(
-            id: Guid.NewGuid().ToString("N"),
-            name: name!,
-            description: description!,
-            operators: request.Operators ?? Array.Empty<string>(),
-            createdAt: now,
-            updatedAt: now);
+            Id: Guid.NewGuid().ToString("N"),
+            Name: name!,
+            Description: string.IsNullOrWhiteSpace(description) ? null : description,
+            OperatorIds: (request.Operators ?? Array.Empty<string>()).ToArray(),
+            StrawManIds: Array.Empty<string>(),
+            CreatedAt: now,
+            UpdatedAt: now);
 
         await _operations.CreateAsync(operation);
         return builder.WithValue(operation).Build();
@@ -73,6 +86,34 @@ public sealed class OperationService : IOperationService
             return NotFoundResult(operationId);
 
         var result = operation.RemoveOperator(operatorId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> AddStrawManAsync(string operationId, string strawManId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.AddStrawMan(strawManId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> RemoveStrawManAsync(string operationId, string strawManId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.RemoveStrawMan(strawManId);
         if (result.IsFailure)
             return result;
 

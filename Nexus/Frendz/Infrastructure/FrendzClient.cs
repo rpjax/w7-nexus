@@ -1,6 +1,8 @@
 using System.Net.Http.Json;
 using System.Text.Json;
 using System.Text.Json.Serialization;
+using Nexus.Frendz.Application;
+using Nexus.Frendz.Application.Models;
 
 namespace Nexus.Frendz.Infrastructure;
 
@@ -8,7 +10,7 @@ namespace Nexus.Frendz.Infrastructure;
 /// Cliente HTTP para a API pública Frendz v1. Autenticação: query <c>api_token</c>.
 /// PIX: <c>POST /transactions</c> com <c>payment_method=pix</c>; montantes em centavos.
 /// </summary>
-public sealed class FrendzClient
+public sealed class FrendzClient : IFrendzClient
 {
     private const string ApiUrl = "https://api.frendz.com.br/api/public/v1";
 

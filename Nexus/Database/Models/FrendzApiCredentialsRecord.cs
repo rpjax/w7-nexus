@@ -7,6 +7,7 @@ public sealed class FrendzApiCredentialsRecord
 {
     [BsonId]
     public ObjectId Id { get; set; }
+    public string? StrawManId { get; set; }
     public string Name { get; set; } = string.Empty;
     public string Token { get; set; } = string.Empty;
 }

@@ -21,7 +21,7 @@ public enum PaymentGateway
     SigiloPay,
 }
 
-public sealed class PixPayment
+public sealed class Payment
 {
     // Internal IDs (not related to the gateway)
     public string Id { get; }
@@ -30,8 +30,8 @@ public sealed class PixPayment
     public string? StrawManAccountId { get; private set; }
 
     // Gateway References
-    public PaymentGateway Gateway { get; }
-    public string GatewayPaymentId { get; }
+    public PaymentGateway Gateway { get; private set; }
+    public string GatewayTransactionId { get; private set; }
 
     // Payment Details
     public decimal Amount { get; }
@@ -44,27 +44,11 @@ public sealed class PixPayment
     public DateTime? DiedAt { get; private set; }
     public string? DeathReason { get; private set; }
 
-    internal PixPayment(
+    internal Payment(
         string id,
         string operationId,
         PaymentGateway gateway,
-        string gatewayPaymentId,
-        decimal amount)
-    {
-        Id = id;
-        OperationId = operationId;
-        Gateway = gateway;
-        GatewayPaymentId = gatewayPaymentId;
-        Amount = amount;
-        Status = PaymentStatus.Pending;
-        CreatedAt = DateTime.UtcNow;
-    }
-
-    internal PixPayment(
-        string id,
-        string operationId,
-        PaymentGateway gateway,
-        string gatewayPaymentId,
+        string gatewayTransactionId,
         decimal amount,
         PaymentStatus status,
         string? operatorAccountId,
@@ -78,7 +62,7 @@ public sealed class PixPayment
         Id = id;
         OperationId = operationId;
         Gateway = gateway;
-        GatewayPaymentId = gatewayPaymentId;
+        GatewayTransactionId = gatewayTransactionId;
         Amount = amount;
 
         Status = status;
@@ -107,6 +91,25 @@ public sealed class PixPayment
                 .Build());
 
         StrawManAccountId = strawManAccountId;
+        return Result.Success();
+    }
+
+    public IResult BindToGateway(PaymentGateway gateway, string transactionId)
+    {
+        if (string.IsNullOrWhiteSpace(transactionId))
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.GatewayPaymentIdInvalid)
+                .WithMessage("Gateway transaction ID cannot be empty")
+                .Build());
+
+        if (gateway == PaymentGateway.None)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.GatewayInvalid)
+                .WithMessage("Gateway is invalid")
+                .Build());
+
+        Gateway = gateway;
+        GatewayTransactionId = transactionId.Trim();
         return Result.Success();
     }
 
