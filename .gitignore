@@ -366,8 +366,14 @@ FodyWeavers.xsd
 # Nexus / local tooling (temp builds, IDE, OS)
 # -----------------------------------------------------------------------------
 
+# .NET / native binaries (covers ad-hoc output dirs, not only bin/obj)
+*.dll
+*.exe
+
 # Ad-hoc build / verify output (keep repo clean)
 .tmp-build/
+_build_*/
+_verify_*/
 
 # JetBrains Rider
 .idea/

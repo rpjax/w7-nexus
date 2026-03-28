@@ -254,6 +254,136 @@ public class OperationController : WebController
         return NoContent();
     }
 
+    [HttpPost("charge-credentials/manual")]
+    public async Task<ActionResult> EnableManualChargeCredentialsAsync(
+        [FromBody] DeleteOperationRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.EnableManualChargeCredentialsAsync(operationId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("charge-credentials/manual")]
+    public async Task<ActionResult> DisableManualChargeCredentialsAsync(
+        [FromBody] DeleteOperationRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.DisableManualChargeCredentialsAsync(operationId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpPost("charge-credentials")]
+    public async Task<ActionResult> AddChargeCredentialAsync(
+        [FromBody] AddChargeCredentialRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        var credentialId = request.CredentialId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        if (string.IsNullOrWhiteSpace(credentialId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialInvalid)
+                .WithMessage("Credential ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.AddChargeCredentialIdAsync(operationId, credentialId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
+    [HttpDelete("charge-credentials")]
+    public async Task<ActionResult> RemoveChargeCredentialAsync(
+        [FromBody] RemoveChargeCredentialRequest? request)
+    {
+        if (request is null)
+        {
+            return ProblemResponse(422, RequestBodyRequiredError());
+        }
+
+        var operationId = request.OperationId;
+        var credentialId = request.CredentialId;
+        if (string.IsNullOrWhiteSpace(operationId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.OperationIdInvalid)
+                .WithMessage("Operation ID is required.")
+                .Build());
+        }
+
+        if (string.IsNullOrWhiteSpace(credentialId))
+        {
+            return ProblemResponse(422, Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialInvalid)
+                .WithMessage("Credential ID is required.")
+                .Build());
+        }
+
+        var result = await _operationService.RemoveChargeCredentialIdAsync(operationId, credentialId);
+
+        if (result.IsFailure)
+        {
+            return ProblemResponse(422, result.Errors);
+        }
+
+        return NoContent();
+    }
+
     [HttpDelete("operations")]
     public async Task<ActionResult> DeleteOperationAsync(
         [FromBody] DeleteOperationRequest? request)

@@ -3,9 +3,11 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
 using Nexus.Frendz.Application;
 using Nexus.Frendz.Application.Models;
 using Nexus.Frendz.ErrorCodes;
+using Nexus.Presentation;
 
 namespace Nexus.Frendz.Presentation;
 
@@ -14,13 +16,36 @@ public class FrendzController : WebController
 {
     private IFrendzApiKeysService _credentialsService { get; }
     private IFrendzApiCredentialsRepository _credentialsRepository { get; }
+    private IServiceScopeFactory _scopeFactory { get; }
+    private ILogger<FrendzController> _logger { get; }
 
     public FrendzController(
         IFrendzApiKeysService credentialsService,
-        IFrendzApiCredentialsRepository credentialsRepository)
+        IFrendzApiCredentialsRepository credentialsRepository,
+        IServiceScopeFactory scopeFactory,
+        ILogger<FrendzController> logger)
     {
         _credentialsService = credentialsService;
         _credentialsRepository = credentialsRepository;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    [HttpPost("webhook/callback")]
+    public async Task<IActionResult> WebhookCallbackAsync(CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var raw = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(raw))
+            raw = "{}";
+
+        GatewayWebhookBackground.Enqueue(
+            _scopeFactory,
+            _logger,
+            raw,
+            (svc, json, ct) => svc.ProcessFrendzPostbackAsync(json, ct));
+
+        return Ok();
     }
 
     [HttpPost("search")]

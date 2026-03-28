@@ -13,6 +13,7 @@
     <StatCard Label="Operações registradas" Value="@operationsTotal.ToString()" Caption="Total no repositório" Tone="info" />
     <StatCard Label="Credencial Frendz" Value="@credentialStatus" Caption="@credentialCaption" Tone="@credentialTone" />
     <StatCard Label="Credencial SigiloPay" Value="@sigiloPayCredentialStatus" Caption="@sigiloPayCredentialCaption" Tone="@sigiloPayCredentialTone" />
+    <StatCard Label="Credencial Wintech" Value="@wintechCredentialStatus" Caption="@wintechCredentialCaption" Tone="@wintechCredentialTone" />
     <StatCard Label="Ambiente" Value="Interno" Caption="Painel sem autenticação (uso interno)" Tone="warn" />
 </section>
 
@@ -20,9 +21,12 @@
     <h2>Atalhos</h2>
     <div class="quick-actions">
         <a class="quick-action" href="/dashboard/operations">Nova operação</a>
-        <a class="quick-action" href="/dashboard/payments">Gerar cobrança PIX</a>
+        <a class="quick-action" href="/dashboard/accounts">Contas</a>
+        <a class="quick-action" href="/dashboard/payments">Pagamentos</a>
+        <a class="quick-action" href="/dashboard/payments/pix">Gerar cobrança PIX</a>
         <a class="quick-action" href="/dashboard/gateways/frendz">Credenciais Frendz</a>
         <a class="quick-action" href="/dashboard/gateways/sigilopay">Credenciais SigiloPay</a>
+        <a class="quick-action" href="/dashboard/gateways/wintech">Credenciais Wintech</a>
     </div>
 </section>
 
@@ -35,6 +39,9 @@
     private string sigiloPayCredentialStatus = "Verificando...";
     private string sigiloPayCredentialCaption = "Cadastradas vs habilitadas para cobrança";
     private string sigiloPayCredentialTone = "info";
+    private string wintechCredentialStatus = "Verificando...";
+    private string wintechCredentialCaption = "Cadastradas vs habilitadas para cobrança";
+    private string wintechCredentialTone = "info";
 
     private sealed class SearchResponse<TItem>
     {
@@ -118,6 +125,38 @@
             sigiloPayCredentialStatus = "Verificando...";
             sigiloPayCredentialCaption = "Cadastradas vs habilitadas para cobrança";
             sigiloPayCredentialTone = "info";
+        }
+
+        var wtTotalResponse = await Http.PostAsJsonAsync("/api/wintech/search", new { Limit = 1, Offset = 0, Keyword = (string?)null });
+        var wtEnabledResponse = await Http.PostAsJsonAsync("/api/wintech/search", new { Limit = 1, Offset = 0, Keyword = (string?)null, enabledOnly = true });
+        if (wtTotalResponse.IsSuccessStatusCode && wtEnabledResponse.IsSuccessStatusCode)
+        {
+            var totalWt = await wtTotalResponse.Content.ReadFromJsonAsync<SearchResponse<CredentialVm>>(_jsonOptions);
+            var enabledWt = await wtEnabledResponse.Content.ReadFromJsonAsync<SearchResponse<CredentialVm>>(_jsonOptions);
+            var total = totalWt?.Total ?? 0;
+            var enabled = enabledWt?.Total ?? 0;
+            wintechCredentialCaption = total == 0 ? "Nenhuma credencial cadastrada" : $"{enabled} habilitada(s) de {total} cadastrada(s)";
+            if (total == 0)
+            {
+                wintechCredentialStatus = "Ausente";
+                wintechCredentialTone = "danger";
+            }
+            else if (enabled == 0)
+            {
+                wintechCredentialStatus = "Desativadas";
+                wintechCredentialTone = "warn";
+            }
+            else
+            {
+                wintechCredentialStatus = "Pronto";
+                wintechCredentialTone = "success";
+            }
+        }
+        else
+        {
+            wintechCredentialStatus = "Verificando...";
+            wintechCredentialCaption = "Cadastradas vs habilitadas para cobrança";
+            wintechCredentialTone = "info";
         }
     }
 }

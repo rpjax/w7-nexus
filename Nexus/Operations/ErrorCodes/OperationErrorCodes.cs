@@ -16,4 +16,9 @@ public static class OperationErrorCodes
     public const string StrawManInvalid = "Operation.STRAW_MAN_INVALID";
     public const string StrawManAlreadyAssigned = "Operation.STRAW_MAN_ALREADY_ASSIGNED";
     public const string StrawManNotAssigned = "Operation.STRAW_MAN_NOT_ASSIGNED";
+
+    public const string ManualChargeCredentialsDisabled = "Operation.MANUAL_CHARGE_CREDENTIALS_DISABLED";
+    public const string ChargeCredentialInvalid = "Operation.CHARGE_CREDENTIAL_INVALID";
+    public const string ChargeCredentialAlreadyAssigned = "Operation.CHARGE_CREDENTIAL_ALREADY_ASSIGNED";
+    public const string ChargeCredentialNotAssigned = "Operation.CHARGE_CREDENTIAL_NOT_ASSIGNED";
 }

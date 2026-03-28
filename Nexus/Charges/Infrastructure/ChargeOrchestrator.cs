@@ -5,6 +5,7 @@ using Nexus.Charges.Application;
 using Nexus.Charges.Application.Models;
 using Nexus.Frendz.Application;
 using Nexus.SigiloPay.Application;
+using Nexus.Wintech.Application;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Payments.Aggregates;
@@ -23,6 +24,8 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private IFrendzChargeServiceFactory _frendzChargeServiceFactory { get; }
     private ISigiloPayApiCredentialsRepository _sigiloPayApiCredentialsRepository { get; }
     private ISigiloPayChargeServiceFactory _sigiloPayChargeServiceFactory { get; }
+    private IWintechApiCredentialsRepository _wintechApiCredentialsRepository { get; }
+    private IWintechChargeServiceFactory _wintechChargeServiceFactory { get; }
 
     public ChargeOrchestrator(
         IOperationRepository operationRepository,
@@ -31,7 +34,9 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         IFrendzApiCredentialsRepository frendzApiCredentialsRepository,
         IFrendzChargeServiceFactory frendzChargeServiceFactory,
         ISigiloPayApiCredentialsRepository sigiloPayApiCredentialsRepository,
-        ISigiloPayChargeServiceFactory sigiloPayChargeServiceFactory)
+        ISigiloPayChargeServiceFactory sigiloPayChargeServiceFactory,
+        IWintechApiCredentialsRepository wintechApiCredentialsRepository,
+        IWintechChargeServiceFactory wintechChargeServiceFactory)
     {
         _operationRepository = operationRepository;
         _paymentService = paymentService;
@@ -40,6 +45,8 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         _frendzChargeServiceFactory = frendzChargeServiceFactory;
         _sigiloPayApiCredentialsRepository = sigiloPayApiCredentialsRepository;
         _sigiloPayChargeServiceFactory = sigiloPayChargeServiceFactory;
+        _wintechApiCredentialsRepository = wintechApiCredentialsRepository;
+        _wintechChargeServiceFactory = wintechChargeServiceFactory;
     }
 
     public async Task<IResult<PixCharge>> CreatePixChargeAsync(CreatePixChargeRequest request)
@@ -130,7 +137,8 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                 // create the charge
                 var pixCharge = await provider.Service.CreatePixChargeAsync(chargeRequest);
 
-                // bind to gateway
+                // ID da transação no gateway (PK usada nos webhooks/postbacks para correlacionar:
+                // SigiloPay/Wintech → transaction.id; Frendz → transaction_hash). Origem: parsers da resposta de criação PIX.
                 var transactionId = pixCharge.Id;
                 var bindGateway = payment.BindToGateway(provider.Gateway, transactionId);
                 if (bindGateway.IsFailure)
@@ -187,7 +195,8 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     {
         var frendzProviders = await GetFrendzChargeProvidersAsync(operation);
         var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(operation);
-        var merged = frendzProviders.Concat(sigiloPayProviders).ToArray();
+        var wintechProviders = await GetWintechChargeProvidersAsync(operation);
+        var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
         Random.Shared.Shuffle(merged);
         return merged;
     }
@@ -195,9 +204,13 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
+        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
 
         var credentials = await _frendzApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled && (x.StrawManId == null || strawmanIds.Contains(x.StrawManId)))
+            .Where(x => x.Enabled && (
+                operation.ManuallySetChargeCredentials
+                    ? manualCredentialIds.Contains(x.Id)
+                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
             .ToArrayAsync();
 
         var providers = new List<ChargeServiceProvider>();
@@ -218,9 +231,13 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
+        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
 
         var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled && (x.StrawManId == null || strawmanIds.Contains(x.StrawManId)))
+            .Where(x => x.Enabled && (
+                operation.ManuallySetChargeCredentials
+                    ? manualCredentialIds.Contains(x.Id)
+                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
             .ToArrayAsync();
 
         var providers = new List<ChargeServiceProvider>();
@@ -230,6 +247,33 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             var service = _sigiloPayChargeServiceFactory.Create(credential);
             var provider = new ChargeServiceProvider(
                 gateway: PaymentGateway.SigiloPay,
+                strawManId: credential.StrawManId,
+                service: service);
+            providers.Add(provider);
+        }
+
+        return providers.ToArray();
+    }
+
+    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(Operation operation)
+    {
+        var strawmanIds = operation.StrawManIds.ToArray();
+        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
+
+        var credentials = await _wintechApiCredentialsRepository.AsQueryable()
+            .Where(x => x.Enabled && (
+                operation.ManuallySetChargeCredentials
+                    ? manualCredentialIds.Contains(x.Id)
+                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
+            .ToArrayAsync();
+
+        var providers = new List<ChargeServiceProvider>();
+
+        foreach (var credential in credentials)
+        {
+            var service = _wintechChargeServiceFactory.Create(credential);
+            var provider = new ChargeServiceProvider(
+                gateway: PaymentGateway.Wintech,
                 strawManId: credential.StrawManId,
                 service: service);
             providers.Add(provider);

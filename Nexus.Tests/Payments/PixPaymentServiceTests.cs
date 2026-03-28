@@ -42,7 +42,7 @@ public sealed class PixPaymentServiceTests
         public StubOperationRepository(params string[] operationIds)
         {
             _operations = operationIds
-                .Select(id => new Operation(id, $"Operation {id}", "desc", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow))
+                .Select(id => new Operation(id, $"Operation {id}", "desc", Array.Empty<string>(), Array.Empty<string>(), false, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow))
                 .ToArray();
         }
 

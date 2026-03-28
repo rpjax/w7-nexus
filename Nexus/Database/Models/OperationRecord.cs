@@ -13,6 +13,8 @@ public sealed class OperationRecord
     public string? Description { get; set; }
     public List<string> Operators { get; set; } = new();
     public List<string> StrawManIds { get; set; } = new();
+    public bool ManuallySetChargeCredentials { get; set; }
+    public List<string> ChargeCredentialsIds { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

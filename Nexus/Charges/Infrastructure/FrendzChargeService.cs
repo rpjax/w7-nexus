@@ -1,3 +1,4 @@
+using Nexus.AppHost;
 using Nexus.Charges.Application;
 using Nexus.Charges.Application.Models;
 using Nexus.Frendz.Application;
@@ -9,13 +10,16 @@ namespace Nexus.Charges.Infrastructure;
 public sealed class FrendzChargeService : IChargeService
 {
     private IFrendzClient _frendzClient { get; }
+    private IAppHostProvider _appHostProvider { get; }
     private FrendzApiCredentials _credentials { get; }
 
     public FrendzChargeService(
         IFrendzClient frendzClient,
+        IAppHostProvider appHostProvider,
         FrendzApiCredentials credentials)
     {
         _frendzClient = frendzClient;
+        _appHostProvider = appHostProvider;
         _credentials = credentials;
     }
 
@@ -29,6 +33,10 @@ public sealed class FrendzChargeService : IChargeService
             throw new InvalidOperationException("Frendz API token is missing for this credential.");
 
         var amountCents = checked((int)Math.Round(request.Amount * 100m, MidpointRounding.AwayFromZero));
+        var postbackUrl = _appHostProvider.BaseUrl is not null
+            ? _appHostProvider.GetWebhookCallbackUrl("frendz")
+            : null;
+
         var frendzResult = await _frendzClient.CreatePixPaymentAsync(
             _credentials.Token,
             new FrendzPixPaymentRequest
@@ -38,7 +46,8 @@ public sealed class FrendzChargeService : IChargeService
                 ProductHash = $"prd_{request.PaymentId}_{Guid.NewGuid():N}",
                 ProductTitle = "PIX Payment",
                 ExpireInDays = 1,
-                Customer = GenerateProceduralCustomer()
+                Customer = GenerateProceduralCustomer(),
+                PostbackUrl = postbackUrl
             });
 
         return new PixCharge

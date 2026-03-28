@@ -1,4 +1,4 @@
-@page "/dashboard/payments"
+@page "/dashboard/payments/pix"
 @layout MainLayout
 @using Microsoft.JSInterop
 @using System.Net.Http.Json
@@ -6,9 +6,12 @@
 @inject HttpClient Http
 @inject IJSRuntime JSRuntime
 
-<section class="page-header">
-    <h1>Pagamentos PIX</h1>
-    <p class="muted page-lead">Gere cobrança PIX vinculada a uma operação; operador e laranja são opcionais (contas).</p>
+<section class="page-header ops-page-header">
+    <div>
+        <h1>Pagamentos PIX</h1>
+        <p class="muted page-lead">Gere cobrança PIX vinculada a uma operação; operador e laranja são opcionais (contas).</p>
+        <p class="muted small page-nav-back"><a href="/dashboard/payments">← Registros de pagamentos</a></p>
+    </div>
 </section>
 
 <section class="card ops-card">
@@ -16,10 +19,19 @@
         <h2>Gerar PIX</h2>
         <span class="post-badge">POST /api/charges/pix</span>
     </div>
-    <div class="form-grid">
+    <div class="form-grid form-grid-wide">
         <div class="field">
-            <label for="pixOpId">ID da operação</label>
-            <input id="pixOpId" class="nexus-input" @bind="model.OperationId" @bind:event="oninput" placeholder="GUID da operação" />
+            <label>Operação</label>
+            <div class="account-select-row">
+                <button type="button" class="account-select-trigger" @onclick="() => operationPickerOpen = true">
+                    @(operationLabel ?? "Selecionar operação")
+                </button>
+                <button type="button" class="btn-icon btn-icon-green" @onclick="() => operationPickerOpen = true" title="Selecionar operação">＋</button>
+                @if (!string.IsNullOrWhiteSpace(model.OperationId))
+                {
+                    <button type="button" class="btn btn-ghost btn-small" @onclick="ClearOperation">Limpar</button>
+                }
+            </div>
         </div>
         <div class="field">
             <label for="pixAmount">Valor</label>
@@ -59,6 +71,11 @@
     </div>
 </section>
 
+<OperationPickerModal @bind-IsOpen="operationPickerOpen"
+                      Title="Selecionar operação"
+                      Subtitle="A cobrança PIX será criada no contexto desta operação."
+                      OnSelected="OnOperationPicked" />
+
 <AccountPickerModal @bind-IsOpen="operatorPickerOpen"
                     Title="Conta do operador"
                     Subtitle="Opcional — filtra a cobrança ao operador."
@@ -66,7 +83,7 @@
 
 <AccountPickerModal @bind-IsOpen="strawPickerOpen"
                     Title="Conta laranja"
-                    Subtitle="Opcional — alinha credenciais Frendz com laranja."
+                    Subtitle="Opcional — alinha credenciais de gateway com laranja."
                     OnSelected="OnStrawPicked" />
 
 @if (!string.IsNullOrWhiteSpace(error))
@@ -117,10 +134,25 @@
     private bool pixCopied;
     private bool generateBusy;
 
+    private bool operationPickerOpen;
     private bool operatorPickerOpen;
     private bool strawPickerOpen;
+    private string? operationLabel;
     private string? operatorLabel;
     private string? strawLabel;
+
+    private Task OnOperationPicked(OperationPickerModal.OperationPickerRow row)
+    {
+        model.OperationId = row.Id;
+        operationLabel = $"{row.Name} ({row.Id})";
+        return Task.CompletedTask;
+    }
+
+    private void ClearOperation()
+    {
+        model.OperationId = string.Empty;
+        operationLabel = null;
+    }
 
     private Task OnOperatorPicked(AccountPickerModal.AccountPickerRow row)
     {
@@ -153,12 +185,17 @@
         error = string.Empty;
         lastResult = null;
         pixCopied = false;
+        if (string.IsNullOrWhiteSpace(model.OperationId))
+        {
+            error = "Selecione uma operação.";
+            return;
+        }
         generateBusy = true;
         try
         {
             var response = await Http.PostAsJsonAsync("/api/charges/pix", new
             {
-                OperationId = model.OperationId,
+                OperationId = model.OperationId.Trim(),
                 Amount = model.Amount,
                 OperatorAccountId = model.OperatorAccountId,
                 StrawManAccountId = model.StrawManAccountId

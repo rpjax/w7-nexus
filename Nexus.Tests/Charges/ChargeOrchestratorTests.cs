@@ -7,6 +7,10 @@ using Nexus.Charges.Application.Models;
 using Nexus.Charges.Infrastructure;
 using Nexus.Frendz.Application;
 using Nexus.Frendz.Application.Models;
+using Nexus.SigiloPay.Application;
+using Nexus.SigiloPay.Application.Models;
+using Nexus.Wintech.Application;
+using Nexus.Wintech.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Payments.Aggregates;
@@ -27,7 +31,11 @@ public sealed class ChargeOrchestratorTests
             new StubPaymentService(),
             new StubPaymentRepository(),
             new EmptyFrendzCredentialsRepository(),
-            new StubChargeServiceFactory(new StubChargeService()));
+            new StubChargeServiceFactory(new StubChargeService()),
+            new EmptySigiloPayCredentialsRepository(),
+            new StubSigiloPayChargeServiceFactory(new StubChargeService()),
+            new EmptyWintechCredentialsRepository(),
+            new StubWintechChargeServiceFactory(new StubChargeService()));
 
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
@@ -48,6 +56,8 @@ public sealed class ChargeOrchestratorTests
             "D",
             Array.Empty<string>(),
             Array.Empty<string>(),
+            false,
+            Array.Empty<string>(),
             DateTime.UtcNow,
             DateTime.UtcNow);
 
@@ -58,8 +68,7 @@ public sealed class ChargeOrchestratorTests
             OnCreate = r => Task.FromResult(new PixCharge
             {
                 Id = r.PaymentId,
-                Code = "pix-code",
-                GatewayTransactionId = "trx-1"
+                Code = "pix-code"
             })
         };
 
@@ -68,7 +77,11 @@ public sealed class ChargeOrchestratorTests
             new StubPaymentService(),
             paymentRepo,
             new SingleFrendzCredentialsRepository(cred),
-            new StubChargeServiceFactory(chargeService));
+            new StubChargeServiceFactory(chargeService),
+            new EmptySigiloPayCredentialsRepository(),
+            new StubSigiloPayChargeServiceFactory(chargeService),
+            new EmptyWintechCredentialsRepository(),
+            new StubWintechChargeServiceFactory(chargeService));
 
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
@@ -220,5 +233,49 @@ public sealed class ChargeOrchestratorTests
         public StubChargeServiceFactory(IChargeService service) => _service = service;
 
         public IChargeService Create(FrendzApiCredentials credentials) => _service;
+    }
+
+    private sealed class EmptySigiloPayCredentialsRepository : ISigiloPayApiCredentialsRepository
+    {
+        public IAsyncQueryable<SigiloPayApiCredentials> AsQueryable() =>
+            new MongoAsyncQueryable<SigiloPayApiCredentials>(Array.Empty<SigiloPayApiCredentials>().AsQueryable());
+
+        public Task CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task CreateAsync(IEnumerable<SigiloPayApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<SigiloPayApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    private sealed class StubSigiloPayChargeServiceFactory : ISigiloPayChargeServiceFactory
+    {
+        private readonly IChargeService _service;
+
+        public StubSigiloPayChargeServiceFactory(IChargeService service) => _service = service;
+
+        public IChargeService Create(SigiloPayApiCredentials credentials) => _service;
+    }
+
+    private sealed class EmptyWintechCredentialsRepository : IWintechApiCredentialsRepository
+    {
+        public IAsyncQueryable<WintechApiCredentials> AsQueryable() =>
+            new MongoAsyncQueryable<WintechApiCredentials>(Array.Empty<WintechApiCredentials>().AsQueryable());
+
+        public Task CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task CreateAsync(IEnumerable<WintechApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<WintechApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    private sealed class StubWintechChargeServiceFactory : IWintechChargeServiceFactory
+    {
+        private readonly IChargeService _service;
+
+        public StubWintechChargeServiceFactory(IChargeService service) => _service = service;
+
+        public IChargeService Create(WintechApiCredentials credentials) => _service;
     }
 }

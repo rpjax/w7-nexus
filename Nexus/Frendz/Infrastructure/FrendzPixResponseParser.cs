@@ -5,6 +5,11 @@ namespace Nexus.Frendz.Infrastructure;
 
 internal static class FrendzPixResponseParser
 {
+    /// <summary>
+    /// Resposta PIX oficial Frendz: <c>success</c> + <c>data.hash</c> (mesmo valor enviado no postback como
+    /// <c>transaction_hash</c>) e <c>data.pix_code</c> (copia-e-cola). Persistido em
+    /// <see cref="Nexus.Payments.Aggregates.Payment.GatewayTransactionId"/>.
+    /// </summary>
     internal static FrendzPixPaymentResult ParseCreatePixResult(string json)
     {
         using var doc = JsonDocument.Parse(json);
@@ -21,7 +26,7 @@ internal static class FrendzPixResponseParser
         if (string.IsNullOrWhiteSpace(transactionId) || string.IsNullOrWhiteSpace(pixCode))
         {
             throw new InvalidOperationException(
-                $"Frendz response did not include transaction id and PIX code. Body: {json}");
+                $"Frendz response did not include data.hash (postback transaction_hash) and PIX copia-e-cola (data.pix_code or pix.code). Body: {json}");
         }
 
         return new FrendzPixPaymentResult
@@ -33,16 +38,34 @@ internal static class FrendzPixResponseParser
 
     private static string? ResolveTransactionId(JsonElement root)
     {
-        // Pagar.me / Frendz: root "transaction" is often the gateway id string (e.g. ch_...).
+        // Doc Frendz (PIX): "data.hash" na criação = "transaction_hash" no postback.
+        if (root.TryGetProperty("hash", out var hash) && hash.ValueKind == JsonValueKind.String)
+        {
+            var h = hash.GetString();
+            if (!string.IsNullOrWhiteSpace(h))
+                return h;
+        }
+
+        if (root.TryGetProperty("transaction_hash", out var txHashSnake) && txHashSnake.ValueKind == JsonValueKind.String)
+        {
+            var s = txHashSnake.GetString();
+            if (!string.IsNullOrWhiteSpace(s))
+                return s;
+        }
+
+        if (root.TryGetProperty("transactionHash", out var txHashCamel) && txHashCamel.ValueKind == JsonValueKind.String)
+        {
+            var s = txHashCamel.GetString();
+            if (!string.IsNullOrWhiteSpace(s))
+                return s;
+        }
+
         if (root.TryGetProperty("transaction", out var tx) && tx.ValueKind == JsonValueKind.String)
         {
             var s = tx.GetString();
             if (!string.IsNullOrWhiteSpace(s))
                 return s;
         }
-
-        if (root.TryGetProperty("hash", out var hash) && hash.ValueKind == JsonValueKind.String)
-            return hash.GetString();
 
         if (root.TryGetProperty("transaction", out var txObj) && txObj.ValueKind == JsonValueKind.Object)
         {
@@ -57,6 +80,14 @@ internal static class FrendzPixResponseParser
 
     private static string? ResolvePixCode(JsonElement root)
     {
+        // Doc Frendz (PIX): string EMV em "data.pix_code" (qr_code em data é PNG base64, não usar como copia-e-cola).
+        if (root.TryGetProperty("pix_code", out var pixCode) && pixCode.ValueKind == JsonValueKind.String)
+        {
+            var s = pixCode.GetString();
+            if (!string.IsNullOrWhiteSpace(s))
+                return s;
+        }
+
         if (root.TryGetProperty("pix", out var pixRoot) && pixRoot.ValueKind == JsonValueKind.Object)
         {
             var code = ReadPixCode(pixRoot);

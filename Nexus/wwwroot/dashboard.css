@@ -151,6 +151,15 @@ body {
     font-size: 0.95rem;
     line-height: 1.45;
 }
+.page-header .page-nav-back {
+    margin: 0.35rem 0 0;
+}
+.page-header .page-nav-back a {
+    color: var(--muted);
+}
+.page-header .page-nav-back a:hover {
+    color: #ccdbff;
+}
 
 .nav-shell {
     width: 100%;
@@ -373,6 +382,13 @@ input, textarea, select {
     color: #fff;
     white-space: nowrap;
 }
+a.btn {
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+}
 .btn-primary { background: linear-gradient(180deg, #4f8bff, #3c73e6); }
 .btn-ghost {
     background: rgba(41, 59, 99, 0.5);
@@ -390,6 +406,26 @@ input, textarea, select {
     align-items: flex-end;
 }
 .toolbar .field { margin: 0; }
+.toolbar .field.grow {
+    flex: 1 1 12rem;
+    min-width: 0;
+}
+.toolbar-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    flex-shrink: 0;
+}
+@media (max-width: 720px) {
+    .toolbar.toolbar-stack-mobile {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    .toolbar.toolbar-stack-mobile .toolbar-actions {
+        justify-content: flex-start;
+    }
+}
 .toolbar-tight { margin-bottom: 0; }
 
 .feedback {
@@ -525,6 +561,7 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
 .empty-state { padding: 1rem; text-align: center; color: var(--muted); }
 .muted { color: var(--muted); margin: 0; }
 .section-title { margin-top: 1rem; }
+.card-title-row .section-title { margin-top: 0; }
 .table-top-gap { margin-top: 0.75rem; }
 
 .dialog-backdrop {
@@ -619,6 +656,19 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
     gap: 0.75rem;
     flex-wrap: wrap;
     margin-bottom: 0.75rem;
+}
+.card-title-group {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+    min-width: 0;
+}
+.card-title-group .section-title {
+    margin: 0;
+}
+.card-title-row > a.btn {
+    flex-shrink: 0;
 }
 .card-title-row h2 { margin: 0; font-size: 1.05rem; }
 .card-actions { display: flex; justify-content: flex-end; margin-top: 0.85rem; }
@@ -766,6 +816,11 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
     background: rgba(242, 187, 90, 0.12);
     border-color: rgba(242, 187, 90, 0.35);
 }
+.count-pill-warn {
+    background: rgba(255, 95, 128, 0.12);
+    border-color: rgba(255, 95, 128, 0.38);
+    color: #ffc8d4;
+}
 
 .token-mask { letter-spacing: 0.01em; }
 
@@ -873,6 +928,33 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
     margin: 0;
 }
 
+.credential-picker-gateway-tabs {
+    display: flex;
+    gap: 0.35rem;
+    padding: 0.65rem 1rem 0;
+    border-bottom: 1px solid var(--border);
+}
+.credential-picker-tab {
+    flex: 1;
+    padding: 0.45rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: rgba(11, 19, 38, 0.45);
+    color: var(--muted);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+}
+.credential-picker-tab:hover {
+    border-color: rgba(74, 134, 255, 0.35);
+    color: var(--text);
+}
+.credential-picker-tab.is-active {
+    border-color: rgba(74, 134, 255, 0.55);
+    background: rgba(74, 134, 255, 0.14);
+    color: var(--text);
+}
+
 .dialog-backdrop--modal {
     z-index: 85;
     display: flex;
@@ -905,26 +987,114 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
     max-width: 100%;
 }
 
-/* Gestão de operação: mobile usa mais % da tela; desktop mais contido */
+/* Gestão de operação: desktop largo em duas colunas; mobile empilhado */
 .dialog-card--manage-op {
-    width: min(96vw, 100%);
-    max-width: min(520px, 92vw);
-    max-height: min(88vh, 800px);
-}
-
-@media (max-width: 1023px) {
-    .dialog-card--manage-op {
-        width: min(98vw, 100%);
-        max-width: none;
-        max-height: min(92vh, 900px);
-    }
+    width: min(98vw, 100%);
+    max-width: none;
+    max-height: min(92vh, 900px);
 }
 
 @media (min-width: 1024px) {
     .dialog-card--manage-op {
-        width: min(480px, 44vw);
-        max-height: min(82vh, 720px);
+        width: min(1120px, 94vw);
+        max-width: none;
+        max-height: min(90vh, 920px);
     }
+}
+
+.manage-op-stack {
+    gap: 1.1rem;
+}
+
+.manage-op-header {
+    flex-shrink: 0;
+}
+
+.manage-op-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+@media (min-width: 1024px) {
+    .manage-op-body {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(320px, 1fr);
+        gap: 1.15rem 1.35rem;
+        align-items: stretch;
+    }
+    .manage-op-col--people {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        min-width: 0;
+    }
+    .manage-op-col--billing {
+        min-width: 0;
+        display: flex;
+    }
+    .manage-op-col--billing .manage-charge-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+    }
+    .manage-charge-chip-list {
+        flex: 1;
+        overflow-y: auto;
+        max-height: min(42vh, 380px);
+    }
+}
+
+.manage-op-lists-grid {
+    align-items: stretch;
+}
+
+.manage-op-list-card {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+}
+
+.manage-op-list-card .chip-list {
+    flex: 1;
+    overflow-y: auto;
+    max-height: min(38vh, 320px);
+}
+
+.manage-charge-card h3 {
+    margin-top: 0;
+}
+
+.manage-charge-lead {
+    margin: 0 0 0.85rem;
+    line-height: 1.45;
+}
+
+.manage-charge-actions {
+    margin-bottom: 0.75rem;
+}
+
+.manage-charge-add-row {
+    margin-bottom: 0.85rem;
+}
+
+.manage-charge-add-inline {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.manage-charge-add-inline .nexus-input {
+    flex: 1;
+    min-width: 12rem;
+}
+
+.manage-charge-empty {
+    margin: 0.5rem 0 0;
+    line-height: 1.45;
 }
 
 .modal-stack {
@@ -1032,7 +1202,7 @@ table.responsive-data td.cell-actions {
     }
     table.responsive-data td {
         display: grid;
-        grid-template-columns: minmax(6.5rem, 34%) 1fr;
+        grid-template-columns: minmax(6.5rem, 34%) minmax(0, 1fr);
         gap: 0.45rem 0.85rem;
         padding: 0.35rem 0;
         border: none;
@@ -1040,6 +1210,7 @@ table.responsive-data td.cell-actions {
         text-align: left;
         white-space: normal;
         word-break: break-word;
+        min-width: 0;
     }
     table.responsive-data td::before {
         content: attr(data-label);

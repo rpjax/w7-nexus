@@ -1,3 +1,4 @@
+using Nexus.AppHost;
 using Nexus.Charges.Application.Models;
 using Nexus.Charges.Infrastructure;
 using Nexus.Frendz.Application.Models;
@@ -17,7 +18,7 @@ public sealed class FrendzChargeServiceTests
             Content = new StringContent("{\"hash\":\"trx-1\",\"pix\":{\"code\":\"pix-copia-cola\"}}")
         });
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzChargeService(credentials, client);
+        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
 
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
@@ -26,9 +27,32 @@ public sealed class FrendzChargeServiceTests
             Amount = 10m
         });
 
-        Assert.Equal("internal-1", result.Id);
+        Assert.Equal("trx-1", result.Id);
         Assert.Equal("pix-copia-cola", result.Code);
-        Assert.Equal("trx-1", result.GatewayTransactionId);
+    }
+
+    [Fact]
+    public async Task CreatePixChargeAsync_WhenOfficialPixResponse_UsesDataHashAndPixCode()
+    {
+        var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "t" };
+        const string body =
+            "{\"success\":true,\"data\":{\"hash\":\"trans123abc456\",\"status\":\"pending\",\"amount\":15000,\"payment_method\":\"pix\",\"qr_code\":\"data:image/png;base64,AAA\",\"pix_code\":\"00020126580014BR.GOV.BCB.PIX\",\"expires_at\":\"2025-01-20T15:30:00Z\",\"created_at\":\"2025-01-20T10:30:00Z\"}}";
+        var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+        {
+            Content = new StringContent(body)
+        });
+        var client = new FrendzClient(new HttpClient(handler));
+        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
+
+        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        {
+            PaymentId = "internal-1",
+            OperationId = "op-1",
+            Amount = 150m
+        });
+
+        Assert.Equal("trans123abc456", result.Id);
+        Assert.Equal("00020126580014BR.GOV.BCB.PIX", result.Code);
     }
 
     [Fact]
@@ -37,7 +61,7 @@ public sealed class FrendzChargeServiceTests
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "" };
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK));
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzChargeService(credentials, client);
+        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
             sut.CreatePixChargeAsync(new CreatePixChargeRequest
@@ -46,6 +70,14 @@ public sealed class FrendzChargeServiceTests
                 OperationId = "op-1",
                 Amount = 10m
             }));
+    }
+
+    private sealed class StubAppHostProvider : IAppHostProvider
+    {
+        public string? BaseUrl => null;
+
+        public string GetWebhookCallbackUrl(string gatewayApiSegment) =>
+            throw new InvalidOperationException("Not used when BaseUrl is null.");
     }
 
     private sealed class StubHttpMessageHandler : HttpMessageHandler

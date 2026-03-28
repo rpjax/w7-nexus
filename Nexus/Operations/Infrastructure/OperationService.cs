@@ -58,6 +58,8 @@ public sealed class OperationService : IOperationService
             Description: string.IsNullOrWhiteSpace(description) ? null : description,
             OperatorIds: (request.Operators ?? Array.Empty<string>()).ToArray(),
             StrawManIds: Array.Empty<string>(),
+            ManuallySetChargeCredentials: false,
+            ChargeCredentialsIds: Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
 
@@ -114,6 +116,62 @@ public sealed class OperationService : IOperationService
             return NotFoundResult(operationId);
 
         var result = operation.RemoveStrawMan(strawManId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> EnableManualChargeCredentialsAsync(string operationId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.EnableManualChargeCredentials();
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> DisableManualChargeCredentialsAsync(string operationId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.DisableManualChargeCredentials();
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> AddChargeCredentialIdAsync(string operationId, string credentialId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.AddChargeCredentialId(credentialId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> RemoveChargeCredentialIdAsync(string operationId, string credentialId)
+    {
+        var operation = await LoadOperationAsync(operationId);
+        if (operation is null)
+            return NotFoundResult(operationId);
+
+        var result = operation.RemoveChargeCredentialId(credentialId);
         if (result.IsFailure)
             return result;
 

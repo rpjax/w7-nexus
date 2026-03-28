@@ -3,6 +3,9 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.DependencyInjection;
+using Nexus.Payments.Aggregates;
+using Nexus.Presentation;
 using Nexus.SigiloPay.Application;
 using Nexus.SigiloPay.Application.Models;
 using Nexus.SigiloPay.ErrorCodes;
@@ -14,13 +17,36 @@ public class SigiloPayController : WebController
 {
     private ISigiloPayApiKeysService _credentialsService { get; }
     private ISigiloPayApiCredentialsRepository _credentialsRepository { get; }
+    private IServiceScopeFactory _scopeFactory { get; }
+    private ILogger<SigiloPayController> _logger { get; }
 
     public SigiloPayController(
         ISigiloPayApiKeysService credentialsService,
-        ISigiloPayApiCredentialsRepository credentialsRepository)
+        ISigiloPayApiCredentialsRepository credentialsRepository,
+        IServiceScopeFactory scopeFactory,
+        ILogger<SigiloPayController> logger)
     {
         _credentialsService = credentialsService;
         _credentialsRepository = credentialsRepository;
+        _scopeFactory = scopeFactory;
+        _logger = logger;
+    }
+
+    [HttpPost("webhook/callback")]
+    public async Task<IActionResult> WebhookCallbackAsync(CancellationToken cancellationToken)
+    {
+        using var reader = new StreamReader(Request.Body);
+        var raw = await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(raw))
+            raw = "{}";
+
+        GatewayWebhookBackground.Enqueue(
+            _scopeFactory,
+            _logger,
+            raw,
+            (svc, json, ct) => svc.ProcessStandardGatewayWebhookAsync(PaymentGateway.SigiloPay, json, ct));
+
+        return Ok();
     }
 
     [HttpPost("search")]

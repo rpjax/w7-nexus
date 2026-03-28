@@ -19,6 +19,7 @@ public enum PaymentGateway
     Frendz,
     SuitPay,
     SigiloPay,
+    Wintech,
 }
 
 public sealed class Payment

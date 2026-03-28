@@ -77,10 +77,13 @@
         return relative switch
         {
             "dashboard/operations" => "Operações",
-            "dashboard/payments" => "Pagamentos PIX",
+            "dashboard/accounts" => "Contas",
+            "dashboard/payments" => "Pagamentos",
+            "dashboard/payments/pix" => "Pagamentos — Gerar PIX",
             "dashboard/gateways" => "Gateways",
             "dashboard/gateways/frendz" => "Frendz",
             "dashboard/gateways/sigilopay" => "SigiloPay",
+            "dashboard/gateways/wintech" => "Wintech",
             "dashboard/gateways/gateway-2" => "GATEWAY2",
             "dashboard/gateways/gateway-3" => "GATEWAY3",
             _ => relative.StartsWith("dashboard/", StringComparison.Ordinal) ? "Websete Nexus" : "Websete Nexus"

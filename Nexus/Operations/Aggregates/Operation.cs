@@ -10,12 +10,16 @@ public sealed class Operation
 
     private readonly List<string> _operatorIds;
     private readonly List<string> _strawManIds;
+    private readonly List<string> _chargeCredentialsIds;
+    private bool _manuallySetChargeCredentials;
 
     public string Id { get; }
     public string Name { get; }
     public string? Description { get; }
     public IReadOnlyList<string> OperatorIds => _operatorIds.AsReadOnly();
     public IReadOnlyList<string> StrawManIds => _strawManIds.AsReadOnly();
+    public bool ManuallySetChargeCredentials => _manuallySetChargeCredentials;
+    public IReadOnlyList<string> ChargeCredentialsIds => _chargeCredentialsIds.AsReadOnly();
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
 
@@ -29,6 +33,8 @@ public sealed class Operation
         string? Description,
         IReadOnlyList<string> OperatorIds,
         IReadOnlyList<string> StrawManIds,
+        bool ManuallySetChargeCredentials,
+        IReadOnlyList<string> ChargeCredentialsIds,
         DateTime CreatedAt,
         DateTime UpdatedAt)
     {
@@ -43,6 +49,12 @@ public sealed class Operation
         _strawManIds = (StrawManIds ?? Array.Empty<string>())
             .Where(s => !string.IsNullOrWhiteSpace(s))
             .Select(s => s.Trim())
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+        _manuallySetChargeCredentials = ManuallySetChargeCredentials;
+        _chargeCredentialsIds = (ChargeCredentialsIds ?? Array.Empty<string>())
+            .Where(c => !string.IsNullOrWhiteSpace(c))
+            .Select(c => c.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToList();
         this.CreatedAt = CreatedAt;
@@ -130,6 +142,77 @@ public sealed class Operation
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.StrawManNotAssigned)
                 .WithMessage($"Straw man '{normalizedStrawManId}' is not assigned to this operation")
+                .Build());
+
+        Touch();
+
+        return Result.Success();
+    }
+
+    public IResult EnableManualChargeCredentials()
+    {
+        _manuallySetChargeCredentials = true;
+        Touch();
+        return Result.Success();
+    }
+
+    public IResult DisableManualChargeCredentials()
+    {
+        _manuallySetChargeCredentials = false;
+        _chargeCredentialsIds.Clear();
+        Touch();
+        return Result.Success();
+    }
+
+    public IResult AddChargeCredentialId(string credentialId)
+    {
+        if (!_manuallySetChargeCredentials)
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ManualChargeCredentialsDisabled)
+                .WithMessage("Manual charge credential selection is not enabled for this operation")
+                .Build());
+
+        if (string.IsNullOrWhiteSpace(credentialId))
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialInvalid)
+                .WithMessage("Charge credential ID cannot be empty")
+                .Build());
+
+        var normalized = credentialId.Trim();
+
+        if (_chargeCredentialsIds.Contains(normalized, StringComparer.Ordinal))
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialAlreadyAssigned)
+                .WithMessage($"Charge credential '{normalized}' is already assigned to this operation")
+                .Build());
+
+        _chargeCredentialsIds.Add(normalized);
+        Touch();
+
+        return Result.Success();
+    }
+
+    public IResult RemoveChargeCredentialId(string credentialId)
+    {
+        if (!_manuallySetChargeCredentials)
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ManualChargeCredentialsDisabled)
+                .WithMessage("Manual charge credential selection is not enabled for this operation")
+                .Build());
+
+        if (string.IsNullOrWhiteSpace(credentialId))
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialInvalid)
+                .WithMessage("Charge credential ID cannot be empty")
+                .Build());
+
+        var normalized = credentialId.Trim();
+        var removed = _chargeCredentialsIds.Remove(normalized);
+
+        if (!removed)
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.ChargeCredentialNotAssigned)
+                .WithMessage($"Charge credential '{normalized}' is not assigned to this operation")
                 .Build());
 
         Touch();

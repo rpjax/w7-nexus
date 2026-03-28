@@ -255,5 +255,6 @@ public sealed class PixPaymentAggregateTests
         Assert.Equal(0, (int)PaymentGateway.None);
         Assert.Equal(PaymentGateway.FusionPay, Enum.Parse<PaymentGateway>("FusionPay"));
         Assert.Equal(PaymentGateway.Frendz, Enum.Parse<PaymentGateway>("Frendz"));
+        Assert.Equal(PaymentGateway.Wintech, Enum.Parse<PaymentGateway>("Wintech"));
     }
 }

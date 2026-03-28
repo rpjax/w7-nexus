@@ -12,9 +12,12 @@ using Nexus.Frendz.Application;
 using Nexus.Frendz.Infrastructure;
 using Nexus.SigiloPay.Application;
 using Nexus.SigiloPay.Infrastructure;
+using Nexus.Wintech.Application;
+using Nexus.Wintech.Infrastructure;
 using Nexus.Operations.Application;
 using Nexus.Operations.Infrastructure;
 using Nexus.Dashboard;
+using Nexus.AppHost;
 using Nexus.Payments.Infrastructure;
 using Nexus.Payments.Application;
 using Nexus.Charges.Application;
@@ -35,8 +38,19 @@ builder.Services.AddControllers();
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// HttpClient for relative /api/... calls from the dashboard. API controllers must not use
+// NavigationManager (Blazor-only); use the current request as base when available.
+builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(sp =>
 {
+    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
+    if (httpContext != null)
+    {
+        var request = httpContext.Request;
+        var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}/";
+        return new HttpClient { BaseAddress = new Uri(baseUrl) };
+    }
+
     var navigationManager = sp.GetRequiredService<NavigationManager>();
     return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
 });
@@ -56,24 +70,33 @@ builder.Services.AddMongoDatabase(mongoConnectionString, mongoDatabaseName);
 builder.Services.AddMongoCollection<AccountRecord>("accounts");
 builder.Services.AddMongoCollection<FrendzApiCredentialsRecord>("frendz_api_credentials");
 builder.Services.AddMongoCollection<SigiloPayApiCredentialsRecord>("sigilopay_api_credentials");
+builder.Services.AddMongoCollection<WintechApiCredentialsRecord>("wintech_api_credentials");
 builder.Services.AddMongoCollection<PaymentRecord>("payments");
 builder.Services.AddMongoCollection<OperationRecord>("operations");
+
+builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
+builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
 
 // Payment services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
+builder.Services.AddScoped<IGatewayPaymentWebhookService, GatewayPaymentWebhookService>();
 builder.Services.AddScoped<IAccountIdValidator, AccountIdValidator>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, FrendzApiCredentialsRepository>();
 builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, SigiloPayApiCredentialsRepository>();
+builder.Services.AddScoped<IWintechApiCredentialsRepository, WintechApiCredentialsRepository>();
 builder.Services.AddScoped<IFrendzChargeServiceFactory, FrendzChargeServiceFactory>();
 builder.Services.AddScoped<ISigiloPayChargeServiceFactory, SigiloPayChargeServiceFactory>();
+builder.Services.AddScoped<IWintechChargeServiceFactory, WintechChargeServiceFactory>();
 builder.Services.AddScoped<IChargeOrchestrator, ChargeOrchestrator>();
 builder.Services.AddScoped<IFrendzClient, FrendzClient>();
 builder.Services.AddHttpClient<FrendzClient>();
 builder.Services.AddScoped<ISigiloPayClient, SigiloPayClient>();
 builder.Services.AddHttpClient<SigiloPayClient>();
+builder.Services.AddScoped<IWintechClient, WintechClient>();
+builder.Services.AddHttpClient<WintechClient>();
 
 // Account services
 builder.Services.AddScoped<IAccountRepository, AccountRepository>();
@@ -86,6 +109,7 @@ builder.Services.AddScoped<IAccountUpdater, AccountUpdater>();
 
 builder.Services.AddScoped<IFrendzApiKeysService, FrendzApiKeysService>();
 builder.Services.AddScoped<ISigiloPayApiKeysService, SigiloPayApiKeysService>();
+builder.Services.AddScoped<IWintechApiKeysService, WintechApiKeysService>();
 
 var app = builder.Build();
 
@@ -112,12 +136,16 @@ static async Task BackfillGatewayCredentialEnabledFieldsAsync(IServiceProvider s
     using var scope = services.CreateScope();
     var frendz = scope.ServiceProvider.GetRequiredService<IMongoCollection<FrendzApiCredentialsRecord>>();
     var sigilo = scope.ServiceProvider.GetRequiredService<IMongoCollection<SigiloPayApiCredentialsRecord>>();
+    var wintech = scope.ServiceProvider.GetRequiredService<IMongoCollection<WintechApiCredentialsRecord>>();
     await frendz.UpdateManyAsync(
         Builders<FrendzApiCredentialsRecord>.Filter.Exists("enabled", false),
         Builders<FrendzApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
     await sigilo.UpdateManyAsync(
         Builders<SigiloPayApiCredentialsRecord>.Filter.Exists("enabled", false),
         Builders<SigiloPayApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
+    await wintech.UpdateManyAsync(
+        Builders<WintechApiCredentialsRecord>.Filter.Exists("enabled", false),
+        Builders<WintechApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
 }
 
 static void ConfigureDevelopmentKestrelWithLocalCertificate(WebApplicationBuilder builder)

@@ -20,6 +20,8 @@ public sealed class OperationRepository : IOperationRepository
             r.Description,
             r.Operators,
             r.StrawManIds,
+            r.ManuallySetChargeCredentials,
+            r.ChargeCredentialsIds,
             r.CreatedAt,
             r.UpdatedAt);
 
@@ -69,6 +71,8 @@ public sealed class OperationRepository : IOperationRepository
             .Set(r => r.Description, entity.Description)
             .Set(r => r.Operators, entity.OperatorIds.ToList())
             .Set(r => r.StrawManIds, entity.StrawManIds.ToList())
+            .Set(r => r.ManuallySetChargeCredentials, entity.ManuallySetChargeCredentials)
+            .Set(r => r.ChargeCredentialsIds, entity.ChargeCredentialsIds.ToList())
             .Set(r => r.CreatedAt, entity.CreatedAt)
             .Set(r => r.UpdatedAt, entity.UpdatedAt);
 
@@ -91,6 +95,8 @@ public sealed class OperationRepository : IOperationRepository
             Description = operation.Description,
             Operators = operation.OperatorIds.ToList(),
             StrawManIds = operation.StrawManIds.ToList(),
+            ManuallySetChargeCredentials = operation.ManuallySetChargeCredentials,
+            ChargeCredentialsIds = operation.ChargeCredentialsIds.ToList(),
             CreatedAt = operation.CreatedAt,
             UpdatedAt = operation.UpdatedAt
         };

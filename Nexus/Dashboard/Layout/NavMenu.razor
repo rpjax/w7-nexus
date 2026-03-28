@@ -10,7 +10,56 @@
     <div class="nav-links">
         <NavLink href="/dashboard" Match="NavLinkMatch.All">Visão geral</NavLink>
         <NavLink href="/dashboard/operations">Operações</NavLink>
-        <NavLink href="/dashboard/payments">Pagamentos</NavLink>
+
+        <div class="nav-group nav-group-gateways">
+            <button type="button"
+                    class="nav-dropdown nav-dropdown-full"
+                    @onclick="ToggleAccounts"
+                    @onclick:stopPropagation="true"
+                    aria-expanded="@accountsOpen"
+                    aria-controls="accounts-submenu">
+                <span class="nav-dropdown-label">Contas</span>
+                <span class="nav-caret" aria-hidden="true">@(accountsOpen ? "▲" : "▼")</span>
+            </button>
+
+            <div id="accounts-submenu"
+                 class="submenu-tree @(accountsOpen ? "is-open" : "is-collapsed")"
+                 aria-hidden="@(!accountsOpen)">
+                <div class="submenu-tree-inner">
+                    <NavLink class="nav-sublink" href="/dashboard/accounts" @onclick="OnAccountsSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        Visão geral
+                    </NavLink>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-group nav-group-gateways">
+            <button type="button"
+                    class="nav-dropdown nav-dropdown-full"
+                    @onclick="TogglePayments"
+                    @onclick:stopPropagation="true"
+                    aria-expanded="@paymentsOpen"
+                    aria-controls="payments-submenu">
+                <span class="nav-dropdown-label">Pagamentos</span>
+                <span class="nav-caret" aria-hidden="true">@(paymentsOpen ? "▲" : "▼")</span>
+            </button>
+
+            <div id="payments-submenu"
+                 class="submenu-tree @(paymentsOpen ? "is-open" : "is-collapsed")"
+                 aria-hidden="@(!paymentsOpen)">
+                <div class="submenu-tree-inner">
+                    <NavLink class="nav-sublink" href="/dashboard/payments" @onclick="OnPaymentsSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        Registros
+                    </NavLink>
+                    <NavLink class="nav-sublink" href="/dashboard/payments/pix" @onclick="OnPaymentsSubnavNavigate">
+                        <span class="submenu-bullet" aria-hidden="true"></span>
+                        Gerar PIX
+                    </NavLink>
+                </div>
+            </div>
+        </div>
 
         <div class="nav-group nav-group-gateways">
             <button type="button"
@@ -27,21 +76,21 @@
                  class="submenu-tree @(gatewaysOpen ? "is-open" : "is-collapsed")"
                  aria-hidden="@(!gatewaysOpen)">
                 <div class="submenu-tree-inner">
-                    <NavLink class="nav-sublink" href="/dashboard/gateways" @onclick="OnSubnavNavigate">
+                    <NavLink class="nav-sublink" href="/dashboard/gateways" @onclick="OnGatewaysSubnavNavigate">
                         <span class="submenu-bullet" aria-hidden="true"></span>
                         Visão geral
                     </NavLink>
-                    <NavLink class="nav-sublink" href="/dashboard/gateways/frendz" @onclick="OnSubnavNavigate">
+                    <NavLink class="nav-sublink" href="/dashboard/gateways/frendz" @onclick="OnGatewaysSubnavNavigate">
                         <span class="submenu-bullet" aria-hidden="true"></span>
                         Frendz
                     </NavLink>
-                    <NavLink class="nav-sublink" href="/dashboard/gateways/sigilopay" @onclick="OnSubnavNavigate">
+                    <NavLink class="nav-sublink" href="/dashboard/gateways/sigilopay" @onclick="OnGatewaysSubnavNavigate">
                         <span class="submenu-bullet" aria-hidden="true"></span>
                         SigiloPay
                     </NavLink>
-                    <NavLink class="nav-sublink nav-sublink-muted" href="/dashboard/gateways/gateway-3" @onclick="OnSubnavNavigate">
+                    <NavLink class="nav-sublink" href="/dashboard/gateways/wintech" @onclick="OnGatewaysSubnavNavigate">
                         <span class="submenu-bullet" aria-hidden="true"></span>
-                        GATEWAY3
+                        Wintech
                     </NavLink>
                 </div>
             </div>
@@ -50,14 +99,36 @@
 </nav>
 
 @code {
+    private bool accountsOpen = true;
+    private bool paymentsOpen = true;
     private bool gatewaysOpen = true;
+
+    private void ToggleAccounts()
+    {
+        accountsOpen = !accountsOpen;
+    }
+
+    private void TogglePayments()
+    {
+        paymentsOpen = !paymentsOpen;
+    }
 
     private void ToggleGateways()
     {
         gatewaysOpen = !gatewaysOpen;
     }
 
-    private void OnSubnavNavigate()
+    private void OnAccountsSubnavNavigate()
+    {
+        accountsOpen = true;
+    }
+
+    private void OnPaymentsSubnavNavigate()
+    {
+        paymentsOpen = true;
+    }
+
+    private void OnGatewaysSubnavNavigate()
     {
         gatewaysOpen = true;
     }

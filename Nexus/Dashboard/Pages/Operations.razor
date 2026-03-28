@@ -8,7 +8,7 @@
 <section class="page-header ops-page-header">
     <div>
         <h1>Gestão de operações</h1>
-        <p class="muted page-lead">Configure fluxos de trabalho, operadores e laranjas vinculados por conta.</p>
+        <p class="muted page-lead">Operadores, laranjas e, opcionalmente, <strong>lista manual de credenciais</strong> de gateway (Frendz, SigiloPay ou Wintech) para PIX — configurável ao gerenciar cada operação.</p>
     </div>
 </section>
 
@@ -58,8 +58,8 @@
 {
     <div class="dialog-backdrop dialog-backdrop--modal" @onclick="CloseManageModal">
         <div class="dialog-card dialog-card--wide dialog-card--manage-op" @onclick:stopPropagation="true">
-            <div class="modal-stack">
-                <div class="modal-stack-header">
+            <div class="modal-stack manage-op-stack">
+                <div class="modal-stack-header manage-op-header">
                     <div>
                         <h2 class="manage-ids-title">Gerenciar operação</h2>
                         <p class="muted manage-ids-desc">
@@ -70,72 +70,125 @@
                     <button type="button" class="btn btn-ghost btn-small" @onclick="CloseManageModal">Fechar</button>
                 </div>
 
-                <div class="dual-grid manage-ids-grid">
-                    <div class="mini-card manage-link">
-                        <div class="manage-link-label">
-                            <span>Vincular operador</span>
-                            <span class="post-badge small">POST</span>
+                <div class="manage-op-body">
+                    <div class="manage-op-col manage-op-col--people">
+                        <div class="dual-grid manage-ids-grid">
+                            <div class="mini-card manage-link">
+                                <div class="manage-link-label">
+                                    <span>Vincular operador</span>
+                                    <span class="post-badge small">POST</span>
+                                </div>
+                                <div class="account-select-row">
+                                    <button type="button" class="account-select-trigger" @onclick="() => operatorPickerOpen = true">
+                                        @(string.IsNullOrWhiteSpace(operatorPickPreview) ? "Selecionar conta" : operatorPickPreview)
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-green" @onclick="() => operatorPickerOpen = true" title="Selecionar operador">＋</button>
+                                </div>
+                            </div>
+                            <div class="mini-card manage-link">
+                                <div class="manage-link-label">
+                                    <span>Vincular laranja</span>
+                                    <span class="post-badge small post-badge-warm">POST</span>
+                                </div>
+                                <div class="account-select-row">
+                                    <button type="button" class="account-select-trigger" @onclick="() => strawPickerOpen = true">
+                                        @(string.IsNullOrWhiteSpace(strawPickPreview) ? "Selecionar conta" : strawPickPreview)
+                                    </button>
+                                    <button type="button" class="btn-icon btn-icon-warm" @onclick="() => strawPickerOpen = true" title="Selecionar laranja">＋</button>
+                                </div>
+                            </div>
                         </div>
-                        <div class="account-select-row">
-                            <button type="button" class="account-select-trigger" @onclick="() => operatorPickerOpen = true">
-                                @(string.IsNullOrWhiteSpace(operatorPickPreview) ? "Selecionar conta" : operatorPickPreview)
-                            </button>
-                            <button type="button" class="btn-icon btn-icon-green" @onclick="() => operatorPickerOpen = true" title="Selecionar operador">＋</button>
-                        </div>
-                    </div>
-                    <div class="mini-card manage-link">
-                        <div class="manage-link-label">
-                            <span>Vincular laranja</span>
-                            <span class="post-badge small post-badge-warm">POST</span>
-                        </div>
-                        <div class="account-select-row">
-                            <button type="button" class="account-select-trigger" @onclick="() => strawPickerOpen = true">
-                                @(string.IsNullOrWhiteSpace(strawPickPreview) ? "Selecionar conta" : strawPickPreview)
-                            </button>
-                            <button type="button" class="btn-icon btn-icon-warm" @onclick="() => strawPickerOpen = true" title="Selecionar laranja">＋</button>
-                        </div>
-                    </div>
-                </div>
 
-                <div class="dual-grid">
-                    <section class="mini-card">
-                        <h3>Operadores</h3>
-                        @if (manageOperation.OperatorIds.Count == 0)
-                        {
-                            <p class="muted">Nenhum operador vinculado.</p>
-                        }
-                        else
-                        {
-                            <ul class="chip-list">
-                                @foreach (var id in manageOperation.OperatorIds)
+                        <div class="dual-grid manage-op-lists-grid">
+                            <section class="mini-card manage-op-list-card">
+                                <h3>Operadores</h3>
+                                @if (manageOperation.OperatorIds.Count == 0)
                                 {
-                                    <li>
-                                        <span>@LabelFor(id)</span>
-                                        <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveOperatorAsync(id)">Remover</button>
-                                    </li>
+                                    <p class="muted">Nenhum operador vinculado.</p>
                                 }
-                            </ul>
-                        }
-                    </section>
-                    <section class="mini-card">
-                        <h3>Laranjas</h3>
-                        @if (manageOperation.StrawManIds.Count == 0)
-                        {
-                            <p class="muted">Nenhum laranja vinculado.</p>
-                        }
-                        else
-                        {
-                            <ul class="chip-list">
-                                @foreach (var id in manageOperation.StrawManIds)
+                                else
                                 {
-                                    <li>
-                                        <span>@LabelFor(id)</span>
-                                        <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveStrawManAsync(id)">Remover</button>
-                                    </li>
+                                    <ul class="chip-list">
+                                        @foreach (var id in manageOperation.OperatorIds)
+                                        {
+                                            <li>
+                                                <span>@LabelFor(id)</span>
+                                                <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveOperatorAsync(id)">Remover</button>
+                                            </li>
+                                        }
+                                    </ul>
                                 }
-                            </ul>
-                        }
-                    </section>
+                            </section>
+                            <section class="mini-card manage-op-list-card">
+                                <h3>Laranjas</h3>
+                                @if (manageOperation.StrawManIds.Count == 0)
+                                {
+                                    <p class="muted">Nenhum laranja vinculado.</p>
+                                }
+                                else
+                                {
+                                    <ul class="chip-list">
+                                        @foreach (var id in manageOperation.StrawManIds)
+                                        {
+                                            <li>
+                                                <span>@LabelFor(id)</span>
+                                                <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveStrawManAsync(id)">Remover</button>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            </section>
+                        </div>
+                    </div>
+
+                    <div class="manage-op-col manage-op-col--billing">
+                        <section class="mini-card manage-charge-card">
+                            <h3>Credenciais de cobrança (gateways)</h3>
+                            <p class="muted small manage-charge-lead">
+                                Com <strong>seleção manual</strong>, só os IDs Frendz, SigiloPay ou Wintech listados entram na rotação de PIX.
+                                Caso contrário, usam-se credenciais elegíveis pelos <strong>laranjas</strong> da operação.
+                            </p>
+                            @if (!manageOperation.ManuallySetChargeCredentials)
+                            {
+                                <button type="button" class="btn btn-primary btn-small" @onclick="EnableManualChargeCredentialsAsync" disabled="@chargeCredBusy">
+                                    Ativar seleção manual de credenciais
+                                </button>
+                            }
+                            else
+                            {
+                                <div class="manage-charge-actions">
+                                    <button type="button" class="btn btn-ghost btn-small" @onclick="DisableManualChargeCredentialsAsync" disabled="@chargeCredBusy">
+                                        Voltar à seleção por laranjas (limpa a lista)
+                                    </button>
+                                </div>
+                                <div class="field manage-charge-add-row">
+                                    <label>Adicionar credencial</label>
+                                    <div class="account-select-row">
+                                        <button type="button" class="account-select-trigger" @onclick="() => chargeCredentialPickerOpen = true" disabled="@chargeCredBusy">
+                                            Selecionar credencial
+                                        </button>
+                                        <button type="button" class="btn-icon btn-icon-green" @onclick="() => chargeCredentialPickerOpen = true" disabled="@chargeCredBusy" title="Selecionar credencial">＋</button>
+                                    </div>
+                                </div>
+                                @if (manageOperation.ChargeCredentialsIds.Count == 0)
+                                {
+                                    <p class="muted manage-charge-empty">Nenhuma credencial na lista — o orquestrador não terá credenciais para esta operação até você incluir ao menos uma.</p>
+                                }
+                                else
+                                {
+                                    <ul class="chip-list manage-charge-chip-list">
+                                        @foreach (var credId in manageOperation.ChargeCredentialsIds)
+                                        {
+                                            <li>
+                                                <span>@ChargeCredentialDisplay(credId)</span>
+                                                <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveChargeCredentialAsync(credId)">Remover</button>
+                                            </li>
+                                        }
+                                    </ul>
+                                }
+                            }
+                        </section>
+                    </div>
                 </div>
             </div>
         </div>
@@ -166,6 +219,7 @@
                         <th>Descrição</th>
                         <th>Operadores</th>
                         <th>Laranjas</th>
+                        <th>Cobrança</th>
                         <th>Atualizado</th>
                         <th class="th-actions" scope="col">Ações</th>
                     </tr>
@@ -181,6 +235,21 @@
                             <td data-label="Descrição">@(string.IsNullOrWhiteSpace(op.Description) ? "—" : op.Description)</td>
                             <td data-label="Operadores"><span class="count-pill">@op.OperatorIds.Count</span></td>
                             <td data-label="Laranjas"><span class="count-pill count-pill-warm">@op.StrawManIds.Count</span></td>
+                            <td data-label="Cobrança">
+                                @if (op.ManuallySetChargeCredentials)
+                                {
+                                    var n = op.ChargeCredentialsIds.Count;
+                                    <span class="@(n == 0 ? "count-pill count-pill-warn" : "count-pill")"
+                                          title="Lista fixa de IDs de credencial Frendz, SigiloPay ou Wintech">
+                                        @(n == 0 ? "Manual · 0 cred." : $"Manual · {n} cred.")
+                                    </span>
+                                }
+                                else
+                                {
+                                    <span class="count-pill count-pill-warm"
+                                          title="Credenciais elegíveis pelos laranjas desta operação">Por laranjas</span>
+                                }
+                            </td>
                             <td data-label="Atualizado" class="muted">@op.UpdatedAt.ToString("dd/MM/yyyy HH:mm")</td>
                             <td class="cell-actions" data-label="Ações">
                                 <div class="row-actions">
@@ -237,6 +306,12 @@
                     DisabledAccountIds="StrawPickerDisabledSet"
                     OnSelected="OnStrawAccountPicked" />
 
+<ChargeCredentialPickerModal @bind-IsOpen="chargeCredentialPickerOpen"
+                             Title="Selecionar credencial"
+                             Subtitle="Apenas credenciais habilitadas. Escolha Frendz, SigiloPay ou Wintech e busque por nome ou ID."
+                             DisabledCredentialIds="ChargeCredentialPickerDisabledSet"
+                             OnSelected="OnChargeCredentialPicked" />
+
 <ConfirmDialog IsOpen="@deleteDialogOpen"
                 Title="Confirmar exclusão"
                 Message="Tem certeza que deseja excluir esta operação?"
@@ -259,6 +334,8 @@
         public string? Description { get; set; }
         public List<string> OperatorIds { get; set; } = new();
         public List<string> StrawManIds { get; set; } = new();
+        public bool ManuallySetChargeCredentials { get; set; }
+        public List<string> ChargeCredentialsIds { get; set; } = new();
         public DateTime UpdatedAt { get; set; }
     }
 
@@ -291,7 +368,11 @@
     private bool initialPickerOpen;
     private bool operatorPickerOpen;
     private bool strawPickerOpen;
+    private bool chargeCredentialPickerOpen;
     private bool createBusy;
+    private bool chargeCredBusy;
+
+    private readonly Dictionary<string, string> chargeCredentialLabels = new(StringComparer.Ordinal);
 
     private string operatorPickPreview = string.Empty;
     private string strawPickPreview = string.Empty;
@@ -307,6 +388,11 @@
         manageOperation is null
             ? null
             : new HashSet<string>(manageOperation.StrawManIds, StringComparer.Ordinal);
+
+    private HashSet<string>? ChargeCredentialPickerDisabledSet =>
+        manageOperation is null
+            ? null
+            : new HashSet<string>(manageOperation.ChargeCredentialsIds, StringComparer.Ordinal);
 
     private string? RowSelectedClass(string opId)
         => manageModalOpen && manageOperation?.Id == opId ? "is-selected" : null;
@@ -344,6 +430,7 @@
             {
                 manageOperation = updated;
                 SyncLabelsFromOperation(manageOperation);
+                PruneChargeCredentialLabels(manageOperation);
             }
         }
     }
@@ -359,6 +446,23 @@
 
     private string LabelFor(string id)
         => accountLabels.TryGetValue(id, out var u) ? $"{u} · {id}" : id;
+
+    private void PruneChargeCredentialLabels(OperationVm op)
+    {
+        var keep = new HashSet<string>(op.ChargeCredentialsIds, StringComparer.Ordinal);
+        foreach (var k in chargeCredentialLabels.Keys.ToList())
+        {
+            if (!keep.Contains(k))
+                chargeCredentialLabels.Remove(k);
+        }
+    }
+
+    private string ChargeCredentialDisplay(string credId)
+    {
+        if (chargeCredentialLabels.TryGetValue(credId, out var label))
+            return $"{label} · {credId}";
+        return credId;
+    }
 
     private async Task RefreshAsync() => await LoadAsync();
 
@@ -494,7 +598,9 @@
         manageModalOpen = true;
         operatorPickPreview = string.Empty;
         strawPickPreview = string.Empty;
+        chargeCredentialPickerOpen = false;
         SyncLabelsFromOperation(manageOperation);
+        PruneChargeCredentialLabels(manageOperation);
     }
 
     private void CloseManageModal()
@@ -503,6 +609,108 @@
         manageOperation = null;
         operatorPickPreview = string.Empty;
         strawPickPreview = string.Empty;
+        chargeCredentialPickerOpen = false;
+    }
+
+    private async Task EnableManualChargeCredentialsAsync()
+    {
+        if (manageOperation is null)
+            return;
+        chargeCredBusy = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/operations/charge-credentials/manual", new { OperationId = manageOperation.Id });
+            feedbackIsError = !response.IsSuccessStatusCode;
+            feedback = response.IsSuccessStatusCode
+                ? "Seleção manual de credenciais ativada."
+                : await DashboardApiErrors.ReadMessageAsync(response, "Falha ao ativar seleção manual.");
+            await LoadAsync();
+        }
+        finally
+        {
+            chargeCredBusy = false;
+        }
+    }
+
+    private async Task DisableManualChargeCredentialsAsync()
+    {
+        if (manageOperation is null)
+            return;
+        chargeCredBusy = true;
+        try
+        {
+            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/charge-credentials/manual")
+            {
+                Content = CreateJsonContent(new { OperationId = manageOperation.Id })
+            });
+            feedbackIsError = !response.IsSuccessStatusCode;
+            feedback = response.IsSuccessStatusCode
+                ? "Seleção por laranjas restaurada; lista de credenciais limpa."
+                : await DashboardApiErrors.ReadMessageAsync(response, "Falha ao desativar seleção manual.");
+            await LoadAsync();
+        }
+        finally
+        {
+            chargeCredBusy = false;
+        }
+    }
+
+    private async Task OnChargeCredentialPicked(ChargeCredentialPickerModal.ChargeCredentialPickerRow row)
+    {
+        chargeCredentialLabels[row.Id] = $"{row.Name} · {row.GatewayLabel}";
+        await AddChargeCredentialWithIdAsync(row.Id);
+    }
+
+    private async Task AddChargeCredentialWithIdAsync(string credentialId)
+    {
+        if (manageOperation is null)
+            return;
+        var id = credentialId.Trim();
+        if (string.IsNullOrWhiteSpace(id))
+            return;
+        chargeCredBusy = true;
+        try
+        {
+            var response = await Http.PostAsJsonAsync("/api/operations/charge-credentials", new
+            {
+                OperationId = manageOperation.Id,
+                CredentialId = id
+            });
+            feedbackIsError = !response.IsSuccessStatusCode;
+            feedback = response.IsSuccessStatusCode
+                ? "Credencial adicionada à operação."
+                : await DashboardApiErrors.ReadMessageAsync(response, "Falha ao adicionar credencial.");
+            if (!response.IsSuccessStatusCode)
+                chargeCredentialLabels.Remove(id);
+            await LoadAsync();
+        }
+        finally
+        {
+            chargeCredBusy = false;
+        }
+    }
+
+    private async Task RemoveChargeCredentialAsync(string credentialId)
+    {
+        if (manageOperation is null)
+            return;
+        chargeCredBusy = true;
+        try
+        {
+            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/charge-credentials")
+            {
+                Content = CreateJsonContent(new { OperationId = manageOperation.Id, CredentialId = credentialId })
+            });
+            feedbackIsError = !response.IsSuccessStatusCode;
+            feedback = response.IsSuccessStatusCode
+                ? "Credencial removida."
+                : await DashboardApiErrors.ReadMessageAsync(response, "Falha ao remover credencial.");
+            await LoadAsync();
+        }
+        finally
+        {
+            chargeCredBusy = false;
+        }
     }
 
     private async Task AddOperatorWithIdAsync(string accountId, string username)
