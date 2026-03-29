@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Server.Kestrel.Core;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
+using Microsoft.AspNetCore.DataProtection;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Database.Models;
@@ -31,7 +32,12 @@ using Nexus.Charges.Infrastructure;
 */
 
 var builder = WebApplication.CreateBuilder(args);
-ConfigureDevelopmentKestrelWithLocalCertificate(builder);
+ConfigureKestrelProtocols(builder);
+ConfigureDevelopmentHttpsCertificate(builder);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(
+        Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys")));
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
@@ -111,6 +117,18 @@ builder.Services.AddScoped<IFrendzApiKeysService, FrendzApiKeysService>();
 builder.Services.AddScoped<ISigiloPayApiKeysService, SigiloPayApiKeysService>();
 builder.Services.AddScoped<IWintechApiKeysService, WintechApiKeysService>();
 
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.SetIsOriginAllowed(_ => true)
+              .AllowAnyHeader()
+              .AllowAnyMethod()
+              .AllowCredentials()
+              .WithExposedHeaders("*");
+    });
+});
+
 var app = builder.Build();
 
 await BackfillGatewayCredentialEnabledFieldsAsync(app.Services);
@@ -120,6 +138,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors();
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseAntiforgery();
@@ -148,19 +167,24 @@ static async Task BackfillGatewayCredentialEnabledFieldsAsync(IServiceProvider s
         Builders<WintechApiCredentialsRecord>.Update.Set(x => x.Enabled, true));
 }
 
-static void ConfigureDevelopmentKestrelWithLocalCertificate(WebApplicationBuilder builder)
+static void ConfigureKestrelProtocols(WebApplicationBuilder builder)
+{
+    builder.WebHost.ConfigureKestrel(options =>
+    {
+        options.ConfigureEndpointDefaults(listenOptions =>
+        {
+            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
+        });
+    });
+}
+
+static void ConfigureDevelopmentHttpsCertificate(WebApplicationBuilder builder)
 {
     if (!builder.Environment.IsDevelopment())
         return;
 
     var certPath = builder.Configuration["Kestrel:Certificates:Default:Path"];
     var keyPath = builder.Configuration["Kestrel:Certificates:Default:KeyPath"];
-    var httpsPort = int.TryParse(builder.Configuration["Kestrel:Endpoints:Https:Port"], out var parsedHttpsPort)
-        ? parsedHttpsPort
-        : 7254;
-    var httpPort = int.TryParse(builder.Configuration["Kestrel:Endpoints:Http:Port"], out var parsedHttpPort)
-        ? parsedHttpPort
-        : 5113;
 
     if (string.IsNullOrWhiteSpace(certPath) || string.IsNullOrWhiteSpace(keyPath))
         throw new InvalidOperationException(
@@ -173,18 +197,13 @@ static void ConfigureDevelopmentKestrelWithLocalCertificate(WebApplicationBuilde
         throw new InvalidOperationException(
             $"Kestrel certificate files were not found. Cert: '{absoluteCertPath}', Key: '{absoluteKeyPath}'.");
 
+    var certificate = LoadCertificateFromPem(absoluteCertPath, absoluteKeyPath);
+
     builder.WebHost.ConfigureKestrel(options =>
     {
-        options.ConfigureEndpointDefaults(listenOptions =>
+        options.ConfigureHttpsDefaults(httpsOptions =>
         {
-            listenOptions.Protocols = HttpProtocols.Http1AndHttp2;
-        });
-
-        options.ListenLocalhost(httpPort);
-        options.ListenAnyIP(httpsPort, listenOptions =>
-        {
-            var certificate = LoadCertificateFromPem(absoluteCertPath, absoluteKeyPath);
-            listenOptions.UseHttps(certificate);
+            httpsOptions.ServerCertificate = certificate;
         });
     });
 }

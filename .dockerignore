@@ -1,0 +1,13 @@
+**/bin/
+**/obj/
+**/out/
+**/.vs/
+**/.vscode/
+**/.idea/
+**/node_modules/
+Nexus.Tests/
+*.user
+*.suo
+.git/
+.gitignore
+*.md
