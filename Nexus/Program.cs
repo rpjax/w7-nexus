@@ -6,6 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Hosting;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Database.Models;
@@ -49,16 +50,36 @@ builder.Services.AddRazorComponents()
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped(sp =>
 {
+    var env = sp.GetRequiredService<IWebHostEnvironment>();
+    HttpClient httpClient;
+    if (env.IsDevelopment())
+    {
+        var handler = new HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback =
+                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
+        };
+        httpClient = new HttpClient(handler);
+    }
+    else
+    {
+        httpClient = new HttpClient();
+    }
+
     var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
     if (httpContext != null)
     {
         var request = httpContext.Request;
         var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}/";
-        return new HttpClient { BaseAddress = new Uri(baseUrl) };
+        httpClient.BaseAddress = new Uri(baseUrl);
+    }
+    else
+    {
+        var navigationManager = sp.GetRequiredService<NavigationManager>();
+        httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
     }
 
-    var navigationManager = sp.GetRequiredService<NavigationManager>();
-    return new HttpClient { BaseAddress = new Uri(navigationManager.BaseUri) };
+    return httpClient;
 });
 
 // Database
@@ -87,6 +108,8 @@ builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
 builder.Services.AddScoped<IPaymentService, PaymentService>();
 builder.Services.AddScoped<IPaymentRepository, PaymentRepository>();
 builder.Services.AddScoped<IGatewayPaymentWebhookService, GatewayPaymentWebhookService>();
+builder.Services.AddSignalR();
+builder.Services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
 builder.Services.AddScoped<IAccountIdValidator, AccountIdValidator>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
@@ -144,6 +167,7 @@ app.UseStaticFiles();
 app.UseAntiforgery();
 
 app.MapGet("/", () => Results.Ok("Nexus API is running"));
+app.MapHub<PaymentStatusHub>("/hubs/payment-status");
 app.MapControllers();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();

@@ -1,5 +1,4 @@
 using Nexus.Charges.Application.Models;
-using Nexus.Frendz.Application;
 
 namespace Nexus.Charges.Application;
 
