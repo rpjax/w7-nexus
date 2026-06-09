@@ -1,0 +1,25 @@
+namespace Nexus.Legacy.Payments.ErrorCodes;
+
+public static class PixPaymentErrorCodes
+{
+    public const string GatewayInvalid = "PixPayment.GATEWAY_INVALID";
+    public const string OperationIdInvalid = "PixPayment.OPERATION_ID_INVALID";
+    public const string OperationNotFound = "PixPayment.OPERATION_NOT_FOUND";
+    public const string PaymentIdInvalid = "PixPayment.PAYMENT_ID_INVALID";
+    public const string PaymentNotFound = "PixPayment.PAYMENT_NOT_FOUND";
+    public const string OperatorInvalid = "PixPayment.OPERATOR_INVALID";
+    public const string OperatorAlreadyBound = "PixPayment.OPERATOR_ALREADY_BOUND";
+    public const string OperatorAccountNotFound = "PixPayment.OPERATOR_ACCOUNT_NOT_FOUND";
+    public const string InvalidTransition = "PixPayment.INVALID_TRANSITION";
+    public const string OperatorRequired = "PixPayment.OPERATOR_REQUIRED";
+    public const string DeathReasonRequired = "PixPayment.DEATH_REASON_REQUIRED";
+    public const string AlreadyDead = "PixPayment.ALREADY_DEAD";
+    public const string AmountInvalid = "PixPayment.AMOUNT_INVALID";
+    public const string GatewayPaymentIdInvalid = "PixPayment.GATEWAY_PAYMENT_ID_INVALID";
+    public const string StrawManAccountNotFound = "PixPayment.STRAW_MAN_ACCOUNT_NOT_FOUND";
+    public const string StrawManInvalid = "PixPayment.STRAW_MAN_INVALID";
+    public const string StrawManAlreadyBound = "PixPayment.STRAW_MAN_ALREADY_BOUND";
+    public const string PaymentIdAlreadyExists = "PixPayment.PAYMENT_ID_ALREADY_EXISTS";
+    public const string ChargeGatewayFailed = "PixPayment.CHARGE_GATEWAY_FAILED";
+    public const string NoChargeServicesAvailable = "PixPayment.NO_CHARGE_SERVICES_AVAILABLE";
+}

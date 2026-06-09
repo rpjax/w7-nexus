@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Wintech\" />
+    <Folder Include="Legacy\Wintech\" />
   </ItemGroup>
 
 </Project>

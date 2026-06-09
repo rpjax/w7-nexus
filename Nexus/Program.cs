@@ -7,23 +7,23 @@ using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Nexus.Accounts.Infrastructure;
-using Nexus.Accounts.Application;
-using Nexus.Database.Models;
-using Nexus.Frendz.Application;
-using Nexus.Frendz.Infrastructure;
-using Nexus.SigiloPay.Application;
-using Nexus.SigiloPay.Infrastructure;
-using Nexus.Wintech.Application;
-using Nexus.Wintech.Infrastructure;
-using Nexus.Operations.Application;
-using Nexus.Operations.Infrastructure;
 using Nexus.Dashboard;
 using Nexus.AppHost;
-using Nexus.Payments.Infrastructure;
-using Nexus.Payments.Application;
-using Nexus.Charges.Application;
-using Nexus.Charges.Infrastructure;
+using Nexus.Legacy.Wintech.Application;
+using Nexus.Legacy.Wintech.Infrastructure;
+using Nexus.Legacy.Operations.Application;
+using Nexus.Legacy.Operations.Infrastructure;
+using Nexus.Legacy.Accounts.Application;
+using Nexus.Legacy.Accounts.Infrastructure;
+using Nexus.Legacy.SigiloPay.Application;
+using Nexus.Legacy.SigiloPay.Infrastructure;
+using Nexus.Legacy.Payments.Application;
+using Nexus.Legacy.Payments.Infrastructure;
+using Nexus.Legacy.Frendz.Application;
+using Nexus.Legacy.Frendz.Infrastructure;
+using Nexus.Legacy.Database.Models;
+using Nexus.Legacy.Charges.Application;
+using Nexus.Legacy.Charges.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
