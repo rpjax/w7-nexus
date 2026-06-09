@@ -2,8 +2,8 @@ using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
-using Nexus.Legacy.Accounts.Aggregates;
-using Nexus.Legacy.Accounts.Application;
+using Nexus.Accounts.Aggregates;
+using Nexus.Accounts.Application;
 
 namespace Nexus.Tests.Accounts;
 

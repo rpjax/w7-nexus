@@ -2,8 +2,8 @@ using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Accounts.Application;
 using Xunit;
-using Nexus.Legacy.Accounts.ErrorCodes;
 using Nexus.Legacy.Accounts.Infrastructure;
+using Nexus.Accounts.ErrorCodes;
 
 namespace Nexus.Tests.Accounts;
 

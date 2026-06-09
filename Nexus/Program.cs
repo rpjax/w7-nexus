@@ -13,8 +13,6 @@ using Nexus.Legacy.Wintech.Application;
 using Nexus.Legacy.Wintech.Infrastructure;
 using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.Operations.Infrastructure;
-using Nexus.Legacy.Accounts.Application;
-using Nexus.Legacy.Accounts.Infrastructure;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.SigiloPay.Infrastructure;
 using Nexus.Legacy.Payments.Application;
@@ -24,6 +22,8 @@ using Nexus.Legacy.Frendz.Infrastructure;
 using Nexus.Legacy.Database.Models;
 using Nexus.Legacy.Charges.Application;
 using Nexus.Legacy.Charges.Infrastructure;
+using Nexus.Accounts.Application;
+using Nexus.Accounts.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!

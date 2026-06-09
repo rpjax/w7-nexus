@@ -1,8 +1,8 @@
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
-using Nexus.Legacy.Accounts.Aggregates;
-using Nexus.Legacy.Accounts.Application;
+using Nexus.Accounts.Aggregates;
+using Nexus.Accounts.Application;
 using Nexus.Legacy.Operations.Aggregates;
 using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.Payments.Aggregates;

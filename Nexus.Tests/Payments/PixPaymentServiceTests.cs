@@ -5,11 +5,11 @@ using Nexus.Payments.Infrastructure;
 using Xunit;
 using Nexus.Legacy.Operations.Aggregates;
 using Nexus.Legacy.Operations.Application;
-using Nexus.Legacy.Accounts.Aggregates;
-using Nexus.Legacy.Accounts.Application;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.ErrorCodes;
+using Nexus.Accounts.Aggregates;
+using Nexus.Accounts.Application;
 
 namespace Nexus.Tests.Payments;
 

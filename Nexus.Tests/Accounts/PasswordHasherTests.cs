@@ -1,4 +1,4 @@
-using Nexus.Legacy.Accounts.Infrastructure;
+using Nexus.Accounts.Infrastructure;
 using Xunit;
 
 namespace Nexus.Tests.Accounts;

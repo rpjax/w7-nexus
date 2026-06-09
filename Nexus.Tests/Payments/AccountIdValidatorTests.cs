@@ -1,4 +1,4 @@
-using Nexus.Legacy.Accounts.Aggregates;
+using Nexus.Accounts.Aggregates;
 using Nexus.Payments.Infrastructure;
 using Nexus.Tests.Accounts;
 using Xunit;

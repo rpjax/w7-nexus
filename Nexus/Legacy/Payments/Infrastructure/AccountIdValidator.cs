@@ -1,4 +1,4 @@
-using Nexus.Legacy.Accounts.Application;
+using Nexus.Accounts.Application;
 using Nexus.Legacy.Payments.Application;
 
 namespace Nexus.Legacy.Payments.Infrastructure;
