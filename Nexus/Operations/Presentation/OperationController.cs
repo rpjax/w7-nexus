@@ -1,4 +1,5 @@
 using Aidan.Core.Linq.Extensions;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
 

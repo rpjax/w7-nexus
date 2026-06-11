@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
+using Nexus.Payments.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Microsoft.Extensions.Logging.Abstractions;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
 using Nexus.Payments.Application.Models;
-using Nexus.Payments.Infrastructure;
 using Xunit;
 
 namespace Nexus.Tests.Payments;

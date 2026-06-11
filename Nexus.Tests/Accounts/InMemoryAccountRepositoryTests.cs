@@ -1,5 +1,4 @@
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Infrastructure;
 using Xunit;
 
 namespace Nexus.Tests.Accounts;

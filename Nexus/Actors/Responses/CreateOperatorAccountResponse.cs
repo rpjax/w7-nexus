@@ -1,3 +1,3 @@
-﻿namespace Nexus.Actors.Responses;
+namespace Nexus.Actors.Responses;
 
 public class CreateOperatorAccountResponse { }

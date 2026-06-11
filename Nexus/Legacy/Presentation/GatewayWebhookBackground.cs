@@ -1,4 +1,5 @@
 using Microsoft.Extensions.DependencyInjection;
+using Nexus.Payments.Application.Contracts;
 using Microsoft.Extensions.Logging;
 using Nexus.Payments.Application;
 

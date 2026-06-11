@@ -1,5 +1,5 @@
-﻿using Aidan.Core.Patterns;
-using Nexus.Accounts.Application;
+using Aidan.Core.Patterns;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Actors.Contracts;
 using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;

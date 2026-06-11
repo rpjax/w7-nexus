@@ -3,7 +3,7 @@ using Moq;
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application;
+using Nexus.Accounts.Application.Contracts;
 
 namespace Nexus.Tests.Gateways;
 

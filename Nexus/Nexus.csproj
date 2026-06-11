@@ -15,24 +15,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Compile Remove="FusionPay\**\*.cs" />
-    <Compile Remove="Legacy\Dashboard\**\*.cs" />
-    <Content Remove="Legacy\Dashboard\**" />
-    <RazorCompile Remove="Legacy\Dashboard\**" />
-    <None Include="Legacy\Dashboard\**" />
-    <Compile Remove="PaymentGateways\**" />
-    <Content Remove="PaymentGateways\**" />
-    <EmbeddedResource Remove="PaymentGateways\**" />
-    <None Remove="PaymentGateways\**" />
     <PackageReference Include="Aidan.Core" Version="1.9.0" />
     <PackageReference Include="Aidan.Mongo" Version="1.5.1" />
     <PackageReference Include="Aidan.Web" Version="1.9.0" />
     <PackageReference Include="BCrypt.Net-Next" Version="4.0.3" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.13" />
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.13" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Folder Include="Operators\" />
   </ItemGroup>
 
 </Project>

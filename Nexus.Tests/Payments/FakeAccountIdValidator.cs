@@ -1,4 +1,4 @@
-using Nexus.Accounts.Application;
+using Nexus.Accounts.Application.Contracts;
 
 namespace Nexus.Tests.Payments;
 

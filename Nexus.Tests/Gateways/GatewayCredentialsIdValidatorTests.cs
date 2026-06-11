@@ -1,9 +1,12 @@
 using System.Linq.Expressions;
+using Nexus.Gateways.Wintech.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
+using Nexus.Gateways.Application;
 using Nexus.Gateways.Frendz.Application;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Infrastructure;
 using Nexus.Gateways.SigiloPay.Application;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.Wintech.Application;

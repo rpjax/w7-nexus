@@ -1,4 +1,5 @@
 using Microsoft.Extensions.Options;
+using Nexus.AppHost.Contracts;
 
 namespace Nexus.AppHost;
 

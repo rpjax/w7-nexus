@@ -1,5 +1,6 @@
+using Nexus.Gateways.Application;
 using Nexus.Gateways.Application.Models;
-using Nexus.Gateways.Infrastructure;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.Wintech.Application;
 using Nexus.Gateways.Wintech.Application.Models;
 using Xunit;

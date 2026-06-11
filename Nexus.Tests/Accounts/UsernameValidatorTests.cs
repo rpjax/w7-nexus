@@ -1,5 +1,4 @@
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Infrastructure;
 using Nexus.Accounts.Application;
 using Xunit;
 using Nexus.Accounts.ErrorCodes;

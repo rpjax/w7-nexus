@@ -1,7 +1,7 @@
 using Nexus.Database.Models;
+using Nexus.Gateways.Frendz.Application;
 using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.Frendz.ErrorCodes;
-using Nexus.Gateways.Frendz.Infrastructure;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 

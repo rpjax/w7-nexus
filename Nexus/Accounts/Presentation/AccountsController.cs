@@ -1,11 +1,12 @@
 using Aidan.Core.Errors;
+using Nexus.Accounts.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application;
-using Nexus.Accounts.Application.Models;
+using Nexus.Accounts.Presentation.Requests;
 using Nexus.Accounts.ErrorCodes;
 
 namespace Nexus.Accounts.Presentation;

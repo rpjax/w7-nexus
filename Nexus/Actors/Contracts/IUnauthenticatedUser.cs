@@ -1,4 +1,4 @@
-﻿using Aidan.Core.Patterns;
+using Aidan.Core.Patterns;
 using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;
 

@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using Nexus.Gateways.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using Nexus.Database.Models;
@@ -7,7 +9,6 @@ using Nexus.Gateways.Entities;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Operations.ErrorCodes;
-using Nexus.Operations.Infrastructure;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Support;
 using Xunit;

@@ -7,23 +7,27 @@ using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Nexus.AppHost;
-using Nexus.Accounts.Application;
-using Nexus.Accounts.Infrastructure;
+using Nexus.AppHost.Contracts;
 using Nexus.Actors;
 using Nexus.Actors.Contracts;
 using Nexus.Operations.Application;
-using Nexus.Operations.Infrastructure;
+using Nexus.Operations.Application.Contracts;
 using Nexus.Database.Models;
 using Nexus.Gateways.Wintech.Application;
-using Nexus.Gateways.SigiloPay.Infrastructure;
-using Nexus.Gateways.Frendz.Application;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Infrastructure;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Application;
-using Nexus.Gateways.Frendz.Infrastructure;
-using Nexus.Gateways.Wintech.Infrastructure;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.Application;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Payments.Application;
-using Nexus.Payments.Infrastructure;
+using Nexus.Payments.Application.Contracts;
+using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application;
+using Nexus.Authentication;
+using Nexus.Authentication.Application;
+using Nexus.Authentication.Application.Contracts;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -65,6 +69,7 @@ builder.Services.AddMongoCollection<TeamRecord>("teams");
 builder.Services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
 
 builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
+builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
 
 // Payment services
@@ -106,6 +111,12 @@ builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IPasswordVerifier, PasswordVerifier>();
 builder.Services.AddScoped<IAccountCreator, AccountCreator>();
 builder.Services.AddScoped<IAccountUpdater, AccountUpdater>();
+
+// Authentication services
+builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
+builder.Services.AddScoped<IUnauthenticatedUser, UnauthenticatedUser>();
+builder.Services.AddScoped<ISignUpService, SignUpService>();
+builder.Services.AddScoped<ISignInService, SignInService>();
 
 builder.Services.AddScoped<IFrendzApiKeysService, FrendzApiKeysService>();
 builder.Services.AddScoped<ISigiloPayApiKeysService, SigiloPayApiKeysService>();

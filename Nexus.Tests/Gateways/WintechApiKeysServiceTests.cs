@@ -1,7 +1,7 @@
 using Nexus.Database.Models;
+using Nexus.Gateways.Wintech.Application;
 using Nexus.Gateways.Wintech.Application.Models;
 using Nexus.Gateways.Wintech.ErrorCodes;
-using Nexus.Gateways.Wintech.Infrastructure;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 

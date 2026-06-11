@@ -1,7 +1,7 @@
 using Nexus.Database.Models;
+using Nexus.Gateways.SigiloPay.Application;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.SigiloPay.ErrorCodes;
-using Nexus.Gateways.SigiloPay.Infrastructure;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 

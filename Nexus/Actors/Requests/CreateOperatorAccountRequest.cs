@@ -1,4 +1,4 @@
-﻿namespace Nexus.Actors.Requests;
+namespace Nexus.Actors.Requests;
 
 // IUnauthenticatedUser
 public class CreateOperatorAccountRequest

@@ -1,15 +1,15 @@
 using System.Linq.Expressions;
+using Nexus.Gateways.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application;
 using Nexus.Database.Models;
-using Nexus.Accounts.Infrastructure;
 using Nexus.Actors;
 using Nexus.Gateways.Application;
 using Nexus.Gateways.Entities;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
-using Nexus.Operations.Infrastructure;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Payments;
 

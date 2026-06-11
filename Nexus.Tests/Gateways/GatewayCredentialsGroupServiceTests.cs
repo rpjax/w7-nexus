@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
+using Nexus.Gateways.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using Nexus.Gateways.Application;
 using Nexus.Gateways.Entities;
 using Nexus.Gateways.ErrorCodes;
-using Nexus.Gateways.Infrastructure;
 using Nexus.Tests.Support;
 using Xunit;
 

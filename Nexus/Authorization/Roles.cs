@@ -1,4 +1,4 @@
-﻿namespace Nexus.Authorization;
+namespace Nexus.Authorization;
 
 public static class Roles
 {

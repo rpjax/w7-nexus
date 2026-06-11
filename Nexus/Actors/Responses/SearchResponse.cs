@@ -1,4 +1,4 @@
-﻿namespace Nexus.Actors.Responses;
+namespace Nexus.Actors.Responses;
 
 public abstract class SearchResponse<T>
 {

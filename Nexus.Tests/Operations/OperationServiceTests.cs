@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Operations.ErrorCodes;
-using Nexus.Operations.Infrastructure;
 using Nexus.Tests.Payments;
 using Xunit;
 
