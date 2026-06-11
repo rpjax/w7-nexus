@@ -1,0 +1,21 @@
+@if (IsOpen)
+{
+    <div class="dialog-backdrop dialog-backdrop--confirm">
+        <div class="dialog-card dialog-card--confirm">
+            <h3>@Title</h3>
+            <p>@Message</p>
+            <div class="dialog-actions">
+                <button type="button" class="btn btn-ghost" @onclick="OnCancel">Cancelar</button>
+                <button type="button" class="btn btn-danger" @onclick="OnConfirm">Confirmar</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "Confirmar";
+    [Parameter] public string Message { get; set; } = "Você tem certeza?";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}

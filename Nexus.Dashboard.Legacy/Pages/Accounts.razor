@@ -1,0 +1,226 @@
+@page "/dashboard/accounts"
+@layout MainLayout
+@using System.Net.Http.Json
+@using System.Text.Json
+@inject HttpClient Http
+
+<section class="page-header ops-page-header">
+    <div>
+        <h1>Contas</h1>
+        <p class="muted page-lead">Contas do agregado <strong>Account</strong> — usuário, papéis e permissões persistidos no repositório.</p>
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(feedback))
+{
+    <p class="feedback @(feedbackIsError ? "error" : "success")">@feedback</p>
+}
+
+<section class="card ops-card ops-create">
+    <div class="card-title-row">
+        <h2>Nova conta</h2>
+        <span class="post-badge">POST /api/accounts</span>
+    </div>
+    <div class="form-grid">
+        <div class="field">
+            <label for="accUsername">Usuário</label>
+            <input id="accUsername" class="nexus-input" @bind="createModel.Username" @bind:event="oninput" autocomplete="off" placeholder="Nome de login" />
+        </div>
+        <div class="field">
+            <label for="accPassword">Senha</label>
+            <input id="accPassword" class="nexus-input" type="password" @bind="createModel.Password" @bind:event="oninput" autocomplete="new-password" placeholder="Senha inicial" />
+        </div>
+    </div>
+    <div class="card-actions">
+        <button type="button" class="btn btn-primary" @onclick="CreateAsync" disabled="@createBusy">
+            @(createBusy ? "Criando…" : "Criar conta")
+        </button>
+    </div>
+</section>
+
+<section class="card ops-card">
+    <div class="toolbar toolbar-tight toolbar-stack-mobile">
+        <div class="field grow">
+            <label for="accSearch">Buscar contas</label>
+            <input id="accSearch" class="nexus-input" @bind="search" @bind:event="oninput" placeholder="ID ou nome de usuário…" />
+        </div>
+        <div class="toolbar-actions">
+            <button type="button" class="btn btn-ghost" @onclick="SearchAsync">Buscar</button>
+            <button type="button" class="btn btn-ghost" @onclick="RefreshAsync">Atualizar</button>
+        </div>
+    </div>
+    <div class="card-title-row">
+        <div class="card-title-group">
+            <h2 class="section-title">Contas cadastradas</h2>
+            <span class="post-badge">POST /api/accounts/search</span>
+        </div>
+    </div>
+
+    @if (filteredRows.Count == 0)
+    {
+        <EmptyState Title="Nenhuma conta encontrada" Message="Crie uma conta acima ou ajuste a busca." />
+    }
+    else
+    {
+        <div class="table-wrap table-top-gap">
+            <table class="responsive-data ops-table">
+                <thead>
+                    <tr>
+                        <th>Usuário</th>
+                        <th>ID</th>
+                        <th>Papéis</th>
+                        <th>Permissões</th>
+                        <th>Criado em</th>
+                        <th>Atualizado em</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in filteredRows)
+                    {
+                        <tr>
+                            <td data-label="Usuário"><strong>@row.Username</strong></td>
+                            <td data-label="ID"><span class="mono">@ShortId(row.Id)</span></td>
+                            <td data-label="Papéis" class="muted small">@JoinList(row.Roles)</td>
+                            <td data-label="Permissões" class="muted small">@JoinList(row.Permissions)</td>
+                            <td data-label="Criado em" class="muted small">@row.CreatedAt.ToString("u")</td>
+                            <td data-label="Atualizado em" class="muted small">@row.LastUpdatedAt.ToString("u")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</section>
+
+@code {
+    private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
+
+    private sealed class AccountRowVm
+    {
+        public string Id { get; set; } = string.Empty;
+        public string Username { get; set; } = string.Empty;
+        public List<string> Roles { get; set; } = new();
+        public List<string> Permissions { get; set; } = new();
+        public DateTime CreatedAt { get; set; }
+        public DateTime LastUpdatedAt { get; set; }
+    }
+
+    private sealed class SearchResponse
+    {
+        public int Total { get; set; }
+        public List<AccountRowVm> Items { get; set; } = new();
+    }
+
+    private sealed class CreateModel
+    {
+        public string Username { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    private readonly CreateModel createModel = new();
+    private string search = string.Empty;
+    private List<AccountRowVm> rows = new();
+    private IReadOnlyList<AccountRowVm> filteredRows = Array.Empty<AccountRowVm>();
+    private string feedback = string.Empty;
+    private bool feedbackIsError;
+    private bool createBusy;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await RefreshAsync();
+    }
+
+    private static string ShortId(string id)
+        => string.IsNullOrEmpty(id) ? "—" : (id.Length <= 18 ? id : id[..14] + "…");
+
+    private static string JoinList(List<string>? list)
+    {
+        if (list is null || list.Count == 0)
+            return "—";
+        return string.Join(", ", list);
+    }
+
+    private async Task RefreshAsync()
+    {
+        feedback = string.Empty;
+        feedbackIsError = false;
+        var response = await Http.PostAsJsonAsync("/api/accounts/search", new
+        {
+            Limit = 500,
+            Offset = 0,
+            Keyword = (string?)null
+        });
+        if (!response.IsSuccessStatusCode)
+        {
+            feedbackIsError = true;
+            feedback = await DashboardApiErrors.ReadMessageAsync(response, "Falha ao carregar contas.");
+            rows = new List<AccountRowVm>();
+            ApplyFilter();
+            return;
+        }
+
+        var data = await response.Content.ReadFromJsonAsync<SearchResponse>(_jsonOptions);
+        rows = data?.Items ?? new List<AccountRowVm>();
+        ApplyFilter();
+    }
+
+    private void ApplyFilter()
+    {
+        if (string.IsNullOrWhiteSpace(search))
+        {
+            filteredRows = rows;
+            return;
+        }
+
+        var term = search.Trim().ToLowerInvariant();
+        filteredRows = rows
+            .Where(r =>
+                r.Id.ToLowerInvariant().Contains(term)
+                || r.Username.ToLowerInvariant().Contains(term))
+            .ToList();
+    }
+
+    private Task SearchAsync()
+    {
+        ApplyFilter();
+        return Task.CompletedTask;
+    }
+
+    private async Task CreateAsync()
+    {
+        createBusy = true;
+        feedback = string.Empty;
+        feedbackIsError = false;
+        try
+        {
+            if (string.IsNullOrWhiteSpace(createModel.Username) || string.IsNullOrWhiteSpace(createModel.Password))
+            {
+                feedbackIsError = true;
+                feedback = "Usuário e senha são obrigatórios.";
+                return;
+            }
+
+            var response = await Http.PostAsJsonAsync("/api/accounts", new
+            {
+                Username = createModel.Username.Trim(),
+                Password = createModel.Password
+            });
+
+            if (!response.IsSuccessStatusCode)
+            {
+                feedbackIsError = true;
+                feedback = await DashboardApiErrors.ReadMessageAsync(response, "Falha ao criar conta.");
+                return;
+            }
+
+            feedback = "Conta criada com sucesso.";
+            createModel.Username = string.Empty;
+            createModel.Password = string.Empty;
+            await RefreshAsync();
+        }
+        finally
+        {
+            createBusy = false;
+        }
+    }
+}

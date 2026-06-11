@@ -28,10 +28,11 @@ using Nexus.Payments.Application;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Application;
-using Nexus.Authentication;
 using Nexus.Authentication.Application;
 using Nexus.Authentication.Application.Contracts;
-using Nexus.Authorization;
+using Nexus.Authorization.Services.Contracts;
+using Nexus.Authorization.Services;
+using Nexus.Authentication.Services.Models;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!

@@ -1,0 +1,20 @@
+@page "/dashboard/gateways/gateway-2"
+@page "/dashboard/gateways/gateway-3"
+@layout MainLayout
+@inject NavigationManager NavigationManager
+
+<section class="page-header">
+    <h1>@Title</h1>
+    <p>Espaço reservado para o próximo módulo de integração de pagamento.</p>
+</section>
+
+<section class="card">
+    <EmptyState Title="Gateway em planejamento"
+                Message="A estrutura de navegação já está pronta. Quando o integrador for implementado, os casos de uso entram aqui sem redesenhar o dashboard." />
+</section>
+
+@code {
+    private string Title => NavigationManager.Uri.Contains("gateway-3", StringComparison.OrdinalIgnoreCase)
+        ? "GATEWAY3"
+        : "GATEWAY2";
+}
