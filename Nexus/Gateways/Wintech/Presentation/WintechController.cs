@@ -1,13 +1,13 @@
 using Aidan.Core.Errors;
-using Nexus.Gateways.Wintech.Application.Contracts;
+using Nexus.Gateways.Wintech.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Nexus.Gateways.Wintech.Application;
+using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.ErrorCodes;
+using Nexus.Gateways.Wintech.Errors;
 using Nexus.Legacy.Presentation;
 using Nexus.Payments.Aggregates;
 

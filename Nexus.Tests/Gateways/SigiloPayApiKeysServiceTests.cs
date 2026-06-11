@@ -1,7 +1,6 @@
-using Nexus.Database.Models;
-using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.ErrorCodes;
+using Nexus.Gateways.SigiloPay.Errors;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 
@@ -11,7 +10,7 @@ public sealed class SigiloPayApiKeysServiceTests
 {
     private static SigiloPayApiKeysService CreateSut(AsyncInMemoryAccountRepository? accounts = null) =>
         new(
-            CreateThrowIfCalledMongoCollection<SigiloPayApiCredentialsRecord>(),
+            new EmptySigiloPayCredentialsRepository(),
             accounts ?? new AsyncInMemoryAccountRepository());
 
     [Theory]

@@ -1,5 +1,5 @@
 using Nexus.Payments.Aggregates;
-using Nexus.Gateways.Application.Contracts;
+using Nexus.Gateways.Application.Services.Contracts;
 
 namespace Nexus.Gateways.Application.Models;
 

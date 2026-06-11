@@ -1,10 +1,10 @@
 using Aidan.Core.Linq.Extensions;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
 
 using Aidan.Web.Controllers;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Models;
 using CreateOperationRequest = Nexus.Actors.Requests.CreateOperationRequest;
 using Nexus.Operations.Errors;

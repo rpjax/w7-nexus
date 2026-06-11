@@ -1,13 +1,14 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Application.Contracts;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Database.Models;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Entities;
+using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Support;
 using Xunit;
@@ -38,10 +39,15 @@ public sealed class TeamServiceTests
         public IAsyncQueryable<Team> AsQueryable()
             => new MongoAsyncQueryable<Team>(_store.AsQueryable());
 
-        public Task CreateAsync(Team entity)
+        public Task<Team> CreateAsync(Team entity)
         {
             _store.Add(entity);
-            return Task.CompletedTask;
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<Team>.CreateAsync(Team entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<Team> entities)
@@ -83,10 +89,15 @@ public sealed class TeamServiceTests
         public IAsyncQueryable<Operation> AsQueryable()
             => new MongoAsyncQueryable<Operation>(_store.AsQueryable());
 
-        public Task CreateAsync(Operation entity)
+        public Task<Operation> CreateAsync(Operation entity)
         {
             _store.Add(entity);
-            return Task.CompletedTask;
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<Operation>.CreateAsync(Operation entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<Operation> entities)
@@ -126,10 +137,15 @@ public sealed class TeamServiceTests
         public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable()
             => new MongoAsyncQueryable<GatewayCredentialsGroup>(_store.AsQueryable());
 
-        public Task CreateAsync(GatewayCredentialsGroup entity)
+        public Task<GatewayCredentialsGroup> CreateAsync(GatewayCredentialsGroup entity)
         {
             _store.Add(entity);
-            return Task.CompletedTask;
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<GatewayCredentialsGroup>.CreateAsync(GatewayCredentialsGroup entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities)

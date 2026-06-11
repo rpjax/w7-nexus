@@ -1,7 +1,6 @@
-using Nexus.Database.Models;
-using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.ErrorCodes;
+using Nexus.Gateways.Frendz.Errors;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 
@@ -11,7 +10,7 @@ public sealed class FrendzApiKeysServiceTests
 {
     private static FrendzApiKeysService CreateSut(AsyncInMemoryAccountRepository? accounts = null) =>
         new(
-            CreateThrowIfCalledMongoCollection<FrendzApiCredentialsRecord>(),
+            new EmptyFrendzCredentialsRepository(),
             accounts ?? new AsyncInMemoryAccountRepository());
 
     [Theory]

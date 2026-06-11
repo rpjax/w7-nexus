@@ -1,10 +1,14 @@
-using MongoDB.Driver;
-using Moq;
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Models;
+using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Models;
+using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Models;
+using Nexus.Gateways.Wintech.Application.Services.Contracts;
 
 namespace Nexus.Tests.Gateways;
 
@@ -12,26 +16,46 @@ internal static class ApiKeysServiceTestSupport
 {
     internal static string Repeat(char c, int count) => new(c, count);
 
-    internal static IMongoCollection<T> CreateThrowIfCalledMongoCollection<T>()
+    internal sealed class EmptyFrendzCredentialsRepository : IFrendzApiCredentialsRepository
     {
-        var collection = new Mock<IMongoCollection<T>>(MockBehavior.Strict);
+        public IAsyncQueryable<FrendzApiCredentials> AsQueryable()
+            => new QueryableToAsyncQueryableAdapter<FrendzApiCredentials>(Array.Empty<FrendzApiCredentials>().AsQueryable());
 
-        collection
-            .Setup(x => x.CountDocumentsAsync(
-                It.IsAny<FilterDefinition<T>>(),
-                It.IsAny<CountOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(0L);
+        public Task<FrendzApiCredentials> CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<FrendzApiCredentials>.CreateAsync(FrendzApiCredentials entity) { await CreateAsync(entity); }
+        public Task CreateAsync(IEnumerable<FrendzApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
 
-        collection
-            .Setup(x => x.CountDocumentsAsync(
-                It.IsAny<IClientSessionHandle>(),
-                It.IsAny<FilterDefinition<T>>(),
-                It.IsAny<CountOptions?>(),
-                It.IsAny<CancellationToken>()))
-            .ReturnsAsync(0L);
+    internal sealed class EmptySigiloPayCredentialsRepository : ISigiloPayApiCredentialsRepository
+    {
+        public IAsyncQueryable<SigiloPayApiCredentials> AsQueryable()
+            => new QueryableToAsyncQueryableAdapter<SigiloPayApiCredentials>(Array.Empty<SigiloPayApiCredentials>().AsQueryable());
 
-        return collection.Object;
+        public Task<SigiloPayApiCredentials> CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<SigiloPayApiCredentials>.CreateAsync(SigiloPayApiCredentials entity) { await CreateAsync(entity); }
+        public Task CreateAsync(IEnumerable<SigiloPayApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<SigiloPayApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    internal sealed class EmptyWintechCredentialsRepository : IWintechApiCredentialsRepository
+    {
+        public IAsyncQueryable<WintechApiCredentials> AsQueryable()
+            => new QueryableToAsyncQueryableAdapter<WintechApiCredentials>(Array.Empty<WintechApiCredentials>().AsQueryable());
+
+        public Task<WintechApiCredentials> CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<WintechApiCredentials>.CreateAsync(WintechApiCredentials entity) { await CreateAsync(entity); }
+        public Task CreateAsync(IEnumerable<WintechApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<WintechApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 
     internal sealed class AsyncInMemoryAccountRepository : IAccountRepository

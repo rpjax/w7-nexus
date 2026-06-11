@@ -1,7 +1,7 @@
-using Nexus.Gateways.Application;
+using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Contracts;
-using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Xunit;
 

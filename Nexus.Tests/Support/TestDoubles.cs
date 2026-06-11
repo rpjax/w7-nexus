@@ -1,16 +1,17 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Application.Contracts;
-using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Infrastructure.Password;
-using Nexus.Database.Models;
 using Nexus.Actors;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Entities;
+using Nexus.Database.Models;
+using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
+using Nexus.Operations.Application.Services.Contracts;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Payments;
 
@@ -23,10 +24,25 @@ internal sealed class InMemoryOperationRepository : IOperationRepository
     public IAsyncQueryable<Operation> AsQueryable()
         => new QueryableToAsyncQueryableAdapter<Operation>(_store.AsQueryable());
 
-    public Task CreateAsync(Operation entity)
+    public Task<Operation> CreateAsync(Operation entity)
     {
-        _store.Add(entity);
-        return Task.CompletedTask;
+        var persisted = string.IsNullOrWhiteSpace(entity.Id)
+            ? new Operation(
+                Guid.NewGuid().ToString("N"),
+                entity.Name,
+                entity.Description,
+                entity.AdministratorIds,
+                entity.CreatedAt,
+                entity.UpdatedAt)
+            : entity;
+
+        _store.Add(persisted);
+        return Task.FromResult(persisted);
+    }
+
+    async Task IRepository<Operation>.CreateAsync(Operation entity)
+    {
+        await CreateAsync(entity);
     }
 
     public Task CreateAsync(IEnumerable<Operation> entities)
@@ -66,10 +82,43 @@ internal sealed class InMemoryTeamRepository : ITeamRepository
     public IAsyncQueryable<Team> AsQueryable()
         => new MongoAsyncQueryable<Team>(_store.AsQueryable());
 
-    public Task CreateAsync(Team entity)
+    public Task<Team> CreateAsync(Team entity)
     {
-        _store.Add(entity);
-        return Task.CompletedTask;
+        var persisted = string.IsNullOrWhiteSpace(entity.Id)
+            ? new Team(
+                Guid.NewGuid().ToString("N"),
+                entity.OperationId,
+                entity.Name,
+                entity.TeamLeaderId,
+                entity.OperatorIds,
+                entity.StrawManIds,
+                (int)entity.GatewaySelectionStrategy,
+                entity.GatewayCredentialsIds,
+                entity.GatewayCredentialsGroupIds,
+                entity.OperatorProfitShareRules.Values
+                    .Select(rule => new OperatorProfitShareRuleRecord
+                    {
+                        OperatorId = rule.OperatorId,
+                        Cuts = rule.ProfitSplits.Values
+                            .Select(cut => new ProfitSplitRecord
+                            {
+                                AccountId = cut.AccountId,
+                                Percentage = cut.Percentage
+                            })
+                            .ToList()
+                    })
+                    .ToList(),
+                entity.CreatedAt,
+                entity.UpdatedAt)
+            : entity;
+
+        _store.Add(persisted);
+        return Task.FromResult(persisted);
+    }
+
+    async Task IRepository<Team>.CreateAsync(Team entity)
+    {
+        await CreateAsync(entity);
     }
 
     public Task CreateAsync(IEnumerable<Team> entities)
@@ -109,10 +158,24 @@ internal sealed class InMemoryGatewayCredentialsGroupRepository : IGatewayCreden
     public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable()
         => new MongoAsyncQueryable<GatewayCredentialsGroup>(_store.AsQueryable());
 
-    public Task CreateAsync(GatewayCredentialsGroup entity)
+    public Task<GatewayCredentialsGroup> CreateAsync(GatewayCredentialsGroup entity)
     {
-        _store.Add(entity);
-        return Task.CompletedTask;
+        var persisted = string.IsNullOrWhiteSpace(entity.Id)
+            ? new GatewayCredentialsGroup(
+                Guid.NewGuid().ToString("N"),
+                entity.Name,
+                entity.GatewayCredentialsIds,
+                entity.CreatedAt,
+                entity.UpdatedAt)
+            : entity;
+
+        _store.Add(persisted);
+        return Task.FromResult(persisted);
+    }
+
+    async Task IRepository<GatewayCredentialsGroup>.CreateAsync(GatewayCredentialsGroup entity)
+    {
+        await CreateAsync(entity);
     }
 
     public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities)
@@ -215,8 +278,7 @@ internal sealed class ActorTestContext
             AdministratorIds: administratorIds ?? Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
-        await Operations.CreateAsync(operation);
-        return operation;
+        return await Operations.CreateAsync(operation);
     }
 
     public async Task<Team> SeedTeamAsync(
@@ -239,8 +301,7 @@ internal sealed class ActorTestContext
             OperatorProfitShareRules: Array.Empty<OperatorProfitShareRuleRecord>(),
             CreatedAt: now,
             UpdatedAt: now);
-        await Teams.CreateAsync(team);
-        return team;
+        return await Teams.CreateAsync(team);
     }
 
     public async Task<GatewayCredentialsGroup> SeedGatewayGroupAsync(
@@ -254,8 +315,7 @@ internal sealed class ActorTestContext
             GatewayCredentialsIds: Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
-        await GatewayGroups.CreateAsync(group);
-        return group;
+        return await GatewayGroups.CreateAsync(group);
     }
 
     public void RegisterAccount(string accountId) => AccountIdValidator.AddExisting(accountId);

@@ -1,9 +1,10 @@
 using System.Linq.Expressions;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Tests.Payments;
 using Xunit;
 using Nexus.Operations.Errors;
@@ -19,10 +20,25 @@ public sealed class OperationServiceTests
         public IAsyncQueryable<Operation> AsQueryable()
             => new MongoAsyncQueryable<Operation>(_store.AsQueryable());
 
-        public Task CreateAsync(Operation entity)
+        public Task<Operation> CreateAsync(Operation entity)
         {
-            _store.Add(entity);
-            return Task.CompletedTask;
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Operation(
+                    Guid.NewGuid().ToString("N"),
+                    entity.Name,
+                    entity.Description,
+                    entity.AdministratorIds,
+                    entity.CreatedAt,
+                    entity.UpdatedAt)
+                : entity;
+
+            _store.Add(persisted);
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<Operation>.CreateAsync(Operation entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<Operation> entities)

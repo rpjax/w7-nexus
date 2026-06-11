@@ -1,15 +1,16 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Wintech.Application.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Contracts;
-using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Services.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.Wintech.Application;
+using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;
 using Xunit;
 
@@ -27,7 +28,8 @@ public sealed class GatewayCredentialsIdValidatorTests
         public IAsyncQueryable<FrendzApiCredentials> AsQueryable()
             => new MongoAsyncQueryable<FrendzApiCredentials>(_credentials.AsQueryable());
 
-        public Task CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<FrendzApiCredentials> CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<FrendzApiCredentials>.CreateAsync(FrendzApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<FrendzApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -45,7 +47,8 @@ public sealed class GatewayCredentialsIdValidatorTests
         public IAsyncQueryable<SigiloPayApiCredentials> AsQueryable()
             => new MongoAsyncQueryable<SigiloPayApiCredentials>(_credentials.AsQueryable());
 
-        public Task CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<SigiloPayApiCredentials> CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<SigiloPayApiCredentials>.CreateAsync(SigiloPayApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<SigiloPayApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<SigiloPayApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -63,7 +66,8 @@ public sealed class GatewayCredentialsIdValidatorTests
         public IAsyncQueryable<WintechApiCredentials> AsQueryable()
             => new MongoAsyncQueryable<WintechApiCredentials>(_credentials.AsQueryable());
 
-        public Task CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<WintechApiCredentials> CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<WintechApiCredentials>.CreateAsync(WintechApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<WintechApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(WintechApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<WintechApiCredentials, bool>> predicate) => throw new NotSupportedException();

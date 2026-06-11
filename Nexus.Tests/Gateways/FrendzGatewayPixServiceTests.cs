@@ -1,9 +1,10 @@
 using Nexus.AppHost;
 using Nexus.AppHost.Contracts;
-using Nexus.Gateways.Application;
+using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
-using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
+using Nexus.Gateways.Frendz.Infrastructure.Http;
 using Xunit;
 
 namespace Nexus.Tests.Gateways;

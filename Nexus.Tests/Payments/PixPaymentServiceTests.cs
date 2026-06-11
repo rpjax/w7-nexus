@@ -1,15 +1,15 @@
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
-using Nexus.Payments.Application.Contracts;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Mongo.Linq;
 using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Accounts.Aggregates;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application;
+using Nexus.Payments.Application.Services;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Payments.Errors;
 
@@ -22,7 +22,32 @@ public sealed class PixPaymentServiceTests
         public IAsyncQueryable<Payment> AsQueryable()
             => new MongoAsyncQueryable<Payment>(Array.Empty<Payment>().AsQueryable());
 
-        public Task CreateAsync(Payment entity) => Task.CompletedTask;
+        public Task<Payment> CreateAsync(Payment entity)
+        {
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Payment(
+                    Guid.NewGuid().ToString("N"),
+                    entity.OperationId,
+                    entity.Gateway,
+                    entity.GatewayTransactionId,
+                    entity.Amount,
+                    entity.Status,
+                    entity.OperatorAccountId,
+                    entity.StrawManAccountId,
+                    entity.CreatedAt,
+                    entity.PaidAt,
+                    entity.RefundedAt,
+                    entity.DiedAt,
+                    entity.DeathReason)
+                : entity;
+
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<Payment>.CreateAsync(Payment entity)
+        {
+            await CreateAsync(entity);
+        }
 
         public Task CreateAsync(IEnumerable<Payment> entities) => Task.CompletedTask;
 
@@ -51,7 +76,13 @@ public sealed class PixPaymentServiceTests
         public IAsyncQueryable<Operation> AsQueryable()
             => new MongoAsyncQueryable<Operation>(_operations.AsQueryable());
 
-        public Task CreateAsync(Operation entity) => Task.CompletedTask;
+        public Task<Operation> CreateAsync(Operation entity) => Task.FromResult(entity);
+
+        async Task IRepository<Operation>.CreateAsync(Operation entity)
+        {
+            await CreateAsync(entity);
+        }
+
         public Task CreateAsync(IEnumerable<Operation> entities) => Task.CompletedTask;
         public Task DeleteAsync(Operation entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<Operation, bool>> predicate) => Task.FromResult(0L);
@@ -75,7 +106,10 @@ public sealed class PixPaymentServiceTests
 
         public Task<Account> CreateAsync(Account entity) => Task.FromResult(entity);
 
-        Task IRepository<Account>.CreateAsync(Account entity) => CreateAsync(entity);
+        async Task IRepository<Account>.CreateAsync(Account entity)
+        {
+            await CreateAsync(entity);
+        }
         public Task CreateAsync(IEnumerable<Account> entities) => Task.CompletedTask;
         public Task DeleteAsync(Account entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<Account, bool>> predicate) => Task.FromResult(0L);

@@ -1,4 +1,4 @@
-using Nexus.Gateways.Entities;
+using Nexus.Gateways.Aggregates;
 
 namespace Nexus.Gateways.Application.Models;
 

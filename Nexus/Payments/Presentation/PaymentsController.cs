@@ -1,10 +1,10 @@
 using Aidan.Core.Errors;
-using Nexus.Payments.Application.Contracts;
+using Nexus.Payments.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application;
+using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
 
 namespace Nexus.Payments.Presentation;

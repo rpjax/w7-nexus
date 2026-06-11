@@ -1,10 +1,11 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Application.Contracts;
+using Nexus.Gateways.Application.Services.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Entities;
-using Nexus.Gateways.ErrorCodes;
+using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Aggregates;
+using Nexus.Gateways.Errors;
 using Nexus.Tests.Support;
 using Xunit;
 
@@ -19,10 +20,24 @@ public sealed class GatewayCredentialsGroupServiceTests
         public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable()
             => new MongoAsyncQueryable<GatewayCredentialsGroup>(_store.AsQueryable());
 
-        public Task CreateAsync(GatewayCredentialsGroup entity)
+        public Task<GatewayCredentialsGroup> CreateAsync(GatewayCredentialsGroup entity)
         {
-            _store.Add(entity);
-            return Task.CompletedTask;
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new GatewayCredentialsGroup(
+                    Guid.NewGuid().ToString("N"),
+                    entity.Name,
+                    entity.GatewayCredentialsIds,
+                    entity.CreatedAt,
+                    entity.UpdatedAt)
+                : entity;
+
+            _store.Add(persisted);
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<GatewayCredentialsGroup>.CreateAsync(GatewayCredentialsGroup entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities)

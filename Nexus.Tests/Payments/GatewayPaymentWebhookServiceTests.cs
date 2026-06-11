@@ -1,10 +1,10 @@
 using System.Linq.Expressions;
-using Nexus.Payments.Application.Contracts;
+using Nexus.Payments.Application.Services.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Microsoft.Extensions.Logging.Abstractions;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application;
+using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
 using Xunit;
 
@@ -21,7 +21,33 @@ public sealed class GatewayPaymentWebhookServiceTests
         public IAsyncQueryable<Payment> AsQueryable()
             => new QueryableToAsyncQueryableAdapter<Payment>(_payments.AsQueryable());
 
-        public Task CreateAsync(Payment entity) => Task.CompletedTask;
+        public Task<Payment> CreateAsync(Payment entity)
+        {
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Payment(
+                    Guid.NewGuid().ToString("N"),
+                    entity.OperationId,
+                    entity.Gateway,
+                    entity.GatewayTransactionId,
+                    entity.Amount,
+                    entity.Status,
+                    entity.OperatorAccountId,
+                    entity.StrawManAccountId,
+                    entity.CreatedAt,
+                    entity.PaidAt,
+                    entity.RefundedAt,
+                    entity.DiedAt,
+                    entity.DeathReason)
+                : entity;
+
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<Payment>.CreateAsync(Payment entity)
+        {
+            await CreateAsync(entity);
+        }
+
         public Task CreateAsync(IEnumerable<Payment> entities) => Task.CompletedTask;
         public Task DeleteAsync(Payment entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Payment, bool>> predicate) => Task.FromResult(0L);

@@ -1,13 +1,13 @@
 using Aidan.Core.Errors;
-using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.ErrorCodes;
+using Nexus.Gateways.SigiloPay.Errors;
 using Nexus.Legacy.Presentation;
 using Nexus.Payments.Aggregates;
 

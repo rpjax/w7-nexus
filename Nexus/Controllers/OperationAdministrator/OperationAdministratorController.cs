@@ -2,8 +2,8 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Actors.Contracts;
 using Nexus.Actors.Requests;
-using Nexus.Authorization.Results;
-using Nexus.Authorization.Services.Contracts;
+using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Application.Services.Contracts;
 
 namespace Nexus.Controllers.OperationAdministrator;
 

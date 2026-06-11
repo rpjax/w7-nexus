@@ -1,7 +1,6 @@
-using Nexus.Database.Models;
-using Nexus.Gateways.Wintech.Application;
+using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.ErrorCodes;
+using Nexus.Gateways.Wintech.Errors;
 using Xunit;
 using static Nexus.Tests.Gateways.ApiKeysServiceTestSupport;
 
@@ -11,7 +10,7 @@ public sealed class WintechApiKeysServiceTests
 {
     private static WintechApiKeysService CreateSut(AsyncInMemoryAccountRepository? accounts = null) =>
         new(
-            CreateThrowIfCalledMongoCollection<WintechApiCredentialsRecord>(),
+            new EmptyWintechCredentialsRepository(),
             accounts ?? new AsyncInMemoryAccountRepository());
 
     [Theory]

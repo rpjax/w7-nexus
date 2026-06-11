@@ -1,13 +1,13 @@
 using Aidan.Core.Errors;
-using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.Frendz.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.ErrorCodes;
+using Nexus.Gateways.Frendz.Errors;
 using Nexus.Legacy.Presentation;
 
 namespace Nexus.Gateways.Frendz.Presentation;

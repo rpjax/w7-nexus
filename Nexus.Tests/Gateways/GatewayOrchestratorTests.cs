@@ -1,28 +1,28 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Wintech.Application.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Contracts;
-using Nexus.Gateways.Frendz.Application.Contracts;
-using Nexus.Gateways.Application.Contracts;
-using Nexus.Payments.Application.Contracts;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Xunit;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.Application;
-using Nexus.Gateways.Entities;
-using Nexus.Gateways.Application;
-using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Wintech.Application.Services;
+using Nexus.Gateways.Aggregates;
+using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application;
+using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
 using Nexus.Payments.Errors;
 
@@ -231,7 +231,28 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<Payment> AsQueryable() =>
             new MongoAsyncQueryable<Payment>(Array.Empty<Payment>().AsQueryable());
 
-        public Task CreateAsync(Payment entity) => Task.CompletedTask;
+        public Task<Payment> CreateAsync(Payment entity)
+        {
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Payment(
+                    Guid.NewGuid().ToString("N"),
+                    entity.OperationId,
+                    entity.Gateway,
+                    entity.GatewayTransactionId,
+                    entity.Amount,
+                    entity.Status,
+                    entity.OperatorAccountId,
+                    entity.StrawManAccountId,
+                    entity.CreatedAt,
+                    entity.PaidAt,
+                    entity.RefundedAt,
+                    entity.DiedAt,
+                    entity.DeathReason)
+                : entity;
+
+            return Task.FromResult(persisted);
+        }
+        async Task IRepository<Payment>.CreateAsync(Payment entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<Payment> entities) => Task.CompletedTask;
         public Task DeleteAsync(Payment entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Payment, bool>> predicate) => Task.FromResult(0L);
@@ -250,7 +271,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<Operation> AsQueryable() =>
             new MongoAsyncQueryable<Operation>(Array.Empty<Operation>().AsQueryable());
 
-        public Task CreateAsync(Operation entity) => Task.CompletedTask;
+        public Task<Operation> CreateAsync(Operation entity) => Task.FromResult(entity);
+        async Task IRepository<Operation>.CreateAsync(Operation entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<Operation> entities) => Task.CompletedTask;
         public Task DeleteAsync(Operation entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Operation, bool>> predicate) => Task.FromResult(0L);
@@ -267,7 +289,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<Operation> AsQueryable() =>
             new MongoAsyncQueryable<Operation>(new[] { _operation }.AsQueryable());
 
-        public Task CreateAsync(Operation entity) => Task.CompletedTask;
+        public Task<Operation> CreateAsync(Operation entity) => Task.FromResult(entity);
+        async Task IRepository<Operation>.CreateAsync(Operation entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<Operation> entities) => Task.CompletedTask;
         public Task DeleteAsync(Operation entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Operation, bool>> predicate) => Task.FromResult(0L);
@@ -280,7 +303,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<Team> AsQueryable() =>
             new MongoAsyncQueryable<Team>(Array.Empty<Team>().AsQueryable());
 
-        public Task CreateAsync(Team entity) => Task.CompletedTask;
+        public Task<Team> CreateAsync(Team entity) => Task.FromResult(entity);
+        async Task IRepository<Team>.CreateAsync(Team entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<Team> entities) => Task.CompletedTask;
         public Task DeleteAsync(Team entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate) => Task.FromResult(0L);
@@ -297,7 +321,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<Team> AsQueryable() =>
             new MongoAsyncQueryable<Team>(new[] { _team }.AsQueryable());
 
-        public Task CreateAsync(Team entity) => Task.CompletedTask;
+        public Task<Team> CreateAsync(Team entity) => Task.FromResult(entity);
+        async Task IRepository<Team>.CreateAsync(Team entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<Team> entities) => Task.CompletedTask;
         public Task DeleteAsync(Team entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate) => Task.FromResult(0L);
@@ -310,7 +335,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<FrendzApiCredentials> AsQueryable() =>
             new MongoAsyncQueryable<FrendzApiCredentials>(Array.Empty<FrendzApiCredentials>().AsQueryable());
 
-        public Task CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<FrendzApiCredentials> CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<FrendzApiCredentials>.CreateAsync(FrendzApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<FrendzApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -327,7 +353,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<FrendzApiCredentials> AsQueryable() =>
             new MongoAsyncQueryable<FrendzApiCredentials>(new[] { _credential }.AsQueryable());
 
-        public Task CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<FrendzApiCredentials> CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<FrendzApiCredentials>.CreateAsync(FrendzApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<FrendzApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -361,7 +388,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<SigiloPayApiCredentials> AsQueryable() =>
             new MongoAsyncQueryable<SigiloPayApiCredentials>(Array.Empty<SigiloPayApiCredentials>().AsQueryable());
 
-        public Task CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        public Task<SigiloPayApiCredentials> CreateAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<SigiloPayApiCredentials>.CreateAsync(SigiloPayApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<SigiloPayApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(SigiloPayApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<SigiloPayApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -383,7 +411,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<WintechApiCredentials> AsQueryable() =>
             new MongoAsyncQueryable<WintechApiCredentials>(Array.Empty<WintechApiCredentials>().AsQueryable());
 
-        public Task CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        public Task<WintechApiCredentials> CreateAsync(WintechApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<WintechApiCredentials>.CreateAsync(WintechApiCredentials entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<WintechApiCredentials> entities) => throw new NotSupportedException();
         public Task DeleteAsync(WintechApiCredentials entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<WintechApiCredentials, bool>> predicate) => throw new NotSupportedException();
@@ -405,7 +434,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable() =>
             new MongoAsyncQueryable<GatewayCredentialsGroup>(Array.Empty<GatewayCredentialsGroup>().AsQueryable());
 
-        public Task CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<GatewayCredentialsGroup> CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        async Task IRepository<GatewayCredentialsGroup>.CreateAsync(GatewayCredentialsGroup entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities) => throw new NotSupportedException();
         public Task DeleteAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<GatewayCredentialsGroup, bool>> predicate) => throw new NotSupportedException();
@@ -422,7 +452,8 @@ public sealed class GatewayOrchestratorTests
         public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable() =>
             new MongoAsyncQueryable<GatewayCredentialsGroup>(new[] { _group }.AsQueryable());
 
-        public Task CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<GatewayCredentialsGroup> CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        async Task IRepository<GatewayCredentialsGroup>.CreateAsync(GatewayCredentialsGroup entity) { await CreateAsync(entity); }
         public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities) => throw new NotSupportedException();
         public Task DeleteAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
         public Task<long> DeleteAsync(Expression<Func<GatewayCredentialsGroup, bool>> predicate) => throw new NotSupportedException();

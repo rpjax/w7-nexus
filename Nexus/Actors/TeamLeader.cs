@@ -1,11 +1,11 @@
 using Aidan.Core.Errors;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Actors.Contracts;
 using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
+using Nexus.Operations.Application.Services;
 using Nexus.Operations.Errors;
 
 namespace Nexus.Actors;
