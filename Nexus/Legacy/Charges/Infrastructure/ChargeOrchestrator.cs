@@ -3,8 +3,6 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Payments.Application.Models;
 using Nexus.Legacy.Wintech.Application;
-using Nexus.Legacy.Operations.Aggregates;
-using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
@@ -12,6 +10,8 @@ using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Legacy.Frendz.Application;
 using Nexus.Legacy.Charges.Application;
 using Nexus.Legacy.Charges.Application.Models;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
 
 namespace Nexus.Legacy.Charges.Infrastructure;
 
@@ -204,7 +204,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
+        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
 
         var credentials = await _frendzApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (
@@ -231,7 +231,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
+        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
 
         var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (
@@ -258,7 +258,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(Operation operation)
     {
         var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.ChargeCredentialsIds.ToArray();
+        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
 
         var credentials = await _wintechApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (

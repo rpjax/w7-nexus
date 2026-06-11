@@ -11,8 +11,6 @@ using Nexus.Dashboard;
 using Nexus.AppHost;
 using Nexus.Legacy.Wintech.Application;
 using Nexus.Legacy.Wintech.Infrastructure;
-using Nexus.Legacy.Operations.Application;
-using Nexus.Legacy.Operations.Infrastructure;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.SigiloPay.Infrastructure;
 using Nexus.Legacy.Payments.Application;
@@ -24,6 +22,10 @@ using Nexus.Legacy.Charges.Application;
 using Nexus.Legacy.Charges.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Accounts.Infrastructure;
+using Nexus.Actors;
+using Nexus.Actors.Contracts;
+using Nexus.Operations.Application;
+using Nexus.Operations.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -113,6 +115,7 @@ builder.Services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
 builder.Services.AddScoped<IAccountIdValidator, AccountIdValidator>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
+builder.Services.AddScoped<IAdministrator, Administrator>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, FrendzApiCredentialsRepository>();
 builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, SigiloPayApiCredentialsRepository>();
 builder.Services.AddScoped<IWintechApiCredentialsRepository, WintechApiCredentialsRepository>();

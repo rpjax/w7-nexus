@@ -1,11 +1,11 @@
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
-using Nexus.Legacy.Operations.Aggregates;
-using Nexus.Legacy.Operations.Application;
-using Nexus.Legacy.Operations.ErrorCodes;
-using Nexus.Operations.Application.Models;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
+using Nexus.Operations.ErrorCodes;
 using Nexus.Operations.Infrastructure;
+using Nexus.Tests.Payments;
 using Xunit;
 
 namespace Nexus.Tests.Operations;
@@ -59,14 +59,12 @@ public sealed class OperationServiceTests
     public async Task CreateOperationAsync_DescriptionMissing_AllowsNullDescription()
     {
         var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo);
+        var sut = new OperationService(repo, new FakeAccountIdValidator());
 
-        var result = await sut.CreateOperationAsync(new CreateOperationRequest
-        {
-            Name = "Operation A",
-            Description = null,
-            Operators = Array.Empty<string>()
-        });
+        var result = await sut.CreateOperationAsync(
+            name: "Operation A",
+            description: null,
+            operatorIds: Array.Empty<string>());
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
@@ -77,14 +75,13 @@ public sealed class OperationServiceTests
     public async Task CreateOperationAsync_NameTooLong_ReturnsError()
     {
         var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo);
+        var sut = new OperationService(repo, new FakeAccountIdValidator());
         var tooLongName = new string('A', Operation.MaxNameLength + 1);
 
-        var result = await sut.CreateOperationAsync(new CreateOperationRequest
-        {
-            Name = tooLongName,
-            Description = "desc"
-        });
+        var result = await sut.CreateOperationAsync(
+            name: tooLongName,
+            description: "desc",
+            operatorIds: Array.Empty<string>());
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.NameTooLong);
@@ -94,20 +91,18 @@ public sealed class OperationServiceTests
     public async Task CreateOperationAsync_NameAlreadyExists_IgnoresCaseAndSpaces()
     {
         var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo);
+        var sut = new OperationService(repo, new FakeAccountIdValidator());
 
-        var first = await sut.CreateOperationAsync(new CreateOperationRequest
-        {
-            Name = "My Operation",
-            Description = "x"
-        });
+        var first = await sut.CreateOperationAsync(
+            name: "My Operation",
+            description: "x",
+            operatorIds: Array.Empty<string>());
         Assert.True(first.IsSuccess);
 
-        var duplicate = await sut.CreateOperationAsync(new CreateOperationRequest
-        {
-            Name = "  my operation  ",
-            Description = "y"
-        });
+        var duplicate = await sut.CreateOperationAsync(
+            name: "  my operation  ",
+            description: "y",
+            operatorIds: Array.Empty<string>());
 
         Assert.True(duplicate.IsFailure);
         Assert.Contains(duplicate.Errors, e => e.Code == OperationErrorCodes.NameAlreadyExists);

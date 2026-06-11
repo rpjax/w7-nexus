@@ -1,11 +1,11 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Accounts.Application;
+using Nexus.Operations.Application;
 
 namespace Nexus.Legacy.Payments.Infrastructure;
 

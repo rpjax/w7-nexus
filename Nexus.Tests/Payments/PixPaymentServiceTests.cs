@@ -3,13 +3,13 @@ using Aidan.Mongo.Linq;
 using Nexus.Payments.Application.Models;
 using Nexus.Payments.Infrastructure;
 using Xunit;
-using Nexus.Legacy.Operations.Aggregates;
-using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
 
 namespace Nexus.Tests.Payments;
 

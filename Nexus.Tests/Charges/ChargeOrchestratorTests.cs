@@ -5,8 +5,6 @@ using Aidan.Mongo.Linq;
 using Nexus.Charges.Infrastructure;
 using Xunit;
 using Nexus.Legacy.Wintech.Application;
-using Nexus.Legacy.Operations.Aggregates;
-using Nexus.Legacy.Operations.Application;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
@@ -18,6 +16,8 @@ using Nexus.Legacy.SigiloPay.Application.Models;
 using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Legacy.Frendz.Application.Models;
 using Nexus.Legacy.Charges.Application.Models;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
 
 namespace Nexus.Tests.Charges;
 

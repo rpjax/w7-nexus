@@ -7,26 +7,26 @@ namespace Nexus.Actors.Contracts;
 public interface IOperationAdministrator
 {
     // operator management
-    Task<IResult<AddOperatorToOperationResponse>> AddOperatorToOperationAsync(
-        AddOperatorToOperationRequest request);
-    Task<IResult<RemoveOperatorFromOperationResponse>> RemoveOperatorFromOperationAsync(
-        RemoveOperatorFromOperationRequest request);
+    Task<IResult<AssignOperatorToOperationResponse>> AssignOperatorToOperationAsync(
+        AssignOperatorToOperationRequest request);
+    Task<IResult<UnassignOperatorFromOperationResponse>> UnassignOperatorFromOperationAsync(
+        UnassignOperatorFromOperationRequest request);
 
     // per strawman, per group, manual
     Task<IResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
         SetOperationGatewaySelectionStrategyRequest request);
-    Task<IResult<AddStrawManToOperationResponse>> AddStrawManToOperationAsync(
-        AddStrawManToOperationRequest request);
-    Task<IResult<RemoveStrawManFromOperationResponse>> RemoveStrawManFromOperationAsync(
-        RemoveStrawManFromOperationRequest request);
-    Task<IResult<AddGatewayAccountGroupToOperationResponse>> AddGatewayAccountGroupToOperationAsync(
-        AddGatewayAccountGroupToOperationRequest request);
-    Task<IResult<RemoveGatewayAccountGroupFromOperationResponse>> RemoveGatewayAccountGroupFromOperationAsync(
-        RemoveGatewayAccountGroupFromOperationRequest request);
-    Task<IResult<AddGatewayAccountToOperationResponse>> AddGatewayAccountToOperationAsync(
-        AddGatewayAccountToOperationRequest request);
-    Task<IResult<RemoveGatewayAccountFromOperationResponse>> RemoveGatewayAccountFromOperationAsync(
-        RemoveGatewayAccountFromOperationRequest request);
+    Task<IResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
+        AssignStrawManToOperationRequest request);
+    Task<IResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
+        UnassignStrawManFromOperationRequest request);
+    Task<IResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
+        AssignGatewayAccountGroupToOperationRequest request);
+    Task<IResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
+        UnassignGatewayAccountGroupFromOperationRequest request);
+    Task<IResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
+        AssignGatewayAccountToOperationRequest request);
+    Task<IResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
+        UnassignGatewayAccountFromOperationRequest request);
 
     // set profit share strategy
     Task<IResult<SetOperationProfitShareStrategyResponse>> SetOperationProfitShareStrategyAsync(

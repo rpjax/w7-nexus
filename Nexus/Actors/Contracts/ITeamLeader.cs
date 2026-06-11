@@ -8,26 +8,26 @@ namespace Nexus.Actors.Contracts;
 public interface ITeamLeader
 {
     // operator management
-    Task<IResult<AddOperatorToTeamResponse>> AddOperatorToTeamAsync(
-        AddOperatorToTeamRequest request);
-    Task<IResult<RemoveOperatorFromTeamResponse>> RemoveOperatorFromTeamAsync(
-        RemoveOperatorFromTeamRequest request);
+    Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+        AssignOperatorToTeamRequest request);
+    Task<IResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+        UnassignOperatorFromTeamRequest request);
 
     // per strawman, per group, manual
     Task<IResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
         SetTeamGatewaySelectionStrategyRequest request);
-    Task<IResult<AddStrawManToTeamResponse>> AddStrawManToTeamAsync(
-        AddStrawManToTeamRequest request);
-    Task<IResult<RemoveStrawManFromTeamResponse>> RemoveStrawManFromTeamAsync(
-        RemoveStrawManFromTeamRequest request);
-    Task<IResult<AddGatewayAccountGroupToTeamResponse>> AddGatewayAccountGroupToTeamAsync(
-        AddGatewayAccountGroupToTeamRequest request);
-    Task<IResult<RemoveGatewayAccountGroupFromTeamResponse>> RemoveGatewayAccountGroupFromTeamAsync(
-        RemoveGatewayAccountGroupFromTeamRequest request);
-    Task<IResult<AddGatewayAccountToTeamResponse>> AddGatewayAccountToTeamAsync(
-        AddGatewayAccountToTeamRequest request);
-    Task<IResult<RemoveGatewayAccountFromTeamResponse>> RemoveGatewayAccountFromTeamAsync(
-        RemoveGatewayAccountFromTeamRequest request);
+    Task<IResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
+        AssignStrawManToTeamRequest request);
+    Task<IResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
+        UnassignStrawManFromTeamRequest request);
+    Task<IResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
+        AssignGatewayAccountGroupToTeamRequest request);
+    Task<IResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
+        UnassignGatewayAccountGroupFromTeamRequest request);
+    Task<IResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
+        AssignGatewayAccountToTeamRequest request);
+    Task<IResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
+        UnassignGatewayAccountFromTeamRequest request);
 
     // set profit share strategy
     Task<IResult<SetTeamProfitShareStrategyResponse>> SetTeamProfitShareStrategyAsync(

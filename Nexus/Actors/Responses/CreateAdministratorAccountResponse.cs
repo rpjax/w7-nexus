@@ -1,3 +1,6 @@
 namespace Nexus.Actors.Responses;
 
-public class CreateAdministratorAccountResponse { }
+public class CreateAdministratorAccountResponse
+{
+
+}
