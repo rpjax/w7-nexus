@@ -1,4 +1,4 @@
-namespace Nexus.Operations.Application.Models;
+namespace Nexus.Operations.Presentation.Requests;
 
 public class SearchOperationsRequest
 {

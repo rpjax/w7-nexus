@@ -5,9 +5,9 @@ using Microsoft.AspNetCore.Mvc;
 
 using Aidan.Web.Controllers;
 using Nexus.Operations.Application.Services;
-using Nexus.Operations.Application.Models;
 using CreateOperationRequest = Nexus.Actors.Requests.CreateOperationRequest;
 using Nexus.Operations.Errors;
+using Nexus.Operations.Presentation.Requests;
 
 namespace Nexus.Operations.Presentation;
 
@@ -32,7 +32,7 @@ public class OperationController : WebController
             .Build();
 
     [HttpPost("search")]
-    public async Task<ActionResult> GetOperations([FromBody] Application.Models.SearchOperationsRequest? request)
+    public async Task<ActionResult> GetOperations([FromBody] SearchOperationsRequest? request)
     {
         request ??= new Application.Models.SearchOperationsRequest();
 
@@ -112,7 +112,7 @@ public class OperationController : WebController
 
     [HttpDelete("operations")]
     public async Task<ActionResult> DeleteOperationAsync(
-        [FromBody] Application.Models.DeleteOperationRequest? request)
+        [FromBody] DeleteOperationRequest? request)
     {
         if (request is null)
         {
