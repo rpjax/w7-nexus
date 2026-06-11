@@ -1243,3 +1243,229 @@ table.responsive-data td.cell-actions {
         justify-content: flex-start;
     }
 }
+
+.topbar-user {
+    max-width: 8rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--muted);
+    padding: 0 0.15rem;
+}
+
+.topbar-signout {
+    min-height: 2.15rem;
+}
+
+.auth-loading,
+.auth-screen {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: grid;
+    place-items: center;
+    padding: 1.25rem;
+}
+
+.auth-loading-card {
+    min-width: min(100%, 18rem);
+    text-align: center;
+    padding: 1.5rem;
+}
+
+.auth-loading-title {
+    margin: 0 0 0.35rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.auth-shell {
+    width: min(100%, 920px);
+    display: grid;
+    gap: 1.25rem;
+    align-items: center;
+}
+
+.auth-brand h1 {
+    margin: 0.2rem 0 0.55rem;
+    font-size: clamp(1.65rem, 4vw, 2.35rem);
+    letter-spacing: -0.03em;
+}
+
+.auth-kicker {
+    margin: 0;
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8eb4ff;
+}
+
+.auth-lead {
+    margin: 0;
+    max-width: 34rem;
+    line-height: 1.55;
+}
+
+.auth-card {
+    padding: 0;
+    overflow: hidden;
+}
+
+.auth-tabs {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: 1px solid var(--border);
+    background: rgba(8, 13, 26, 0.55);
+}
+
+.auth-tab {
+    border: 0;
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-weight: 600;
+    padding: 0.85rem 1rem;
+    cursor: pointer;
+}
+
+.auth-tab.is-active {
+    color: var(--text);
+    background: rgba(74, 134, 255, 0.12);
+    box-shadow: inset 0 -2px 0 var(--primary);
+}
+
+.auth-card-body {
+    padding: 1.25rem;
+}
+
+.auth-card-body h2 {
+    margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+}
+
+.auth-card-lead {
+    margin: 0 0 1rem;
+    line-height: 1.5;
+}
+
+.auth-form {
+    margin-top: 0.35rem;
+}
+
+.auth-account-type {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+.auth-account-type-btn {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: rgba(11, 19, 38, 0.55);
+    color: var(--muted);
+    font: inherit;
+    font-weight: 600;
+    padding: 0.62rem 0.75rem;
+    cursor: pointer;
+}
+
+.auth-account-type-btn.is-active {
+    color: var(--text);
+    border-color: rgba(74, 134, 255, 0.55);
+    background: rgba(74, 134, 255, 0.16);
+    box-shadow: inset 0 0 0 1px rgba(74, 134, 255, 0.22);
+}
+
+.auth-account-type-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.auth-submit {
+    margin-top: 0.25rem;
+    width: 100%;
+}
+
+@media (min-width: 840px) {
+    .auth-shell {
+        grid-template-columns: minmax(0, 1fr) minmax(22rem, 26rem);
+        gap: 2rem;
+    }
+}
+
+.notification-host {
+    position: fixed;
+    top: 0.85rem;
+    right: 0.85rem;
+    z-index: 130;
+    display: grid;
+    gap: 0.55rem;
+    width: min(calc(100vw - 1.7rem), 22rem);
+    pointer-events: none;
+}
+
+.notification {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.55rem;
+    align-items: start;
+    border-radius: 12px;
+    padding: 0.72rem 0.55rem 0.72rem 0.82rem;
+    border: 1px solid transparent;
+    box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+    pointer-events: auto;
+    animation: notification-in 0.18s ease-out;
+}
+
+.notification-message {
+    margin: 0;
+    line-height: 1.45;
+    font-size: 0.92rem;
+}
+
+.notification-dismiss {
+    border: 0;
+    background: transparent;
+    color: inherit;
+    opacity: 0.72;
+    cursor: pointer;
+    font-size: 1.15rem;
+    line-height: 1;
+    padding: 0.1rem 0.35rem;
+}
+
+.notification-dismiss:hover {
+    opacity: 1;
+}
+
+.notification-success {
+    color: #cdf4da;
+    background: rgba(17, 26, 47, 0.94);
+    border-color: rgba(101, 193, 141, 0.35);
+}
+
+.notification-error {
+    color: #ffd0da;
+    background: rgba(17, 26, 47, 0.94);
+    border-color: rgba(255, 95, 128, 0.38);
+}
+
+.notification-info {
+    color: #dce8ff;
+    background: rgba(17, 26, 47, 0.94);
+    border-color: rgba(74, 134, 255, 0.35);
+}
+
+@keyframes notification-in {
+    from {
+        opacity: 0;
+        transform: translateY(-0.35rem);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

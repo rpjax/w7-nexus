@@ -2,16 +2,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { createAccount, searchAccounts } from '../api/accounts';
 import type { AccountRow } from '../api/types';
 import { EmptyState } from '../components/EmptyState';
-import { Feedback } from '../components/Feedback';
+import { useNotifications } from '../notifications/NotificationContext';
 import { formatUtc, joinList, shortId } from '../utils/format';
 
 export function AccountsPage() {
+  const { notifyError, notifySuccess } = useNotifications();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<AccountRow[]>([]);
-  const [feedback, setFeedback] = useState('');
-  const [feedbackIsError, setFeedbackIsError] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
 
   const filteredRows = useMemo(() => {
@@ -23,12 +22,9 @@ export function AccountsPage() {
   }, [rows, search]);
 
   async function refresh() {
-    setFeedback('');
-    setFeedbackIsError(false);
     const result = await searchAccounts({ limit: 500, offset: 0, keyword: null });
     if (!result.ok) {
-      setFeedbackIsError(true);
-      setFeedback(result.error);
+      notifyError(result.error);
       setRows([]);
       return;
     }
@@ -41,21 +37,17 @@ export function AccountsPage() {
 
   async function handleCreate() {
     setCreateBusy(true);
-    setFeedback('');
-    setFeedbackIsError(false);
     try {
       if (!username.trim() || !password.trim()) {
-        setFeedbackIsError(true);
-        setFeedback('Usuário e senha são obrigatórios.');
+        notifyError('Usuário e senha são obrigatórios.');
         return;
       }
       const result = await createAccount(username.trim(), password);
       if (!result.ok) {
-        setFeedbackIsError(true);
-        setFeedback(result.error);
+        notifyError(result.error);
         return;
       }
-      setFeedback('Conta criada com sucesso.');
+      notifySuccess('Conta criada com sucesso.');
       setUsername('');
       setPassword('');
       await refresh();
@@ -72,8 +64,6 @@ export function AccountsPage() {
           <p className="muted page-lead">Contas do agregado <strong>Account</strong> — usuário, papéis e permissões persistidos no repositório.</p>
         </div>
       </section>
-
-      <Feedback message={feedback} isError={feedbackIsError} />
 
       <section className="card ops-card ops-create">
         <div className="card-title-row">

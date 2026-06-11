@@ -86,6 +86,7 @@ builder.Services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_cred
 
 builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
+builder.Services.Configure<AuthenticationOptions>(builder.Configuration.GetSection(AuthenticationOptions.SectionName));
 builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
@@ -158,6 +159,7 @@ builder.Services.AddScoped<IAccountCreator, AccountCreator>();
 builder.Services.AddScoped<IAccountUpdater, AccountUpdater>();
 
 // Authentication services
+builder.Services.AddSingleton<IAdministratorSignUpTokenService, AdministratorSignUpTokenService>();
 builder.Services.AddScoped<IJwtTokenService, JwtTokenService>();
 builder.Services.AddScoped<IUnauthenticatedUser, UnauthenticatedUser>();
 builder.Services.AddScoped<ISignUpService, SignUpService>();

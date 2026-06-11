@@ -3,14 +3,13 @@ import { Link } from 'react-router-dom';
 import { searchPayments } from '../api/payments';
 import type { PaymentRow } from '../api/types';
 import { EmptyState } from '../components/EmptyState';
-import { Feedback } from '../components/Feedback';
+import { useNotifications } from '../notifications/NotificationContext';
 import { formatUtc, shortId, shortTx } from '../utils/format';
 
 export function PaymentsListPage() {
+  const { notifyError } = useNotifications();
   const [search, setSearch] = useState('');
   const [rows, setRows] = useState<PaymentRow[]>([]);
-  const [feedback, setFeedback] = useState('');
-  const [feedbackIsError, setFeedbackIsError] = useState(false);
 
   const filteredRows = useMemo(() => {
     if (!search.trim()) return rows;
@@ -28,12 +27,9 @@ export function PaymentsListPage() {
   }, [rows, search]);
 
   async function refresh() {
-    setFeedback('');
-    setFeedbackIsError(false);
     const result = await searchPayments({ limit: 500, offset: 0, keyword: null });
     if (!result.ok) {
-      setFeedbackIsError(true);
-      setFeedback(result.error);
+      notifyError(result.error);
       setRows([]);
       return;
     }
@@ -52,8 +48,6 @@ export function PaymentsListPage() {
           <p className="muted page-lead">Registros do agregado <strong>Payment</strong> no repositório — busca por ID, operação, transação no gateway, operador ou laranja.</p>
         </div>
       </section>
-
-      <Feedback message={feedback} isError={feedbackIsError} />
 
       <section className="card ops-card">
         <div className="toolbar toolbar-tight toolbar-stack-mobile">

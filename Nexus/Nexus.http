@@ -1,4 +1,4 @@
-@Nexus_HostAddress = https://websete.localhost:7254
+@Nexus_HostAddress = https://websete.localhost
 
 GET {{Nexus_HostAddress}}/
 Accept: application/json

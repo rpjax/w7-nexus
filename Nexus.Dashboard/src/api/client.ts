@@ -1,8 +1,30 @@
+import { getAccessToken } from '../auth/tokenStore';
 import { readApiMessage, readJson } from './errors';
 
 type RequestOptions = {
   fallbackError?: string;
+  headers?: Record<string, string>;
 };
+
+function buildHeaders(initHeaders?: HeadersInit): HeadersInit {
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+
+  const accessToken = getAccessToken();
+  if (accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  if (initHeaders) {
+    const extra = new Headers(initHeaders);
+    extra.forEach((value, key) => {
+      headers[key] = value;
+    });
+  }
+
+  return headers;
+}
 
 async function request<T>(
   path: string,
@@ -10,8 +32,8 @@ async function request<T>(
   options?: RequestOptions,
 ): Promise<{ ok: true; data: T | null } | { ok: false; error: string; status: number }> {
   const response = await fetch(path, {
-    headers: { 'Content-Type': 'application/json', ...init.headers },
     ...init,
+    headers: buildHeaders(init.headers),
   });
 
   if (!response.ok) {
@@ -26,7 +48,11 @@ async function request<T>(
 
 export const apiClient = {
   post<T>(path: string, body: unknown, options?: RequestOptions) {
-    return request<T>(path, { method: 'POST', body: JSON.stringify(body) }, options);
+    return request<T>(path, {
+      method: 'POST',
+      body: JSON.stringify(body),
+      headers: options?.headers,
+    }, options);
   },
 
   put<T>(path: string, body: unknown, options?: RequestOptions) {

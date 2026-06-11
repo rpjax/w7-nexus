@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Outlet, useLocation } from 'react-router-dom';
+import { Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { NavMenu } from './NavMenu';
 
 function resolvePageTitle(pathname: string): string {
@@ -22,6 +23,8 @@ function resolvePageTitle(pathname: string): string {
 
 export function DashboardLayout() {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, signOut } = useAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
@@ -59,11 +62,16 @@ export function DashboardLayout() {
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </button>
-            <button type="button" className="icon-btn icon-btn-ghost" aria-label="Conta">
-              <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-                <circle cx="12" cy="7" r="4" />
-              </svg>
+            <span className="topbar-user" title={user?.username}>{user?.username ?? 'Conta'}</span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-small topbar-signout"
+              onClick={() => {
+                signOut();
+                navigate('/auth', { replace: true });
+              }}
+            >
+              Sair
             </button>
           </div>
         </header>

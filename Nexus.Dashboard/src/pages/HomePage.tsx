@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../auth/AuthContext';
 import { searchGatewayCredentials } from '../api/gateways';
 import { searchOperations } from '../api/operations';
 import { StatCard } from '../components/StatCard';
@@ -27,6 +28,7 @@ const defaultStat: CredentialStat = {
 };
 
 export function HomePage() {
+  const { user } = useAuth();
   const [operationsTotal, setOperationsTotal] = useState(0);
   const [frendz, setFrendz] = useState<CredentialStat>(defaultStat);
   const [sigiloPay, setSigiloPay] = useState<CredentialStat>(defaultStat);
@@ -70,7 +72,12 @@ export function HomePage() {
         <StatCard label="Credencial Frendz" value={frendz.status} caption={frendz.caption} tone={frendz.tone} />
         <StatCard label="Credencial SigiloPay" value={sigiloPay.status} caption={sigiloPay.caption} tone={sigiloPay.tone} />
         <StatCard label="Credencial Wintech" value={wintech.status} caption={wintech.caption} tone={wintech.tone} />
-        <StatCard label="Ambiente" value="Interno" caption="Painel sem autenticação (uso interno)" tone="warn" />
+        <StatCard
+          label="Sessão"
+          value={user?.username ?? '—'}
+          caption={user?.roles.length ? user.roles.join(', ') : 'Autenticado'}
+          tone="success"
+        />
       </section>
 
       <section className="card">

@@ -6,7 +6,7 @@ O dashboard Blazor original está arquivado em [`../Nexus.Dashboard.Legacy/`](..
 
 ## Executar
 
-1. Suba a API Nexus (`Nexus/Nexus.csproj`) — padrão `https://websete.localhost:7254/`.
+1. Suba a API Nexus (`Nexus/Nexus.csproj`) — padrão `https://websete.localhost/`.
 2. Instale dependências e inicie o dev server:
 
 ```bash
@@ -22,7 +22,7 @@ npm run dev
 Ajuste o alvo do proxy em `.env.development`:
 
 ```
-VITE_API_PROXY_TARGET=https://websete.localhost:7254
+VITE_API_PROXY_TARGET=https://websete.localhost
 ```
 
 Em produção, sirva o build (`npm run build`) atrás de um reverse proxy que encaminhe `/api` para a API Nexus.

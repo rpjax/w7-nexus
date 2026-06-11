@@ -12,7 +12,7 @@ import type { GatewayPrefix, KeyPairCredential, TokenCredential } from '../api/t
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { Feedback } from '../components/Feedback';
+import { useNotifications } from '../notifications/NotificationContext';
 import { maskKey, maskToken, shortId } from '../utils/format';
 
 type Variant = GatewayPrefix;
@@ -63,10 +63,9 @@ type GatewayCredentialsPageProps = {
 
 export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps) {
   const config = CONFIG[variant];
+  const { notifyError, notifySuccess } = useNotifications();
   const [credentials, setCredentials] = useState<CredentialRow[]>([]);
   const [search, setSearch] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [feedbackIsError, setFeedbackIsError] = useState(false);
   const [addBusy, setAddBusy] = useState(false);
   const [editBusy, setEditBusy] = useState(false);
   const [enableToggleBusyId, setEnableToggleBusyId] = useState<string | null>(null);
@@ -101,12 +100,9 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
   }, [credentials, search]);
 
   async function refresh() {
-    setFeedback('');
-    setFeedbackIsError(false);
     const result = await searchGatewayCredentials(variant, { limit: 999, offset: 0, keyword: null });
     if (!result.ok) {
-      setFeedbackIsError(true);
-      setFeedback(result.error);
+      notifyError(result.error);
       return;
     }
     const items = (result.data?.items ?? []).slice().sort((a, b) => a.name.localeCompare(b.name));
@@ -131,13 +127,10 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
 
   async function handleAdd() {
     setAddBusy(true);
-    setFeedback('');
-    setFeedbackIsError(false);
     try {
       if (config.mode === 'token') {
         if (!addToken.trim()) {
-          setFeedbackIsError(true);
-          setFeedback('O token é obrigatório.');
+          notifyError('O token é obrigatório.');
           return;
         }
         const result = await addTokenCredential(variant, {
@@ -147,14 +140,12 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
           enabled: addEnabled,
         });
         if (!result.ok) {
-          setFeedbackIsError(true);
-          setFeedback(result.error);
+          notifyError(result.error);
           return;
         }
       } else {
         if (!addPublicKey.trim() || !addSecretKey.trim()) {
-          setFeedbackIsError(true);
-          setFeedback('Chave pública e secreta são obrigatórias.');
+          notifyError('Chave pública e secreta são obrigatórias.');
           return;
         }
         const result = await addKeyPairCredential(variant, {
@@ -165,12 +156,11 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
           enabled: addEnabled,
         });
         if (!result.ok) {
-          setFeedbackIsError(true);
-          setFeedback(result.error);
+          notifyError(result.error);
           return;
         }
       }
-      setFeedback('Credencial adicionada com sucesso.');
+      notifySuccess('Credencial adicionada com sucesso.');
       setAddName('');
       setAddToken('');
       setAddPublicKey('');
@@ -189,14 +179,12 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
     try {
       const result = await setCredentialEnabled(variant, cred.id, enabled);
       if (!result.ok) {
-        setFeedbackIsError(true);
-        setFeedback(result.error);
+        notifyError(result.error);
         await refresh();
         return;
       }
       setCredentials((prev) => prev.map((c) => (c.id === cred.id ? { ...c, enabled } : c)));
-      setFeedbackIsError(false);
-      setFeedback(enabled ? 'Credencial habilitada para cobrança.' : 'Credencial desabilitada (não entra no orquestrador).');
+      notifySuccess(enabled ? 'Credencial habilitada para cobrança.' : 'Credencial desabilitada (não entra no orquestrador).');
     } finally {
       setEnableToggleBusyId(null);
     }
@@ -212,20 +200,15 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
       strawManId: cred.strawManId ?? null,
       enabled: cred.enabled,
     });
-    setFeedback('');
-    setFeedbackIsError(false);
   }
 
   async function handleUpdate() {
     if (!editing) return;
     setEditBusy(true);
-    setFeedback('');
-    setFeedbackIsError(false);
     try {
       if (config.mode === 'token') {
         if (!editing.token.trim()) {
-          setFeedbackIsError(true);
-          setFeedback('O token é obrigatório.');
+          notifyError('O token é obrigatório.');
           return;
         }
         const result = await updateTokenCredential(variant, {
@@ -236,14 +219,12 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
           enabled: editing.enabled,
         });
         if (!result.ok) {
-          setFeedbackIsError(true);
-          setFeedback(result.error);
+          notifyError(result.error);
           return;
         }
       } else {
         if (!editing.publicKey.trim() || !editing.secretKey.trim()) {
-          setFeedbackIsError(true);
-          setFeedback('Chave pública e secreta são obrigatórias.');
+          notifyError('Chave pública e secreta são obrigatórias.');
           return;
         }
         const result = await updateKeyPairCredential(variant, {
@@ -255,12 +236,11 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
           enabled: editing.enabled,
         });
         if (!result.ok) {
-          setFeedbackIsError(true);
-          setFeedback(result.error);
+          notifyError(result.error);
           return;
         }
       }
-      setFeedback('Credencial atualizada com sucesso.');
+      notifySuccess('Credencial atualizada com sucesso.');
       setEditing(null);
       await refresh();
     } finally {
@@ -271,11 +251,9 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
   async function confirmDelete() {
     setDeleteDialogOpen(false);
     if (!deleteId) return;
-    setFeedback('');
-    setFeedbackIsError(false);
     const result = await deleteCredential(variant, deleteId);
-    setFeedbackIsError(!result.ok);
-    setFeedback(result.ok ? 'Credencial excluída com sucesso.' : result.error);
+    if (result.ok) notifySuccess('Credencial excluída com sucesso.');
+    else notifyError(result.error);
     setDeleteId('');
     setEditing(null);
     await refresh();
@@ -291,8 +269,6 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
         <h1>{config.title}</h1>
         <p className="muted page-lead">{config.lead}</p>
       </section>
-
-      <Feedback message={feedback} isError={feedbackIsError} />
 
       <section className="card ops-card">
         <div className="card-title-row">

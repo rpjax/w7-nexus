@@ -8,30 +8,24 @@ namespace Nexus.Controllers.Authentication;
 [Route("api/authentication")]
 public class AuthenticationController : NexusController
 {
-    const string SignUpAsAdministratorToken = "";
-
     private ISignInService _signInService { get; }
     private ISignUpService _signUpService { get; }
+    private IAdministratorSignUpTokenService _administratorSignUpTokenService { get; }
 
     public AuthenticationController(
         ISignInService signInService,
-        ISignUpService signUpService)
+        ISignUpService signUpService,
+        IAdministratorSignUpTokenService administratorSignUpTokenService)
     {
         _signInService = signInService;
         _signUpService = signUpService;
+        _administratorSignUpTokenService = administratorSignUpTokenService;
     }
 
     [HttpPost("sign-up/administrator")]
     public async Task<ActionResult> SignUpAsAdministratorAsync([FromBody] SignUpRequest request)
     {
-        var result = await _signUpService.SignUpAsAdministratorAsync(request);
-        return ToResponse(result);
-    }
-
-    [HttpPost("sign-up/operator")]
-    public async Task<ActionResult> SignUpAsOperatorAsync([FromBody] SignUpRequest request)
-    {
-        if (Request.Headers["Authorization"] != SignUpAsAdministratorToken)
+        if (!_administratorSignUpTokenService.IsAuthorized(Request.Headers.Authorization))
         {
             return ProblemResponse(401, Error.Create()
                 .WithCode("Authentication.UNAUTHORIZED")
@@ -39,6 +33,13 @@ public class AuthenticationController : NexusController
                 .Build());
         }
 
+        var result = await _signUpService.SignUpAsAdministratorAsync(request);
+        return ToResponse(result);
+    }
+
+    [HttpPost("sign-up/operator")]
+    public async Task<ActionResult> SignUpAsOperatorAsync([FromBody] SignUpRequest request)
+    {
         var result = await _signUpService.SignUpAsOperatorAsync(request);
         return ToResponse(result);
     }

@@ -16,13 +16,14 @@ import type { GatewayCredentialPickerRow, OperationRow } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
-import { Feedback } from '../components/Feedback';
 import { GatewayCredentialPickerModal } from '../components/GatewayCredentialPickerModal';
+import { useNotifications } from '../notifications/NotificationContext';
 import { formatDateTime, shortId } from '../utils/format';
 
 const PAGE_SIZE = 20;
 
 export function OperationsPage() {
+  const { notifyError, notifySuccess } = useNotifications();
   const [createName, setCreateName] = useState('');
   const [createDescription, setCreateDescription] = useState('');
   const [createInitialOperatorIds, setCreateInitialOperatorIds] = useState<string[]>([]);
@@ -31,8 +32,6 @@ export function OperationsPage() {
 
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [feedback, setFeedback] = useState('');
-  const [feedbackIsError, setFeedbackIsError] = useState(false);
   const [items, setItems] = useState<OperationRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -106,8 +105,7 @@ export function OperationsPage() {
       keyword: keyword.trim() || null,
     });
     if (!result.ok) {
-      setFeedbackIsError(true);
-      setFeedback(result.error);
+      notifyError(result.error);
       return;
     }
     setTotalItems(result.data?.total ?? 0);
@@ -139,16 +137,13 @@ export function OperationsPage() {
 
   async function handleCreate() {
     setCreateBusy(true);
-    setFeedback('');
-    setFeedbackIsError(false);
     try {
       const result = await createOperation(createName, createDescription, createInitialOperatorIds);
       if (!result.ok) {
-        setFeedbackIsError(true);
-        setFeedback(result.error);
+        notifyError(result.error);
         return;
       }
-      setFeedback('Operação criada com sucesso.');
+      notifySuccess('Operação criada com sucesso.');
       setCreateName('');
       setCreateDescription('');
       setCreateInitialOperatorIds([]);
@@ -192,11 +187,10 @@ export function OperationsPage() {
     if (!deleteOperationId) return;
     const result = await deleteOperation(deleteOperationId);
     if (!result.ok) {
-      setFeedbackIsError(true);
-      setFeedback(result.error);
+      notifyError(result.error);
       return;
     }
-    setFeedback('Operação excluída com sucesso.');
+    notifySuccess('Operação excluída com sucesso.');
     if (manageOperation?.id === deleteOperationId) closeManageModal();
     setDeleteOperationId('');
     setCurrentPage(1);
@@ -209,8 +203,8 @@ export function OperationsPage() {
   ) {
     if (!manageOperation) return;
     const result = await action();
-    setFeedbackIsError(!result.ok);
-    setFeedback(result.ok ? successMessage : result.error);
+    if (result.ok) notifySuccess(successMessage);
+    else notifyError(result.error);
     await load(currentPage, search, manageOperation.id);
   }
 
@@ -256,8 +250,6 @@ export function OperationsPage() {
           </button>
         </div>
       </section>
-
-      <Feedback message={feedback} isError={feedbackIsError} />
 
       {manageModalOpen && manageOperation ? (
         <div className="dialog-backdrop dialog-backdrop--modal" onClick={closeManageModal}>
@@ -353,8 +345,8 @@ export function OperationsPage() {
                           setGatewayCredBusy(true);
                           void enableManualGatewayCredentials(manageOperation.id)
                             .then((r) => {
-                              setFeedbackIsError(!r.ok);
-                              setFeedback(r.ok ? 'Seleção manual de credenciais ativada.' : r.error);
+                              if (r.ok) notifySuccess('Seleção manual de credenciais ativada.');
+                              else notifyError(r.error);
                               return load(currentPage, query, manageOperation.id);
                             })
                             .finally(() => setGatewayCredBusy(false));
@@ -373,8 +365,8 @@ export function OperationsPage() {
                               setGatewayCredBusy(true);
                               void disableManualGatewayCredentials(manageOperation.id)
                                 .then((r) => {
-                                  setFeedbackIsError(!r.ok);
-                                  setFeedback(r.ok ? 'Seleção por laranjas restaurada; lista de credenciais limpa.' : r.error);
+                                  if (r.ok) notifySuccess('Seleção por laranjas restaurada; lista de credenciais limpa.');
+                                  else notifyError(r.error);
                                   return load(currentPage, query, manageOperation.id);
                                 })
                                 .finally(() => setGatewayCredBusy(false));
@@ -548,8 +540,8 @@ export function OperationsPage() {
           setGatewayCredBusy(true);
           void addGatewayCredential(manageOperation.id, row.id)
             .then((r) => {
-              setFeedbackIsError(!r.ok);
-              setFeedback(r.ok ? 'Credencial adicionada à operação.' : r.error);
+              if (r.ok) notifySuccess('Credencial adicionada à operação.');
+              else notifyError(r.error);
               if (!r.ok) {
                 setGatewayCredentialLabels((prev) => {
                   const next = { ...prev };
