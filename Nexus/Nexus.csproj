@@ -28,7 +28,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Legacy\Wintech\" />
     <Folder Include="Operators\" />
   </ItemGroup>
 

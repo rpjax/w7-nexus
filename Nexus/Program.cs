@@ -9,14 +9,8 @@ using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
 using Nexus.Dashboard;
 using Nexus.AppHost;
-using Nexus.Legacy.Wintech.Application;
-using Nexus.Legacy.Wintech.Infrastructure;
-using Nexus.Legacy.SigiloPay.Application;
-using Nexus.Legacy.SigiloPay.Infrastructure;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.Infrastructure;
-using Nexus.Legacy.Frendz.Application;
-using Nexus.Legacy.Frendz.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Actors;
@@ -24,8 +18,14 @@ using Nexus.Actors.Contracts;
 using Nexus.Operations.Application;
 using Nexus.Operations.Infrastructure;
 using Nexus.Database.Models;
-using Nexus.Charges.Application;
-using Nexus.Charges.Infrastructure;
+using Nexus.Gateways.Wintech.Application;
+using Nexus.Gateways.SigiloPay.Infrastructure;
+using Nexus.Gateways.Frendz.Application;
+using Nexus.Gateways.Application;
+using Nexus.Gateways.Infrastructure;
+using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Gateways.Frendz.Infrastructure;
+using Nexus.Gateways.Wintech.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
