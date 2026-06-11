@@ -7,8 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Nexus.Gateways.Wintech.Application;
 using Nexus.Gateways.Wintech.Application.Models;
 using Nexus.Gateways.Wintech.ErrorCodes;
-using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Presentation;
+using Nexus.Payments.Aggregates;
 
 namespace Nexus.Gateways.Wintech.Presentation;
 

@@ -1,15 +1,15 @@
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
-using Nexus.Payments.Application.Models;
-using Nexus.Payments.Infrastructure;
+using Nexus.Legacy.Payments.Application.Models;
+using Nexus.Legacy.Payments.Infrastructure;
 using Xunit;
-using Nexus.Legacy.Payments.Aggregates;
-using Nexus.Legacy.Payments.Application;
-using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
+using Nexus.Payments.Aggregates;
+using Nexus.Payments.Application;
+using Nexus.Payments.ErrorCodes;
 
 namespace Nexus.Tests.Payments;
 

@@ -2,7 +2,7 @@ using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Accounts.Application;
 using Xunit;
-using Nexus.Legacy.Accounts.Infrastructure;
+
 
 namespace Nexus.Tests.Accounts;
 

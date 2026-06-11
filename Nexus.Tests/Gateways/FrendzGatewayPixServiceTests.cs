@@ -1,8 +1,8 @@
 using Nexus.AppHost;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Infrastructure;
-using Nexus.Frendz.Application.Models;
-using Nexus.Frendz.Infrastructure;
+using Nexus.Gateways.Frendz.Application.Models;
+using Nexus.Gateways.Frendz.Infrastructure;
 using Xunit;
 
 namespace Nexus.Tests.Gateways;

@@ -333,11 +333,21 @@ public sealed class TeamService : ITeamService
         if (validation is not null)
             return validation;
 
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
+                .WithMessage("Gateway credentials group ID is required")
+                .Build());
+        }
+
+        var normalizedGroupId = groupId.Trim();
+
         var team = FindTeam(normalizedTeamId);
         if (team is null)
             return NotFoundResult(normalizedTeamId);
 
-        var result = team.UnassignGatewayCredentialsGroup(groupId);
+        var result = team.UnassignGatewayCredentialsGroup(normalizedGroupId);
         if (result.IsFailure)
             return result;
 

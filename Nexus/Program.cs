@@ -1,5 +1,4 @@
 using Aidan.Mongo.Extensions;
-using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
 using MongoDB.Bson;
@@ -7,10 +6,7 @@ using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Hosting;
-using Nexus.Dashboard;
 using Nexus.AppHost;
-using Nexus.Legacy.Payments.Application;
-using Nexus.Legacy.Payments.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Actors;
@@ -26,6 +22,8 @@ using Nexus.Gateways.Infrastructure;
 using Nexus.Gateways.SigiloPay.Application;
 using Nexus.Gateways.Frendz.Infrastructure;
 using Nexus.Gateways.Wintech.Infrastructure;
+using Nexus.Payments.Application;
+using Nexus.Payments.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -44,45 +42,6 @@ builder.Services.AddDataProtection()
 
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
-builder.Services.AddRazorComponents()
-    .AddInteractiveServerComponents();
-
-// HttpClient for relative /api/... calls from the dashboard. API controllers must not use
-// NavigationManager (Blazor-only); use the current request as base when available.
-builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped(sp =>
-{
-    var env = sp.GetRequiredService<IWebHostEnvironment>();
-    HttpClient httpClient;
-    if (env.IsDevelopment())
-    {
-        var handler = new HttpClientHandler
-        {
-            ServerCertificateCustomValidationCallback =
-                HttpClientHandler.DangerousAcceptAnyServerCertificateValidator
-        };
-        httpClient = new HttpClient(handler);
-    }
-    else
-    {
-        httpClient = new HttpClient();
-    }
-
-    var httpContext = sp.GetRequiredService<IHttpContextAccessor>().HttpContext;
-    if (httpContext != null)
-    {
-        var request = httpContext.Request;
-        var baseUrl = $"{request.Scheme}://{request.Host}{request.PathBase}/";
-        httpClient.BaseAddress = new Uri(baseUrl);
-    }
-    else
-    {
-        var navigationManager = sp.GetRequiredService<NavigationManager>();
-        httpClient.BaseAddress = new Uri(navigationManager.BaseUri);
-    }
-
-    return httpClient;
-});
 
 // Database
 var mongo = builder.Configuration.GetSection("MongoDB");
@@ -175,14 +134,9 @@ if (app.Environment.IsDevelopment())
 
 app.UseCors();
 app.UseHttpsRedirection();
-app.UseStaticFiles();
-app.UseAntiforgery();
-
 app.MapGet("/", () => Results.Ok("Nexus API is running"));
 app.MapHub<PaymentStatusHub>("/hubs/payment-status");
 app.MapControllers();
-app.MapRazorComponents<App>()
-    .AddInteractiveServerRenderMode();
 
 app.Run();
 

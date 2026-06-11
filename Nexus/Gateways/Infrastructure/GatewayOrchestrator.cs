@@ -1,10 +1,8 @@
 using Aidan.Core.Errors;
+using Aidan.Core.Linq;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Legacy.Payments.Application.Models;
-using Nexus.Legacy.Payments.Aggregates;
-using Nexus.Legacy.Payments.Application;
-using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Gateways.Wintech.Application;
@@ -12,6 +10,9 @@ using Nexus.Gateways.Application;
 using Nexus.Gateways.Frendz.Application;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Payments.Aggregates;
+using Nexus.Payments.Application;
+using Nexus.Payments.ErrorCodes;
 
 namespace Nexus.Gateways.Infrastructure;
 
@@ -237,9 +238,9 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         if (groupIds.Length == 0)
             return Array.Empty<string>();
 
-        var groups = await _gatewayCredentialsGroupRepository.AsQueryable()
-            .Where(g => groupIds.Contains(g.Id))
-            .ToArrayAsync();
+        var groups = await MaterializeAsync(
+            _gatewayCredentialsGroupRepository.AsQueryable()
+                .Where(g => groupIds.Contains(g.Id)));
 
         return groups
             .SelectMany(g => g.GatewayCredentialsIds)
@@ -247,19 +248,16 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             .ToArray();
     }
 
-    private static bool MatchesTeamGatewaySelection(
-        Team team,
-        string[] allowedCredentialIds,
-        string[] strawmanIds,
-        string credentialId,
-        string? strawManId)
+    private static async Task<T[]> MaterializeAsync<T>(IAsyncQueryable<T> query)
     {
-        return team.GatewaySelectionStrategy switch
+        try
         {
-            GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
-                => allowedCredentialIds.Contains(credentialId),
-            _ => strawManId is null || strawmanIds.Contains(strawManId)
-        };
+            return await query.ToArrayAsync();
+        }
+        catch (ArgumentException)
+        {
+            return query.AsEnumerable().ToArray();
+        }
     }
 
     private async Task<GatewayServiceProvider[]> GetFrendzGatewayProvidersAsync(
@@ -268,13 +266,12 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     {
         var strawmanIds = team.StrawManIds.ToArray();
 
-        var credentials = await _frendzApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled)
-            .ToArrayAsync();
+        var query = _frendzApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
+        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
+            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 
-        credentials = credentials
-            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
-            .ToArray();
+        var credentials = await MaterializeAsync(query);
 
         var providers = new List<GatewayServiceProvider>();
 
@@ -297,13 +294,12 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     {
         var strawmanIds = team.StrawManIds.ToArray();
 
-        var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled)
-            .ToArrayAsync();
+        var query = _sigiloPayApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
+        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
+            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 
-        credentials = credentials
-            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
-            .ToArray();
+        var credentials = await MaterializeAsync(query);
 
         var providers = new List<GatewayServiceProvider>();
 
@@ -326,13 +322,12 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     {
         var strawmanIds = team.StrawManIds.ToArray();
 
-        var credentials = await _wintechApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled)
-            .ToArrayAsync();
+        var query = _wintechApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
+        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
+            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 
-        credentials = credentials
-            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
-            .ToArray();
+        var credentials = await MaterializeAsync(query);
 
         var providers = new List<GatewayServiceProvider>();
 

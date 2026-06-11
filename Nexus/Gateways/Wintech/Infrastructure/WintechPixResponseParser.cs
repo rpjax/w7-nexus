@@ -1,6 +1,6 @@
 using System.Text.Json;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Legacy.Payments.Aggregates;
+using Nexus.Payments.Aggregates;
 
 namespace Nexus.Gateways.Wintech.Infrastructure;
 

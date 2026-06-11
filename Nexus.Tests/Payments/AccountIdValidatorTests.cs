@@ -1,5 +1,5 @@
 using Nexus.Accounts.Aggregates;
-using Nexus.Payments.Infrastructure;
+using Nexus.Accounts.Infrastructure;
 using Nexus.Tests.Accounts;
 using Xunit;
 

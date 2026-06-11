@@ -1,4 +1,4 @@
-using Nexus.Legacy.Payments.ErrorCodes;
+using Nexus.Payments.ErrorCodes;
 using Xunit;
 
 namespace Nexus.Tests.Payments;

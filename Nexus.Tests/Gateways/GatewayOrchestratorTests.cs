@@ -4,10 +4,6 @@ using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Gateways.Infrastructure;
 using Xunit;
-using Nexus.Legacy.Payments.Aggregates;
-using Nexus.Legacy.Payments.Application;
-using Nexus.Legacy.Payments.ErrorCodes;
-using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Database.Models;
@@ -20,6 +16,10 @@ using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.SigiloPay.Application;
+using Nexus.Payments.Aggregates;
+using Nexus.Payments.Application;
+using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Application.Models;
 
 namespace Nexus.Tests.Gateways;
 

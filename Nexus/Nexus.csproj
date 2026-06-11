@@ -16,6 +16,10 @@
 
   <ItemGroup>
     <Compile Remove="FusionPay\**\*.cs" />
+    <Compile Remove="Legacy\Dashboard\**\*.cs" />
+    <Content Remove="Legacy\Dashboard\**" />
+    <RazorCompile Remove="Legacy\Dashboard\**" />
+    <None Include="Legacy\Dashboard\**" />
     <Compile Remove="PaymentGateways\**" />
     <Content Remove="PaymentGateways\**" />
     <EmbeddedResource Remove="PaymentGateways\**" />

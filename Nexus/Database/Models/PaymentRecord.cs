@@ -1,6 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Nexus.Legacy.Payments.Aggregates;
+using Nexus.Payments.Aggregates;
 
 namespace Nexus.Database.Models;
 
