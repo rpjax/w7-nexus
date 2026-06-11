@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Aggregates;
@@ -30,19 +30,19 @@ public sealed class OperationService : IOperationService
         if (string.IsNullOrWhiteSpace(name))
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.NameInvalid)
-                .WithMessage("Operation name is required")
+                .WithMessage("O nome da operação é obrigatório.")
                 .Build());
 
         if (!string.IsNullOrWhiteSpace(name) && name.Length > Operation.MaxNameLength)
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.NameTooLong)
-                .WithMessage($"Operation name must be at most {Operation.MaxNameLength} characters")
+                .WithMessage($"O nome da operação pode ter no máximo {Operation.MaxNameLength} caracteres.")
                 .Build());
 
         if (!string.IsNullOrWhiteSpace(description) && description.Length > Operation.MaxDescriptionLength)
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.DescriptionTooLong)
-                .WithMessage($"Operation description must be at most {Operation.MaxDescriptionLength} characters")
+                .WithMessage($"A descrição da operação pode ter no máximo {Operation.MaxDescriptionLength} caracteres.")
                 .Build());
 
         if (builder.ContainsError)
@@ -55,7 +55,7 @@ public sealed class OperationService : IOperationService
         {
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.NameAlreadyExists)
-                .WithMessage($"Operation name '{name}' is already in use")
+                .WithMessage($"O nome de operação '{name}' já está em uso. Escolha outro nome.")
                 .Build());
             return builder.Build();
         }
@@ -86,7 +86,7 @@ public sealed class OperationService : IOperationService
             administratorId,
             OperationErrorCodes.AdministratorInvalid,
             OperationErrorCodes.AdministratorAccountNotFound,
-            "Administrator");
+            "administrador");
         if (accountValidation is not null)
             return accountValidation;
 
@@ -112,7 +112,7 @@ public sealed class OperationService : IOperationService
         {
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.AdministratorInvalid)
-                .WithMessage("Administrator ID is required")
+                .WithMessage("O ID do administrador é obrigatório.")
                 .Build());
         }
 
@@ -155,7 +155,7 @@ public sealed class OperationService : IOperationService
         {
             return Result.Failure(Error.Create()
                 .WithCode(invalidCode)
-                .WithMessage($"{label} ID cannot be empty")
+                .WithMessage($"O ID de {label} não pode estar vazio.")
                 .Build());
         }
 
@@ -164,7 +164,7 @@ public sealed class OperationService : IOperationService
         {
             return Result.Failure(Error.Create()
                 .WithCode(notFoundCode)
-                .WithMessage($"{label} account '{normalizedAccountId}' was not found")
+                .WithMessage($"A conta de {label} '{normalizedAccountId}' não foi encontrada.")
                 .Build());
         }
 
@@ -179,7 +179,7 @@ public sealed class OperationService : IOperationService
         {
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.OperationIdInvalid)
-                .WithMessage("Operation ID is required")
+                .WithMessage("O ID da operação é obrigatório.")
                 .Build());
         }
 
@@ -190,7 +190,7 @@ public sealed class OperationService : IOperationService
     {
         return Result.Failure(Error.Create()
             .WithCode(OperationErrorCodes.OperationNotFound)
-            .WithMessage($"Operation '{operationId}' was not found")
+            .WithMessage($"A operação '{operationId}' não foi encontrada.")
             .Build());
     }
 }

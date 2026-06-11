@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
 using Nexus.Accounts.Application.Services.Contracts;
@@ -48,7 +48,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.NameTooLong)
-                .WithMessage($"Name must be at most {MaxNameLength} characters.")
+                .WithMessage($"O nome pode ter no máximo {MaxNameLength} caracteres.")
                 .Build());
         }
 
@@ -57,14 +57,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyRequired)
-                .WithMessage("Public key is required.")
+                .WithMessage("A chave pública é obrigatória.")
                 .Build());
         }
         else if (publicKey.Length > MaxKeyLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyTooLong)
-                .WithMessage($"Public key must be at most {MaxKeyLength} characters.")
+                .WithMessage($"A chave pública pode ter no máximo {MaxKeyLength} caracteres.")
                 .Build());
         }
 
@@ -73,14 +73,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyRequired)
-                .WithMessage("Secret key is required.")
+                .WithMessage("A chave secreta é obrigatória.")
                 .Build());
         }
         else if (secretKey.Length > MaxKeyLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyTooLong)
-                .WithMessage($"Secret key must be at most {MaxKeyLength} characters.")
+                .WithMessage($"A chave secreta pode ter no máximo {MaxKeyLength} caracteres.")
                 .Build());
         }
 
@@ -92,14 +92,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManIdInvalid)
-                    .WithMessage("Straw man id cannot be empty when provided.")
+                    .WithMessage("O ID do laranja não pode estar vazio quando informado.")
                     .Build());
             }
             else if (sm.Length > MaxStrawManIdLength)
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManIdTooLong)
-                    .WithMessage($"Straw man id must be at most {MaxStrawManIdLength} characters.")
+                    .WithMessage($"O ID do laranja pode ter no máximo {MaxStrawManIdLength} caracteres.")
                     .Build());
             }
             else
@@ -115,7 +115,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyAlreadyExists)
-                .WithMessage("This public key is already registered.")
+                .WithMessage("Esta chave pública já está cadastrada.")
                 .Build());
         }
 
@@ -123,7 +123,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyAlreadyExists)
-                .WithMessage("This secret key is already registered.")
+                .WithMessage("Esta chave secreta já está cadastrada.")
                 .Build());
         }
 
@@ -135,7 +135,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManAccountNotFound)
-                    .WithMessage($"Straw man account '{normalizedStrawMan}' was not found.")
+                    .WithMessage($"A conta laranja '{normalizedStrawMan}' não foi encontrada.")
                     .Build());
             }
         }
@@ -168,7 +168,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -177,7 +177,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.NameTooLong)
-                .WithMessage($"Name must be at most {MaxNameLength} characters.")
+                .WithMessage($"O nome pode ter no máximo {MaxNameLength} caracteres.")
                 .Build());
         }
 
@@ -186,14 +186,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyRequired)
-                .WithMessage("Public key is required.")
+                .WithMessage("A chave pública é obrigatória.")
                 .Build());
         }
         else if (publicKey.Length > MaxKeyLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyTooLong)
-                .WithMessage($"Public key must be at most {MaxKeyLength} characters.")
+                .WithMessage($"A chave pública pode ter no máximo {MaxKeyLength} caracteres.")
                 .Build());
         }
 
@@ -202,14 +202,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyRequired)
-                .WithMessage("Secret key is required.")
+                .WithMessage("A chave secreta é obrigatória.")
                 .Build());
         }
         else if (secretKey.Length > MaxKeyLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyTooLong)
-                .WithMessage($"Secret key must be at most {MaxKeyLength} characters.")
+                .WithMessage($"A chave secreta pode ter no máximo {MaxKeyLength} caracteres.")
                 .Build());
         }
 
@@ -221,14 +221,14 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManIdInvalid)
-                    .WithMessage("Straw man id cannot be empty when provided.")
+                    .WithMessage("O ID do laranja não pode estar vazio quando informado.")
                     .Build());
             }
             else if (sm.Length > MaxStrawManIdLength)
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManIdTooLong)
-                    .WithMessage($"Straw man id must be at most {MaxStrawManIdLength} characters.")
+                    .WithMessage($"O ID do laranja pode ter no máximo {MaxStrawManIdLength} caracteres.")
                     .Build());
             }
             else
@@ -244,7 +244,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.PublicKeyAlreadyExists)
-                .WithMessage("This public key is already registered for another credential.")
+                .WithMessage("Esta chave pública já está cadastrada em outra credencial.")
                 .Build());
         }
 
@@ -252,7 +252,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(SigiloPayErrorCodes.SecretKeyAlreadyExists)
-                .WithMessage("This secret key is already registered for another credential.")
+                .WithMessage("Esta chave secreta já está cadastrada em outra credencial.")
                 .Build());
         }
 
@@ -264,7 +264,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(SigiloPayErrorCodes.StrawManAccountNotFound)
-                    .WithMessage($"Straw man account '{normalizedStrawMan}' was not found.")
+                    .WithMessage($"A conta laranja '{normalizedStrawMan}' não foi encontrada.")
                     .Build());
             }
         }
@@ -277,7 +277,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{request.Id}' was not found.")
+                .WithMessage($"A credencial '{request.Id}' não foi encontrada.")
                 .Build());
         }
 
@@ -304,7 +304,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -313,7 +313,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{request.Id}' was not found.")
+                .WithMessage($"A credencial '{request.Id}' não foi encontrada.")
                 .Build());
         }
 
@@ -337,7 +337,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -346,7 +346,7 @@ public class SigiloPayApiKeysService : ISigiloPayApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(SigiloPayErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{id}' was not found.")
+                .WithMessage($"A credencial '{id}' não foi encontrada.")
                 .Build());
         }
 

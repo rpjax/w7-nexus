@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
@@ -45,7 +45,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
             return Task.FromResult<IAccessEvaluationResult<IOperationAdministrator>>(
                 AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                     .WithCode(OperationErrorCodes.OperationIdInvalid)
-                    .WithMessage("Operation ID is required.")
+                    .WithMessage("O ID da operação é obrigatório.")
                     .Build()));
         }
 
@@ -60,7 +60,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamIdInvalid)
-                .WithMessage("Team ID is required.")
+                .WithMessage("O ID da equipe é obrigatório.")
                 .Build());
         }
 
@@ -72,7 +72,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamNotFound)
-                .WithMessage($"Team '{teamId.Trim()}' was not found.")
+                .WithMessage($"A equipe '{teamId.Trim()}' não foi encontrada.")
                 .Build());
         }
 
@@ -88,7 +88,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.IdentityRequired)
-                .WithMessage("An authenticated identity is required.")
+                .WithMessage("É necessário estar autenticado para realizar esta ação.")
                 .Build());
         }
 
@@ -99,7 +99,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.AccountIdClaimMissing)
-                .WithMessage("Account identity claim is missing.")
+                .WithMessage("A identidade da conta não foi encontrada no token de acesso.")
                 .Build());
         }
 
@@ -111,7 +111,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.AccountNotFound)
-                .WithMessage($"Account '{accountId}' was not found.")
+                .WithMessage($"A conta '{accountId}' não foi encontrada.")
                 .Build());
         }
 
@@ -123,7 +123,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.OperationNotFound)
-                .WithMessage($"Operation '{operationId}' was not found.")
+                .WithMessage($"A operação '{operationId}' não foi encontrada.")
                 .Build());
         }
 
@@ -131,7 +131,7 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         {
             return AccessEvaluationResult<IOperationAdministrator>.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotOperationAdministrator)
-                .WithMessage("Operation administrator access is required.")
+                .WithMessage("Acesso de administrador de operação necessário para realizar esta ação.")
                 .Build());
         }
 

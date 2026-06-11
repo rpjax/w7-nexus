@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Gateways.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Gateways.Application.Models;
@@ -29,13 +29,13 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         if (string.IsNullOrWhiteSpace(name))
             builder.WithError(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.NameInvalid)
-                .WithMessage("Group name is required")
+                .WithMessage("O nome do grupo é obrigatório.")
                 .Build());
 
         if (!string.IsNullOrWhiteSpace(name) && name.Length > GatewayCredentialsGroup.MaxNameLength)
             builder.WithError(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.NameTooLong)
-                .WithMessage($"Group name must be at most {GatewayCredentialsGroup.MaxNameLength} characters")
+                .WithMessage($"O nome do grupo pode ter no máximo {GatewayCredentialsGroup.MaxNameLength} caracteres.")
                 .Build());
 
         if (builder.ContainsError)
@@ -48,7 +48,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         {
             builder.WithError(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.NameAlreadyExists)
-                .WithMessage($"Group name '{name}' is already in use")
+                .WithMessage($"O nome de grupo '{name}' já está em uso. Escolha outro nome.")
                 .Build());
             return builder.Build();
         }
@@ -100,7 +100,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         {
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID is required")
+                .WithMessage("O ID da credencial de gateway é obrigatório.")
                 .Build());
         }
 
@@ -139,7 +139,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         {
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID is required")
+                .WithMessage("O ID da credencial de gateway é obrigatório.")
                 .Build());
         }
 
@@ -148,7 +148,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         {
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialNotFound)
-                .WithMessage($"Gateway credential '{normalized}' was not found")
+                .WithMessage($"A credencial de gateway '{normalized}' não foi encontrada.")
                 .Build());
         }
 
@@ -163,7 +163,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
         {
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GroupIdInvalid)
-                .WithMessage("Group ID is required")
+                .WithMessage("O ID do grupo é obrigatório.")
                 .Build());
         }
 
@@ -174,7 +174,7 @@ public sealed class GatewayCredentialsGroupService : IGatewayCredentialsGroupSer
     {
         return Result.Failure(Error.Create()
             .WithCode(GatewayCredentialsGroupErrorCodes.GroupNotFound)
-            .WithMessage($"Gateway credentials group '{groupId}' was not found")
+            .WithMessage($"O grupo de credenciais '{groupId}' não foi encontrado.")
             .Build());
     }
 }

@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Errors;
 
@@ -43,7 +43,7 @@ public sealed class Operation
         if (string.IsNullOrWhiteSpace(administratorId))
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.AdministratorInvalid)
-                .WithMessage("Administrator ID cannot be empty")
+                .WithMessage("O ID do administrador não pode estar vazio.")
                 .Build());
 
         var normalizedAdministratorId = administratorId.Trim();
@@ -51,7 +51,7 @@ public sealed class Operation
         if (_administratorIds.Contains(normalizedAdministratorId, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.AdministratorAlreadyAssigned)
-                .WithMessage($"Administrator '{normalizedAdministratorId}' is already assigned to this operation")
+                .WithMessage($"O administrador '{normalizedAdministratorId}' já está atribuído a esta operação.")
                 .Build());
 
         _administratorIds.Add(normalizedAdministratorId);
@@ -65,7 +65,7 @@ public sealed class Operation
         if (string.IsNullOrWhiteSpace(administratorId))
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.AdministratorInvalid)
-                .WithMessage("Administrator ID cannot be empty")
+                .WithMessage("O ID do administrador não pode estar vazio.")
                 .Build());
 
         var normalizedAdministratorId = administratorId.Trim();
@@ -74,7 +74,7 @@ public sealed class Operation
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(OperationErrorCodes.AdministratorNotAssigned)
-                .WithMessage($"Administrator '{normalizedAdministratorId}' is not assigned to this operation")
+                .WithMessage($"O administrador '{normalizedAdministratorId}' não está atribuído a esta operação.")
                 .Build());
 
         Touch();

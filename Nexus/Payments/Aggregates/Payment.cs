@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Payments.Errors;
 
@@ -82,13 +82,13 @@ public sealed class Payment
         if (string.IsNullOrWhiteSpace(strawManAccountId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManInvalid)
-                .WithMessage("Straw man account ID cannot be empty")
+                .WithMessage("O ID da conta laranja não pode estar vazio.")
                 .Build());
 
         if (StrawManAccountId is not null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManAlreadyBound)
-                .WithMessage("Payment is already bound to a straw man account")
+                .WithMessage("Este pagamento já está vinculado a uma conta laranja.")
                 .Build());
 
         StrawManAccountId = strawManAccountId;
@@ -100,13 +100,13 @@ public sealed class Payment
         if (string.IsNullOrWhiteSpace(transactionId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayPaymentIdInvalid)
-                .WithMessage("Gateway transaction ID cannot be empty")
+                .WithMessage("O ID da transação no gateway não pode estar vazio.")
                 .Build());
 
         if (gateway == PaymentGateway.None)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayInvalid)
-                .WithMessage("Gateway is invalid")
+                .WithMessage("O gateway informado é inválido.")
                 .Build());
 
         Gateway = gateway;
@@ -119,13 +119,13 @@ public sealed class Payment
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID cannot be empty")
+                .WithMessage("O ID do operador não pode estar vazio.")
                 .Build());
 
         if (OperatorAccountId is not null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorAlreadyBound)
-                .WithMessage("Payment is already bound to an operator")
+                .WithMessage("Este pagamento já está vinculado a um operador.")
                 .Build());
 
         OperatorAccountId = operatorId;
@@ -137,13 +137,13 @@ public sealed class Payment
         if (Status != PaymentStatus.Pending)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.InvalidTransition)
-                .WithMessage($"Cannot mark as paid from status {Status}")
+                .WithMessage($"Não é possível marcar como pago a partir do status {DescribeStatus(Status)}.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(OperatorAccountId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorRequired)
-                .WithMessage("Operator must be bound before marking payment as paid")
+                .WithMessage("É necessário vincular um operador antes de marcar o pagamento como pago.")
                 .Build());
 
         Status = PaymentStatus.Paid;
@@ -156,7 +156,7 @@ public sealed class Payment
         if (Status != PaymentStatus.Paid)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.InvalidTransition)
-                .WithMessage($"Cannot refund payment with status {Status}")
+                .WithMessage($"Não é possível reembolsar um pagamento com status {DescribeStatus(Status)}.")
                 .Build());
 
         Status = PaymentStatus.Refunded;
@@ -169,13 +169,13 @@ public sealed class Payment
         if (string.IsNullOrWhiteSpace(reason))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.DeathReasonRequired)
-                .WithMessage("Death reason is required")
+                .WithMessage("O motivo do cancelamento é obrigatório.")
                 .Build());
 
         if (Status == PaymentStatus.Dead)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.AlreadyDead)
-                .WithMessage("Payment is already dead")
+                .WithMessage("Este pagamento já foi cancelado.")
                 .Build());
 
         Status = PaymentStatus.Dead;
@@ -183,5 +183,14 @@ public sealed class Payment
         DeathReason = reason;
         return Result.Success();
     }
+
+    private static string DescribeStatus(PaymentStatus status) => status switch
+    {
+        PaymentStatus.Pending => "pendente",
+        PaymentStatus.Paid => "pago",
+        PaymentStatus.Refunded => "reembolsado",
+        PaymentStatus.Dead => "cancelado",
+        _ => status.ToString(),
+    };
 
 }

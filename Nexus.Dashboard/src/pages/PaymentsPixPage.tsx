@@ -43,7 +43,7 @@ export function PaymentsPixPage() {
       }
       setLastResult(result.data);
     } catch (ex) {
-      setError(ex instanceof Error ? ex.message : 'Erro inesperado.');
+      setError(ex instanceof Error ? ex.message : 'Ocorreu um erro inesperado. Tente novamente.');
     } finally {
       setGenerateBusy(false);
     }

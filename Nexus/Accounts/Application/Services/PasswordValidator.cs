@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Errors;
@@ -24,13 +24,13 @@ public sealed class PasswordValidator : IPasswordValidator
         if (string.IsNullOrEmpty(password))
             return Task.FromResult<IResult>(Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PasswordTooShort)
-                .WithMessage("Password cannot be empty")
+                .WithMessage("A senha não pode estar vazia.")
                 .Build()));
 
         if (password.Length < MinLength)
             return Task.FromResult<IResult>(Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PasswordTooShort)
-                .WithMessage($"Password must be at least {MinLength} characters")
+                .WithMessage($"A senha deve ter no mínimo {MinLength} caracteres.")
                 .Build()));
 
         return Task.FromResult<IResult>(Result.Success());

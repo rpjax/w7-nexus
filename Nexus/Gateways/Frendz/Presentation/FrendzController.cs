@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Gateways.Frendz.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
@@ -62,7 +62,7 @@ public class FrendzController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Frendz.SEARCH_LIMIT_INVALID")
-                .WithMessage("Limit must be between 1 and 999.")
+                .WithMessage("O limite deve estar entre 1 e 999.")
                 .Build());
         }
 
@@ -70,7 +70,7 @@ public class FrendzController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Frendz.SEARCH_OFFSET_INVALID")
-                .WithMessage("Offset cannot be negative.")
+                .WithMessage("O deslocamento não pode ser negativo.")
                 .Build());
         }
 
@@ -78,7 +78,7 @@ public class FrendzController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Frendz.SEARCH_KEYWORD_TOO_LONG")
-                .WithMessage("Keyword can have at most 200 characters.")
+                .WithMessage("A palavra-chave pode ter no máximo 200 caracteres.")
                 .Build());
         }
 
@@ -118,7 +118,7 @@ public class FrendzController : WebController
     public async Task<ActionResult> AddCredentialsAsync([FromBody] AddCredentialsRequest request)
     {
         if (request is null)
-            return BadRequest("Request body is required.");
+            return BadRequest("O corpo da requisição é obrigatório.");
 
         var result = await _credentialsService.AddCredentialsAsync(request);
         if (result.IsFailure)
@@ -131,7 +131,7 @@ public class FrendzController : WebController
     public async Task<ActionResult> UpdateCredentialsAsync([FromBody] UpdateCredentialsRequest request)
     {
         if (request is null)
-            return BadRequest("Request body is required.");
+            return BadRequest("O corpo da requisição é obrigatório.");
 
         var result = await _credentialsService.UpdateCredentialsAsync(request);
         if (result.IsFailure)
@@ -148,7 +148,7 @@ public class FrendzController : WebController
     public async Task<ActionResult> SetCredentialEnabledAsync([FromBody] SetFrendzCredentialEnabledRequest request)
     {
         if (request is null)
-            return BadRequest("Request body is required.");
+            return BadRequest("O corpo da requisição é obrigatório.");
 
         var result = await _credentialsService.SetCredentialEnabledAsync(request);
         if (result.IsFailure)
@@ -165,7 +165,7 @@ public class FrendzController : WebController
     public async Task<ActionResult> DeleteCredentialsAsync([FromQuery] string id)
     {
         if (string.IsNullOrWhiteSpace(id))
-            return BadRequest("Query parameter id is required.");
+            return BadRequest("O parâmetro de consulta id é obrigatório.");
 
         var result = await _credentialsService.DeleteCredentialsAsync(id);
         if (result.IsFailure)

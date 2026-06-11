@@ -14,7 +14,7 @@ export async function searchGatewayCredentials(prefix: GatewayPrefix, payload: S
       Keyword: payload.keyword ?? null,
       EnabledOnly: payload.enabledOnly ?? undefined,
     },
-    { fallbackError: 'Falha ao carregar credenciais.' },
+    { fallbackError: 'Não foi possível carregar as credenciais. Atualize a página e tente novamente.' },
   );
 }
 
@@ -29,7 +29,7 @@ export async function addTokenCredential(prefix: GatewayPrefix, body: {
     Token: body.token,
     StrawManId: body.strawManId ?? null,
     Enabled: body.enabled,
-  }, { fallbackError: 'Falha ao adicionar credencial.' });
+  }, { fallbackError: 'Não foi possível cadastrar a credencial. Verifique os dados informados.' });
 }
 
 export async function addKeyPairCredential(prefix: GatewayPrefix, body: {
@@ -45,7 +45,7 @@ export async function addKeyPairCredential(prefix: GatewayPrefix, body: {
     SecretKey: body.secretKey,
     StrawManId: body.strawManId ?? null,
     Enabled: body.enabled,
-  }, { fallbackError: 'Falha ao adicionar credencial.' });
+  }, { fallbackError: 'Não foi possível cadastrar a credencial. Verifique os dados informados.' });
 }
 
 export async function updateTokenCredential(prefix: GatewayPrefix, body: {
@@ -61,7 +61,7 @@ export async function updateTokenCredential(prefix: GatewayPrefix, body: {
     Token: body.token,
     StrawManId: body.strawManId ?? null,
     Enabled: body.enabled,
-  }, { fallbackError: 'Falha ao atualizar credencial.' });
+  }, { fallbackError: 'Não foi possível atualizar a credencial. Verifique os dados informados.' });
 }
 
 export async function updateKeyPairCredential(prefix: GatewayPrefix, body: {
@@ -79,18 +79,18 @@ export async function updateKeyPairCredential(prefix: GatewayPrefix, body: {
     SecretKey: body.secretKey,
     StrawManId: body.strawManId ?? null,
     Enabled: body.enabled,
-  }, { fallbackError: 'Falha ao atualizar credencial.' });
+  }, { fallbackError: 'Não foi possível atualizar a credencial. Verifique os dados informados.' });
 }
 
 export async function setCredentialEnabled(prefix: GatewayPrefix, id: string, enabled: boolean) {
   return apiClient.patch<void>(apiPath(prefix, 'credentials/enabled'), { id, enabled }, {
-    fallbackError: 'Falha ao atualizar estado da credencial.',
+    fallbackError: 'Não foi possível alterar o estado da credencial.',
   });
 }
 
 export async function deleteCredential(prefix: GatewayPrefix, id: string) {
   return apiClient.delete(`${apiPath(prefix, 'credentials')}?id=${encodeURIComponent(id)}`, {
-    fallbackError: 'Falha ao excluir credencial.',
+    fallbackError: 'Não foi possível excluir a credencial. Tente novamente.',
   });
 }
 

@@ -100,14 +100,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const tokens = result.data?.tokens;
     if (!tokens?.accessToken) {
-      return { ok: false, error: 'Resposta de autenticação inválida.' };
+      return { ok: false, error: 'A resposta do servidor não incluiu um token de acesso válido.' };
     }
 
     const nextUser = persistTokens(tokens);
     if (!nextUser) {
       clearStoredSession();
       setAccessToken(null);
-      return { ok: false, error: 'Token de acesso inválido.' };
+      return { ok: false, error: 'O token de acesso recebido é inválido ou expirado.' };
     }
 
     setUser(nextUser);
@@ -125,14 +125,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const tokens = result.data?.tokens;
     if (!tokens?.accessToken) {
-      return { ok: false, error: 'Resposta de cadastro inválida.' };
+      return { ok: false, error: 'A conta foi criada, mas o servidor não retornou um token de acesso válido.' };
     }
 
     const nextUser = persistTokens(tokens);
     if (!nextUser) {
       clearStoredSession();
       setAccessToken(null);
-      return { ok: false, error: 'Token de acesso inválido.' };
+      return { ok: false, error: 'O token de acesso recebido é inválido ou expirado.' };
     }
 
     setUser(nextUser);

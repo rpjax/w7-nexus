@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
@@ -57,7 +57,7 @@ public class Administrator : IAdministrator
         {
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.SearchLimitInvalid)
-                .WithMessage("Limit must be between 1 and 999.")
+                .WithMessage("O limite deve estar entre 1 e 999.")
                 .Build());
         }
 
@@ -65,7 +65,7 @@ public class Administrator : IAdministrator
         {
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.SearchOffsetInvalid)
-                .WithMessage("Offset cannot be negative.")
+                .WithMessage("O deslocamento não pode ser negativo.")
                 .Build());
         }
 
@@ -73,7 +73,7 @@ public class Administrator : IAdministrator
         {
             builder.WithError(Error.Create()
                 .WithCode(OperationErrorCodes.SearchKeywordTooLong)
-                .WithMessage($"Keyword can have at most {Operation.MaxNameLength} characters.")
+                .WithMessage($"A palavra-chave pode ter no máximo {Operation.MaxNameLength} caracteres.")
                 .Build());
         }
 
@@ -177,7 +177,7 @@ public class Administrator : IAdministrator
     {
         return Result<T>.Failure(Error.Create()
             .WithCode(OperationErrorCodes.RequestBodyRequired)
-            .WithMessage("Request body is required.")
+            .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
     }
 }

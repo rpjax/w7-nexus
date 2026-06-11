@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Database.Models;
 using Nexus.Operations.Errors;
@@ -69,7 +69,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(teamLeaderId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamLeaderInvalid)
-                .WithMessage("Team leader ID cannot be empty")
+                .WithMessage("O ID do líder de equipe não pode estar vazio.")
                 .Build());
 
         var normalizedTeamLeaderId = teamLeaderId.Trim();
@@ -81,7 +81,7 @@ public sealed class Team
         if (TeamLeaderId is not null)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamLeaderAlreadyAssigned)
-                .WithMessage($"Team leader '{TeamLeaderId}' is already assigned to this team")
+                .WithMessage($"O líder de equipe '{TeamLeaderId}' já está atribuído a esta equipe.")
                 .Build());
 
         TeamLeaderId = normalizedTeamLeaderId;
@@ -95,7 +95,7 @@ public sealed class Team
         if (TeamLeaderId is null)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamLeaderNotAssigned)
-                .WithMessage("This team does not have a team leader assigned")
+                .WithMessage("Esta equipe não possui um líder de equipe atribuído.")
                 .Build());
 
         TeamLeaderId = null;
@@ -109,7 +109,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID cannot be empty")
+                .WithMessage("O ID do operador não pode estar vazio.")
                 .Build());
 
         var normalizedOperatorId = operatorId.Trim();
@@ -117,7 +117,7 @@ public sealed class Team
         if (_operatorIds.Contains(normalizedOperatorId, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorAlreadyAssigned)
-                .WithMessage($"Operator '{normalizedOperatorId}' is already assigned to this team")
+                .WithMessage($"O operador '{normalizedOperatorId}' já está atribuído a esta equipe.")
                 .Build());
 
         _operatorIds.Add(normalizedOperatorId);
@@ -132,7 +132,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID cannot be empty")
+                .WithMessage("O ID do operador não pode estar vazio.")
                 .Build());
 
         var normalizedOperatorId = operatorId.Trim();
@@ -141,7 +141,7 @@ public sealed class Team
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorNotAssigned)
-                .WithMessage($"Operator '{normalizedOperatorId}' is not assigned to this team")
+                .WithMessage($"O operador '{normalizedOperatorId}' não está atribuído a esta equipe.")
                 .Build());
 
         _operatorProfitShareRules.Remove(normalizedOperatorId);
@@ -155,7 +155,7 @@ public sealed class Team
         if (!Enum.IsDefined(strategy))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewaySelectionStrategyInvalid)
-                .WithMessage("Gateway selection strategy is invalid")
+                .WithMessage("A estratégia de seleção de gateway é inválida.")
                 .Build());
 
         if (GatewaySelectionStrategy == strategy)
@@ -172,7 +172,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID cannot be empty")
+                .WithMessage("O ID do operador não pode estar vazio.")
                 .Build());
 
         var normalizedOperatorId = operatorId.Trim();
@@ -180,7 +180,7 @@ public sealed class Team
         if (!_operatorIds.Contains(normalizedOperatorId, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorNotAssigned)
-                .WithMessage($"Operator '{normalizedOperatorId}' is not assigned to this team")
+                .WithMessage($"O operador '{normalizedOperatorId}' não está atribuído a esta equipe.")
                 .Build());
 
         var validation = ValidateProfitShareCuts(cuts, out var normalizedCuts);
@@ -204,7 +204,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(strawManId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.StrawManInvalid)
-                .WithMessage("Straw man ID cannot be empty")
+                .WithMessage("O ID do laranja não pode estar vazio.")
                 .Build());
 
         var normalizedStrawManId = strawManId.Trim();
@@ -212,7 +212,7 @@ public sealed class Team
         if (_strawManIds.Contains(normalizedStrawManId, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.StrawManAlreadyAssigned)
-                .WithMessage($"Straw man '{normalizedStrawManId}' is already assigned to this team")
+                .WithMessage($"O laranja '{normalizedStrawManId}' já está atribuído a esta equipe.")
                 .Build());
 
         _strawManIds.Add(normalizedStrawManId);
@@ -226,7 +226,7 @@ public sealed class Team
         if (string.IsNullOrWhiteSpace(strawManId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.StrawManInvalid)
-                .WithMessage("Straw man ID cannot be empty")
+                .WithMessage("O ID do laranja não pode estar vazio.")
                 .Build());
 
         var normalizedStrawManId = strawManId.Trim();
@@ -235,7 +235,7 @@ public sealed class Team
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.StrawManNotAssigned)
-                .WithMessage($"Straw man '{normalizedStrawManId}' is not assigned to this team")
+                .WithMessage($"O laranja '{normalizedStrawManId}' não está atribuído a esta equipe.")
                 .Build());
 
         Touch();
@@ -248,13 +248,13 @@ public sealed class Team
         if (GatewaySelectionStrategy != GatewaySelectionStrategy.PerGroup)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupStrategyMismatch)
-                .WithMessage("Gateway credential groups can only be assigned when the selection strategy is PerGroup")
+                .WithMessage("Grupos de credenciais só podem ser atribuídos quando a estratégia de seleção é Por Grupo.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(groupId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
-                .WithMessage("Gateway credentials group ID cannot be empty")
+                .WithMessage("O ID do grupo de credenciais não pode estar vazio.")
                 .Build());
 
         var normalizedGroupId = groupId.Trim();
@@ -262,7 +262,7 @@ public sealed class Team
         if (_gatewayCredentialsGroupIds.Contains(normalizedGroupId, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupAlreadyAssigned)
-                .WithMessage($"Gateway credentials group '{normalizedGroupId}' is already assigned to this team")
+                .WithMessage($"O grupo de credenciais '{normalizedGroupId}' já está atribuído a esta equipe.")
                 .Build());
 
         _gatewayCredentialsGroupIds.Add(normalizedGroupId);
@@ -276,13 +276,13 @@ public sealed class Team
         if (GatewaySelectionStrategy != GatewaySelectionStrategy.PerGroup)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupStrategyMismatch)
-                .WithMessage("Gateway credential groups can only be unassigned when the selection strategy is PerGroup")
+                .WithMessage("Grupos de credenciais só podem ser removidos quando a estratégia de seleção é Por Grupo.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(groupId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
-                .WithMessage("Gateway credentials group ID cannot be empty")
+                .WithMessage("O ID do grupo de credenciais não pode estar vazio.")
                 .Build());
 
         var normalizedGroupId = groupId.Trim();
@@ -291,7 +291,7 @@ public sealed class Team
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupNotAssigned)
-                .WithMessage($"Gateway credentials group '{normalizedGroupId}' is not assigned to this team")
+                .WithMessage($"O grupo de credenciais '{normalizedGroupId}' não está atribuído a esta equipe.")
                 .Build());
 
         Touch();
@@ -304,13 +304,13 @@ public sealed class Team
         if (GatewaySelectionStrategy != GatewaySelectionStrategy.Manual)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.ManualGatewayCredentialsDisabled)
-                .WithMessage("Manual gateway credential selection is not enabled for this team")
+                .WithMessage("A seleção manual de credenciais de gateway não está habilitada para esta equipe.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(credentialsId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID cannot be empty")
+                .WithMessage("O ID da credencial de gateway não pode estar vazio.")
                 .Build());
 
         var normalized = credentialsId.Trim();
@@ -318,7 +318,7 @@ public sealed class Team
         if (_gatewayCredentialsIds.Contains(normalized, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialAlreadyAssigned)
-                .WithMessage($"Gateway credential '{normalized}' is already assigned to this team")
+                .WithMessage($"A credencial de gateway '{normalized}' já está atribuída a esta equipe.")
                 .Build());
 
         _gatewayCredentialsIds.Add(normalized);
@@ -332,13 +332,13 @@ public sealed class Team
         if (GatewaySelectionStrategy != GatewaySelectionStrategy.Manual)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.ManualGatewayCredentialsDisabled)
-                .WithMessage("Manual gateway credential selection is not enabled for this team")
+                .WithMessage("A seleção manual de credenciais de gateway não está habilitada para esta equipe.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(credentialsId))
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID cannot be empty")
+                .WithMessage("O ID da credencial de gateway não pode estar vazio.")
                 .Build());
 
         var normalized = credentialsId.Trim();
@@ -347,7 +347,7 @@ public sealed class Team
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialNotAssigned)
-                .WithMessage($"Gateway credential '{normalized}' is not assigned to this team")
+                .WithMessage($"A credencial de gateway '{normalized}' não está atribuída a esta equipe.")
                 .Build());
 
         Touch();
@@ -365,7 +365,7 @@ public sealed class Team
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.ProfitShareRuleEmpty)
-                .WithMessage("Profit share rule must contain at least one cut")
+                .WithMessage("A regra de divisão de lucro deve conter pelo menos uma fatia.")
                 .Build());
         }
 
@@ -377,7 +377,7 @@ public sealed class Team
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutAccountInvalid)
-                    .WithMessage("Profit share cut account ID cannot be empty")
+                    .WithMessage("O ID da conta na divisão de lucro não pode estar vazio.")
                     .Build());
             }
 
@@ -387,7 +387,7 @@ public sealed class Team
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutDuplicateAccount)
-                    .WithMessage($"Account '{accountId}' appears more than once in the profit share rule")
+                    .WithMessage($"A conta '{accountId}' aparece mais de uma vez na regra de divisão de lucro.")
                     .Build());
             }
 
@@ -395,7 +395,7 @@ public sealed class Team
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutPercentageInvalid)
-                    .WithMessage($"Profit share percentage for account '{accountId}' must be greater than zero and at most 100")
+                    .WithMessage($"A porcentagem de divisão de lucro da conta '{accountId}' deve ser maior que zero e no máximo 100%.")
                     .Build());
             }
 
@@ -407,7 +407,7 @@ public sealed class Team
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.ProfitShareCutsMustTotal100Percent)
-                .WithMessage("Profit share cuts must total exactly 100%")
+                .WithMessage("As fatias da divisão de lucro devem totalizar exatamente 100%.")
                 .Build());
         }
 

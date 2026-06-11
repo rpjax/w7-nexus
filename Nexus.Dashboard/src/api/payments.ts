@@ -6,7 +6,7 @@ export async function searchPayments(payload: SearchRequest) {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
-  }, { fallbackError: 'Falha ao carregar pagamentos.' });
+  }, { fallbackError: 'Não foi possível carregar os pagamentos. Atualize a página e tente novamente.' });
 }
 
 export async function generatePix(payload: {
@@ -20,5 +20,5 @@ export async function generatePix(payload: {
     Amount: payload.amount,
     OperatorAccountId: payload.operatorAccountId ?? null,
     StrawManAccountId: payload.strawManAccountId ?? null,
-  }, { fallbackError: 'Falha ao gerar cobrança PIX.' });
+  }, { fallbackError: 'Não foi possível gerar a cobrança PIX. Verifique os dados e tente novamente.' });
 }

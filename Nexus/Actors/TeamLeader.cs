@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Actors.Contracts;
@@ -147,7 +147,7 @@ public class TeamLeader : ITeamLeader
     {
         return Result<T>.Failure(Error.Create()
             .WithCode(OperationErrorCodes.RequestBodyRequired)
-            .WithMessage("Request body is required.")
+            .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
     }
 }

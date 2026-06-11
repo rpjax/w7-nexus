@@ -6,12 +6,12 @@ export async function searchAccounts(payload: SearchRequest) {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
-  }, { fallbackError: 'Falha ao carregar contas.' });
+  }, { fallbackError: 'Não foi possível carregar as contas. Atualize a página e tente novamente.' });
 }
 
 export async function createAccount(username: string, password: string) {
   return apiClient.post<void>('/api/accounts', { Username: username, Password: password }, {
-    fallbackError: 'Falha ao criar conta.',
+    fallbackError: 'Não foi possível criar a conta. Verifique os dados informados e tente novamente.',
   });
 }
 

@@ -6,7 +6,7 @@ export async function searchOperations(payload: SearchRequest) {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
-  }, { fallbackError: 'Falha ao carregar operações.' });
+  }, { fallbackError: 'Não foi possível carregar as operações. Atualize a página e tente novamente.' });
 }
 
 export async function createOperation(name: string, description: string, operators: string[]) {
@@ -14,60 +14,60 @@ export async function createOperation(name: string, description: string, operato
     Name: name,
     Description: description,
     Operators: operators,
-  }, { fallbackError: 'Falha ao criar operação.' });
+  }, { fallbackError: 'Não foi possível registrar a operação. Verifique os dados e tente novamente.' });
 }
 
 export async function deleteOperation(operationId: string) {
   return apiClient.deleteWithBody<void>('/api/operations/operations', { OperationId: operationId }, {
-    fallbackError: 'Falha ao excluir operação.',
+    fallbackError: 'Não foi possível excluir a operação. Tente novamente.',
   });
 }
 
 export async function addOperator(operationId: string, operatorId: string) {
   return apiClient.post<void>('/api/operations/operators', { OperationId: operationId, OperatorId: operatorId }, {
-    fallbackError: 'Falha ao adicionar operador.',
+    fallbackError: 'Não foi possível adicionar o operador à operação.',
   });
 }
 
 export async function removeOperator(operationId: string, operatorId: string) {
   return apiClient.deleteWithBody<void>('/api/operations/operators', { OperationId: operationId, OperatorId: operatorId }, {
-    fallbackError: 'Falha ao remover operador.',
+    fallbackError: 'Não foi possível remover o operador da operação.',
   });
 }
 
 export async function addStrawMan(operationId: string, strawManId: string) {
   return apiClient.post<void>('/api/operations/strawman', { OperationId: operationId, StrawManId: strawManId }, {
-    fallbackError: 'Falha ao adicionar laranja.',
+    fallbackError: 'Não foi possível adicionar o laranja à operação.',
   });
 }
 
 export async function removeStrawMan(operationId: string, strawManId: string) {
   return apiClient.deleteWithBody<void>('/api/operations/strawman', { OperationId: operationId, StrawManId: strawManId }, {
-    fallbackError: 'Falha ao remover laranja.',
+    fallbackError: 'Não foi possível remover o laranja da operação.',
   });
 }
 
 export async function enableManualGatewayCredentials(operationId: string) {
   return apiClient.post<void>('/api/operations/gateway-credentials/manual', { OperationId: operationId }, {
-    fallbackError: 'Falha ao ativar seleção manual.',
+    fallbackError: 'Não foi possível ativar a seleção manual de credenciais.',
   });
 }
 
 export async function disableManualGatewayCredentials(operationId: string) {
   return apiClient.deleteWithBody<void>('/api/operations/gateway-credentials/manual', { OperationId: operationId }, {
-    fallbackError: 'Falha ao desativar seleção manual.',
+    fallbackError: 'Não foi possível desativar a seleção manual de credenciais.',
   });
 }
 
 export async function addGatewayCredential(operationId: string, credentialId: string) {
   return apiClient.post<void>('/api/operations/gateway-credentials', { OperationId: operationId, CredentialId: credentialId }, {
-    fallbackError: 'Falha ao adicionar credencial.',
+    fallbackError: 'Não foi possível adicionar a credencial à operação.',
   });
 }
 
 export async function removeGatewayCredential(operationId: string, credentialId: string) {
   return apiClient.deleteWithBody<void>('/api/operations/gateway-credentials', { OperationId: operationId, CredentialId: credentialId }, {
-    fallbackError: 'Falha ao remover credencial.',
+    fallbackError: 'Não foi possível remover a credencial da operação.',
   });
 }
 

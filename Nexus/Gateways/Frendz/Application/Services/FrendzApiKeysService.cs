@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
 using Nexus.Accounts.Application.Services.Contracts;
@@ -48,7 +48,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.NameTooLong)
-                .WithMessage($"Name must be at most {MaxNameLength} characters.")
+                .WithMessage($"O nome pode ter no máximo {MaxNameLength} caracteres.")
                 .Build());
         }
 
@@ -57,14 +57,14 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenRequired)
-                .WithMessage("Token is required.")
+                .WithMessage("O token é obrigatório.")
                 .Build());
         }
         else if (token.Length > MaxTokenLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenTooLong)
-                .WithMessage($"Token must be at most {MaxTokenLength} characters.")
+                .WithMessage($"O token pode ter no máximo {MaxTokenLength} caracteres.")
                 .Build());
         }
 
@@ -76,14 +76,14 @@ public class FrendzApiKeysService : IFrendzApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManIdInvalid)
-                    .WithMessage("Straw man id cannot be empty when provided.")
+                    .WithMessage("O ID do laranja não pode estar vazio quando informado.")
                     .Build());
             }
             else if (sm.Length > MaxStrawManIdLength)
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManIdTooLong)
-                    .WithMessage($"Straw man id must be at most {MaxStrawManIdLength} characters.")
+                    .WithMessage($"O ID do laranja pode ter no máximo {MaxStrawManIdLength} caracteres.")
                     .Build());
             }
             else
@@ -99,7 +99,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenAlreadyExists)
-                .WithMessage("This token is already registered.")
+                .WithMessage("Este token já está cadastrado.")
                 .Build());
         }
 
@@ -111,7 +111,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManAccountNotFound)
-                    .WithMessage($"Straw man account '{normalizedStrawMan}' was not found.")
+                    .WithMessage($"A conta laranja '{normalizedStrawMan}' não foi encontrada.")
                     .Build());
             }
         }
@@ -143,7 +143,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -152,7 +152,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.NameTooLong)
-                .WithMessage($"Name must be at most {MaxNameLength} characters.")
+                .WithMessage($"O nome pode ter no máximo {MaxNameLength} caracteres.")
                 .Build());
         }
 
@@ -161,14 +161,14 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenRequired)
-                .WithMessage("Token is required.")
+                .WithMessage("O token é obrigatório.")
                 .Build());
         }
         else if (token.Length > MaxTokenLength)
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenTooLong)
-                .WithMessage($"Token must be at most {MaxTokenLength} characters.")
+                .WithMessage($"O token pode ter no máximo {MaxTokenLength} caracteres.")
                 .Build());
         }
 
@@ -180,14 +180,14 @@ public class FrendzApiKeysService : IFrendzApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManIdInvalid)
-                    .WithMessage("Straw man id cannot be empty when provided.")
+                    .WithMessage("O ID do laranja não pode estar vazio quando informado.")
                     .Build());
             }
             else if (sm.Length > MaxStrawManIdLength)
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManIdTooLong)
-                    .WithMessage($"Straw man id must be at most {MaxStrawManIdLength} characters.")
+                    .WithMessage($"O ID do laranja pode ter no máximo {MaxStrawManIdLength} caracteres.")
                     .Build());
             }
             else
@@ -203,7 +203,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             builder.WithError(Error.Create()
                 .WithCode(FrendzErrorCodes.TokenAlreadyExists)
-                .WithMessage("This token is already registered for another credential.")
+                .WithMessage("Este token já está cadastrado em outra credencial.")
                 .Build());
         }
 
@@ -215,7 +215,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
             {
                 builder.WithError(Error.Create()
                     .WithCode(FrendzErrorCodes.StrawManAccountNotFound)
-                    .WithMessage($"Straw man account '{normalizedStrawMan}' was not found.")
+                    .WithMessage($"A conta laranja '{normalizedStrawMan}' não foi encontrada.")
                     .Build());
             }
         }
@@ -228,7 +228,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{request.Id}' was not found.")
+                .WithMessage($"A credencial '{request.Id}' não foi encontrada.")
                 .Build());
         }
 
@@ -254,7 +254,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -263,7 +263,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{request.Id}' was not found.")
+                .WithMessage($"A credencial '{request.Id}' não foi encontrada.")
                 .Build());
         }
 
@@ -286,7 +286,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialIdInvalid)
-                .WithMessage("A valid credential id is required.")
+                .WithMessage("Um ID de credencial válido é obrigatório.")
                 .Build());
         }
 
@@ -295,7 +295,7 @@ public class FrendzApiKeysService : IFrendzApiKeysService
         {
             return Result.Failure(Error.Create()
                 .WithCode(FrendzErrorCodes.CredentialNotFound)
-                .WithMessage($"Credential '{id}' was not found.")
+                .WithMessage($"A credencial '{id}' não foi encontrada.")
                 .Build());
         }
 

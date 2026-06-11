@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Gateways.Wintech.Application.Services.Contracts;
 using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
 using Nexus.Gateways.Frendz.Application.Services.Contracts;
@@ -71,7 +71,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperationIdInvalid)
-                    .WithMessage("Operation ID is required")
+                    .WithMessage("O ID da operação é obrigatório.")
                     .Build())
                 .Build();
 
@@ -80,7 +80,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperatorRequired)
-                    .WithMessage("Operator account ID is required")
+                    .WithMessage("O ID da conta do operador é obrigatório.")
                     .Build())
                 .Build();
 
@@ -88,7 +88,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.AmountInvalid)
-                    .WithMessage("Amount must be greater than zero")
+                    .WithMessage("O valor deve ser maior que zero.")
                     .Build())
                 .Build();
 
@@ -99,7 +99,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperationNotFound)
-                    .WithMessage($"Operation '{operationId}' was not found")
+                    .WithMessage($"A operação '{operationId}' não foi encontrada.")
                     .Build())
                 .Build();
 
@@ -112,7 +112,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.TeamNotFound)
-                    .WithMessage($"No team was found for operator '{operatorAccountId}' in operation '{operationId}'")
+                    .WithMessage($"Nenhuma equipe foi encontrada para o operador '{operatorAccountId}' na operação '{operationId}'.")
                     .Build())
                 .Build();
 
@@ -123,7 +123,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.NoGatewayServicesAvailable)
-                    .WithMessage("No gateway credentials are available for this team.")
+                    .WithMessage("Não há credenciais de gateway disponíveis para esta equipe.")
                     .Build())
                 .Build();
         }
@@ -154,7 +154,6 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         var payment = createPaymentResult.Value
             ?? throw new InvalidOperationException("Payment creation succeeded without a value.");
 
-        var exceptions = new List<Exception>();
         foreach (var provider in providers)
         {
             try
@@ -197,23 +196,18 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                     .WithValue(gatewayPix)
                     .Build();
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                exceptions.Add(ex);
+                // Tenta o próximo gateway disponível.
             }
         }
-
-        var exceptionErrors = exceptions
-            .Select(Error.FromException)
-            .ToArray();
 
         await _paymentService.DeletePaymentAsync(payment.Id);
         return Result.Create<GatewayPix>()
             .WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayPixFailed)
-                .WithMessage("All gateway attempts failed.")
+                .WithMessage("Todas as tentativas de processamento pelo gateway falharam. Verifique as credenciais configuradas e tente novamente.")
                 .Build())
-            .WithErrors(exceptionErrors)
             .Build();
     }
 

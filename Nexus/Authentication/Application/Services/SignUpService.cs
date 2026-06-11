@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Actors.Contracts;
@@ -71,7 +71,7 @@ public sealed class SignUpService : ISignUpService
         {
             return Task.FromResult<IResult<SignUpResponse>>(Result<SignUpResponse>.Failure(Error.Create()
                 .WithCode(AuthenticationErrorCodes.AccountNotFound)
-                .WithMessage("Account was created but could not be loaded")
+                .WithMessage("A conta foi criada, mas não foi possível carregá-la. Tente entrar novamente.")
                 .Build()));
         }
 
@@ -94,7 +94,7 @@ public sealed class SignUpService : ISignUpService
     {
         return Result<T>.Failure(Error.Create()
             .WithCode(AuthenticationErrorCodes.RequestRequired)
-            .WithMessage("Request body is required")
+            .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
     }
 }

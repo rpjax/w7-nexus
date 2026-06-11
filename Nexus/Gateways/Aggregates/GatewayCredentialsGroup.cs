@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Gateways.Errors;
 
@@ -39,7 +39,7 @@ public sealed class GatewayCredentialsGroup
         if (string.IsNullOrWhiteSpace(credentialsId))
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID cannot be empty")
+                .WithMessage("O ID da credencial de gateway não pode estar vazio.")
                 .Build());
 
         var normalized = credentialsId.Trim();
@@ -47,7 +47,7 @@ public sealed class GatewayCredentialsGroup
         if (_gatewayCredentialsIds.Contains(normalized, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialAlreadyAssigned)
-                .WithMessage($"Gateway credential '{normalized}' is already assigned to this group")
+                .WithMessage($"A credencial de gateway '{normalized}' já está atribuída a este grupo.")
                 .Build());
 
         _gatewayCredentialsIds.Add(normalized);
@@ -61,7 +61,7 @@ public sealed class GatewayCredentialsGroup
         if (string.IsNullOrWhiteSpace(credentialsId))
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID cannot be empty")
+                .WithMessage("O ID da credencial de gateway não pode estar vazio.")
                 .Build());
 
         var normalized = credentialsId.Trim();
@@ -70,7 +70,7 @@ public sealed class GatewayCredentialsGroup
         if (!removed)
             return Result.Failure(Error.Create()
                 .WithCode(GatewayCredentialsGroupErrorCodes.GatewayCredentialNotAssigned)
-                .WithMessage($"Gateway credential '{normalized}' is not assigned to this group")
+                .WithMessage($"A credencial de gateway '{normalized}' não está atribuída a este grupo.")
                 .Build());
 
         Touch();

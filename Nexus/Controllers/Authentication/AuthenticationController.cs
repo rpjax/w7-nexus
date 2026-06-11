@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Authentication.Application.Services.Contracts;
 using Nexus.Authentication.Application.Services.Requests;
@@ -29,7 +29,7 @@ public class AuthenticationController : NexusController
         {
             return ProblemResponse(401, Error.Create()
                 .WithCode("Authentication.UNAUTHORIZED")
-                .WithMessage("Unauthorized")
+                .WithMessage("Chave mestra inválida ou ausente. Verifique a autorização e tente novamente.")
                 .Build());
         }
 

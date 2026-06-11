@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+﻿using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
@@ -41,7 +41,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamIdInvalid)
-                .WithMessage("Team ID is required.")
+                .WithMessage("O ID da equipe é obrigatório.")
                 .Build());
         }
 
@@ -50,7 +50,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.IdentityRequired)
-                .WithMessage("An authenticated identity is required.")
+                .WithMessage("É necessário estar autenticado para realizar esta ação.")
                 .Build());
         }
 
@@ -61,7 +61,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.AccountIdClaimMissing)
-                .WithMessage("Account identity claim is missing.")
+                .WithMessage("A identidade da conta não foi encontrada no token de acesso.")
                 .Build());
         }
 
@@ -73,7 +73,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.AccountNotFound)
-                .WithMessage($"Account '{accountId}' was not found.")
+                .WithMessage($"A conta '{accountId}' não foi encontrada.")
                 .Build());
         }
 
@@ -86,7 +86,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamNotFound)
-                .WithMessage($"Team '{normalizedTeamId}' was not found.")
+                .WithMessage($"A equipe '{normalizedTeamId}' não foi encontrada.")
                 .Build());
         }
 
@@ -95,7 +95,7 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         {
             return AccessEvaluationResult<ITeamLeader>.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotTeamLeader)
-                .WithMessage("Team leader access is required.")
+                .WithMessage("Acesso de líder de equipe necessário para realizar esta ação.")
                 .Build());
         }
 

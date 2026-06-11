@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Errors;
 
@@ -59,13 +59,13 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(newUsername))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameEmpty)
-                .WithMessage("Username cannot be empty")
+                .WithMessage("O nome de usuário não pode estar vazio.")
                 .Build());
 
         if (string.Equals(Username, newUsername, StringComparison.OrdinalIgnoreCase))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameUnchanged)
-                .WithMessage("New username is the same as current")
+                .WithMessage("O novo nome de usuário é igual ao atual.")
                 .Build());
 
         Username = newUsername;
@@ -78,7 +78,7 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(newPasswordHash))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PasswordHashEmpty)
-                .WithMessage("Password hash cannot be empty")
+                .WithMessage("O hash da senha não pode estar vazio.")
                 .Build());
 
         PasswordHash = newPasswordHash;
@@ -91,13 +91,13 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(role))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.RoleEmpty)
-                .WithMessage("Role cannot be empty")
+                .WithMessage("A função não pode estar vazia.")
                 .Build());
 
         if (_roles.Contains(role, StringComparer.OrdinalIgnoreCase))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.RoleAlreadyExists)
-                .WithMessage($"Role '{role}' already exists")
+                .WithMessage($"A função '{DescribeRole(role)}' já está atribuída a esta conta.")
                 .Build());
 
         _roles.Add(role);
@@ -110,14 +110,14 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(role))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.RoleEmpty)
-                .WithMessage("Role cannot be empty")
+                .WithMessage("A função não pode estar vazia.")
                 .Build());
 
         var index = _roles.FindIndex(r => string.Equals(r, role, StringComparison.OrdinalIgnoreCase));
         if (index < 0)
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.RoleNotFound)
-                .WithMessage($"Role '{role}' was not found")
+                .WithMessage($"A função '{DescribeRole(role)}' não está atribuída a esta conta.")
                 .Build());
 
         _roles.RemoveAt(index);
@@ -137,13 +137,13 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(permission))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PermissionEmpty)
-                .WithMessage("Permission cannot be empty")
+                .WithMessage("A permissão não pode estar vazia.")
                 .Build());
 
         if (_permissions.Contains(permission, StringComparer.OrdinalIgnoreCase))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PermissionAlreadyExists)
-                .WithMessage($"Permission '{permission}' already exists")
+                .WithMessage($"A permissão '{permission}' já está atribuída a esta conta.")
                 .Build());
 
         _permissions.Add(permission);
@@ -156,14 +156,14 @@ public sealed class Account
         if (string.IsNullOrWhiteSpace(permission))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PermissionEmpty)
-                .WithMessage("Permission cannot be empty")
+                .WithMessage("A permissão não pode estar vazia.")
                 .Build());
 
         var index = _permissions.FindIndex(p => string.Equals(p, permission, StringComparison.OrdinalIgnoreCase));
         if (index < 0)
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.PermissionNotFound)
-                .WithMessage($"Permission '{permission}' was not found")
+                .WithMessage($"A permissão '{permission}' não está atribuída a esta conta.")
                 .Build());
 
         _permissions.RemoveAt(index);
@@ -177,4 +177,11 @@ public sealed class Account
         LastUpdatedAt = DateTime.UtcNow;
         return Result.Success();
     }
+
+    private static string DescribeRole(string role) => role switch
+    {
+        global::Nexus.Authorization.Roles.Administrator => "administrador",
+        global::Nexus.Authorization.Roles.Operator => "operador",
+        _ => role,
+    };
 }

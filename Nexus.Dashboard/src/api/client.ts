@@ -37,7 +37,7 @@ async function request<T>(
   });
 
   if (!response.ok) {
-    const fallback = options?.fallbackError ?? 'Falha na requisição.';
+    const fallback = options?.fallbackError ?? 'Não foi possível concluir a operação. Tente novamente em instantes.';
     const error = await readApiMessage(response, fallback);
     return { ok: false, error, status: response.status };
   }

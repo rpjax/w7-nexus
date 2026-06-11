@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Payments.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Microsoft.AspNetCore.SignalR;
@@ -31,7 +31,7 @@ public sealed class SignalRPaymentNotifier : IPaymentNotifier
         {
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("Payment id is required.")
+                .WithMessage("O ID do pagamento é obrigatório.")
                 .Build());
         }
 
@@ -48,7 +48,7 @@ public sealed class SignalRPaymentNotifier : IPaymentNotifier
             _logger.LogError(ex, "SignalR: failed to publish payment status for {PaymentId}.", paymentId);
             return Result.Failure(Error.Create()
                 .WithCode("PaymentNotifier.SIGNALR_PUBLISH_FAILED")
-                .WithMessage("Failed to notify clients over SignalR.")
+                .WithMessage("Não foi possível notificar os clientes em tempo real.")
                 .Build());
         }
     }

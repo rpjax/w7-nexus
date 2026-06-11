@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Payments.Application.Services.Contracts;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
@@ -44,37 +44,37 @@ public sealed class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(operationId))
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperationIdInvalid)
-                .WithMessage("Operation ID is required")
+                .WithMessage("O ID da operação é obrigatório.")
                 .Build());
 
         if (amount <= 0m)
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.AmountInvalid)
-                .WithMessage("Amount must be greater than zero")
+                .WithMessage("O valor deve ser maior que zero.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(gatewayPaymentId))
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayPaymentIdInvalid)
-                .WithMessage("Gateway payment ID is required")
+                .WithMessage("O ID do pagamento no gateway é obrigatório.")
                 .Build());
 
         if (gateway == PaymentGateway.None)
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayInvalid)
-                .WithMessage("Gateway is invalid")
+                .WithMessage("O gateway informado é inválido.")
                 .Build());
 
         if (operatorAccountId is not null && string.IsNullOrWhiteSpace(operatorAccountId))
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID cannot be empty when provided")
+                .WithMessage("O ID do operador não pode estar vazio quando informado.")
                 .Build());
 
         if (strawManAccountId is not null && string.IsNullOrWhiteSpace(strawManAccountId))
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManInvalid)
-                .WithMessage("Straw man account ID cannot be empty when provided")
+                .WithMessage("O ID da conta laranja não pode estar vazio quando informado.")
                 .Build());
 
         if (builder.ContainsError)
@@ -88,7 +88,7 @@ public sealed class PaymentService : IPaymentService
             if (idTaken)
                 builder.WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.PaymentIdAlreadyExists)
-                    .WithMessage($"Payment id '{explicitPaymentId}' is already in use")
+                    .WithMessage($"O ID de pagamento '{explicitPaymentId}' já está em uso.")
                     .Build());
         }
 
@@ -100,7 +100,7 @@ public sealed class PaymentService : IPaymentService
         if (!operationExists)
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperationNotFound)
-                .WithMessage($"Operation '{operationId}' was not found")
+                .WithMessage($"A operação '{operationId}' não foi encontrada.")
                 .Build());
 
         if (operatorAccountId is not null)
@@ -110,7 +110,7 @@ public sealed class PaymentService : IPaymentService
             if (!operatorExists)
                 builder.WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperatorAccountNotFound)
-                    .WithMessage($"Operator account '{operatorAccountId}' was not found")
+                    .WithMessage($"A conta do operador '{operatorAccountId}' não foi encontrada.")
                     .Build());
         }
 
@@ -121,7 +121,7 @@ public sealed class PaymentService : IPaymentService
             if (!strawManExists)
                 builder.WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.StrawManAccountNotFound)
-                    .WithMessage($"Straw man account '{strawManAccountId}' was not found")
+                    .WithMessage($"A conta laranja '{strawManAccountId}' não foi encontrada.")
                     .Build());
         }
 
@@ -171,7 +171,7 @@ public sealed class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(paymentId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("Payment ID is required")
+                .WithMessage("O ID do pagamento é obrigatório.")
                 .Build());
 
         var payment = _paymentRepository.AsQueryable()
@@ -180,7 +180,7 @@ public sealed class PaymentService : IPaymentService
         if (payment is null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentNotFound)
-                .WithMessage($"Payment '{paymentId}' was not found")
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
                 .Build());
 
         if (payment.OperatorAccountId is not null)
@@ -190,7 +190,7 @@ public sealed class PaymentService : IPaymentService
             if (!operatorExists)
                 return Result.Failure(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperatorAccountNotFound)
-                    .WithMessage($"Operator account '{payment.OperatorAccountId}' was not found")
+                    .WithMessage($"A conta do operador '{payment.OperatorAccountId}' não foi encontrada.")
                     .Build());
         }
 
@@ -207,7 +207,7 @@ public sealed class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(paymentId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("Payment ID is required")
+                .WithMessage("O ID do pagamento é obrigatório.")
                 .Build());
 
         var payment = _paymentRepository.AsQueryable()
@@ -216,7 +216,7 @@ public sealed class PaymentService : IPaymentService
         if (payment is null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentNotFound)
-                .WithMessage($"Payment '{paymentId}' was not found")
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
                 .Build());
 
         var result = payment.Refund();
@@ -232,7 +232,7 @@ public sealed class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(paymentId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("Payment ID is required")
+                .WithMessage("O ID do pagamento é obrigatório.")
                 .Build());
 
         var payment = _paymentRepository.AsQueryable()
@@ -241,7 +241,7 @@ public sealed class PaymentService : IPaymentService
         if (payment is null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentNotFound)
-                .WithMessage($"Payment '{paymentId}' was not found")
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
                 .Build());
 
         var result = payment.Die(reason);
@@ -257,7 +257,7 @@ public sealed class PaymentService : IPaymentService
         if (string.IsNullOrWhiteSpace(paymentId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("Payment ID is required")
+                .WithMessage("O ID do pagamento é obrigatório.")
                 .Build());
 
         var payment = _paymentRepository.AsQueryable()
@@ -266,7 +266,7 @@ public sealed class PaymentService : IPaymentService
         if (payment is null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.PaymentNotFound)
-                .WithMessage($"Payment '{paymentId}' was not found")
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
                 .Build());
 
         await _paymentRepository.DeleteAsync(payment);

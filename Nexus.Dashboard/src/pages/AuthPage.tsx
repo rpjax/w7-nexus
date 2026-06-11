@@ -112,7 +112,7 @@ export function AuthPage() {
           </div>
 
           <div className="auth-card-body">
-            <h2>{mode === 'sign-in' ? 'Sign in' : 'Sign up'}</h2>
+            <h2>{mode === 'sign-in' ? 'Entrar' : 'Criar conta'}</h2>
             <p className="muted auth-card-lead">
               {mode === 'sign-in'
                 ? 'Use suas credenciais para restaurar a sessão neste navegador.'

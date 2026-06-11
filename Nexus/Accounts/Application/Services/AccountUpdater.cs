@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
@@ -154,7 +154,7 @@ public sealed class AccountUpdater : IAccountUpdater
     {
         return Result.Failure(Error.Create()
             .WithCode(AccountErrorCodes.AccountNotFound)
-            .WithMessage($"Account '{accountId}' was not found")
+            .WithMessage($"A conta '{accountId}' não foi encontrada.")
             .Build());
     }
 }

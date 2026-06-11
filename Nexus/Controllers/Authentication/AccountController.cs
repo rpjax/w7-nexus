@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
@@ -50,7 +50,7 @@ public class AccountController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Account.SEARCH_LIMIT_INVALID")
-                .WithMessage("Limit must be between 1 and 999.")
+                .WithMessage("O limite deve estar entre 1 e 999.")
                 .Build());
         }
 
@@ -58,7 +58,7 @@ public class AccountController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Account.SEARCH_OFFSET_INVALID")
-                .WithMessage("Offset cannot be negative.")
+                .WithMessage("O deslocamento não pode ser negativo.")
                 .Build());
         }
 
@@ -66,7 +66,7 @@ public class AccountController : WebController
         {
             return ProblemResponse(422, Error.Create()
                 .WithCode("Account.SEARCH_KEYWORD_TOO_LONG")
-                .WithMessage("Keyword can have at most 200 characters.")
+                .WithMessage("A palavra-chave pode ter no máximo 200 caracteres.")
                 .Build());
         }
 

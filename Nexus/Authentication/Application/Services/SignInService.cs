@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Authentication.Errors;
@@ -34,7 +34,7 @@ public sealed class SignInService : ISignInService
         {
             return Result<SignInResponse>.Failure(Error.Create()
                 .WithCode(AuthenticationErrorCodes.InvalidCredentials)
-                .WithMessage("Invalid username or password")
+                .WithMessage("Usuário ou senha incorretos. Verifique os dados informados e tente novamente.")
                 .Build());
         }
 
@@ -45,7 +45,7 @@ public sealed class SignInService : ISignInService
         {
             return Result<SignInResponse>.Failure(Error.Create()
                 .WithCode(AuthenticationErrorCodes.InvalidCredentials)
-                .WithMessage("Invalid username or password")
+                .WithMessage("Usuário ou senha incorretos. Verifique os dados informados e tente novamente.")
                 .Build());
         }
 
@@ -54,7 +54,7 @@ public sealed class SignInService : ISignInService
         {
             return Result<SignInResponse>.Failure(Error.Create()
                 .WithCode(AuthenticationErrorCodes.InvalidCredentials)
-                .WithMessage("Invalid username or password")
+                .WithMessage("Usuário ou senha incorretos. Verifique os dados informados e tente novamente.")
                 .Build());
         }
 
@@ -81,7 +81,7 @@ public sealed class SignInService : ISignInService
     {
         return Result<T>.Failure(Error.Create()
             .WithCode(AuthenticationErrorCodes.RequestRequired)
-            .WithMessage("Request body is required")
+            .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
     }
 }

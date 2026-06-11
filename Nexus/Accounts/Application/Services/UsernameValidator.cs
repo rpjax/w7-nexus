@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Errors;
@@ -29,7 +29,7 @@ public sealed class UsernameValidator : IUsernameValidator
         if (existing is not null)
             return Task.FromResult<IResult>(Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameAlreadyTaken)
-                .WithMessage($"Username '{username}' is already taken")
+                .WithMessage($"O nome de usuário '{username}' já está em uso. Escolha outro nome.")
                 .Build()));
 
         return Task.FromResult<IResult>(Result.Success());
@@ -46,7 +46,7 @@ public sealed class UsernameValidator : IUsernameValidator
         if (existing is not null && existing.Id != accountId)
             return Task.FromResult<IResult>(Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameAlreadyTaken)
-                .WithMessage($"Username '{newUsername}' is already taken")
+                .WithMessage($"O nome de usuário '{newUsername}' já está em uso. Escolha outro nome.")
                 .Build()));
 
         return Task.FromResult<IResult>(Result.Success());
@@ -57,19 +57,19 @@ public sealed class UsernameValidator : IUsernameValidator
         if (string.IsNullOrWhiteSpace(username))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameEmpty)
-                .WithMessage("Username cannot be empty")
+                .WithMessage("O nome de usuário não pode estar vazio.")
                 .Build());
 
         if (username.Length < MinLength || username.Length > MaxLength)
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameInvalidFormat)
-                .WithMessage($"Username must be between {MinLength} and {MaxLength} characters")
+                .WithMessage($"O nome de usuário deve ter entre {MinLength} e {MaxLength} caracteres.")
                 .Build());
 
         if (username.Any(c => InvalidChars.Contains(c)))
             return Result.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.UsernameInvalidFormat)
-                .WithMessage("Username contains invalid characters")
+                .WithMessage("O nome de usuário contém caracteres inválidos. Use apenas letras, números e os caracteres permitidos.")
                 .Build());
 
         return Result.Success();

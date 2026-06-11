@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Gateways.Application.Services.Contracts;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
@@ -49,7 +49,7 @@ public sealed class TeamService : ITeamService
         {
             builder.WithError(Error.Create()
                 .WithCode(TeamErrorCodes.OperationNotFound)
-                .WithMessage($"Operation '{normalizedOperationId}' was not found")
+                .WithMessage($"A operação '{normalizedOperationId}' não foi encontrada.")
                 .Build());
             return builder.Build();
         }
@@ -59,13 +59,13 @@ public sealed class TeamService : ITeamService
         if (string.IsNullOrWhiteSpace(name))
             builder.WithError(Error.Create()
                 .WithCode(TeamErrorCodes.NameInvalid)
-                .WithMessage("Team name is required")
+                .WithMessage("O nome da equipe é obrigatório.")
                 .Build());
 
         if (!string.IsNullOrWhiteSpace(name) && name.Length > Team.MaxNameLength)
             builder.WithError(Error.Create()
                 .WithCode(TeamErrorCodes.NameTooLong)
-                .WithMessage($"Team name must be at most {Team.MaxNameLength} characters")
+                .WithMessage($"O nome da equipe pode ter no máximo {Team.MaxNameLength} caracteres.")
                 .Build());
 
         if (builder.ContainsError)
@@ -78,7 +78,7 @@ public sealed class TeamService : ITeamService
         {
             builder.WithError(Error.Create()
                 .WithCode(TeamErrorCodes.NameAlreadyExists)
-                .WithMessage($"Team name '{name}' is already in use for this operation")
+                .WithMessage($"O nome de equipe '{name}' já está em uso nesta operação. Escolha outro nome.")
                 .Build());
             return builder.Build();
         }
@@ -129,7 +129,7 @@ public sealed class TeamService : ITeamService
             teamLeaderId,
             TeamErrorCodes.TeamLeaderInvalid,
             TeamErrorCodes.TeamLeaderAccountNotFound,
-            "Team leader");
+            "líder de equipe");
         if (accountValidation is not null)
             return accountValidation;
 
@@ -173,7 +173,7 @@ public sealed class TeamService : ITeamService
             operatorId,
             TeamErrorCodes.OperatorInvalid,
             TeamErrorCodes.OperatorAccountNotFound,
-            "Operator");
+            "operador");
         if (accountValidation is not null)
             return accountValidation;
 
@@ -184,7 +184,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorAlreadyAssignedToAnotherTeam)
-                .WithMessage($"Operator '{normalizedOperatorId}' is already assigned to another team")
+                .WithMessage($"O operador '{normalizedOperatorId}' já está atribuído a outra equipe.")
                 .Build());
         }
 
@@ -232,7 +232,7 @@ public sealed class TeamService : ITeamService
             strawManId,
             TeamErrorCodes.StrawManInvalid,
             TeamErrorCodes.StrawManAccountNotFound,
-            "Straw man");
+            "laranja");
         if (accountValidation is not null)
             return accountValidation;
 
@@ -276,7 +276,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewaySelectionStrategyInvalid)
-                .WithMessage("Gateway selection strategy is invalid")
+                .WithMessage("A estratégia de seleção de gateway é inválida.")
                 .Build());
         }
 
@@ -302,7 +302,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
-                .WithMessage("Gateway credentials group ID is required")
+                .WithMessage("O ID do grupo de credenciais é obrigatório.")
                 .Build());
         }
 
@@ -313,7 +313,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupNotFound)
-                .WithMessage($"Gateway credentials group '{normalizedGroupId}' was not found")
+                .WithMessage($"O grupo de credenciais '{normalizedGroupId}' não foi encontrado.")
                 .Build());
         }
 
@@ -339,7 +339,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
-                .WithMessage("Gateway credentials group ID is required")
+                .WithMessage("O ID do grupo de credenciais é obrigatório.")
                 .Build());
         }
 
@@ -367,7 +367,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
-                .WithMessage("Gateway credential ID is required")
+                .WithMessage("O ID da credencial de gateway é obrigatório.")
                 .Build());
         }
 
@@ -376,7 +376,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
-                .WithMessage($"Gateway credential '{normalizedCredentialsId}' was not found")
+                .WithMessage($"A credencial de gateway '{normalizedCredentialsId}' não foi encontrada.")
                 .Build());
         }
 
@@ -439,7 +439,7 @@ public sealed class TeamService : ITeamService
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutAccountInvalid)
-                    .WithMessage("Profit share cut account ID cannot be empty")
+                    .WithMessage("O ID da conta na divisão de lucro não pode estar vazio.")
                     .Build());
             }
 
@@ -447,7 +447,7 @@ public sealed class TeamService : ITeamService
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutAccountNotFound)
-                    .WithMessage($"Profit share cut account '{cut.AccountId}' was not found")
+                    .WithMessage($"A conta '{cut.AccountId}' da divisão de lucro não foi encontrada.")
                     .Build());
             }
         }
@@ -476,7 +476,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(invalidCode)
-                .WithMessage($"{label} ID cannot be empty")
+                .WithMessage($"O ID de {label} não pode estar vazio.")
                 .Build());
         }
 
@@ -485,7 +485,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(notFoundCode)
-                .WithMessage($"{label} account '{normalizedAccountId}' was not found")
+                .WithMessage($"A conta de {label} '{normalizedAccountId}' não foi encontrada.")
                 .Build());
         }
 
@@ -500,7 +500,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperatorInvalid)
-                .WithMessage("Operator ID is required")
+                .WithMessage("O ID do operador é obrigatório.")
                 .Build());
         }
 
@@ -515,7 +515,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.TeamIdInvalid)
-                .WithMessage("Team ID is required")
+                .WithMessage("O ID da equipe é obrigatório.")
                 .Build());
         }
 
@@ -530,7 +530,7 @@ public sealed class TeamService : ITeamService
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.OperationIdInvalid)
-                .WithMessage("Operation ID is required")
+                .WithMessage("O ID da operação é obrigatório.")
                 .Build());
         }
 
@@ -541,7 +541,7 @@ public sealed class TeamService : ITeamService
     {
         return Result.Failure(Error.Create()
             .WithCode(TeamErrorCodes.TeamNotFound)
-            .WithMessage($"Team '{teamId}' was not found")
+            .WithMessage($"A equipe '{teamId}' não foi encontrada.")
             .Build());
     }
 }
