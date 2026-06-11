@@ -1,29 +1,25 @@
 using Aidan.Core.Errors;
-using Nexus.Accounts.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application;
-using Nexus.Accounts.Presentation.Requests;
 using Nexus.Accounts.ErrorCodes;
+using Nexus.Controllers.Authentication.Requests;
 
-namespace Nexus.Accounts.Presentation;
+namespace Nexus.Controllers.Authentication;
 
-[Route("api/accounts")]
-public class AccountsController : WebController
+[Route("api/account")]
+public class AccountController : WebController
 {
-    private IAccountCreator _accountCreator { get; }
     private IAccountUpdater _accountUpdater { get; }
     private IAccountRepository _accountRepository { get; }
 
-    public AccountsController(
-        IAccountCreator accountCreator,
+    public AccountController(
         IAccountUpdater accountUpdater,
         IAccountRepository accountRepository)
     {
-        _accountCreator = accountCreator;
         _accountUpdater = accountUpdater;
         _accountRepository = accountRepository;
     }
@@ -102,20 +98,6 @@ public class AccountsController : WebController
             Total = total,
             Items = items,
         });
-    }
-
-    [HttpPost("")]
-    public async Task<ActionResult> CreateAccountAsync([FromBody] CreateAccountRequest request)
-    {
-        var result = await _accountCreator.CreateAccountAsync(request.Username, request.Password);
-
-        if (result.IsFailure)
-        {
-            return ProblemResponse(422, result.Errors);
-        }
-
-        var account = result.Value!;
-        return Created($"/api/accounts/{account.Id}", ToAccountResponse(account));
     }
 
     [HttpPatch("username")]

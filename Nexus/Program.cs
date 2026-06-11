@@ -1,6 +1,9 @@
+using System.Text;
 using Aidan.Mongo.Extensions;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Server.Kestrel.Core;
+using Microsoft.IdentityModel.Tokens;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using System.Security.Cryptography.X509Certificates;
@@ -28,6 +31,7 @@ using Nexus.Accounts.Application;
 using Nexus.Authentication;
 using Nexus.Authentication.Application;
 using Nexus.Authentication.Application.Contracts;
+using Nexus.Authorization;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -71,6 +75,35 @@ builder.Services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_cred
 builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
 builder.Services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));
 builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
+
+var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
+    ?? throw new InvalidOperationException("Jwt configuration is required.");
+if (string.IsNullOrWhiteSpace(jwtOptions.SecretKey) || jwtOptions.SecretKey.Length < 32)
+{
+    throw new InvalidOperationException(
+        "Jwt:SecretKey must be configured with at least 32 characters.");
+}
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidIssuer = jwtOptions.Issuer,
+            ValidateAudience = true,
+            ValidAudience = jwtOptions.Audience,
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtOptions.SecretKey)),
+            ValidateLifetime = true,
+            ClockSkew = TimeSpan.FromMinutes(1),
+        };
+    });
+builder.Services.AddAuthorization();
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<IAdministratorAccess, AdministratorAccess>();
+builder.Services.AddScoped<IOperationAdministratorAccess, OperationAdministratorAccess>();
+builder.Services.AddScoped<ITeamLeaderAccess, TeamLeaderAccess>();
 
 // Payment services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -144,6 +177,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseCors();
+app.UseAuthentication();
+app.UseAuthorization();
 app.UseHttpsRedirection();
 app.MapGet("/", () => Results.Ok("Nexus API is running"));
 app.MapHub<PaymentStatusHub>("/hubs/payment-status");

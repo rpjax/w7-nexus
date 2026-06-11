@@ -1,4 +1,4 @@
-using Aidan.Core.Errors;
+﻿using Aidan.Core.Errors;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
@@ -7,8 +7,8 @@ using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;
 using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
 using Nexus.Operations.ErrorCodes;
+using Nexus.Actors.Extensions;
 
 namespace Nexus.Actors;
 
@@ -25,15 +25,20 @@ public class Administrator : IAdministrator
         _operations = operations;
     }
 
-    public Task<IResult<OperationDetails>> CreateOperationAsync(
+    public async Task<IResult<OperationDetails>> CreateOperationAsync(
         CreateOperationRequest request)
     {
         if (request is null)
-            return Task.FromResult(RequestBodyRequiredResult<OperationDetails>());
+            return RequestBodyRequiredResult<OperationDetails>();
 
-        return _operationService.CreateOperationAsync(
+        var result = await _operationService.CreateOperationAsync(
             name: request.Name,
             description: request.Description);
+
+        if (result.IsFailure)
+            return Result<OperationDetails>.Failure(result.Errors);
+
+        return Result<OperationDetails>.Success(result.Value!.ToOperationDetails());
     }
 
     public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -107,7 +112,7 @@ public class Administrator : IAdministrator
             Limit = limit,
             Total = total,
             Items = operations
-                .Select(OperationDetails.FromOperation)
+                .Select(o => o.ToOperationDetails())
                 .ToList()
         };
 

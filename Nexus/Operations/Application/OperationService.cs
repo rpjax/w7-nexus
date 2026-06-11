@@ -2,9 +2,7 @@ using Aidan.Core.Errors;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
-using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
 using Nexus.Operations.ErrorCodes;
 
 namespace Nexus.Operations.Application;
@@ -22,9 +20,9 @@ public sealed class OperationService : IOperationService
         _accountIdValidator = accountIdValidator;
     }
 
-    public async Task<IResult<OperationDetails>> CreateOperationAsync(string? name, string? description)
+    public async Task<IResult<Operation>> CreateOperationAsync(string? name, string? description)
     {
-        var builder = Result.Create<OperationDetails>();
+        var builder = Result.Create<Operation>();
 
         name = name?.Trim();
         description = description?.Trim();
@@ -74,7 +72,7 @@ public sealed class OperationService : IOperationService
         await _operations.CreateAsync(operation);
 
         return builder
-            .WithValue(OperationDetails.FromOperation(operation))
+            .WithValue(operation)
             .Build();
     }
 

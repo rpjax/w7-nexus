@@ -1,4 +1,4 @@
-namespace Nexus.Accounts.Presentation.Requests;
+namespace Nexus.Controllers.Authentication.Requests;
 
 public class ChangeUsernameRequest
 {
