@@ -2,13 +2,13 @@ using Aidan.Core.Errors;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
-using Nexus.Accounts.Application.Contracts;
 using Nexus.Actors.Responses.Models;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
-using Nexus.Operations.ErrorCodes;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Operations.Errors;
 
 namespace Nexus.Operations.Application;
 

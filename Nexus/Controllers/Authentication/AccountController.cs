@@ -3,10 +3,10 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.ErrorCodes;
 using Nexus.Controllers.Authentication.Requests;
+using Nexus.Accounts.Errors;
+using Nexus.Accounts.Application.Services.Contracts;
 
 namespace Nexus.Controllers.Authentication;
 

@@ -1,4 +1,4 @@
-using Nexus.Authentication.Application.Models;
+using Nexus.Authentication.Services.Models;
 
 namespace Nexus.Authentication.Services.Responses;
 

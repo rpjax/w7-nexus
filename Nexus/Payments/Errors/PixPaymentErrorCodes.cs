@@ -1,4 +1,4 @@
-namespace Nexus.Payments.ErrorCodes;
+namespace Nexus.Payments.Errors;
 
 public static class PixPaymentErrorCodes
 {

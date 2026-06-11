@@ -3,11 +3,11 @@ using Nexus.Gateways.Wintech.Application.Contracts;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Nexus.Accounts.Application.Contracts;
 using Nexus.Database.Models;
 using Nexus.Gateways.Wintech.Application;
 using Nexus.Gateways.Wintech.Application.Models;
 using Nexus.Gateways.Wintech.ErrorCodes;
+using Nexus.Accounts.Application.Services.Contracts;
 
 namespace Nexus.Gateways.Wintech.Application;
 

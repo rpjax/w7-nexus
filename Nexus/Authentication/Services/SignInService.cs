@@ -1,13 +1,13 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.Accounts.Application.Contracts;
-using Nexus.Authentication.Application.Contracts;
-using Nexus.Authentication.Application.Models;
-using Nexus.Authentication.ErrorCodes;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Authentication.Errors;
+using Nexus.Authentication.Services.Contracts;
+using Nexus.Authentication.Services.Models;
 using Nexus.Authentication.Services.Requests;
 using Nexus.Authentication.Services.Responses;
 
-namespace Nexus.Authentication.Application;
+namespace Nexus.Authentication.Services;
 
 public sealed class SignInService : ISignInService
 {

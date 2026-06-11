@@ -1,9 +1,9 @@
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Services.Contracts;
 
-namespace Nexus.Accounts.Application;
+namespace Nexus.Accounts.Application.Services;
 
 public sealed class AccountCreator : IAccountCreator
 {

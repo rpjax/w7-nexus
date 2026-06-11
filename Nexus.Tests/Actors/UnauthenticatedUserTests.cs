@@ -1,4 +1,4 @@
-using Nexus.Accounts.ErrorCodes;
+using Nexus.Accounts.Errors;
 using Nexus.Actors.Requests;
 using Nexus.Authorization;
 using Nexus.Tests.Accounts;

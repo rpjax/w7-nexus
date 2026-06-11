@@ -1,6 +1,6 @@
 ﻿using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Authentication.Application.Contracts;
+using Nexus.Authentication.Services.Contracts;
 using Nexus.Authentication.Services.Requests;
 
 namespace Nexus.Controllers.Authentication;

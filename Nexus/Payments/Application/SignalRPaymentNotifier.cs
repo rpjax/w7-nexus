@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;
 using Nexus.Payments.Application.Models;
 using Nexus.Payments.Application;
-using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Errors;
 namespace Nexus.Payments.Application;
 
 public sealed class SignalRPaymentNotifier : IPaymentNotifier

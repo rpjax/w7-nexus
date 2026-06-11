@@ -1,6 +1,6 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Payments.Aggregates;
 

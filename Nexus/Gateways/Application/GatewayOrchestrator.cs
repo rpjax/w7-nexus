@@ -18,7 +18,7 @@ using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.SigiloPay.Application;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
-using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Gateways.Application;
 

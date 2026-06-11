@@ -5,9 +5,9 @@ using Aidan.Core.Patterns;
 using Nexus.Operations.Application;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
-using Nexus.Payments.ErrorCodes;
 using Nexus.Payments.Application.Models;
-using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Payments.Application;
 

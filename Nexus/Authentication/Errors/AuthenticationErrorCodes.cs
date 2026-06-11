@@ -1,4 +1,4 @@
-namespace Nexus.Authentication.ErrorCodes;
+namespace Nexus.Authentication.Errors;
 
 public static class AuthenticationErrorCodes
 {

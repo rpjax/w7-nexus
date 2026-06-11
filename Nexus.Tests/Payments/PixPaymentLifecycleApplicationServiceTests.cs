@@ -10,8 +10,8 @@ using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
-using Nexus.Payments.ErrorCodes;
-using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Tests.Payments;
 

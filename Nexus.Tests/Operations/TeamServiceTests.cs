@@ -8,10 +8,10 @@ using Nexus.Gateways.Application;
 using Nexus.Gateways.Entities;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
-using Nexus.Operations.ErrorCodes;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Support;
 using Xunit;
+using Nexus.Operations.Errors;
 
 namespace Nexus.Tests.Operations;
 

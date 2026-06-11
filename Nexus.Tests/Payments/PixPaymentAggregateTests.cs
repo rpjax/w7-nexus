@@ -1,5 +1,5 @@
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.ErrorCodes;
+using Nexus.Payments.Errors;
 using Xunit;
 
 namespace Nexus.Tests.Payments;

@@ -23,8 +23,8 @@ using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.SigiloPay.Application;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application;
-using Nexus.Payments.ErrorCodes;
 using Nexus.Payments.Application.Models;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Tests.Gateways;
 

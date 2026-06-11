@@ -1,4 +1,4 @@
-namespace Nexus.Operations.ErrorCodes;
+namespace Nexus.Operations.Errors;
 
 public static class TeamErrorCodes
 {

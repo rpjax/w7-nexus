@@ -1,5 +1,5 @@
-using Nexus.Accounts.Application;
-using Nexus.Accounts.ErrorCodes;
+using Nexus.Accounts.Application.Services;
+using Nexus.Accounts.Errors;
 using Xunit;
 
 namespace Nexus.Tests.Accounts;

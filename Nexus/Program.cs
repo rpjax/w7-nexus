@@ -26,13 +26,13 @@ using Nexus.Gateways.Application;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Payments.Application;
 using Nexus.Payments.Application.Contracts;
-using Nexus.Accounts.Application.Contracts;
-using Nexus.Accounts.Application;
-using Nexus.Authentication.Application;
-using Nexus.Authentication.Application.Contracts;
 using Nexus.Authorization.Services.Contracts;
 using Nexus.Authorization.Services;
 using Nexus.Authentication.Services.Models;
+using Nexus.Authentication.Services.Contracts;
+using Nexus.Authentication.Services;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Services;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!

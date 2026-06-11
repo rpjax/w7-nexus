@@ -1,4 +1,4 @@
-namespace Nexus.Authentication.Application.Models;
+namespace Nexus.Authentication.Services.Models;
 
 public class JwtTokenSubject
 {

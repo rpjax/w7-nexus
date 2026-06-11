@@ -4,10 +4,10 @@ using Aidan.Mongo.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Database.Models;
 
-namespace Nexus.Accounts.Application;
+namespace Nexus.Accounts.Application.Services;
 
 public sealed class AccountRepository : IAccountRepository
 {

@@ -3,14 +3,14 @@ using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Microsoft.AspNetCore.Http;
-using Nexus.Accounts.Application.Contracts;
-using Nexus.Accounts.ErrorCodes;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Errors;
 using Nexus.Actors.Contracts;
 using Nexus.Authorization.Errors;
 using Nexus.Authorization.Results;
 using Nexus.Authorization.Services.Contracts;
 using Nexus.Operations.Application.Contracts;
-using Nexus.Operations.ErrorCodes;
+using Nexus.Operations.Errors;
 
 namespace Nexus.Authorization.Services;
 

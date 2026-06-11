@@ -1,7 +1,7 @@
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application;
 using Xunit;
-using Nexus.Accounts.ErrorCodes;
+using Nexus.Accounts.Errors;
 
 namespace Nexus.Tests.Accounts;
 

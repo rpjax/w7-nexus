@@ -1,8 +1,7 @@
 using Aidan.Core.Patterns;
-using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Aggregates;
 
-namespace Nexus.Accounts.Application.Contracts;
+namespace Nexus.Accounts.Application.Services.Contracts;
 
 public interface IAccountCreator
 {

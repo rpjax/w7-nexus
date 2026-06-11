@@ -2,7 +2,7 @@ using Aidan.Core.Patterns;
 using Nexus.Authentication.Services.Requests;
 using Nexus.Authentication.Services.Responses;
 
-namespace Nexus.Authentication.Application.Contracts;
+namespace Nexus.Authentication.Services.Contracts;
 
 public interface ISignUpService
 {

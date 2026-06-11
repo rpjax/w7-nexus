@@ -5,7 +5,7 @@ using Nexus.Actors.Contracts;
 using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;
 using Nexus.Operations.Application;
-using Nexus.Operations.ErrorCodes;
+using Nexus.Operations.Errors;
 
 namespace Nexus.Actors;
 

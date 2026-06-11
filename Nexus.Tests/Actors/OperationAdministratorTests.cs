@@ -1,5 +1,5 @@
 using Nexus.Actors.Requests;
-using Nexus.Operations.ErrorCodes;
+using Nexus.Operations.Errors;
 using Nexus.Tests.Support;
 using Xunit;
 

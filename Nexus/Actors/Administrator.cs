@@ -7,8 +7,8 @@ using Nexus.Actors.Requests;
 using Nexus.Actors.Responses;
 using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.ErrorCodes;
 using Nexus.Actors.Extensions;
+using Nexus.Operations.Errors;
 
 namespace Nexus.Actors;
 

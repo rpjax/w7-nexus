@@ -1,4 +1,4 @@
-namespace Nexus.Accounts.ErrorCodes;
+namespace Nexus.Accounts.Errors;
 
 public static class AccountErrorCodes
 {

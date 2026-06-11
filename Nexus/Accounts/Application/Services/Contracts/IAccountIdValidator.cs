@@ -1,6 +1,4 @@
-using Nexus.Accounts.Application.Contracts;
-
-namespace Nexus.Accounts.Application.Contracts;
+namespace Nexus.Accounts.Application.Services.Contracts;
 
 // domain service to validate account ids
 public interface IAccountIdValidator

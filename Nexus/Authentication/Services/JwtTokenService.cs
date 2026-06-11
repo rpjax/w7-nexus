@@ -3,11 +3,10 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Nexus.Authentication.Application.Contracts;
-using Nexus.Authentication.Application.Models;
+using Nexus.Authentication.Services.Contracts;
 using Nexus.Authentication.Services.Models;
 
-namespace Nexus.Authentication.Application;
+namespace Nexus.Authentication.Services;
 
 public sealed class JwtTokenService : IJwtTokenService
 {

@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using Nexus.Accounts.Aggregates;
 using Nexus.Database.Models;
 
-namespace Nexus.Accounts.Application;
+namespace Nexus.Accounts.Application.Services;
 
 internal static class AccountRecordMapping
 {
