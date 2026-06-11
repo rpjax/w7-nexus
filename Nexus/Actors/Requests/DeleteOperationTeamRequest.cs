@@ -2,5 +2,5 @@ namespace Nexus.Actors.Requests;
 
 public class DeleteOperationTeamRequest
 {
-    public string? TeamId { get; set; }
+    public string TeamId { get; set; } = string.Empty;
 }

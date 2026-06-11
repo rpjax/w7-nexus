@@ -122,10 +122,8 @@ public class TeamLeader : ITeamLeader
         if (request is null)
             return RequestBodyRequiredResult<SetOperatorProfitShareRuleResponse>();
 
-        var cuts = (request.Cuts ?? Array.Empty<ProfitShareCutRequest>())
-            .Select(cut => new ProfitSplit(
-                string.IsNullOrWhiteSpace(cut.AccountId) ? string.Empty : cut.AccountId.Trim(),
-                cut.Percentage))
+        var cuts = request.Cuts
+            .Select(cut => new ProfitSplit(cut.AccountId.Trim(), cut.Percentage))
             .ToList();
 
         var result = await _teamService.SetOperatorProfitShareRuleAsync(

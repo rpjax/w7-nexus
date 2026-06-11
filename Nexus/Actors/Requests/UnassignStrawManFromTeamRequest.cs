@@ -2,6 +2,6 @@ namespace Nexus.Actors.Requests;
 
 public class UnassignStrawManFromTeamRequest
 {
-    public string? TeamId { get; set; }
-    public string? StrawManId { get; set; }
+    public string TeamId { get; set; } = string.Empty;
+    public string StrawManId { get; set; } = string.Empty;
 }

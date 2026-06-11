@@ -2,6 +2,6 @@ namespace Nexus.Actors.Requests;
 
 public class AssignOperationTeamLeaderRequest
 {
-    public string? TeamId { get; set; }
-    public string? TeamLeaderId { get; set; }
+    public string TeamId { get; set; } = string.Empty;
+    public string TeamLeaderId { get; set; } = string.Empty;
 }

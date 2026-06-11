@@ -2,6 +2,6 @@ namespace Nexus.Actors.Requests;
 
 public class AssignOperatorToTeamRequest
 {
-    public string? TeamId { get; set; }
-    public string? OperatorId { get; set; }
+    public string TeamId { get; set; } = string.Empty;
+    public string OperatorId { get; set; } = string.Empty;
 }

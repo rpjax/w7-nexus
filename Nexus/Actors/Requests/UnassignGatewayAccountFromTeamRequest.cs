@@ -2,6 +2,6 @@ namespace Nexus.Actors.Requests;
 
 public class UnassignGatewayAccountFromTeamRequest
 {
-    public string? TeamId { get; set; }
-    public string? GatewayCredentialsId { get; set; }
+    public string TeamId { get; set; } = string.Empty;
+    public string GatewayCredentialsId { get; set; } = string.Empty;
 }
