@@ -4,6 +4,6 @@ namespace Nexus.Operations.Application.Models;
 
 public class SetGatewaySelectionStrategyRequest
 {
-    public string OperationId { get; set; } = default!;
-    public OperationGatewaySelectionStrategy Strategy { get; set; }
+    public string? TeamId { get; set; }
+    public GatewaySelectionStrategy Strategy { get; set; }
 }

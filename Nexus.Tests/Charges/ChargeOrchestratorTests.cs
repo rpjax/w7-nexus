@@ -16,6 +16,7 @@ using Nexus.Legacy.SigiloPay.Application.Models;
 using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Legacy.Frendz.Application.Models;
 using Nexus.Legacy.Charges.Application.Models;
+using Nexus.Legacy.Database.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 
@@ -28,6 +29,7 @@ public sealed class ChargeOrchestratorTests
     {
         var sut = new ChargeOrchestrator(
             new EmptyOperationRepository(),
+            new EmptyTeamRepository(),
             new StubPaymentService(),
             new StubPaymentRepository(),
             new EmptyFrendzCredentialsRepository(),
@@ -40,6 +42,7 @@ public sealed class ChargeOrchestratorTests
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
             OperationId = "missing",
+            OperatorAccountId = "operator-1",
             Amount = 10m
         });
 
@@ -55,9 +58,20 @@ public sealed class ChargeOrchestratorTests
             "N",
             "D",
             Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var team = new Team(
+            "team-1",
+            "op-1",
+            "Team A",
+            null,
+            new[] { "operator-1" },
             Array.Empty<string>(),
-            false,
+            (int)GatewaySelectionStrategy.PerStrawman,
             Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<OperatorProfitShareRuleRecord>(),
             DateTime.UtcNow,
             DateTime.UtcNow);
 
@@ -74,6 +88,7 @@ public sealed class ChargeOrchestratorTests
 
         var sut = new ChargeOrchestrator(
             new SingleOperationRepository(operation),
+            new SingleTeamRepository(team),
             new StubPaymentService(),
             paymentRepo,
             new SingleFrendzCredentialsRepository(cred),
@@ -86,6 +101,7 @@ public sealed class ChargeOrchestratorTests
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
             OperationId = "op-1",
+            OperatorAccountId = "operator-1",
             Amount = 10m
         });
 
@@ -181,6 +197,36 @@ public sealed class ChargeOrchestratorTests
         public Task DeleteAsync(Operation entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(Expression<Func<Operation, bool>> predicate) => Task.FromResult(0L);
         public Task UpdateAsync(Operation entity) => Task.CompletedTask;
+        public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+    }
+
+    private sealed class EmptyTeamRepository : ITeamRepository
+    {
+        public IAsyncQueryable<Team> AsQueryable() =>
+            new MongoAsyncQueryable<Team>(Array.Empty<Team>().AsQueryable());
+
+        public Task CreateAsync(Team entity) => Task.CompletedTask;
+        public Task CreateAsync(IEnumerable<Team> entities) => Task.CompletedTask;
+        public Task DeleteAsync(Team entity) => Task.CompletedTask;
+        public Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(Team entity) => Task.CompletedTask;
+        public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+    }
+
+    private sealed class SingleTeamRepository : ITeamRepository
+    {
+        private readonly Team _team;
+
+        public SingleTeamRepository(Team team) => _team = team;
+
+        public IAsyncQueryable<Team> AsQueryable() =>
+            new MongoAsyncQueryable<Team>(new[] { _team }.AsQueryable());
+
+        public Task CreateAsync(Team entity) => Task.CompletedTask;
+        public Task CreateAsync(IEnumerable<Team> entities) => Task.CompletedTask;
+        public Task DeleteAsync(Team entity) => Task.CompletedTask;
+        public Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(Team entity) => Task.CompletedTask;
         public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
     }
 

@@ -21,10 +21,7 @@ public sealed class OperationService : IOperationService
         _accountIdValidator = accountIdValidator;
     }
 
-    public async Task<IResult<OperationDetails>> CreateOperationAsync(
-        string? name,
-        string? description,
-        string[] operatorIds)
+    public async Task<IResult<OperationDetails>> CreateOperationAsync(string? name, string? description)
     {
         var builder = Result.Create<OperationDetails>();
 
@@ -49,18 +46,6 @@ public sealed class OperationService : IOperationService
                 .WithMessage($"Operation description must be at most {Operation.MaxDescriptionLength} characters")
                 .Build());
 
-        var normalizedOperatorIds = NormalizeAccountIds(operatorIds);
-        foreach (var operatorId in normalizedOperatorIds)
-        {
-            if (!await _accountIdValidator.ExistsAsync(operatorId))
-            {
-                builder.WithError(Error.Create()
-                    .WithCode(OperationErrorCodes.OperatorAccountNotFound)
-                    .WithMessage($"Operator account '{operatorId}' was not found")
-                    .Build());
-            }
-        }
-
         if (builder.ContainsError)
             return builder.Build();
 
@@ -81,19 +66,14 @@ public sealed class OperationService : IOperationService
             Id: Guid.NewGuid().ToString("N"),
             Name: name!,
             Description: string.IsNullOrWhiteSpace(description) ? null : description,
-            OperatorIds: normalizedOperatorIds,
-            StrawManIds: Array.Empty<string>(),
-            ManuallySetChargeCredentials: false,
-            ChargeCredentialsIds: Array.Empty<string>(),
+            AdministratorIds: Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
 
         await _operations.CreateAsync(operation);
 
-        var operationDetails = OperationDetails.FromOperation(operation);
-
         return builder
-            .WithValue(operationDetails)
+            .WithValue(OperationDetails.FromOperation(operation))
             .Build();
     }
 
@@ -129,191 +109,19 @@ public sealed class OperationService : IOperationService
         if (validation is not null)
             return validation;
 
+        if (string.IsNullOrWhiteSpace(administratorId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.AdministratorInvalid)
+                .WithMessage("Administrator ID is required")
+                .Build());
+        }
+
         var operation = FindOperation(normalizedOperationId);
         if (operation is null)
             return NotFoundResult(normalizedOperationId);
 
         var result = operation.UnassignAdministrator(administratorId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> AssignOperatorAsync(string operationId, string operatorId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var accountValidation = await ValidateAccountExistsAsync(
-            operatorId,
-            OperationErrorCodes.OperatorInvalid,
-            OperationErrorCodes.OperatorAccountNotFound,
-            "Operator");
-        if (accountValidation is not null)
-            return accountValidation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.AssignOperator(operatorId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> UnassignOperatorAsync(string operationId, string operatorId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.UnassignOperator(operatorId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> AssignStrawManAsync(string operationId, string strawManId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var accountValidation = await ValidateAccountExistsAsync(
-            strawManId,
-            OperationErrorCodes.StrawManInvalid,
-            OperationErrorCodes.StrawManAccountNotFound,
-            "Straw man");
-        if (accountValidation is not null)
-            return accountValidation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.AssignStrawMan(strawManId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> UnassignStrawManAsync(string operationId, string strawManId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.UnassignStrawMan(strawManId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> SetGatewaySelectionStrategyAsync(
-        string operationId,
-        OperationGatewaySelectionStrategy strategy)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.SetGatewaySelectionStrategy(strategy);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> AssignGatewayCredentialsGroupAsync(string operationId, string groupId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.AssignGatewayCredentialsGroup(groupId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> UnassignGatewayCredentialsGroupAsync(string operationId, string groupId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.UnassignGatewayCredentialsGroup(groupId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> AssignGatewayCredentialsAsync(string operationId, string credentialsId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.AssignGatewayCredentials(credentialsId);
-        if (result.IsFailure)
-            return result;
-
-        await _operations.UpdateAsync(operation);
-        return Result.Success();
-    }
-
-    public async Task<IResult> UnassignGatewayCredentialsAsync(string operationId, string credentialsId)
-    {
-        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
-        if (validation is not null)
-            return validation;
-
-        var operation = FindOperation(normalizedOperationId);
-        if (operation is null)
-            return NotFoundResult(normalizedOperationId);
-
-        var result = operation.UnassignGatewayCredentials(credentialsId);
         if (result.IsFailure)
             return result;
 
@@ -363,13 +171,6 @@ public sealed class OperationService : IOperationService
 
         return null;
     }
-
-    private static string[] NormalizeAccountIds(string[]? accountIds)
-        => (accountIds ?? Array.Empty<string>())
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select(id => id.Trim())
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
 
     private static IResult? ValidateOperationId(string? operationId, out string normalizedOperationId)
     {

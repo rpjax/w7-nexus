@@ -102,6 +102,7 @@ builder.Services.AddMongoCollection<SigiloPayApiCredentialsRecord>("sigilopay_ap
 builder.Services.AddMongoCollection<WintechApiCredentialsRecord>("wintech_api_credentials");
 builder.Services.AddMongoCollection<PaymentRecord>("payments");
 builder.Services.AddMongoCollection<OperationRecord>("operations");
+builder.Services.AddMongoCollection<TeamRecord>("teams");
 
 builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
 builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
@@ -115,7 +116,11 @@ builder.Services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
 builder.Services.AddScoped<IAccountIdValidator, AccountIdValidator>();
 builder.Services.AddScoped<IOperationRepository, OperationRepository>();
 builder.Services.AddScoped<IOperationService, OperationService>();
+builder.Services.AddScoped<ITeamRepository, TeamRepository>();
+builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IAdministrator, Administrator>();
+builder.Services.AddScoped<IOperationAdministrator, OperationAdministrator>();
+builder.Services.AddScoped<ITeamLeader, TeamLeader>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, FrendzApiCredentialsRepository>();
 builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, SigiloPayApiCredentialsRepository>();
 builder.Services.AddScoped<IWintechApiCredentialsRepository, WintechApiCredentialsRepository>();

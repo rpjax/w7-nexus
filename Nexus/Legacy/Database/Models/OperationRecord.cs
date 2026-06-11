@@ -11,10 +11,7 @@ public sealed class OperationRecord
     public string OperationId { get; set; } = string.Empty;
     public string Name { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public List<string> Operators { get; set; } = new();
-    public List<string> StrawManIds { get; set; } = new();
-    public bool ManuallySetChargeCredentials { get; set; }
-    public List<string> ChargeCredentialsIds { get; set; } = new();
+    public List<string> AdministratorIds { get; set; } = new();
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }
 }

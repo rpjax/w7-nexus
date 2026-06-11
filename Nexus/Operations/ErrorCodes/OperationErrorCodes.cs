@@ -38,4 +38,6 @@ public static class OperationErrorCodes
     public const string ChargeCredentialInvalid = "Operation.CHARGE_CREDENTIAL_INVALID";
     public const string ChargeCredentialAlreadyAssigned = "Operation.CHARGE_CREDENTIAL_ALREADY_ASSIGNED";
     public const string ChargeCredentialNotAssigned = "Operation.CHARGE_CREDENTIAL_NOT_ASSIGNED";
+
+    public const string ProfitShareStrategyNotSupported = "Operation.PROFIT_SHARE_STRATEGY_NOT_SUPPORTED";
 }

@@ -63,8 +63,7 @@ public sealed class OperationServiceTests
 
         var result = await sut.CreateOperationAsync(
             name: "Operation A",
-            description: null,
-            operatorIds: Array.Empty<string>());
+            description: null);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
@@ -80,8 +79,7 @@ public sealed class OperationServiceTests
 
         var result = await sut.CreateOperationAsync(
             name: tooLongName,
-            description: "desc",
-            operatorIds: Array.Empty<string>());
+            description: "desc");
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.NameTooLong);
@@ -95,14 +93,12 @@ public sealed class OperationServiceTests
 
         var first = await sut.CreateOperationAsync(
             name: "My Operation",
-            description: "x",
-            operatorIds: Array.Empty<string>());
+            description: "x");
         Assert.True(first.IsSuccess);
 
         var duplicate = await sut.CreateOperationAsync(
             name: "  my operation  ",
-            description: "y",
-            operatorIds: Array.Empty<string>());
+            description: "y");
 
         Assert.True(duplicate.IsFailure);
         Assert.Contains(duplicate.Errors, e => e.Code == OperationErrorCodes.NameAlreadyExists);

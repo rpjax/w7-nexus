@@ -32,8 +32,7 @@ public class Administrator : IAdministrator
 
         return _operationService.CreateOperationAsync(
             name: request.Name,
-            description: request.Description,
-            operatorIds: request.Operators);
+            description: request.Description);
     }
 
     public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -91,27 +90,6 @@ public class Administrator : IAdministrator
         {
             query = query.Where(o =>
                 o.AdministratorIds.Any(id => administratorIds.Contains(id)));
-        }
-
-        var operatorIds = NormalizeFilterIds(request.OperatorsIds);
-        if (operatorIds.Length > 0)
-        {
-            query = query.Where(o =>
-                o.OperatorIds.Any(id => operatorIds.Contains(id)));
-        }
-
-        var strawManIds = NormalizeFilterIds(request.StrawMansIds);
-        if (strawManIds.Length > 0)
-        {
-            query = query.Where(o =>
-                o.StrawManIds.Any(id => strawManIds.Contains(id)));
-        }
-
-        var gatewayCredentialsIds = NormalizeFilterIds(request.GatewayCredentialsIds);
-        if (gatewayCredentialsIds.Length > 0)
-        {
-            query = query.Where(o =>
-                o.GatewayCredentialsIds.Any(id => gatewayCredentialsIds.Contains(id)));
         }
 
         var total = await query.CountAsync();
@@ -195,58 +173,5 @@ public class Administrator : IAdministrator
             .WithCode(OperationErrorCodes.RequestBodyRequired)
             .WithMessage("Request body is required.")
             .Build());
-    }
-}
-
-public class TeamLeader : ITeamLeader
-{
-    public Task<IResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(AssignGatewayAccountGroupToTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(AssignGatewayAccountToTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(AssignOperatorToTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(AssignStrawManToTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(SetTeamGatewaySelectionStrategyRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<SetTeamProfitShareStrategyResponse>> SetTeamProfitShareStrategyAsync(SetTeamProfitShareStrategyRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(UnassignGatewayAccountFromTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(UnassignGatewayAccountGroupFromTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(UnassignOperatorFromTeamRequest request)
-    {
-        throw new NotImplementedException();
-    }
-
-    public Task<IResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(UnassignStrawManFromTeamRequest request)
-    {
-        throw new NotImplementedException();
     }
 }

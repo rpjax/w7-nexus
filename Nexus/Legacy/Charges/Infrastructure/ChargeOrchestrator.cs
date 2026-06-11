@@ -1,7 +1,7 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.Payments.Application.Models;
+using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Legacy.Wintech.Application;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.Payments.Aggregates;
@@ -18,6 +18,7 @@ namespace Nexus.Legacy.Charges.Infrastructure;
 public sealed class ChargeOrchestrator : IChargeOrchestrator
 {
     private IOperationRepository _operationRepository { get; }
+    private ITeamRepository _teamRepository { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
     private IFrendzApiCredentialsRepository _frendzApiCredentialsRepository { get; }
@@ -29,6 +30,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
 
     public ChargeOrchestrator(
         IOperationRepository operationRepository,
+        ITeamRepository teamRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
         IFrendzApiCredentialsRepository frendzApiCredentialsRepository,
@@ -39,6 +41,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         IWintechChargeServiceFactory wintechChargeServiceFactory)
     {
         _operationRepository = operationRepository;
+        _teamRepository = teamRepository;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
         _frendzApiCredentialsRepository = frendzApiCredentialsRepository;
@@ -62,6 +65,15 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                     .Build())
                 .Build();
 
+        var operatorAccountId = request.OperatorAccountId?.Trim();
+        if (string.IsNullOrWhiteSpace(operatorAccountId))
+            return Result.Create<PixCharge>()
+                .WithError(Error.Create()
+                    .WithCode(PixPaymentErrorCodes.OperatorRequired)
+                    .WithMessage("Operator account ID is required")
+                    .Build())
+                .Build();
+
         if (request.Amount <= 0m)
             return Result.Create<PixCharge>()
                 .WithError(Error.Create()
@@ -81,14 +93,27 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                     .Build())
                 .Build();
 
-        var providers = await GetChargeProvidersAsync(operation);
+        var team = _teamRepository.AsQueryable()
+            .FirstOrDefault(t =>
+                t.OperationId == operationId &&
+                t.OperatorIds.Contains(operatorAccountId));
+
+        if (team is null)
+            return Result.Create<PixCharge>()
+                .WithError(Error.Create()
+                    .WithCode(PixPaymentErrorCodes.TeamNotFound)
+                    .WithMessage($"No team was found for operator '{operatorAccountId}' in operation '{operationId}'")
+                    .Build())
+                .Build();
+
+        var providers = await GetChargeProvidersAsync(team);
 
         if (providers.Length == 0)
         {
             return Result.Create<PixCharge>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.NoChargeServicesAvailable)
-                    .WithMessage("No gateway credentials are available for this operation.")
+                    .WithMessage("No gateway credentials are available for this team.")
                     .Build())
                 .Build();
         }
@@ -97,12 +122,11 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             ? Guid.NewGuid().ToString("N")
             : request.PaymentId.Trim();
 
-        // Straw man só é conhecido após uma tentativa de cobrança bem-sucedida (via provider).
         var createPaymentRequest = new CreatePaymentRequest
         {
             ExplicitPaymentId = paymentId,
             OperationId = operationId,
-            OperatorAccountId = request.OperatorAccountId,
+            OperatorAccountId = operatorAccountId,
             StrawManAccountId = null,
             Gateway = PaymentGateway.Frendz,
             Amount = request.Amount,
@@ -129,16 +153,13 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                 {
                     PaymentId = payment.Id,
                     OperationId = operationId,
-                    OperatorAccountId = request.OperatorAccountId,
+                    OperatorAccountId = operatorAccountId,
                     StrawManAccountId = provider.StrawManId,
                     Amount = request.Amount
                 };
 
-                // create the charge
                 var pixCharge = await provider.Service.CreatePixChargeAsync(chargeRequest);
 
-                // ID da transação no gateway (PK usada nos webhooks/postbacks para correlacionar:
-                // SigiloPay/Wintech → transaction.id; Frendz → transaction_hash). Origem: parsers da resposta de criação PIX.
                 var transactionId = pixCharge.Id;
                 var bindGateway = payment.BindToGateway(provider.Gateway, transactionId);
                 if (bindGateway.IsFailure)
@@ -149,7 +170,6 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                         .Build();
                 }
 
-                // bind to strawman
                 if (!string.IsNullOrWhiteSpace(provider.StrawManId))
                 {
                     var bindStrawMan = payment.BindToStrawMan(provider.StrawManId);
@@ -161,8 +181,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                             .Build();
                     }
                 }
-                
-                // updates the payments
+
                 await _paymentRepository.UpdateAsync(payment);
                 return Result.Create<PixCharge>()
                     .WithValue(pixCharge)
@@ -188,27 +207,24 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .Build();
     }
 
-    /// <summary>
-    /// Reúne todos os provedores de cobrança elegíveis (por gateway) e embaralha a ordem de tentativa.
-    /// </summary>
-    private async Task<ChargeServiceProvider[]> GetChargeProvidersAsync(Operation operation)
+    private async Task<ChargeServiceProvider[]> GetChargeProvidersAsync(Team team)
     {
-        var frendzProviders = await GetFrendzChargeProvidersAsync(operation);
-        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(operation);
-        var wintechProviders = await GetWintechChargeProvidersAsync(operation);
+        var frendzProviders = await GetFrendzChargeProvidersAsync(team);
+        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(team);
+        var wintechProviders = await GetWintechChargeProvidersAsync(team);
         var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
         Random.Shared.Shuffle(merged);
         return merged;
     }
 
-    private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Operation operation)
+    private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Team team)
     {
-        var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
+        var strawmanIds = team.StrawManIds.ToArray();
+        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _frendzApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (
-                operation.ManuallySetChargeCredentials
+                team.ManuallySetChargeCredentials
                     ? manualCredentialIds.Contains(x.Id)
                     : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
             .ToArrayAsync();
@@ -228,14 +244,14 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Operation operation)
+    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Team team)
     {
-        var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
+        var strawmanIds = team.StrawManIds.ToArray();
+        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (
-                operation.ManuallySetChargeCredentials
+                team.ManuallySetChargeCredentials
                     ? manualCredentialIds.Contains(x.Id)
                     : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
             .ToArrayAsync();
@@ -255,14 +271,14 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(Operation operation)
+    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(Team team)
     {
-        var strawmanIds = operation.StrawManIds.ToArray();
-        var manualCredentialIds = operation.GatewayCredentialsIds.ToArray();
+        var strawmanIds = team.StrawManIds.ToArray();
+        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _wintechApiCredentialsRepository.AsQueryable()
             .Where(x => x.Enabled && (
-                operation.ManuallySetChargeCredentials
+                team.ManuallySetChargeCredentials
                     ? manualCredentialIds.Contains(x.Id)
                     : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
             .ToArrayAsync();

@@ -1,3 +1,6 @@
 namespace Nexus.Actors.Requests;
 
-public class UnassignOperationTeamLeaderRequest { }
+public class UnassignOperationTeamLeaderRequest
+{
+    public string? TeamId { get; set; }
+}
