@@ -1,6 +1,6 @@
 using MongoDB.Bson;
 using Nexus.Accounts.Aggregates;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 
 namespace Nexus.Accounts.Infrastructure;
 

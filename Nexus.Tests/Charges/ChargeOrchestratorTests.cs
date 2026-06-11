@@ -10,15 +10,15 @@ using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Legacy.Frendz.Application;
-using Nexus.Legacy.Charges.Application;
 using Nexus.Legacy.Wintech.Application.Models;
 using Nexus.Legacy.SigiloPay.Application.Models;
 using Nexus.Legacy.Payments.Application.Models;
 using Nexus.Legacy.Frendz.Application.Models;
-using Nexus.Legacy.Charges.Application.Models;
-using Nexus.Legacy.Database.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
+using Nexus.Database.Models;
+using Nexus.Charges.Application;
+using Nexus.Charges.Application.Models;
 
 namespace Nexus.Tests.Charges;
 

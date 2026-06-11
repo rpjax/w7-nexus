@@ -3,7 +3,7 @@ using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 

@@ -6,3 +6,4 @@ public enum GatewaySelectionStrategy
     PerGroup,
     Manual
 }
+

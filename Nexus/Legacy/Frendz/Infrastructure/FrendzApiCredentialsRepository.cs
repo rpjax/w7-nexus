@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Mongo.Linq;
 using MongoDB.Driver;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 using Nexus.Legacy.Frendz.Application;
 using Nexus.Legacy.Frendz.Application.Models;
 

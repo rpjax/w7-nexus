@@ -3,7 +3,7 @@ using Aidan.Core.Patterns;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Accounts.Application;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 using Nexus.Legacy.SigiloPay.Application;
 using Nexus.Legacy.SigiloPay.Application.Models;
 using Nexus.Legacy.SigiloPay.ErrorCodes;

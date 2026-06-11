@@ -5,7 +5,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 
 namespace Nexus.Accounts.Infrastructure;
 

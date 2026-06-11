@@ -1,4 +1,4 @@
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 
 namespace Nexus.Operations.Aggregates;
 

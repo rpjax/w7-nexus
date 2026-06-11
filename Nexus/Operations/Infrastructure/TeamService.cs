@@ -2,6 +2,7 @@ using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application;
 using Nexus.Actors.Responses.Models;
+using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
 using Nexus.Operations.ErrorCodes;
@@ -84,7 +85,7 @@ public sealed class TeamService : ITeamService
             GatewaySelectionStrategy: (int)GatewaySelectionStrategy.PerStrawman,
             ChargeCredentialsIds: Array.Empty<string>(),
             GatewayCredentialsGroupIds: Array.Empty<string>(),
-            OperatorProfitShareRules: Array.Empty<Legacy.Database.Models.OperatorProfitShareRuleRecord>(),
+            OperatorProfitShareRules: Array.Empty<OperatorProfitShareRuleRecord>(),
             CreatedAt: now,
             UpdatedAt: now);
 

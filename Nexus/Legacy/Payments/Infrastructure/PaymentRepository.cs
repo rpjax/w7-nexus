@@ -5,7 +5,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 
 namespace Nexus.Legacy.Payments.Infrastructure;
 

@@ -17,15 +17,15 @@ using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.Infrastructure;
 using Nexus.Legacy.Frendz.Application;
 using Nexus.Legacy.Frendz.Infrastructure;
-using Nexus.Legacy.Database.Models;
-using Nexus.Legacy.Charges.Application;
-using Nexus.Legacy.Charges.Infrastructure;
 using Nexus.Accounts.Application;
 using Nexus.Accounts.Infrastructure;
 using Nexus.Actors;
 using Nexus.Actors.Contracts;
 using Nexus.Operations.Application;
 using Nexus.Operations.Infrastructure;
+using Nexus.Database.Models;
+using Nexus.Charges.Application;
+using Nexus.Charges.Infrastructure;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
