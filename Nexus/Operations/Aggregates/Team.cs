@@ -1,6 +1,6 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.Legacy.Database.Models;
+using Nexus.Database.Models;
 using Nexus.Operations.ErrorCodes;
 
 namespace Nexus.Operations.Aggregates;

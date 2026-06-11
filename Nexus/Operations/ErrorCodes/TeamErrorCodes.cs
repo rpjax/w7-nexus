@@ -29,6 +29,7 @@ public static class TeamErrorCodes
     public const string GatewayCredentialsGroupInvalid = "Team.GATEWAY_CREDENTIALS_GROUP_INVALID";
     public const string GatewayCredentialsGroupAlreadyAssigned = "Team.GATEWAY_CREDENTIALS_GROUP_ALREADY_ASSIGNED";
     public const string GatewayCredentialsGroupNotAssigned = "Team.GATEWAY_CREDENTIALS_GROUP_NOT_ASSIGNED";
+    public const string GatewayCredentialsGroupNotFound = "Team.GATEWAY_CREDENTIALS_GROUP_NOT_FOUND";
     public const string GatewayCredentialsGroupStrategyMismatch = "Team.GATEWAY_CREDENTIALS_GROUP_STRATEGY_MISMATCH";
     public const string GatewaySelectionStrategyInvalid = "Team.GATEWAY_SELECTION_STRATEGY_INVALID";
 

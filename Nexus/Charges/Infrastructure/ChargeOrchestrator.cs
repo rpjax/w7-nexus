@@ -8,10 +8,10 @@ using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
 using Nexus.Legacy.Payments.ErrorCodes;
 using Nexus.Legacy.Frendz.Application;
-using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
 using Nexus.Charges.Application;
 using Nexus.Charges.Application.Models;
+using Nexus.Operations.Aggregates;
+using Nexus.Operations.Application;
 
 namespace Nexus.Charges.Infrastructure;
 
@@ -27,6 +27,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
     private ISigiloPayChargeServiceFactory _sigiloPayChargeServiceFactory { get; }
     private IWintechApiCredentialsRepository _wintechApiCredentialsRepository { get; }
     private IWintechChargeServiceFactory _wintechChargeServiceFactory { get; }
+    private IGatewayCredentialsGroupRepository _gatewayCredentialsGroupRepository { get; }
 
     public ChargeOrchestrator(
         IOperationRepository operationRepository,
@@ -38,7 +39,8 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         ISigiloPayApiCredentialsRepository sigiloPayApiCredentialsRepository,
         ISigiloPayChargeServiceFactory sigiloPayChargeServiceFactory,
         IWintechApiCredentialsRepository wintechApiCredentialsRepository,
-        IWintechChargeServiceFactory wintechChargeServiceFactory)
+        IWintechChargeServiceFactory wintechChargeServiceFactory,
+        IGatewayCredentialsGroupRepository gatewayCredentialsGroupRepository)
     {
         _operationRepository = operationRepository;
         _teamRepository = teamRepository;
@@ -50,6 +52,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         _sigiloPayChargeServiceFactory = sigiloPayChargeServiceFactory;
         _wintechApiCredentialsRepository = wintechApiCredentialsRepository;
         _wintechChargeServiceFactory = wintechChargeServiceFactory;
+        _gatewayCredentialsGroupRepository = gatewayCredentialsGroupRepository;
     }
 
     public async Task<IResult<PixCharge>> CreatePixChargeAsync(CreatePixChargeRequest request)
@@ -209,25 +212,69 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
 
     private async Task<ChargeServiceProvider[]> GetChargeProvidersAsync(Team team)
     {
-        var frendzProviders = await GetFrendzChargeProvidersAsync(team);
-        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(team);
-        var wintechProviders = await GetWintechChargeProvidersAsync(team);
+        var allowedCredentialIds = await ResolveAllowedCredentialIdsAsync(team);
+        var frendzProviders = await GetFrendzChargeProvidersAsync(team, allowedCredentialIds);
+        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(team, allowedCredentialIds);
+        var wintechProviders = await GetWintechChargeProvidersAsync(team, allowedCredentialIds);
         var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
         Random.Shared.Shuffle(merged);
         return merged;
     }
 
-    private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(Team team)
+    private async Task<string[]> ResolveAllowedCredentialIdsAsync(Team team)
+    {
+        return team.GatewaySelectionStrategy switch
+        {
+            GatewaySelectionStrategy.Manual => team.GatewayCredentialsIds.ToArray(),
+            GatewaySelectionStrategy.PerGroup => await ResolveGroupCredentialIdsAsync(team),
+            _ => Array.Empty<string>()
+        };
+    }
+
+    private async Task<string[]> ResolveGroupCredentialIdsAsync(Team team)
+    {
+        var groupIds = team.GatewayCredentialsGroupIds.ToArray();
+        if (groupIds.Length == 0)
+            return Array.Empty<string>();
+
+        var groups = await _gatewayCredentialsGroupRepository.AsQueryable()
+            .Where(g => groupIds.Contains(g.Id))
+            .ToArrayAsync();
+
+        return groups
+            .SelectMany(g => g.GatewayCredentialsIds)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+    }
+
+    private static bool MatchesTeamGatewaySelection(
+        Team team,
+        string[] allowedCredentialIds,
+        string[] strawmanIds,
+        string credentialId,
+        string? strawManId)
+    {
+        return team.GatewaySelectionStrategy switch
+        {
+            GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+                => allowedCredentialIds.Contains(credentialId),
+            _ => strawManId is null || strawmanIds.Contains(strawManId)
+        };
+    }
+
+    private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(
+        Team team,
+        string[] allowedCredentialIds)
     {
         var strawmanIds = team.StrawManIds.ToArray();
-        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _frendzApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled && (
-                team.ManuallySetChargeCredentials
-                    ? manualCredentialIds.Contains(x.Id)
-                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
+            .Where(x => x.Enabled)
             .ToArrayAsync();
+
+        credentials = credentials
+            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
+            .ToArray();
 
         var providers = new List<ChargeServiceProvider>();
 
@@ -244,17 +291,19 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(Team team)
+    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(
+        Team team,
+        string[] allowedCredentialIds)
     {
         var strawmanIds = team.StrawManIds.ToArray();
-        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _sigiloPayApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled && (
-                team.ManuallySetChargeCredentials
-                    ? manualCredentialIds.Contains(x.Id)
-                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
+            .Where(x => x.Enabled)
             .ToArrayAsync();
+
+        credentials = credentials
+            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
+            .ToArray();
 
         var providers = new List<ChargeServiceProvider>();
 
@@ -271,17 +320,19 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(Team team)
+    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(
+        Team team,
+        string[] allowedCredentialIds)
     {
         var strawmanIds = team.StrawManIds.ToArray();
-        var manualCredentialIds = team.GatewayCredentialsIds.ToArray();
 
         var credentials = await _wintechApiCredentialsRepository.AsQueryable()
-            .Where(x => x.Enabled && (
-                team.ManuallySetChargeCredentials
-                    ? manualCredentialIds.Contains(x.Id)
-                    : (x.StrawManId == null || strawmanIds.Contains(x.StrawManId))))
+            .Where(x => x.Enabled)
             .ToArrayAsync();
+
+        credentials = credentials
+            .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
+            .ToArray();
 
         var providers = new List<ChargeServiceProvider>();
 

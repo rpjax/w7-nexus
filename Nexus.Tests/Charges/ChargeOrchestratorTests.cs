@@ -19,6 +19,7 @@ using Nexus.Operations.Application;
 using Nexus.Database.Models;
 using Nexus.Charges.Application;
 using Nexus.Charges.Application.Models;
+using Nexus.Charges.Entities;
 
 namespace Nexus.Tests.Charges;
 
@@ -37,7 +38,8 @@ public sealed class ChargeOrchestratorTests
             new EmptySigiloPayCredentialsRepository(),
             new StubSigiloPayChargeServiceFactory(new StubChargeService()),
             new EmptyWintechCredentialsRepository(),
-            new StubWintechChargeServiceFactory(new StubChargeService()));
+            new StubWintechChargeServiceFactory(new StubChargeService()),
+            new EmptyGatewayCredentialsGroupRepository());
 
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
@@ -96,7 +98,8 @@ public sealed class ChargeOrchestratorTests
             new EmptySigiloPayCredentialsRepository(),
             new StubSigiloPayChargeServiceFactory(chargeService),
             new EmptyWintechCredentialsRepository(),
-            new StubWintechChargeServiceFactory(chargeService));
+            new StubWintechChargeServiceFactory(chargeService),
+            new EmptyGatewayCredentialsGroupRepository());
 
         var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
         {
@@ -109,6 +112,73 @@ public sealed class ChargeOrchestratorTests
         Assert.NotNull(result.Value);
         Assert.Equal("pix-code", result.Value!.Code);
         Assert.True(paymentRepo.WasUpdated);
+    }
+
+    [Fact]
+    public async Task CreatePixChargeAsync_WhenPerGroupStrategy_UsesCredentialsFromAssignedGroups()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var team = new Team(
+            "team-1",
+            "op-1",
+            "Team A",
+            null,
+            new[] { "operator-1" },
+            Array.Empty<string>(),
+            (int)GatewaySelectionStrategy.PerGroup,
+            Array.Empty<string>(),
+            new[] { "grp-1" },
+            Array.Empty<OperatorProfitShareRuleRecord>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var group = new GatewayCredentialsGroup(
+            "grp-1",
+            "Group A",
+            new[] { "cred-1" },
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok" };
+        var paymentRepo = new StubPaymentRepository();
+        var chargeService = new StubChargeService
+        {
+            OnCreate = r => Task.FromResult(new PixCharge
+            {
+                Id = r.PaymentId,
+                Code = "pix-group"
+            })
+        };
+
+        var sut = new ChargeOrchestrator(
+            new SingleOperationRepository(operation),
+            new SingleTeamRepository(team),
+            new StubPaymentService(),
+            paymentRepo,
+            new SingleFrendzCredentialsRepository(cred),
+            new StubChargeServiceFactory(chargeService),
+            new EmptySigiloPayCredentialsRepository(),
+            new StubSigiloPayChargeServiceFactory(chargeService),
+            new EmptyWintechCredentialsRepository(),
+            new StubWintechChargeServiceFactory(chargeService),
+            new SingleGatewayCredentialsGroupRepository(group));
+
+        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "operator-1",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("pix-group", result.Value!.Code);
     }
 
     private sealed class StubPaymentService : IPaymentService
@@ -323,5 +393,35 @@ public sealed class ChargeOrchestratorTests
         public StubWintechChargeServiceFactory(IChargeService service) => _service = service;
 
         public IChargeService Create(WintechApiCredentials credentials) => _service;
+    }
+
+    private sealed class EmptyGatewayCredentialsGroupRepository : IGatewayCredentialsGroupRepository
+    {
+        public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable() =>
+            new MongoAsyncQueryable<GatewayCredentialsGroup>(Array.Empty<GatewayCredentialsGroup>().AsQueryable());
+
+        public Task CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<GatewayCredentialsGroup, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    private sealed class SingleGatewayCredentialsGroupRepository : IGatewayCredentialsGroupRepository
+    {
+        private readonly GatewayCredentialsGroup _group;
+
+        public SingleGatewayCredentialsGroupRepository(GatewayCredentialsGroup group) => _group = group;
+
+        public IAsyncQueryable<GatewayCredentialsGroup> AsQueryable() =>
+            new MongoAsyncQueryable<GatewayCredentialsGroup>(new[] { _group }.AsQueryable());
+
+        public Task CreateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task CreateAsync(IEnumerable<GatewayCredentialsGroup> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<GatewayCredentialsGroup, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(GatewayCredentialsGroup entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 }

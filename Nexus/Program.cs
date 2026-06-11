@@ -103,6 +103,7 @@ builder.Services.AddMongoCollection<WintechApiCredentialsRecord>("wintech_api_cr
 builder.Services.AddMongoCollection<PaymentRecord>("payments");
 builder.Services.AddMongoCollection<OperationRecord>("operations");
 builder.Services.AddMongoCollection<TeamRecord>("teams");
+builder.Services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
 
 builder.Services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
 builder.Services.AddSingleton<IAppHostProvider, AppHostProvider>();
@@ -127,6 +128,9 @@ builder.Services.AddScoped<IWintechApiCredentialsRepository, WintechApiCredentia
 builder.Services.AddScoped<IFrendzChargeServiceFactory, FrendzChargeServiceFactory>();
 builder.Services.AddScoped<ISigiloPayChargeServiceFactory, SigiloPayChargeServiceFactory>();
 builder.Services.AddScoped<IWintechChargeServiceFactory, WintechChargeServiceFactory>();
+builder.Services.AddScoped<IGatewayCredentialsGroupRepository, GatewayCredentialsGroupRepository>();
+builder.Services.AddScoped<IGatewayCredentialsGroupService, GatewayCredentialsGroupService>();
+builder.Services.AddScoped<IGatewayCredentialsIdValidator, GatewayCredentialsIdValidator>();
 builder.Services.AddScoped<IChargeOrchestrator, ChargeOrchestrator>();
 builder.Services.AddScoped<IFrendzClient, FrendzClient>();
 builder.Services.AddHttpClient<FrendzClient>();

@@ -2,6 +2,7 @@ using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application;
 using Nexus.Actors.Responses.Models;
+using Nexus.Charges.Application;
 using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application;
@@ -14,15 +15,21 @@ public sealed class TeamService : ITeamService
     private readonly ITeamRepository _teams;
     private readonly IOperationRepository _operations;
     private readonly IAccountIdValidator _accountIdValidator;
+    private readonly IGatewayCredentialsGroupRepository _gatewayCredentialsGroups;
+    private readonly IGatewayCredentialsIdValidator _gatewayCredentialsIdValidator;
 
     public TeamService(
         ITeamRepository teams,
         IOperationRepository operations,
-        IAccountIdValidator accountIdValidator)
+        IAccountIdValidator accountIdValidator,
+        IGatewayCredentialsGroupRepository gatewayCredentialsGroups,
+        IGatewayCredentialsIdValidator gatewayCredentialsIdValidator)
     {
         _teams = teams;
         _operations = operations;
         _accountIdValidator = accountIdValidator;
+        _gatewayCredentialsGroups = gatewayCredentialsGroups;
+        _gatewayCredentialsIdValidator = gatewayCredentialsIdValidator;
     }
 
     public async Task<IResult<TeamDetails>> CreateTeamAsync(string operationId, string? name)
@@ -289,11 +296,30 @@ public sealed class TeamService : ITeamService
         if (validation is not null)
             return validation;
 
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(TeamErrorCodes.GatewayCredentialsGroupInvalid)
+                .WithMessage("Gateway credentials group ID is required")
+                .Build());
+        }
+
+        var normalizedGroupId = groupId.Trim();
+        var groupExists = _gatewayCredentialsGroups.AsQueryable()
+            .Any(g => g.Id == normalizedGroupId);
+        if (!groupExists)
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(TeamErrorCodes.GatewayCredentialsGroupNotFound)
+                .WithMessage($"Gateway credentials group '{normalizedGroupId}' was not found")
+                .Build());
+        }
+
         var team = FindTeam(normalizedTeamId);
         if (team is null)
             return NotFoundResult(normalizedTeamId);
 
-        var result = team.AssignGatewayCredentialsGroup(groupId);
+        var result = team.AssignGatewayCredentialsGroup(normalizedGroupId);
         if (result.IsFailure)
             return result;
 
@@ -325,11 +351,28 @@ public sealed class TeamService : ITeamService
         if (validation is not null)
             return validation;
 
+        if (string.IsNullOrWhiteSpace(credentialsId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
+                .WithMessage("Gateway credential ID is required")
+                .Build());
+        }
+
+        var normalizedCredentialsId = credentialsId.Trim();
+        if (!await _gatewayCredentialsIdValidator.ExistsAsync(normalizedCredentialsId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(TeamErrorCodes.GatewayCredentialInvalid)
+                .WithMessage($"Gateway credential '{normalizedCredentialsId}' was not found")
+                .Build());
+        }
+
         var team = FindTeam(normalizedTeamId);
         if (team is null)
             return NotFoundResult(normalizedTeamId);
 
-        var result = team.AssignGatewayCredentials(credentialsId);
+        var result = team.AssignGatewayCredentials(normalizedCredentialsId);
         if (result.IsFailure)
             return result;
 
