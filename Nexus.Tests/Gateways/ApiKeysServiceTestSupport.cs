@@ -2,6 +2,7 @@ using MongoDB.Driver;
 using Moq;
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
 
@@ -40,10 +41,26 @@ internal static class ApiKeysServiceTestSupport
         public IAsyncQueryable<Account> AsQueryable()
             => new QueryableToAsyncQueryableAdapter<Account>(_store.AsQueryable());
 
-        public Task CreateAsync(Account entity)
+        public Task<Account> CreateAsync(Account entity)
         {
-            _store.Add(entity);
-            return Task.CompletedTask;
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Account(
+                    Guid.NewGuid().ToString("N"),
+                    entity.Username,
+                    entity.PasswordHash,
+                    entity.Roles,
+                    entity.Permissions,
+                    entity.CreatedAt,
+                    entity.LastUpdatedAt)
+                : entity;
+
+            _store.Add(persisted);
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<Account>.CreateAsync(Account entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<Account> entities)

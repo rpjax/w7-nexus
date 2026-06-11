@@ -3,7 +3,7 @@ using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Actors.Contracts;
 using Nexus.Actors.Requests;
-using Nexus.Authentication.Application.Models;
+using Nexus.Authentication.Services.Models;
 using Nexus.Authentication.Errors;
 using Nexus.Authentication.Services.Contracts;
 using Nexus.Authentication.Services.Requests;

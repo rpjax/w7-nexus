@@ -33,6 +33,8 @@ using Nexus.Authentication.Services.Contracts;
 using Nexus.Authentication.Services;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Application.Services;
+using Nexus.Accounts.Infrastructure.Persistance;
+using Nexus.Accounts.Infrastructure.Password;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -138,7 +140,7 @@ builder.Services.AddScoped<IWintechClient, WintechClient>();
 builder.Services.AddHttpClient<WintechClient>();
 
 // Account services
-builder.Services.AddScoped<IAccountRepository, AccountRepository>();
+builder.Services.AddScoped<IAccountRepository, MongoAccountRepository>();
 builder.Services.AddScoped<IUsernameValidator, UsernameValidator>();
 builder.Services.AddScoped<IPasswordValidator, PasswordValidator>();
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();

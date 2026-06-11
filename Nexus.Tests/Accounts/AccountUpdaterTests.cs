@@ -1,8 +1,8 @@
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application;
+using Nexus.Accounts.Application.Services;
+using Nexus.Accounts.Infrastructure.Password;
 using Xunit;
 using Nexus.Accounts.Errors;
-using Nexus.Accounts.Application.Services;
 
 namespace Nexus.Tests.Accounts;
 

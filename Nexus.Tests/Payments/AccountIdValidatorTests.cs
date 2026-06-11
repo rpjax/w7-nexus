@@ -1,4 +1,4 @@
-using Nexus.Accounts.Application;
+using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Tests.Accounts;
 using Xunit;

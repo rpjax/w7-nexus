@@ -1,19 +1,21 @@
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Infrastructure.Mapping;
 using Nexus.Database.Models;
 
-namespace Nexus.Accounts.Application.Services;
+namespace Nexus.Accounts.Infrastructure.Persistance;
 
-public sealed class AccountRepository : IAccountRepository
+public sealed class MongoAccountRepository : IAccountRepository
 {
     private readonly IMongoCollection<AccountRecord> _collection;
 
-    public AccountRepository(IMongoCollection<AccountRecord> collection)
+    public MongoAccountRepository(IMongoCollection<AccountRecord> collection)
     {
         _collection = collection;
     }
@@ -35,10 +37,16 @@ public sealed class AccountRepository : IAccountRepository
         return new MongoAsyncQueryable<Account>(source);
     }
 
-    public Task CreateAsync(Account entity)
+    public async Task<Account> CreateAsync(Account entity)
     {
         var record = AccountRecordMapping.ToRecord(entity);
-        return _collection.InsertOneAsync(record);
+        await _collection.InsertOneAsync(record);
+        return AccountRecordMapping.ToAccount(record);
+    }
+
+    async Task IRepository<Account>.CreateAsync(Account entity)
+    {
+        await CreateAsync(entity);
     }
 
     public Task CreateAsync(IEnumerable<Account> entities)

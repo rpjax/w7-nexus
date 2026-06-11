@@ -6,7 +6,6 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application;
 
 namespace Nexus.Operations.Application;
 

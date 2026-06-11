@@ -2,7 +2,7 @@ using MongoDB.Bson;
 using Nexus.Accounts.Aggregates;
 using Nexus.Database.Models;
 
-namespace Nexus.Accounts.Application.Services;
+namespace Nexus.Accounts.Infrastructure.Mapping;
 
 internal static class AccountRecordMapping
 {
@@ -20,7 +20,7 @@ internal static class AccountRecordMapping
 
     public static AccountRecord ToRecord(Account account)
     {
-        if (!ObjectId.TryParse(account.Id, out var objectId))
+        if (string.IsNullOrWhiteSpace(account.Id) || !ObjectId.TryParse(account.Id, out var objectId))
             objectId = ObjectId.GenerateNewId();
 
         return new AccountRecord

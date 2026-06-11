@@ -1,4 +1,5 @@
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Mongo.Linq;
@@ -72,7 +73,9 @@ public sealed class PixPaymentServiceTests
         public IAsyncQueryable<Account> AsQueryable()
             => new MongoAsyncQueryable<Account>(_accounts.AsQueryable());
 
-        public Task CreateAsync(Account entity) => Task.CompletedTask;
+        public Task<Account> CreateAsync(Account entity) => Task.FromResult(entity);
+
+        Task IRepository<Account>.CreateAsync(Account entity) => CreateAsync(entity);
         public Task CreateAsync(IEnumerable<Account> entities) => Task.CompletedTask;
         public Task DeleteAsync(Account entity) => Task.CompletedTask;
         public Task<long> DeleteAsync(System.Linq.Expressions.Expression<Func<Account, bool>> predicate) => Task.FromResult(0L);

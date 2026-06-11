@@ -1,6 +1,7 @@
 using System.Collections.Concurrent;
 using System.Linq.Expressions;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
@@ -17,10 +18,26 @@ internal sealed class InMemoryAccountRepository : IAccountRepository
         return new MongoAsyncQueryable<Account>(source);
     }
 
-    public Task CreateAsync(Account entity)
+    public Task<Account> CreateAsync(Account entity)
     {
-        _store[entity.Id] = CloneAccount(entity);
-        return Task.CompletedTask;
+        var persisted = string.IsNullOrWhiteSpace(entity.Id)
+            ? new Account(
+                Guid.NewGuid().ToString("N"),
+                entity.Username,
+                entity.PasswordHash,
+                entity.Roles,
+                entity.Permissions,
+                entity.CreatedAt,
+                entity.LastUpdatedAt)
+            : CloneAccount(entity);
+
+        _store[persisted.Id] = CloneAccount(persisted);
+        return Task.FromResult(CloneAccount(persisted));
+    }
+
+    async Task IRepository<Account>.CreateAsync(Account entity)
+    {
+        await CreateAsync(entity);
     }
 
     public Task CreateAsync(IEnumerable<Account> entities)

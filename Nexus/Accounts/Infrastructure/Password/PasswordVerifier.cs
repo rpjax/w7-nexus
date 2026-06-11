@@ -1,6 +1,6 @@
 using Nexus.Accounts.Application.Services.Contracts;
 
-namespace Nexus.Accounts.Application.Services;
+namespace Nexus.Accounts.Infrastructure.Password;
 
 public sealed class PasswordVerifier : IPasswordVerifier
 {

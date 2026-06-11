@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
+using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Aggregates;
 using Nexus.Operations.Aggregates;
@@ -110,10 +111,26 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         public IAsyncQueryable<Account> AsQueryable()
             => new MongoAsyncQueryable<Account>(_store.AsQueryable());
 
-        public Task CreateAsync(Account entity)
+        public Task<Account> CreateAsync(Account entity)
         {
-            _store.Add(entity);
-            return Task.CompletedTask;
+            var persisted = string.IsNullOrWhiteSpace(entity.Id)
+                ? new Account(
+                    Guid.NewGuid().ToString("N"),
+                    entity.Username,
+                    entity.PasswordHash,
+                    entity.Roles,
+                    entity.Permissions,
+                    entity.CreatedAt,
+                    entity.LastUpdatedAt)
+                : entity;
+
+            _store.Add(persisted);
+            return Task.FromResult(persisted);
+        }
+
+        async Task IRepository<Account>.CreateAsync(Account entity)
+        {
+            await CreateAsync(entity);
         }
 
         public Task CreateAsync(IEnumerable<Account> entities)

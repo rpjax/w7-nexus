@@ -1,5 +1,4 @@
 using Aidan.Core.Patterns;
-using MongoDB.Bson;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Services.Contracts;
 
@@ -40,15 +39,14 @@ public sealed class AccountCreator : IAccountCreator
 
         var passwordHash = await _passwordHasher.HashAsync(password);
 
-        var id = ObjectId.GenerateNewId().ToString();
         var account = new Account(
-            id,
+            string.Empty,
             username,
             passwordHash,
             roles ?? Array.Empty<string>(),
             permissions ?? Array.Empty<string>());
 
-        await _accounts.CreateAsync(account);
+        account = await _accounts.CreateAsync(account);
 
         return Result.Create<Account>().WithValue(account).Build();
     }
