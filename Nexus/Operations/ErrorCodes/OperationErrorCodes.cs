@@ -34,10 +34,10 @@ public static class OperationErrorCodes
     public const string GatewayCredentialsGroupNotAssigned = "Operation.GATEWAY_CREDENTIALS_GROUP_NOT_ASSIGNED";
     public const string GatewayCredentialsGroupStrategyMismatch = "Operation.GATEWAY_CREDENTIALS_GROUP_STRATEGY_MISMATCH";
 
-    public const string ManualChargeCredentialsDisabled = "Operation.MANUAL_CHARGE_CREDENTIALS_DISABLED";
-    public const string ChargeCredentialInvalid = "Operation.CHARGE_CREDENTIAL_INVALID";
-    public const string ChargeCredentialAlreadyAssigned = "Operation.CHARGE_CREDENTIAL_ALREADY_ASSIGNED";
-    public const string ChargeCredentialNotAssigned = "Operation.CHARGE_CREDENTIAL_NOT_ASSIGNED";
+    public const string ManualGatewayCredentialsDisabled = "Operation.MANUAL_GATEWAY_CREDENTIALS_DISABLED";
+    public const string GatewayCredentialInvalid = "Operation.GATEWAY_CREDENTIAL_INVALID";
+    public const string GatewayCredentialAlreadyAssigned = "Operation.GATEWAY_CREDENTIAL_ALREADY_ASSIGNED";
+    public const string GatewayCredentialNotAssigned = "Operation.GATEWAY_CREDENTIAL_NOT_ASSIGNED";
 
     public const string ProfitShareStrategyNotSupported = "Operation.PROFIT_SHARE_STRATEGY_NOT_SUPPORTED";
 }

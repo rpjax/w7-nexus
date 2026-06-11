@@ -2,7 +2,7 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
-using Nexus.Charges.Infrastructure;
+using Nexus.Gateways.Infrastructure;
 using Xunit;
 using Nexus.Legacy.Payments.Aggregates;
 using Nexus.Legacy.Payments.Application;
@@ -21,27 +21,27 @@ using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.SigiloPay.Application;
 
-namespace Nexus.Tests.Charges;
+namespace Nexus.Tests.Gateways;
 
-public sealed class ChargeOrchestratorTests
+public sealed class GatewayOrchestratorTests
 {
     [Fact]
-    public async Task CreatePixChargeAsync_WhenOperationMissing_ReturnsFailure()
+    public async Task CreateGatewayPixAsync_WhenOperationMissing_ReturnsFailure()
     {
-        var sut = new ChargeOrchestrator(
+        var sut = new GatewayOrchestrator(
             new EmptyOperationRepository(),
             new EmptyTeamRepository(),
             new StubPaymentService(),
             new StubPaymentRepository(),
             new EmptyFrendzCredentialsRepository(),
-            new StubChargeServiceFactory(new StubChargeService()),
+            new StubGatewayPixServiceFactory(new StubGatewayPixService()),
             new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayChargeServiceFactory(new StubChargeService()),
+            new StubSigiloPayGatewayPixServiceFactory(new StubGatewayPixService()),
             new EmptyWintechCredentialsRepository(),
-            new StubWintechChargeServiceFactory(new StubChargeService()),
+            new StubWintechGatewayPixServiceFactory(new StubGatewayPixService()),
             new EmptyGatewayCredentialsGroupRepository());
 
-        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "missing",
             OperatorAccountId = "operator-1",
@@ -53,7 +53,7 @@ public sealed class ChargeOrchestratorTests
     }
 
     [Fact]
-    public async Task CreatePixChargeAsync_WhenChargeSucceeds_ReturnsPixChargeAndUpdatesPayment()
+    public async Task CreateGatewayPixAsync_WhenGatewayPixSucceeds_ReturnsGatewayPixAndUpdatesPayment()
     {
         var operation = new Operation(
             "op-1",
@@ -79,29 +79,29 @@ public sealed class ChargeOrchestratorTests
 
         var cred = new FrendzApiCredentials { Id = "1", Name = "c", Token = "tok" };
         var paymentRepo = new StubPaymentRepository();
-        var chargeService = new StubChargeService
+        var gatewayPixService = new StubGatewayPixService
         {
-            OnCreate = r => Task.FromResult(new PixCharge
+            OnCreate = r => Task.FromResult(new GatewayPix
             {
                 Id = r.PaymentId,
                 Code = "pix-code"
             })
         };
 
-        var sut = new ChargeOrchestrator(
+        var sut = new GatewayOrchestrator(
             new SingleOperationRepository(operation),
             new SingleTeamRepository(team),
             new StubPaymentService(),
             paymentRepo,
             new SingleFrendzCredentialsRepository(cred),
-            new StubChargeServiceFactory(chargeService),
+            new StubGatewayPixServiceFactory(gatewayPixService),
             new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayChargeServiceFactory(chargeService),
+            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
             new EmptyWintechCredentialsRepository(),
-            new StubWintechChargeServiceFactory(chargeService),
+            new StubWintechGatewayPixServiceFactory(gatewayPixService),
             new EmptyGatewayCredentialsGroupRepository());
 
-        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "op-1",
             OperatorAccountId = "operator-1",
@@ -115,7 +115,7 @@ public sealed class ChargeOrchestratorTests
     }
 
     [Fact]
-    public async Task CreatePixChargeAsync_WhenPerGroupStrategy_UsesCredentialsFromAssignedGroups()
+    public async Task CreateGatewayPixAsync_WhenPerGroupStrategy_UsesCredentialsFromAssignedGroups()
     {
         var operation = new Operation(
             "op-1",
@@ -148,29 +148,29 @@ public sealed class ChargeOrchestratorTests
 
         var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok" };
         var paymentRepo = new StubPaymentRepository();
-        var chargeService = new StubChargeService
+        var gatewayPixService = new StubGatewayPixService
         {
-            OnCreate = r => Task.FromResult(new PixCharge
+            OnCreate = r => Task.FromResult(new GatewayPix
             {
                 Id = r.PaymentId,
                 Code = "pix-group"
             })
         };
 
-        var sut = new ChargeOrchestrator(
+        var sut = new GatewayOrchestrator(
             new SingleOperationRepository(operation),
             new SingleTeamRepository(team),
             new StubPaymentService(),
             paymentRepo,
             new SingleFrendzCredentialsRepository(cred),
-            new StubChargeServiceFactory(chargeService),
+            new StubGatewayPixServiceFactory(gatewayPixService),
             new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayChargeServiceFactory(chargeService),
+            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
             new EmptyWintechCredentialsRepository(),
-            new StubWintechChargeServiceFactory(chargeService),
+            new StubWintechGatewayPixServiceFactory(gatewayPixService),
             new SingleGatewayCredentialsGroupRepository(group));
 
-        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "op-1",
             OperatorAccountId = "operator-1",
@@ -330,11 +330,11 @@ public sealed class ChargeOrchestratorTests
         public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 
-    private sealed class StubChargeService : IChargeService
+    private sealed class StubGatewayPixService : IGatewayPixService
     {
-        public Func<CreatePixChargeRequest, Task<PixCharge>>? OnCreate { get; init; }
+        public Func<CreateGatewayPixRequest, Task<GatewayPix>>? OnCreate { get; init; }
 
-        public Task<PixCharge> CreatePixChargeAsync(CreatePixChargeRequest request)
+        public Task<GatewayPix> CreateGatewayPixAsync(CreateGatewayPixRequest request)
         {
             if (OnCreate is null)
                 throw new InvalidOperationException();
@@ -342,13 +342,13 @@ public sealed class ChargeOrchestratorTests
         }
     }
 
-    private sealed class StubChargeServiceFactory : IFrendzChargeServiceFactory
+    private sealed class StubGatewayPixServiceFactory : IFrendzGatewayPixServiceFactory
     {
-        private readonly IChargeService _service;
+        private readonly IGatewayPixService _service;
 
-        public StubChargeServiceFactory(IChargeService service) => _service = service;
+        public StubGatewayPixServiceFactory(IGatewayPixService service) => _service = service;
 
-        public IChargeService Create(FrendzApiCredentials credentials) => _service;
+        public IGatewayPixService Create(FrendzApiCredentials credentials) => _service;
     }
 
     private sealed class EmptySigiloPayCredentialsRepository : ISigiloPayApiCredentialsRepository
@@ -364,13 +364,13 @@ public sealed class ChargeOrchestratorTests
         public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 
-    private sealed class StubSigiloPayChargeServiceFactory : ISigiloPayChargeServiceFactory
+    private sealed class StubSigiloPayGatewayPixServiceFactory : ISigiloPayGatewayPixServiceFactory
     {
-        private readonly IChargeService _service;
+        private readonly IGatewayPixService _service;
 
-        public StubSigiloPayChargeServiceFactory(IChargeService service) => _service = service;
+        public StubSigiloPayGatewayPixServiceFactory(IGatewayPixService service) => _service = service;
 
-        public IChargeService Create(SigiloPayApiCredentials credentials) => _service;
+        public IGatewayPixService Create(SigiloPayApiCredentials credentials) => _service;
     }
 
     private sealed class EmptyWintechCredentialsRepository : IWintechApiCredentialsRepository
@@ -386,13 +386,13 @@ public sealed class ChargeOrchestratorTests
         public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 
-    private sealed class StubWintechChargeServiceFactory : IWintechChargeServiceFactory
+    private sealed class StubWintechGatewayPixServiceFactory : IWintechGatewayPixServiceFactory
     {
-        private readonly IChargeService _service;
+        private readonly IGatewayPixService _service;
 
-        public StubWintechChargeServiceFactory(IChargeService service) => _service = service;
+        public StubWintechGatewayPixServiceFactory(IGatewayPixService service) => _service = service;
 
-        public IChargeService Create(WintechApiCredentials credentials) => _service;
+        public IGatewayPixService Create(WintechApiCredentials credentials) => _service;
     }
 
     private sealed class EmptyGatewayCredentialsGroupRepository : IGatewayCredentialsGroupRepository

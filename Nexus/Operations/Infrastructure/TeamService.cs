@@ -90,7 +90,7 @@ public sealed class TeamService : ITeamService
             OperatorIds: Array.Empty<string>(),
             StrawManIds: Array.Empty<string>(),
             GatewaySelectionStrategy: (int)GatewaySelectionStrategy.PerStrawman,
-            ChargeCredentialsIds: Array.Empty<string>(),
+            GatewayCredentialsIds: Array.Empty<string>(),
             GatewayCredentialsGroupIds: Array.Empty<string>(),
             OperatorProfitShareRules: Array.Empty<OperatorProfitShareRuleRecord>(),
             CreatedAt: now,

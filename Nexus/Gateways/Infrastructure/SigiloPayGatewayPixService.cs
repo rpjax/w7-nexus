@@ -5,12 +5,12 @@ using Nexus.Gateways.SigiloPay.Application.Models;
 
 namespace Nexus.Gateways.Infrastructure;
 
-public sealed class SigiloPayChargeService : IChargeService
+public sealed class SigiloPayGatewayPixService : IGatewayPixService
 {
     private ISigiloPayClient _sigiloPayClient { get; }
     private SigiloPayApiCredentials _credentials { get; }
 
-    public SigiloPayChargeService(
+    public SigiloPayGatewayPixService(
         ISigiloPayClient sigiloPayClient,
         SigiloPayApiCredentials credentials)
     {
@@ -18,7 +18,7 @@ public sealed class SigiloPayChargeService : IChargeService
         _credentials = credentials;
     }
 
-    public async Task<PixCharge> CreatePixChargeAsync(CreatePixChargeRequest request)
+    public async Task<GatewayPix> CreateGatewayPixAsync(CreateGatewayPixRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.PaymentId))
@@ -37,7 +37,7 @@ public sealed class SigiloPayChargeService : IChargeService
                 Client = GenerateProceduralCustomer()
             });
 
-        return new PixCharge
+        return new GatewayPix
         {
             Id = sigiloResult.TransactionId,
             Code = sigiloResult.PixCode,

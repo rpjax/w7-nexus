@@ -1034,13 +1034,13 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
         min-width: 0;
         display: flex;
     }
-    .manage-op-col--billing .manage-charge-card {
+    .manage-op-col--billing .manage-gateway-card {
         flex: 1;
         display: flex;
         flex-direction: column;
         min-height: 0;
     }
-    .manage-charge-chip-list {
+    .manage-gateway-chip-list {
         flex: 1;
         overflow-y: auto;
         max-height: min(42vh, 380px);
@@ -1063,36 +1063,36 @@ table.responsive-data th { color: var(--muted); font-weight: 600; }
     max-height: min(38vh, 320px);
 }
 
-.manage-charge-card h3 {
+.manage-gateway-card h3 {
     margin-top: 0;
 }
 
-.manage-charge-lead {
+.manage-gateway-lead {
     margin: 0 0 0.85rem;
     line-height: 1.45;
 }
 
-.manage-charge-actions {
+.manage-gateway-actions {
     margin-bottom: 0.75rem;
 }
 
-.manage-charge-add-row {
+.manage-gateway-add-row {
     margin-bottom: 0.85rem;
 }
 
-.manage-charge-add-inline {
+.manage-gateway-add-inline {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
     align-items: flex-end;
 }
 
-.manage-charge-add-inline .nexus-input {
+.manage-gateway-add-inline .nexus-input {
     flex: 1;
     min-width: 12rem;
 }
 
-.manage-charge-empty {
+.manage-gateway-empty {
     margin: 0.5rem 0 0;
     line-height: 1.45;
 }

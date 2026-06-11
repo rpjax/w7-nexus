@@ -15,31 +15,31 @@ using Nexus.Gateways.SigiloPay.Application;
 
 namespace Nexus.Gateways.Infrastructure;
 
-public sealed class ChargeOrchestrator : IChargeOrchestrator
+public sealed class GatewayOrchestrator : IGatewayOrchestrator
 {
     private IOperationRepository _operationRepository { get; }
     private ITeamRepository _teamRepository { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
     private IFrendzApiCredentialsRepository _frendzApiCredentialsRepository { get; }
-    private IFrendzChargeServiceFactory _frendzChargeServiceFactory { get; }
+    private IFrendzGatewayPixServiceFactory _frendzGatewayPixServiceFactory { get; }
     private ISigiloPayApiCredentialsRepository _sigiloPayApiCredentialsRepository { get; }
-    private ISigiloPayChargeServiceFactory _sigiloPayChargeServiceFactory { get; }
+    private ISigiloPayGatewayPixServiceFactory _sigiloPayGatewayPixServiceFactory { get; }
     private IWintechApiCredentialsRepository _wintechApiCredentialsRepository { get; }
-    private IWintechChargeServiceFactory _wintechChargeServiceFactory { get; }
+    private IWintechGatewayPixServiceFactory _wintechGatewayPixServiceFactory { get; }
     private IGatewayCredentialsGroupRepository _gatewayCredentialsGroupRepository { get; }
 
-    public ChargeOrchestrator(
+    public GatewayOrchestrator(
         IOperationRepository operationRepository,
         ITeamRepository teamRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
         IFrendzApiCredentialsRepository frendzApiCredentialsRepository,
-        IFrendzChargeServiceFactory frendzChargeServiceFactory,
+        IFrendzGatewayPixServiceFactory frendzGatewayPixServiceFactory,
         ISigiloPayApiCredentialsRepository sigiloPayApiCredentialsRepository,
-        ISigiloPayChargeServiceFactory sigiloPayChargeServiceFactory,
+        ISigiloPayGatewayPixServiceFactory sigiloPayGatewayPixServiceFactory,
         IWintechApiCredentialsRepository wintechApiCredentialsRepository,
-        IWintechChargeServiceFactory wintechChargeServiceFactory,
+        IWintechGatewayPixServiceFactory wintechGatewayPixServiceFactory,
         IGatewayCredentialsGroupRepository gatewayCredentialsGroupRepository)
     {
         _operationRepository = operationRepository;
@@ -47,21 +47,21 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
         _frendzApiCredentialsRepository = frendzApiCredentialsRepository;
-        _frendzChargeServiceFactory = frendzChargeServiceFactory;
+        _frendzGatewayPixServiceFactory = frendzGatewayPixServiceFactory;
         _sigiloPayApiCredentialsRepository = sigiloPayApiCredentialsRepository;
-        _sigiloPayChargeServiceFactory = sigiloPayChargeServiceFactory;
+        _sigiloPayGatewayPixServiceFactory = sigiloPayGatewayPixServiceFactory;
         _wintechApiCredentialsRepository = wintechApiCredentialsRepository;
-        _wintechChargeServiceFactory = wintechChargeServiceFactory;
+        _wintechGatewayPixServiceFactory = wintechGatewayPixServiceFactory;
         _gatewayCredentialsGroupRepository = gatewayCredentialsGroupRepository;
     }
 
-    public async Task<IResult<PixCharge>> CreatePixChargeAsync(CreatePixChargeRequest request)
+    public async Task<IResult<GatewayPix>> CreateGatewayPixAsync(CreateGatewayPixRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
         var operationId = request.OperationId?.Trim();
         if (string.IsNullOrWhiteSpace(operationId))
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperationIdInvalid)
                     .WithMessage("Operation ID is required")
@@ -70,7 +70,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
 
         var operatorAccountId = request.OperatorAccountId?.Trim();
         if (string.IsNullOrWhiteSpace(operatorAccountId))
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperatorRequired)
                     .WithMessage("Operator account ID is required")
@@ -78,7 +78,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                 .Build();
 
         if (request.Amount <= 0m)
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.AmountInvalid)
                     .WithMessage("Amount must be greater than zero")
@@ -89,7 +89,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .FirstOrDefault(x => x.Id == operationId);
 
         if (operation is null)
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperationNotFound)
                     .WithMessage($"Operation '{operationId}' was not found")
@@ -102,20 +102,20 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                 t.OperatorIds.Contains(operatorAccountId));
 
         if (team is null)
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.TeamNotFound)
                     .WithMessage($"No team was found for operator '{operatorAccountId}' in operation '{operationId}'")
                     .Build())
                 .Build();
 
-        var providers = await GetChargeProvidersAsync(team);
+        var providers = await GetGatewayProvidersAsync(team);
 
         if (providers.Length == 0)
         {
-            return Result.Create<PixCharge>()
+            return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.NoChargeServicesAvailable)
+                    .WithCode(PixPaymentErrorCodes.NoGatewayServicesAvailable)
                     .WithMessage("No gateway credentials are available for this team.")
                     .Build())
                 .Build();
@@ -139,7 +139,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         var createPaymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
         if (createPaymentResult.IsFailure)
         {
-            return new ResultBuilder<PixCharge>()
+            return new ResultBuilder<GatewayPix>()
                 .WithErrors(createPaymentResult.Errors)
                 .Build();
         }
@@ -152,7 +152,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         {
             try
             {
-                var chargeRequest = new CreatePixChargeRequest
+                var gatewayPixRequest = new CreateGatewayPixRequest
                 {
                     PaymentId = payment.Id,
                     OperationId = operationId,
@@ -161,14 +161,14 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                     Amount = request.Amount
                 };
 
-                var pixCharge = await provider.Service.CreatePixChargeAsync(chargeRequest);
+                var gatewayPix = await provider.Service.CreateGatewayPixAsync(gatewayPixRequest);
 
-                var transactionId = pixCharge.Id;
+                var transactionId = gatewayPix.Id;
                 var bindGateway = payment.BindToGateway(provider.Gateway, transactionId);
                 if (bindGateway.IsFailure)
                 {
                     await _paymentService.DeletePaymentAsync(payment.Id);
-                    return Result.Create<PixCharge>()
+                    return Result.Create<GatewayPix>()
                         .WithErrors(bindGateway.Errors)
                         .Build();
                 }
@@ -179,15 +179,15 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
                     if (bindStrawMan.IsFailure)
                     {
                         await _paymentService.DeletePaymentAsync(payment.Id);
-                        return Result.Create<PixCharge>()
+                        return Result.Create<GatewayPix>()
                             .WithErrors(bindStrawMan.Errors)
                             .Build();
                     }
                 }
 
                 await _paymentRepository.UpdateAsync(payment);
-                return Result.Create<PixCharge>()
-                    .WithValue(pixCharge)
+                return Result.Create<GatewayPix>()
+                    .WithValue(gatewayPix)
                     .Build();
             }
             catch (Exception ex)
@@ -201,21 +201,21 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .ToArray();
 
         await _paymentService.DeletePaymentAsync(payment.Id);
-        return Result.Create<PixCharge>()
+        return Result.Create<GatewayPix>()
             .WithError(Error.Create()
-                .WithCode(PixPaymentErrorCodes.ChargeGatewayFailed)
+                .WithCode(PixPaymentErrorCodes.GatewayPixFailed)
                 .WithMessage("All gateway attempts failed.")
                 .Build())
             .WithErrors(exceptionErrors)
             .Build();
     }
 
-    private async Task<ChargeServiceProvider[]> GetChargeProvidersAsync(Team team)
+    private async Task<GatewayServiceProvider[]> GetGatewayProvidersAsync(Team team)
     {
         var allowedCredentialIds = await ResolveAllowedCredentialIdsAsync(team);
-        var frendzProviders = await GetFrendzChargeProvidersAsync(team, allowedCredentialIds);
-        var sigiloPayProviders = await GetSigiloPayChargeProvidersAsync(team, allowedCredentialIds);
-        var wintechProviders = await GetWintechChargeProvidersAsync(team, allowedCredentialIds);
+        var frendzProviders = await GetFrendzGatewayProvidersAsync(team, allowedCredentialIds);
+        var sigiloPayProviders = await GetSigiloPayGatewayProvidersAsync(team, allowedCredentialIds);
+        var wintechProviders = await GetWintechGatewayProvidersAsync(team, allowedCredentialIds);
         var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
         Random.Shared.Shuffle(merged);
         return merged;
@@ -262,7 +262,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         };
     }
 
-    private async Task<ChargeServiceProvider[]> GetFrendzChargeProvidersAsync(
+    private async Task<GatewayServiceProvider[]> GetFrendzGatewayProvidersAsync(
         Team team,
         string[] allowedCredentialIds)
     {
@@ -276,12 +276,12 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
             .ToArray();
 
-        var providers = new List<ChargeServiceProvider>();
+        var providers = new List<GatewayServiceProvider>();
 
         foreach (var credential in credentials)
         {
-            var service = _frendzChargeServiceFactory.Create(credential);
-            var provider = new ChargeServiceProvider(
+            var service = _frendzGatewayPixServiceFactory.Create(credential);
+            var provider = new GatewayServiceProvider(
                 gateway: PaymentGateway.Frendz,
                 strawManId: credential.StrawManId,
                 service: service);
@@ -291,7 +291,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetSigiloPayChargeProvidersAsync(
+    private async Task<GatewayServiceProvider[]> GetSigiloPayGatewayProvidersAsync(
         Team team,
         string[] allowedCredentialIds)
     {
@@ -305,12 +305,12 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
             .ToArray();
 
-        var providers = new List<ChargeServiceProvider>();
+        var providers = new List<GatewayServiceProvider>();
 
         foreach (var credential in credentials)
         {
-            var service = _sigiloPayChargeServiceFactory.Create(credential);
-            var provider = new ChargeServiceProvider(
+            var service = _sigiloPayGatewayPixServiceFactory.Create(credential);
+            var provider = new GatewayServiceProvider(
                 gateway: PaymentGateway.SigiloPay,
                 strawManId: credential.StrawManId,
                 service: service);
@@ -320,7 +320,7 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
         return providers.ToArray();
     }
 
-    private async Task<ChargeServiceProvider[]> GetWintechChargeProvidersAsync(
+    private async Task<GatewayServiceProvider[]> GetWintechGatewayProvidersAsync(
         Team team,
         string[] allowedCredentialIds)
     {
@@ -334,12 +334,12 @@ public sealed class ChargeOrchestrator : IChargeOrchestrator
             .Where(x => MatchesTeamGatewaySelection(team, allowedCredentialIds, strawmanIds, x.Id, x.StrawManId))
             .ToArray();
 
-        var providers = new List<ChargeServiceProvider>();
+        var providers = new List<GatewayServiceProvider>();
 
         foreach (var credential in credentials)
         {
-            var service = _wintechChargeServiceFactory.Create(credential);
-            var provider = new ChargeServiceProvider(
+            var service = _wintechGatewayPixServiceFactory.Create(credential);
+            var provider = new GatewayServiceProvider(
                 gateway: PaymentGateway.Wintech,
                 strawManId: credential.StrawManId,
                 service: service);

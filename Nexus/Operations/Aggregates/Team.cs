@@ -29,7 +29,7 @@ public sealed class Team
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
 
-    public bool ManuallySetChargeCredentials => GatewaySelectionStrategy == GatewaySelectionStrategy.Manual;
+    public bool ManuallySetGatewayCredentials => GatewaySelectionStrategy == GatewaySelectionStrategy.Manual;
 
     /// <summary>
     /// LINQCOMPATIBLE constructor used by repository projections/rehydration.
@@ -43,7 +43,7 @@ public sealed class Team
         IReadOnlyList<string> OperatorIds,
         IReadOnlyList<string> StrawManIds,
         int GatewaySelectionStrategy,
-        IReadOnlyList<string> ChargeCredentialsIds,
+        IReadOnlyList<string> GatewayCredentialsIds,
         IReadOnlyList<string> GatewayCredentialsGroupIds,
         IReadOnlyList<OperatorProfitShareRuleRecord> OperatorProfitShareRules,
         DateTime CreatedAt,
@@ -57,7 +57,7 @@ public sealed class Team
         _strawManIds = NormalizeIds(StrawManIds);
         this.GatewaySelectionStrategy = ParseGatewaySelectionStrategy(GatewaySelectionStrategy);
         _gatewayCredentialsGroupIds = NormalizeIds(GatewayCredentialsGroupIds);
-        _gatewayCredentialsIds = NormalizeIds(ChargeCredentialsIds);
+        _gatewayCredentialsIds = NormalizeIds(GatewayCredentialsIds);
         _operatorProfitShareRules = NormalizeProfitShareRules(OperatorProfitShareRules);
         EnsureOperatorProfitShareInvariant();
         CreatedAt = CreatedAt;

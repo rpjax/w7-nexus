@@ -22,7 +22,7 @@ public sealed class TeamRepository : ITeamRepository
             r.Operators,
             r.StrawManIds,
             r.GatewaySelectionStrategy,
-            r.ChargeCredentialsIds,
+            r.GatewayCredentialsIds,
             r.GatewayCredentialsGroupIds,
             r.OperatorProfitShareRules,
             r.CreatedAt,
@@ -75,7 +75,7 @@ public sealed class TeamRepository : ITeamRepository
             .Set(r => r.Operators, entity.OperatorIds.ToList())
             .Set(r => r.StrawManIds, entity.StrawManIds.ToList())
             .Set(r => r.GatewaySelectionStrategy, (int)entity.GatewaySelectionStrategy)
-            .Set(r => r.ChargeCredentialsIds, entity.GatewayCredentialsIds.ToList())
+            .Set(r => r.GatewayCredentialsIds, entity.GatewayCredentialsIds.ToList())
             .Set(r => r.GatewayCredentialsGroupIds, entity.GatewayCredentialsGroupIds.ToList())
             .Set(r => r.OperatorProfitShareRules, ToProfitShareRuleRecords(entity))
             .Set(r => r.CreatedAt, entity.CreatedAt)
@@ -102,7 +102,7 @@ public sealed class TeamRepository : ITeamRepository
             Operators = team.OperatorIds.ToList(),
             StrawManIds = team.StrawManIds.ToList(),
             GatewaySelectionStrategy = (int)team.GatewaySelectionStrategy,
-            ChargeCredentialsIds = team.GatewayCredentialsIds.ToList(),
+            GatewayCredentialsIds = team.GatewayCredentialsIds.ToList(),
             GatewayCredentialsGroupIds = team.GatewayCredentialsGroupIds.ToList(),
             OperatorProfitShareRules = ToProfitShareRuleRecords(team),
             CreatedAt = team.CreatedAt,

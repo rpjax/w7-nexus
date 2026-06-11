@@ -142,46 +142,46 @@
                     </div>
 
                     <div class="manage-op-col manage-op-col--billing">
-                        <section class="mini-card manage-charge-card">
+                        <section class="mini-card manage-gateway-card">
                             <h3>Credenciais de cobrança (gateways)</h3>
-                            <p class="muted small manage-charge-lead">
+                            <p class="muted small manage-gateway-lead">
                                 Com <strong>seleção manual</strong>, só os IDs Frendz, SigiloPay ou Wintech listados entram na rotação de PIX.
                                 Caso contrário, usam-se credenciais elegíveis pelos <strong>laranjas</strong> da operação.
                             </p>
-                            @if (!manageOperation.ManuallySetChargeCredentials)
+                            @if (!manageOperation.ManuallySetGatewayCredentials)
                             {
-                                <button type="button" class="btn btn-primary btn-small" @onclick="EnableManualChargeCredentialsAsync" disabled="@chargeCredBusy">
+                                <button type="button" class="btn btn-primary btn-small" @onclick="EnableManualGatewayCredentialsAsync" disabled="@gatewayCredBusy">
                                     Ativar seleção manual de credenciais
                                 </button>
                             }
                             else
                             {
-                                <div class="manage-charge-actions">
-                                    <button type="button" class="btn btn-ghost btn-small" @onclick="DisableManualChargeCredentialsAsync" disabled="@chargeCredBusy">
+                                <div class="manage-gateway-actions">
+                                    <button type="button" class="btn btn-ghost btn-small" @onclick="DisableManualGatewayCredentialsAsync" disabled="@gatewayCredBusy">
                                         Voltar à seleção por laranjas (limpa a lista)
                                     </button>
                                 </div>
-                                <div class="field manage-charge-add-row">
+                                <div class="field manage-gateway-add-row">
                                     <label>Adicionar credencial</label>
                                     <div class="account-select-row">
-                                        <button type="button" class="account-select-trigger" @onclick="() => chargeCredentialPickerOpen = true" disabled="@chargeCredBusy">
+                                        <button type="button" class="account-select-trigger" @onclick="() => gatewayCredentialPickerOpen = true" disabled="@gatewayCredBusy">
                                             Selecionar credencial
                                         </button>
-                                        <button type="button" class="btn-icon btn-icon-green" @onclick="() => chargeCredentialPickerOpen = true" disabled="@chargeCredBusy" title="Selecionar credencial">＋</button>
+                                        <button type="button" class="btn-icon btn-icon-green" @onclick="() => gatewayCredentialPickerOpen = true" disabled="@gatewayCredBusy" title="Selecionar credencial">＋</button>
                                     </div>
                                 </div>
-                                @if (manageOperation.ChargeCredentialsIds.Count == 0)
+                                @if (manageOperation.GatewayCredentialsIds.Count == 0)
                                 {
-                                    <p class="muted manage-charge-empty">Nenhuma credencial na lista — o orquestrador não terá credenciais para esta operação até você incluir ao menos uma.</p>
+                                    <p class="muted manage-gateway-empty">Nenhuma credencial na lista — o orquestrador não terá credenciais para esta operação até você incluir ao menos uma.</p>
                                 }
                                 else
                                 {
-                                    <ul class="chip-list manage-charge-chip-list">
-                                        @foreach (var credId in manageOperation.ChargeCredentialsIds)
+                                    <ul class="chip-list manage-gateway-chip-list">
+                                        @foreach (var credId in manageOperation.GatewayCredentialsIds)
                                         {
                                             <li>
-                                                <span>@ChargeCredentialDisplay(credId)</span>
-                                                <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveChargeCredentialAsync(credId)">Remover</button>
+                                                <span>@GatewayCredentialDisplay(credId)</span>
+                                                <button type="button" class="btn btn-danger btn-small" @onclick="() => RemoveGatewayCredentialAsync(credId)">Remover</button>
                                             </li>
                                         }
                                     </ul>
@@ -236,9 +236,9 @@
                             <td data-label="Operadores"><span class="count-pill">@op.OperatorIds.Count</span></td>
                             <td data-label="Laranjas"><span class="count-pill count-pill-warm">@op.StrawManIds.Count</span></td>
                             <td data-label="Cobrança">
-                                @if (op.ManuallySetChargeCredentials)
+                                @if (op.ManuallySetGatewayCredentials)
                                 {
-                                    var n = op.ChargeCredentialsIds.Count;
+                                    var n = op.GatewayCredentialsIds.Count;
                                     <span class="@(n == 0 ? "count-pill count-pill-warn" : "count-pill")"
                                           title="Lista fixa de IDs de credencial Frendz, SigiloPay ou Wintech">
                                         @(n == 0 ? "Manual · 0 cred." : $"Manual · {n} cred.")
@@ -306,11 +306,11 @@
                     DisabledAccountIds="StrawPickerDisabledSet"
                     OnSelected="OnStrawAccountPicked" />
 
-<ChargeCredentialPickerModal @bind-IsOpen="chargeCredentialPickerOpen"
+<GatewayCredentialPickerModal @bind-IsOpen="gatewayCredentialPickerOpen"
                              Title="Selecionar credencial"
                              Subtitle="Apenas credenciais habilitadas. Escolha Frendz, SigiloPay ou Wintech e busque por nome ou ID."
-                             DisabledCredentialIds="ChargeCredentialPickerDisabledSet"
-                             OnSelected="OnChargeCredentialPicked" />
+                             DisabledCredentialIds="GatewayCredentialPickerDisabledSet"
+                             OnSelected="OnGatewayCredentialPicked" />
 
 <ConfirmDialog IsOpen="@deleteDialogOpen"
                 Title="Confirmar exclusão"
@@ -334,8 +334,8 @@
         public string? Description { get; set; }
         public List<string> OperatorIds { get; set; } = new();
         public List<string> StrawManIds { get; set; } = new();
-        public bool ManuallySetChargeCredentials { get; set; }
-        public List<string> ChargeCredentialsIds { get; set; } = new();
+        public bool ManuallySetGatewayCredentials { get; set; }
+        public List<string> GatewayCredentialsIds { get; set; } = new();
         public DateTime UpdatedAt { get; set; }
     }
 
@@ -368,11 +368,11 @@
     private bool initialPickerOpen;
     private bool operatorPickerOpen;
     private bool strawPickerOpen;
-    private bool chargeCredentialPickerOpen;
+    private bool gatewayCredentialPickerOpen;
     private bool createBusy;
-    private bool chargeCredBusy;
+    private bool gatewayCredBusy;
 
-    private readonly Dictionary<string, string> chargeCredentialLabels = new(StringComparer.Ordinal);
+    private readonly Dictionary<string, string> gatewayCredentialLabels = new(StringComparer.Ordinal);
 
     private string operatorPickPreview = string.Empty;
     private string strawPickPreview = string.Empty;
@@ -389,10 +389,10 @@
             ? null
             : new HashSet<string>(manageOperation.StrawManIds, StringComparer.Ordinal);
 
-    private HashSet<string>? ChargeCredentialPickerDisabledSet =>
+    private HashSet<string>? GatewayCredentialPickerDisabledSet =>
         manageOperation is null
             ? null
-            : new HashSet<string>(manageOperation.ChargeCredentialsIds, StringComparer.Ordinal);
+            : new HashSet<string>(manageOperation.GatewayCredentialsIds, StringComparer.Ordinal);
 
     private string? RowSelectedClass(string opId)
         => manageModalOpen && manageOperation?.Id == opId ? "is-selected" : null;
@@ -430,7 +430,7 @@
             {
                 manageOperation = updated;
                 SyncLabelsFromOperation(manageOperation);
-                PruneChargeCredentialLabels(manageOperation);
+                PruneGatewayCredentialLabels(manageOperation);
             }
         }
     }
@@ -447,19 +447,19 @@
     private string LabelFor(string id)
         => accountLabels.TryGetValue(id, out var u) ? $"{u} · {id}" : id;
 
-    private void PruneChargeCredentialLabels(OperationVm op)
+    private void PruneGatewayCredentialLabels(OperationVm op)
     {
-        var keep = new HashSet<string>(op.ChargeCredentialsIds, StringComparer.Ordinal);
-        foreach (var k in chargeCredentialLabels.Keys.ToList())
+        var keep = new HashSet<string>(op.GatewayCredentialsIds, StringComparer.Ordinal);
+        foreach (var k in gatewayCredentialLabels.Keys.ToList())
         {
             if (!keep.Contains(k))
-                chargeCredentialLabels.Remove(k);
+                gatewayCredentialLabels.Remove(k);
         }
     }
 
-    private string ChargeCredentialDisplay(string credId)
+    private string GatewayCredentialDisplay(string credId)
     {
-        if (chargeCredentialLabels.TryGetValue(credId, out var label))
+        if (gatewayCredentialLabels.TryGetValue(credId, out var label))
             return $"{label} · {credId}";
         return credId;
     }
@@ -598,9 +598,9 @@
         manageModalOpen = true;
         operatorPickPreview = string.Empty;
         strawPickPreview = string.Empty;
-        chargeCredentialPickerOpen = false;
+        gatewayCredentialPickerOpen = false;
         SyncLabelsFromOperation(manageOperation);
-        PruneChargeCredentialLabels(manageOperation);
+        PruneGatewayCredentialLabels(manageOperation);
     }
 
     private void CloseManageModal()
@@ -609,17 +609,17 @@
         manageOperation = null;
         operatorPickPreview = string.Empty;
         strawPickPreview = string.Empty;
-        chargeCredentialPickerOpen = false;
+        gatewayCredentialPickerOpen = false;
     }
 
-    private async Task EnableManualChargeCredentialsAsync()
+    private async Task EnableManualGatewayCredentialsAsync()
     {
         if (manageOperation is null)
             return;
-        chargeCredBusy = true;
+        gatewayCredBusy = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("/api/operations/charge-credentials/manual", new { OperationId = manageOperation.Id });
+            var response = await Http.PostAsJsonAsync("/api/operations/gateway-credentials/manual", new { OperationId = manageOperation.Id });
             feedbackIsError = !response.IsSuccessStatusCode;
             feedback = response.IsSuccessStatusCode
                 ? "Seleção manual de credenciais ativada."
@@ -628,18 +628,18 @@
         }
         finally
         {
-            chargeCredBusy = false;
+            gatewayCredBusy = false;
         }
     }
 
-    private async Task DisableManualChargeCredentialsAsync()
+    private async Task DisableManualGatewayCredentialsAsync()
     {
         if (manageOperation is null)
             return;
-        chargeCredBusy = true;
+        gatewayCredBusy = true;
         try
         {
-            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/charge-credentials/manual")
+            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/gateway-credentials/manual")
             {
                 Content = CreateJsonContent(new { OperationId = manageOperation.Id })
             });
@@ -651,27 +651,27 @@
         }
         finally
         {
-            chargeCredBusy = false;
+            gatewayCredBusy = false;
         }
     }
 
-    private async Task OnChargeCredentialPicked(ChargeCredentialPickerModal.ChargeCredentialPickerRow row)
+    private async Task OnGatewayCredentialPicked(GatewayCredentialPickerModal.GatewayCredentialPickerRow row)
     {
-        chargeCredentialLabels[row.Id] = $"{row.Name} · {row.GatewayLabel}";
-        await AddChargeCredentialWithIdAsync(row.Id);
+        gatewayCredentialLabels[row.Id] = $"{row.Name} · {row.GatewayLabel}";
+        await AddGatewayCredentialWithIdAsync(row.Id);
     }
 
-    private async Task AddChargeCredentialWithIdAsync(string credentialId)
+    private async Task AddGatewayCredentialWithIdAsync(string credentialId)
     {
         if (manageOperation is null)
             return;
         var id = credentialId.Trim();
         if (string.IsNullOrWhiteSpace(id))
             return;
-        chargeCredBusy = true;
+        gatewayCredBusy = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("/api/operations/charge-credentials", new
+            var response = await Http.PostAsJsonAsync("/api/operations/gateway-credentials", new
             {
                 OperationId = manageOperation.Id,
                 CredentialId = id
@@ -681,23 +681,23 @@
                 ? "Credencial adicionada à operação."
                 : await DashboardApiErrors.ReadMessageAsync(response, "Falha ao adicionar credencial.");
             if (!response.IsSuccessStatusCode)
-                chargeCredentialLabels.Remove(id);
+                gatewayCredentialLabels.Remove(id);
             await LoadAsync();
         }
         finally
         {
-            chargeCredBusy = false;
+            gatewayCredBusy = false;
         }
     }
 
-    private async Task RemoveChargeCredentialAsync(string credentialId)
+    private async Task RemoveGatewayCredentialAsync(string credentialId)
     {
         if (manageOperation is null)
             return;
-        chargeCredBusy = true;
+        gatewayCredBusy = true;
         try
         {
-            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/charge-credentials")
+            var response = await Http.SendAsync(new HttpRequestMessage(HttpMethod.Delete, "/api/operations/gateway-credentials")
             {
                 Content = CreateJsonContent(new { OperationId = manageOperation.Id, CredentialId = credentialId })
             });
@@ -709,7 +709,7 @@
         }
         finally
         {
-            chargeCredBusy = false;
+            gatewayCredBusy = false;
         }
     }
 

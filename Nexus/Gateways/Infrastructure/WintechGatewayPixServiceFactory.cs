@@ -4,18 +4,18 @@ using Nexus.Gateways.Wintech.Application.Models;
 
 namespace Nexus.Gateways.Infrastructure;
 
-public sealed class WintechChargeServiceFactory : IWintechChargeServiceFactory
+public sealed class WintechGatewayPixServiceFactory : IWintechGatewayPixServiceFactory
 {
     private IWintechClient _wintechClient { get; }
 
-    public WintechChargeServiceFactory(IWintechClient wintechClient)
+    public WintechGatewayPixServiceFactory(IWintechClient wintechClient)
     {
         _wintechClient = wintechClient;
     }
 
-    public IChargeService Create(WintechApiCredentials credentials)
+    public IGatewayPixService Create(WintechApiCredentials credentials)
     {
         ArgumentNullException.ThrowIfNull(credentials);
-        return new WintechChargeService(_wintechClient, credentials);
+        return new WintechGatewayPixService(_wintechClient, credentials);
     }
 }

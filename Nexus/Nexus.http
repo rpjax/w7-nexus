@@ -10,4 +10,4 @@ Accept: application/json
 
 ###
 
-POST {{Nexus_HostAddress}}/api/charges/pix
+POST {{Nexus_HostAddress}}/api/gateways/pix

@@ -6,20 +6,20 @@ using Nexus.Gateways.Application.Models;
 namespace Nexus.Gateways.Presentation;
 
 [ApiController]
-[Route("api/charges")]
-public sealed class ChargesController : WebController
+[Route("api/gateways")]
+public sealed class GatewaysController : WebController
 {
-    private IChargeOrchestrator _chargeOrchestrator { get; }
+    private IGatewayOrchestrator _gatewayOrchestrator { get; }
 
-    public ChargesController(IChargeOrchestrator chargeOrchestrator)
+    public GatewaysController(IGatewayOrchestrator gatewayOrchestrator)
     {
-        _chargeOrchestrator = chargeOrchestrator;
+        _gatewayOrchestrator = gatewayOrchestrator;
     }
 
     [HttpPost("pix")]
-    public async Task<IActionResult> CreatePixChargeAsync([FromBody] CreatePixChargeRequest request)
+    public async Task<IActionResult> CreateGatewayPixAsync([FromBody] CreateGatewayPixRequest request)
     {
-        var result = await _chargeOrchestrator.CreatePixChargeAsync(request);
+        var result = await _gatewayOrchestrator.CreateGatewayPixAsync(request);
 
         if (result.IsFailure)
         {

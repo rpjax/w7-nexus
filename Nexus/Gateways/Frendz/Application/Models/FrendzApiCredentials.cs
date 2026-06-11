@@ -1,6 +1,6 @@
 namespace Nexus.Gateways.Frendz.Application.Models;
 
-public class FrendzApiCredentials : IChargeServiceCredentials
+public class FrendzApiCredentials : IGatewayServiceCredentials
 {
     public string Id { get; init; } = string.Empty;
     public bool Enabled { get; init; } = true;
@@ -9,7 +9,7 @@ public class FrendzApiCredentials : IChargeServiceCredentials
     public string Token { get; init; } = string.Empty;
 }
 
-public interface IChargeServiceCredentials
+public interface IGatewayServiceCredentials
 {
     string Id { get; }
     bool Enabled { get; }

@@ -15,7 +15,8 @@ public sealed class TeamRecord
     public List<string> Operators { get; set; } = new();
     public List<string> StrawManIds { get; set; } = new();
     public int GatewaySelectionStrategy { get; set; }
-    public List<string> ChargeCredentialsIds { get; set; } = new();
+    [BsonElement("ChargeCredentialsIds")]
+    public List<string> GatewayCredentialsIds { get; set; } = new();
     public List<string> GatewayCredentialsGroupIds { get; set; } = new();
     public List<OperatorProfitShareRuleRecord> OperatorProfitShareRules { get; set; } = new();
     public DateTime CreatedAt { get; set; }

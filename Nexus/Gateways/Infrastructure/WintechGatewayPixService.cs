@@ -5,12 +5,12 @@ using Nexus.Gateways.Wintech.Application.Models;
 
 namespace Nexus.Gateways.Infrastructure;
 
-public sealed class WintechChargeService : IChargeService
+public sealed class WintechGatewayPixService : IGatewayPixService
 {
     private IWintechClient _wintechClient { get; }
     private WintechApiCredentials _credentials { get; }
 
-    public WintechChargeService(
+    public WintechGatewayPixService(
         IWintechClient wintechClient,
         WintechApiCredentials credentials)
     {
@@ -18,7 +18,7 @@ public sealed class WintechChargeService : IChargeService
         _credentials = credentials;
     }
 
-    public async Task<PixCharge> CreatePixChargeAsync(CreatePixChargeRequest request)
+    public async Task<GatewayPix> CreateGatewayPixAsync(CreateGatewayPixRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.PaymentId))
@@ -37,7 +37,7 @@ public sealed class WintechChargeService : IChargeService
                 Client = GenerateProceduralCustomer()
             });
 
-        return new PixCharge
+        return new GatewayPix
         {
             Id = wintechResult.TransactionId,
             Code = wintechResult.PixCode,

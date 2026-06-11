@@ -6,13 +6,13 @@ namespace Nexus.Gateways.Application.Models;
 /// Associa um serviço de cobrança ao gateway e ao straw man da credencial usada.
 /// O orchestrator só faz bind no pagamento depois que a cobrança é criada com sucesso.
 /// </summary>
-public sealed class ChargeServiceProvider
+public sealed class GatewayServiceProvider
 {
     public PaymentGateway Gateway { get; }
     public string? StrawManId { get; }
-    public IChargeService Service { get; }
+    public IGatewayPixService Service { get; }
 
-    public ChargeServiceProvider(PaymentGateway gateway, string? strawManId, IChargeService service)
+    public GatewayServiceProvider(PaymentGateway gateway, string? strawManId, IGatewayPixService service)
     {
         Gateway = gateway;
         StrawManId = strawManId;

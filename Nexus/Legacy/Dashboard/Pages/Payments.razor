@@ -17,7 +17,7 @@
 <section class="card ops-card">
     <div class="card-title-row">
         <h2>Gerar PIX</h2>
-        <span class="post-badge">POST /api/charges/pix</span>
+        <span class="post-badge">POST /api/gateways/pix</span>
     </div>
     <div class="form-grid form-grid-wide">
         <div class="field">
@@ -122,14 +122,14 @@
         public string? StrawManAccountId { get; set; }
     }
 
-    private sealed class PixChargeVm
+    private sealed class GatewayPixVm
     {
         public string Id { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
     }
 
     private readonly GeneratePixVm model = new();
-    private PixChargeVm? lastResult;
+    private GatewayPixVm? lastResult;
     private string error = string.Empty;
     private bool pixCopied;
     private bool generateBusy;
@@ -193,7 +193,7 @@
         generateBusy = true;
         try
         {
-            var response = await Http.PostAsJsonAsync("/api/charges/pix", new
+            var response = await Http.PostAsJsonAsync("/api/gateways/pix", new
             {
                 OperationId = model.OperationId.Trim(),
                 Amount = model.Amount,
@@ -207,7 +207,7 @@
                 return;
             }
 
-            lastResult = await response.Content.ReadFromJsonAsync<PixChargeVm>(_jsonOptions);
+            lastResult = await response.Content.ReadFromJsonAsync<GatewayPixVm>(_jsonOptions);
         }
         catch (Exception ex)
         {

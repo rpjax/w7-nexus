@@ -1,5 +1,5 @@
 using Nexus.AppHost;
-using Nexus.Frendz.Infrastructure;
+using Nexus.Gateways.Frendz.Infrastructure;
 using Nexus.Gateways.Application;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Frendz.Application;
@@ -7,13 +7,13 @@ using Nexus.Gateways.Frendz.Application.Models;
 
 namespace Nexus.Gateways.Infrastructure;
 
-public sealed class FrendzChargeService : IChargeService
+public sealed class FrendzGatewayPixService : IGatewayPixService
 {
     private IFrendzClient _frendzClient { get; }
     private IAppHostProvider _appHostProvider { get; }
     private FrendzApiCredentials _credentials { get; }
 
-    public FrendzChargeService(
+    public FrendzGatewayPixService(
         IFrendzClient frendzClient,
         IAppHostProvider appHostProvider,
         FrendzApiCredentials credentials)
@@ -23,7 +23,7 @@ public sealed class FrendzChargeService : IChargeService
         _credentials = credentials;
     }
 
-    public async Task<PixCharge> CreatePixChargeAsync(CreatePixChargeRequest request)
+    public async Task<GatewayPix> CreateGatewayPixAsync(CreateGatewayPixRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
         if (string.IsNullOrWhiteSpace(request.PaymentId))
@@ -50,7 +50,7 @@ public sealed class FrendzChargeService : IChargeService
                 PostbackUrl = postbackUrl
             });
 
-        return new PixCharge
+        return new GatewayPix
         {
             Id = frendzResult.TransactionId,
             Code = frendzResult.PixCode,

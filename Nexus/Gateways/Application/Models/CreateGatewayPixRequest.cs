@@ -1,6 +1,6 @@
 namespace Nexus.Gateways.Application.Models;
 
-public sealed class CreatePixChargeRequest
+public sealed class CreateGatewayPixRequest
 {
     public string PaymentId { get; init; } = string.Empty;
     public string OperationId { get; init; } = string.Empty;

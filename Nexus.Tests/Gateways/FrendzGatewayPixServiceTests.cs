@@ -1,16 +1,16 @@
 using Nexus.AppHost;
-using Nexus.Charges.Application.Models;
-using Nexus.Charges.Infrastructure;
+using Nexus.Gateways.Application.Models;
+using Nexus.Gateways.Infrastructure;
 using Nexus.Frendz.Application.Models;
 using Nexus.Frendz.Infrastructure;
 using Xunit;
 
-namespace Nexus.Tests.Charges;
+namespace Nexus.Tests.Gateways;
 
-public sealed class FrendzChargeServiceTests
+public sealed class FrendzGatewayPixServiceTests
 {
     [Fact]
-    public async Task CreatePixChargeAsync_WhenHttpSucceeds_ReturnsPixCharge()
+    public async Task CreateGatewayPixAsync_WhenHttpSucceeds_ReturnsGatewayPix()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "t" };
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK)
@@ -18,9 +18,9 @@ public sealed class FrendzChargeServiceTests
             Content = new StringContent("{\"hash\":\"trx-1\",\"pix\":{\"code\":\"pix-copia-cola\"}}")
         });
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
 
-        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             PaymentId = "internal-1",
             OperationId = "op-1",
@@ -32,7 +32,7 @@ public sealed class FrendzChargeServiceTests
     }
 
     [Fact]
-    public async Task CreatePixChargeAsync_WhenOfficialPixResponse_UsesDataHashAndPixCode()
+    public async Task CreateGatewayPixAsync_WhenOfficialPixResponse_UsesDataHashAndPixCode()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "t" };
         const string body =
@@ -42,9 +42,9 @@ public sealed class FrendzChargeServiceTests
             Content = new StringContent(body)
         });
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
 
-        var result = await sut.CreatePixChargeAsync(new CreatePixChargeRequest
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             PaymentId = "internal-1",
             OperationId = "op-1",
@@ -56,15 +56,15 @@ public sealed class FrendzChargeServiceTests
     }
 
     [Fact]
-    public async Task CreatePixChargeAsync_WhenTokenMissing_ThrowsInvalidOperationException()
+    public async Task CreateGatewayPixAsync_WhenTokenMissing_ThrowsInvalidOperationException()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "" };
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK));
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzChargeService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.CreatePixChargeAsync(new CreatePixChargeRequest
+            sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
             {
                 PaymentId = "internal-1",
                 OperationId = "op-1",

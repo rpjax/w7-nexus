@@ -20,7 +20,7 @@ public static class PixPaymentErrorCodes
     public const string StrawManInvalid = "PixPayment.STRAW_MAN_INVALID";
     public const string StrawManAlreadyBound = "PixPayment.STRAW_MAN_ALREADY_BOUND";
     public const string PaymentIdAlreadyExists = "PixPayment.PAYMENT_ID_ALREADY_EXISTS";
-    public const string ChargeGatewayFailed = "PixPayment.CHARGE_GATEWAY_FAILED";
-    public const string NoChargeServicesAvailable = "PixPayment.NO_CHARGE_SERVICES_AVAILABLE";
+    public const string GatewayPixFailed = "PixPayment.GATEWAY_PIX_FAILED";
+    public const string NoGatewayServicesAvailable = "PixPayment.NO_GATEWAY_SERVICES_AVAILABLE";
     public const string TeamNotFound = "PixPayment.TEAM_NOT_FOUND";
 }
