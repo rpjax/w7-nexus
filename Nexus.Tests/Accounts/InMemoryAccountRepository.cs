@@ -15,7 +15,7 @@ internal sealed class InMemoryAccountRepository : IAccountRepository
     public IAsyncQueryable<Account> AsQueryable()
     {
         var source = _store.Values.AsQueryable();
-        return new MongoAsyncQueryable<Account>(source);
+        return new QueryableToAsyncQueryableAdapter<Account>(source);
     }
 
     public Task<Account> CreateAsync(Account entity)

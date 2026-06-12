@@ -90,8 +90,9 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
                 .Build());
         }
 
-        if (team.TeamLeaderId is null ||
-            !string.Equals(team.TeamLeaderId, accountId, StringComparison.Ordinal))
+        if (!RoleAuthorization.IsGlobalAdministrator(account.Roles)
+            && (team.TeamLeaderId is null ||
+                !string.Equals(team.TeamLeaderId, accountId, StringComparison.Ordinal)))
         {
             return AccessEvaluationResult<ITeamLeader>.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotTeamLeader)

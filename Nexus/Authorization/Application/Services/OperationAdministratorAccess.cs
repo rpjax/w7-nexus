@@ -127,7 +127,8 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
                 .Build());
         }
 
-        if (!operation.AdministratorIds.Contains(accountId, StringComparer.Ordinal))
+        if (!RoleAuthorization.IsGlobalAdministrator(account.Roles)
+            && !operation.AdministratorIds.Contains(accountId, StringComparer.Ordinal))
         {
             return AccessEvaluationResult<IOperationAdministrator>.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotOperationAdministrator)

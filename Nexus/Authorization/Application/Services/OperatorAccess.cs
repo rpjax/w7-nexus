@@ -63,8 +63,8 @@ public sealed class OperatorAccess : IOperatorAccess
                 .Build());
         }
 
-        if (!account.Roles.Contains(Roles.Operator, StringComparer.Ordinal)
-            && !account.Roles.Contains(Roles.Administrator, StringComparer.Ordinal))
+        if (!RoleAuthorization.IsGlobalAdministrator(account.Roles)
+            && !account.Roles.Contains(Roles.Operator, StringComparer.Ordinal))
         {
             return AccessEvaluationResult<IOperator>.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotOperator)
