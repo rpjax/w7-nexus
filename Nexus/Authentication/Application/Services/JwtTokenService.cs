@@ -13,6 +13,7 @@ public sealed class JwtTokenService : IJwtTokenService
     private const string TokenTypeClaim = "token_type";
     private const string AccessTokenType = "access";
     private const string RefreshTokenType = "refresh";
+    private const string RoleClaimType = "role";
     private const string PermissionClaimType = "permission";
 
     private readonly JwtOptions _options;
@@ -76,7 +77,7 @@ public sealed class JwtTokenService : IJwtTokenService
         };
 
         foreach (var role in subject.Roles)
-            claims.Add(new Claim(ClaimTypes.Role, role));
+            claims.Add(new Claim(RoleClaimType, role));
 
         foreach (var permission in subject.Permissions)
             claims.Add(new Claim(PermissionClaimType, permission));
@@ -121,7 +122,7 @@ public sealed class JwtTokenService : IJwtTokenService
             if (string.IsNullOrWhiteSpace(accountId) || string.IsNullOrWhiteSpace(username))
                 return null;
 
-            var roles = principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToArray();
+            var roles = principal.FindAll(RoleClaimType).Select(c => c.Value).ToArray();
             var permissions = principal.FindAll(PermissionClaimType).Select(c => c.Value).ToArray();
 
             return new JwtTokenSubject
@@ -149,7 +150,8 @@ public sealed class JwtTokenService : IJwtTokenService
             ValidateIssuerSigningKey = true,
             IssuerSigningKey = _signingKey,
             ValidateLifetime = true,
-            ClockSkew = TimeSpan.FromMinutes(1)
+            ClockSkew = TimeSpan.FromMinutes(1),
+            RoleClaimType = RoleClaimType,
         };
     }
 }

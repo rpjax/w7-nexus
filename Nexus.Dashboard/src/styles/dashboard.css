@@ -161,6 +161,44 @@ body {
     color: #ccdbff;
 }
 
+.page-kicker {
+    margin: 0 0 0.35rem;
+    font-size: 0.74rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #8eb4ff;
+}
+
+.page-kicker-admin {
+    color: #f2bb5a;
+}
+
+.admin-surface {
+    border-color: rgba(242, 187, 90, 0.22);
+}
+
+.nav-sublink-admin {
+    color: #f2d18a;
+}
+
+.nav-sublink-admin.active {
+    color: #fff6dc;
+}
+
+.nav-group-admin .nav-dropdown-label {
+    color: #f2d18a;
+}
+
+.quick-action-admin {
+    background: rgba(242, 187, 90, 0.12);
+    border-color: rgba(242, 187, 90, 0.28);
+}
+
+.quick-action-admin:hover {
+    background: rgba(242, 187, 90, 0.2);
+}
+
 .nav-shell {
     width: 100%;
     border-bottom: 1px solid var(--border);

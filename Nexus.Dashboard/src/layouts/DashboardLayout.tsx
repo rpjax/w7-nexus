@@ -7,7 +7,8 @@ function resolvePageTitle(pathname: string): string {
   const relative = pathname.replace(/\/$/, '').toLowerCase();
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
-    '/dashboard/operations': 'Operações',
+    '/dashboard/operations': 'Minhas operações',
+    '/dashboard/admin/operations': 'Todas as operações',
     '/dashboard/accounts': 'Contas',
     '/dashboard/payments': 'Pagamentos',
     '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',

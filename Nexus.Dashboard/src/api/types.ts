@@ -30,6 +30,12 @@ export type OperationRow = {
   updatedAt: string;
 };
 
+export type OperationDetails = {
+  id: string;
+  name: string;
+  description?: string | null;
+};
+
 export type PaymentRow = {
   id: string;
   operationId: string;

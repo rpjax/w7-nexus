@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { searchOperationsForPicker } from '../api/operations';
+import { searchOperatorOperations } from '../api/operator/operations';
 import type { OperationPickerRow } from '../api/types';
 
 type OperationPickerModalProps = {
@@ -18,7 +18,7 @@ export function OperationPickerModal({
   open,
   onClose,
   title = 'Selecionar operação',
-  subtitle,
+  subtitle = 'Operações em que você está alocado como operador.',
   disabledOperationIds,
   disabledBadgeText = 'Indisponível',
   onSelected,
@@ -42,7 +42,7 @@ export function OperationPickerModal({
   async function load(page: number, term: string) {
     setLoading(true);
     try {
-      const result = await searchOperationsForPicker({
+      const result = await searchOperatorOperations({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
         keyword: term.trim() || null,

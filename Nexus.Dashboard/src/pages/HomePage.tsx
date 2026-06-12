@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
+import { searchAdministratorOperations } from '../api/administrator/operations';
 import { searchGatewayCredentials } from '../api/gateways';
-import { searchOperations } from '../api/operations';
+import { searchOperatorOperations } from '../api/operator/operations';
+import { useAuth } from '../auth/AuthContext';
+import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
 import { StatCard } from '../components/StatCard';
 
 type CredentialStat = {
@@ -29,15 +31,28 @@ const defaultStat: CredentialStat = {
 
 export function HomePage() {
   const { user } = useAuth();
-  const [operationsTotal, setOperationsTotal] = useState(0);
+  const operatorPanel = canUseOperatorPanel(user);
+  const adminView = isAdministrator(user);
+
+  const [myOperationsTotal, setMyOperationsTotal] = useState<number | null>(null);
+  const [systemOperationsTotal, setSystemOperationsTotal] = useState<number | null>(null);
   const [frendz, setFrendz] = useState<CredentialStat>(defaultStat);
   const [sigiloPay, setSigiloPay] = useState<CredentialStat>(defaultStat);
   const [wintech, setWintech] = useState<CredentialStat>(defaultStat);
 
   useEffect(() => {
     void (async () => {
-      const ops = await searchOperations({ limit: 1, offset: 0, keyword: null });
-      if (ops.ok) setOperationsTotal(ops.data?.total ?? 0);
+      if (operatorPanel) {
+        const ops = await searchOperatorOperations({ limit: 1, offset: 0, keyword: null });
+        if (ops.ok) setMyOperationsTotal(ops.data?.total ?? 0);
+      }
+
+      if (adminView) {
+        const ops = await searchAdministratorOperations({ limit: 1, offset: 0, keyword: null });
+        if (ops.ok) setSystemOperationsTotal(ops.data?.total ?? 0);
+      }
+
+      if (!operatorPanel) return;
 
       async function loadGateway(
         prefix: 'frendz' | 'sigilopay' | 'wintech',
@@ -58,20 +73,56 @@ export function HomePage() {
         loadGateway('wintech', setWintech),
       ]);
     })();
-  }, []);
+  }, [operatorPanel, adminView]);
 
   return (
     <>
       <section className="page-header">
+        <p className="page-kicker">
+          {adminView && operatorPanel
+            ? 'Administração e operação'
+            : adminView
+              ? 'Administração'
+              : operatorPanel
+                ? 'Painel do operador'
+                : 'Dashboard'}
+        </p>
         <h1>Visão geral</h1>
-        <p>Visibilidade operacional e acesso rápido aos módulos críticos do Nexus.</p>
+        <p>
+          {adminView && operatorPanel
+            ? 'Visão operacional das suas alocações e gestão global do sistema.'
+            : adminView
+              ? 'Gerencie o catálogo global de operações e contas do sistema.'
+              : operatorPanel
+                ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
+                : 'Nenhum papel operacional ou administrativo associado à sua sessão.'}
+        </p>
       </section>
 
       <section className="stats-grid">
-        <StatCard label="Operações registradas" value={operationsTotal.toString()} caption="Total no repositório" tone="info" />
-        <StatCard label="Credencial Frendz" value={frendz.status} caption={frendz.caption} tone={frendz.tone} />
-        <StatCard label="Credencial SigiloPay" value={sigiloPay.status} caption={sigiloPay.caption} tone={sigiloPay.tone} />
-        <StatCard label="Credencial Wintech" value={wintech.status} caption={wintech.caption} tone={wintech.tone} />
+        {operatorPanel ? (
+          <StatCard
+            label="Minhas operações"
+            value={myOperationsTotal?.toString() ?? '—'}
+            caption="Operações em que você está alocado"
+            tone="info"
+          />
+        ) : null}
+        {adminView ? (
+          <StatCard
+            label="Operações no sistema"
+            value={systemOperationsTotal?.toString() ?? '—'}
+            caption="Total no repositório global"
+            tone="info"
+          />
+        ) : null}
+        {operatorPanel ? (
+          <>
+            <StatCard label="Credencial Frendz" value={frendz.status} caption={frendz.caption} tone={frendz.tone} />
+            <StatCard label="Credencial SigiloPay" value={sigiloPay.status} caption={sigiloPay.caption} tone={sigiloPay.tone} />
+            <StatCard label="Credencial Wintech" value={wintech.status} caption={wintech.caption} tone={wintech.tone} />
+          </>
+        ) : null}
         <StatCard
           label="Sessão"
           value={user?.username ?? '—'}
@@ -83,13 +134,22 @@ export function HomePage() {
       <section className="card">
         <h2>Atalhos</h2>
         <div className="quick-actions">
-          <Link className="quick-action" to="/dashboard/operations">Nova operação</Link>
-          <Link className="quick-action" to="/dashboard/accounts">Contas</Link>
-          <Link className="quick-action" to="/dashboard/payments">Pagamentos</Link>
-          <Link className="quick-action" to="/dashboard/payments/pix">Gerar cobrança PIX</Link>
-          <Link className="quick-action" to="/dashboard/gateways/frendz">Credenciais Frendz</Link>
-          <Link className="quick-action" to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</Link>
-          <Link className="quick-action" to="/dashboard/gateways/wintech">Credenciais Wintech</Link>
+          {operatorPanel ? (
+            <>
+              <Link className="quick-action" to="/dashboard/operations">Minhas operações</Link>
+              <Link className="quick-action" to="/dashboard/payments">Pagamentos</Link>
+              <Link className="quick-action" to="/dashboard/payments/pix">Gerar cobrança PIX</Link>
+              <Link className="quick-action" to="/dashboard/gateways/frendz">Credenciais Frendz</Link>
+              <Link className="quick-action" to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</Link>
+              <Link className="quick-action" to="/dashboard/gateways/wintech">Credenciais Wintech</Link>
+            </>
+          ) : null}
+          {adminView ? (
+            <>
+              <Link className="quick-action quick-action-admin" to="/dashboard/admin/operations">Todas as operações</Link>
+              <Link className="quick-action quick-action-admin" to="/dashboard/accounts">Contas</Link>
+            </>
+          ) : null}
         </div>
       </section>
     </>
