@@ -7,4 +7,5 @@ public static class AuthorizationErrorCodes
     public const string NotAdministrator = "Authorization.NOT_ADMINISTRATOR";
     public const string NotOperationAdministrator = "Authorization.NOT_OPERATION_ADMINISTRATOR";
     public const string NotTeamLeader = "Authorization.NOT_TEAM_LEADER";
+    public const string NotOperator = "Authorization.NOT_OPERATOR";
 }

@@ -117,6 +117,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<IAdministratorAccess, AdministratorAccess>();
 builder.Services.AddScoped<IOperationAdministratorAccess, OperationAdministratorAccess>();
 builder.Services.AddScoped<ITeamLeaderAccess, TeamLeaderAccess>();
+builder.Services.AddScoped<IOperatorAccess, OperatorAccess>();
 
 // Payment services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -132,6 +133,7 @@ builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IAdministrator, Administrator>();
 builder.Services.AddScoped<IOperationAdministrator, OperationAdministrator>();
 builder.Services.AddScoped<ITeamLeader, TeamLeader>();
+builder.Services.AddScoped<IOperator, Operator>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, MongoFrendzApiCredentialsRepository>();
 builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, MongoSigiloPayApiCredentialsRepository>();
 builder.Services.AddScoped<IWintechApiCredentialsRepository, MongoWintechApiCredentialsRepository>();

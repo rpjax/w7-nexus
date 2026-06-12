@@ -80,7 +80,7 @@ internal sealed class InMemoryTeamRepository : ITeamRepository
     private readonly List<Team> _store = new();
 
     public IAsyncQueryable<Team> AsQueryable()
-        => new MongoAsyncQueryable<Team>(_store.AsQueryable());
+        => new QueryableToAsyncQueryableAdapter<Team>(_store.AsQueryable());
 
     public Task<Team> CreateAsync(Team entity)
     {
@@ -253,6 +253,9 @@ internal sealed class ActorTestContext
     public TeamLeader CreateTeamLeader()
         => new(CreateTeamService());
 
+    public Operator CreateOperator(string operatorAccountId)
+        => new(operatorAccountId, Operations, Teams);
+
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
         var repo = accounts ?? new InMemoryAccountRepository();
@@ -285,7 +288,8 @@ internal sealed class ActorTestContext
         string operationId,
         string name = "Test Team",
         GatewaySelectionStrategy strategy = GatewaySelectionStrategy.PerStrawman,
-        string? id = null)
+        string? id = null,
+        string[]? operatorIds = null)
     {
         var now = DateTime.UtcNow;
         var team = new Team(
@@ -293,7 +297,7 @@ internal sealed class ActorTestContext
             OperationId: operationId,
             Name: name,
             TeamLeaderId: null,
-            OperatorIds: Array.Empty<string>(),
+            OperatorIds: operatorIds ?? Array.Empty<string>(),
             StrawManIds: Array.Empty<string>(),
             GatewaySelectionStrategy: (int)strategy,
             GatewayCredentialsIds: Array.Empty<string>(),
