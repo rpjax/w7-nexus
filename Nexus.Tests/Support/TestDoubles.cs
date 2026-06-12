@@ -327,3 +327,4 @@ internal sealed class ActorTestContext
     public void RegisterGatewayCredential(string credentialsId) =>
         GatewayCredentialsIdValidator.AddExisting(credentialsId);
 }
+

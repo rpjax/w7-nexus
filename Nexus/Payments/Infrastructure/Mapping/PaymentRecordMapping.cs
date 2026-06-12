@@ -8,7 +8,7 @@ internal static class PaymentRecordMapping
 {
     public static Payment ToPayment(PaymentRecord record) =>
         new(
-            record.PixPaymentId,
+            record.Id.ToString(),
             record.OperationId,
             record.Gateway,
             record.GatewayPaymentId,
@@ -22,16 +22,11 @@ internal static class PaymentRecordMapping
             record.DiedAt,
             record.DeathReason);
 
-    public static PaymentRecord ToRecord(Payment entity, ObjectId? existingBsonId = null)
+    public static PaymentRecord ToRecord(Payment entity)
     {
-        var paymentId = string.IsNullOrWhiteSpace(entity.Id)
-            ? Guid.NewGuid().ToString("N")
-            : entity.Id;
-
         return new PaymentRecord
         {
-            Id = existingBsonId ?? ObjectId.GenerateNewId(),
-            PixPaymentId = paymentId,
+            Id = string.IsNullOrWhiteSpace(entity.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(entity.Id),
             OperationId = entity.OperationId,
             Gateway = entity.Gateway,
             GatewayPaymentId = entity.GatewayTransactionId,

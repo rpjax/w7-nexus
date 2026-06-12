@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services.Contracts;
@@ -16,7 +17,7 @@ public sealed class MongoGatewayCredentialsGroupRepository : IGatewayCredentials
 
     private static readonly Expression<Func<GatewayCredentialsGroupRecord, GatewayCredentialsGroup>> ToProjection = r =>
         new GatewayCredentialsGroup(
-            r.GroupId,
+            r.Id.ToString(),
             r.Name,
             r.GatewayCredentialsIds,
             r.CreatedAt,
@@ -53,7 +54,8 @@ public sealed class MongoGatewayCredentialsGroupRepository : IGatewayCredentials
 
     public Task DeleteAsync(GatewayCredentialsGroup entity)
     {
-        return _collection.DeleteOneAsync(r => r.GroupId == entity.Id);
+        var objectId = ObjectId.Parse(entity.Id);
+        return _collection.DeleteOneAsync(r => r.Id == objectId);
     }
 
     public async Task<long> DeleteAsync(Expression<Func<GatewayCredentialsGroup, bool>> predicate)
@@ -62,20 +64,21 @@ public sealed class MongoGatewayCredentialsGroupRepository : IGatewayCredentials
         if (toDelete.Count == 0)
             return 0;
 
-        var ids = toDelete.Select(g => g.Id).ToList();
-        var result = await _collection.DeleteManyAsync(r => ids.Contains(r.GroupId));
+        var objectIds = toDelete.Select(g => ObjectId.Parse(g.Id)).ToList();
+        var result = await _collection.DeleteManyAsync(r => objectIds.Contains(r.Id));
         return result.DeletedCount;
     }
 
     public Task UpdateAsync(GatewayCredentialsGroup entity)
     {
+        var objectId = ObjectId.Parse(entity.Id);
         var update = Builders<GatewayCredentialsGroupRecord>.Update
             .Set(r => r.Name, entity.Name)
             .Set(r => r.GatewayCredentialsIds, entity.GatewayCredentialsIds.ToList())
             .Set(r => r.CreatedAt, entity.CreatedAt)
             .Set(r => r.UpdatedAt, entity.UpdatedAt);
 
-        return _collection.UpdateOneAsync(r => r.GroupId == entity.Id, update);
+        return _collection.UpdateOneAsync(r => r.Id == objectId, update);
     }
 
     public Task<long> UpdateAsync(Expression expression)

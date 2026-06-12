@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Payments.Aggregates;
@@ -16,7 +17,7 @@ public sealed class MongoPaymentRepository : IPaymentRepository
 
     private static readonly Expression<Func<PaymentRecord, Payment>> ToPaymentProjection = r =>
         new Payment(
-            r.PixPaymentId,
+            r.Id.ToString(),
             r.OperationId,
             r.Gateway,
             r.GatewayPaymentId,
@@ -61,7 +62,8 @@ public sealed class MongoPaymentRepository : IPaymentRepository
 
     public Task DeleteAsync(Payment entity)
     {
-        return _collection.DeleteOneAsync(r => r.PixPaymentId == entity.Id);
+        var objectId = ObjectId.Parse(entity.Id);
+        return _collection.DeleteOneAsync(r => r.Id == objectId);
     }
 
     public async Task<long> DeleteAsync(Expression<Func<Payment, bool>> predicate)
@@ -70,19 +72,16 @@ public sealed class MongoPaymentRepository : IPaymentRepository
         if (paymentsToDelete.Count == 0)
             return 0;
 
-        var ids = paymentsToDelete.Select(p => p.Id).ToList();
-        var result = await _collection.DeleteManyAsync(r => ids.Contains(r.PixPaymentId));
+        var objectIds = paymentsToDelete.Select(p => ObjectId.Parse(p.Id)).ToList();
+        var result = await _collection.DeleteManyAsync(r => objectIds.Contains(r.Id));
         return result.DeletedCount;
     }
 
     public async Task UpdateAsync(Payment entity)
     {
-        var existing = await _collection.Find(r => r.PixPaymentId == entity.Id).FirstOrDefaultAsync();
-        if (existing is null)
-            throw new InvalidOperationException($"Payment '{entity.Id}' was not found for update.");
-
-        var record = PaymentRecordMapping.ToRecord(entity, existing.Id);
-        await _collection.ReplaceOneAsync(r => r.PixPaymentId == entity.Id, record);
+        var objectId = ObjectId.Parse(entity.Id);
+        var record = PaymentRecordMapping.ToRecord(entity);
+        await _collection.ReplaceOneAsync(r => r.Id == objectId, record);
     }
 
     public Task<long> UpdateAsync(Expression expression)

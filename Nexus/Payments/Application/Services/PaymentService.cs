@@ -140,13 +140,13 @@ public sealed class PaymentService : IPaymentService
             validatedGatewayPaymentId,
             amount,
             PaymentStatus.Pending,
-            operatorAccountId: null,
-            strawManAccountId: null,
+            OperatorAccountId: null,
+            StrawManAccountId: null,
             createdAt,
-            paidAt: null,
-            refundedAt: null,
-            diedAt: null,
-            deathReason: null);
+            PaidAt: null,
+            RefundedAt: null,
+            DiedAt: null,
+            DeathReason: null);
 
         if (strawManAccountId is not null)
         {

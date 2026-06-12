@@ -8,11 +8,11 @@ internal static class TeamRecordMapping
 {
     public static Team ToTeam(TeamRecord record) =>
         new(
-            record.TeamId,
+            record.Id.ToString(),
             record.OperationId,
             record.Name,
             record.TeamLeaderId,
-            record.Operators,
+            record.OperatorIds,
             record.StrawManIds,
             record.GatewaySelectionStrategy,
             record.GatewayCredentialsIds,
@@ -23,18 +23,13 @@ internal static class TeamRecordMapping
 
     public static TeamRecord ToRecord(Team team)
     {
-        var teamId = string.IsNullOrWhiteSpace(team.Id)
-            ? Guid.NewGuid().ToString("N")
-            : team.Id;
-
         return new TeamRecord
         {
-            Id = ObjectId.GenerateNewId(),
-            TeamId = teamId,
+            Id = string.IsNullOrWhiteSpace(team.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(team.Id),
             OperationId = team.OperationId,
             Name = team.Name,
             TeamLeaderId = team.TeamLeaderId,
-            Operators = team.OperatorIds.ToList(),
+            OperatorIds = team.OperatorIds.ToList(),
             StrawManIds = team.StrawManIds.ToList(),
             GatewaySelectionStrategy = (int)team.GatewaySelectionStrategy,
             GatewayCredentialsIds = team.GatewayCredentialsIds.ToList(),

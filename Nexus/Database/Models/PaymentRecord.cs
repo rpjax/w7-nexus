@@ -9,8 +9,6 @@ public sealed class PaymentRecord
     [BsonId]
     public ObjectId Id { get; set; }
 
-    // Aggregate identity (PixPayment.Id)
-    public string PixPaymentId { get; set; } = string.Empty;
     public string OperationId { get; set; } = string.Empty;
 
     // Gateway references

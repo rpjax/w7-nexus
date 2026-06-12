@@ -2,6 +2,7 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
+using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
@@ -16,11 +17,11 @@ public sealed class MongoTeamRepository : ITeamRepository
 
     private static readonly Expression<Func<TeamRecord, Team>> ToTeamProjection = r =>
         new Team(
-            r.TeamId,
+            r.Id.ToString(),
             r.OperationId,
             r.Name,
             r.TeamLeaderId,
-            r.Operators,
+            r.OperatorIds,
             r.StrawManIds,
             r.GatewaySelectionStrategy,
             r.GatewayCredentialsIds,
@@ -60,7 +61,8 @@ public sealed class MongoTeamRepository : ITeamRepository
 
     public Task DeleteAsync(Team entity)
     {
-        return _collection.DeleteOneAsync(r => r.TeamId == entity.Id);
+        var objectId = ObjectId.Parse(entity.Id);
+        return _collection.DeleteOneAsync(r => r.Id == objectId);
     }
 
     public async Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate)
@@ -69,17 +71,18 @@ public sealed class MongoTeamRepository : ITeamRepository
         if (toDelete.Count == 0)
             return 0;
 
-        var ids = toDelete.Select(t => t.Id).ToList();
-        var result = await _collection.DeleteManyAsync(r => ids.Contains(r.TeamId));
+        var objectIds = toDelete.Select(t => ObjectId.Parse(t.Id)).ToList();
+        var result = await _collection.DeleteManyAsync(r => objectIds.Contains(r.Id));
         return result.DeletedCount;
     }
 
     public Task UpdateAsync(Team entity)
     {
+        var objectId = ObjectId.Parse(entity.Id);
         var update = Builders<TeamRecord>.Update
             .Set(r => r.Name, entity.Name)
             .Set(r => r.TeamLeaderId, entity.TeamLeaderId)
-            .Set(r => r.Operators, entity.OperatorIds.ToList())
+            .Set(r => r.OperatorIds, entity.OperatorIds.ToList())
             .Set(r => r.StrawManIds, entity.StrawManIds.ToList())
             .Set(r => r.GatewaySelectionStrategy, (int)entity.GatewaySelectionStrategy)
             .Set(r => r.GatewayCredentialsIds, entity.GatewayCredentialsIds.ToList())
@@ -88,7 +91,7 @@ public sealed class MongoTeamRepository : ITeamRepository
             .Set(r => r.CreatedAt, entity.CreatedAt)
             .Set(r => r.UpdatedAt, entity.UpdatedAt);
 
-        return _collection.UpdateOneAsync(r => r.TeamId == entity.Id, update);
+        return _collection.UpdateOneAsync(r => r.Id == objectId, update);
     }
 
     public Task<long> UpdateAsync(Expression expression)

@@ -52,7 +52,7 @@ public sealed class Team
         this.Id = Id.Trim();
         this.OperationId = OperationId.Trim();
         this.Name = Name.Trim();
-        TeamLeaderId = string.IsNullOrWhiteSpace(TeamLeaderId) ? null : TeamLeaderId.Trim();
+        this.TeamLeaderId = string.IsNullOrWhiteSpace(TeamLeaderId) ? null : TeamLeaderId.Trim();
         _operatorIds = NormalizeIds(OperatorIds);
         _strawManIds = NormalizeIds(StrawManIds);
         this.GatewaySelectionStrategy = ParseGatewaySelectionStrategy(GatewaySelectionStrategy);
@@ -60,8 +60,8 @@ public sealed class Team
         _gatewayCredentialsIds = NormalizeIds(GatewayCredentialsIds);
         _operatorProfitShareRules = NormalizeProfitShareRules(OperatorProfitShareRules);
         EnsureOperatorProfitShareInvariant();
-        CreatedAt = CreatedAt;
-        UpdatedAt = UpdatedAt;
+        this.CreatedAt = CreatedAt;
+        this.UpdatedAt = UpdatedAt;
     }
 
     public IResult AssignTeamLeader(string teamLeaderId)

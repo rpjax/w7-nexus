@@ -46,35 +46,35 @@ public sealed class Payment
     public string? DeathReason { get; private set; }
 
     internal Payment(
-        string id,
-        string operationId,
-        PaymentGateway gateway,
-        string gatewayTransactionId,
-        decimal amount,
-        PaymentStatus status,
-        string? operatorAccountId,
-        string? strawManAccountId,
-        DateTime createdAt,
-        DateTime? paidAt,
-        DateTime? refundedAt,
-        DateTime? diedAt,
-        string? deathReason)
+        string Id,
+        string OperationId,
+        PaymentGateway Gateway,
+        string GatewayTransactionId,
+        decimal Amount,
+        PaymentStatus Status,
+        string? OperatorAccountId,
+        string? StrawManAccountId,
+        DateTime CreatedAt,
+        DateTime? PaidAt,
+        DateTime? RefundedAt,
+        DateTime? DiedAt,
+        string? DeathReason)
     {
-        Id = id;
-        OperationId = operationId;
-        Gateway = gateway;
-        GatewayTransactionId = gatewayTransactionId;
-        Amount = amount;
+        this.Id = Id;
+        this.OperationId = OperationId;
+        this.Gateway = Gateway;
+        this.GatewayTransactionId = GatewayTransactionId;
+        this.Amount = Amount;
 
-        Status = status;
-        OperatorAccountId = operatorAccountId;
-        StrawManAccountId = strawManAccountId;
+        this.Status = Status;
+        this.OperatorAccountId = OperatorAccountId;
+        this.StrawManAccountId = StrawManAccountId;
 
-        CreatedAt = createdAt;
-        PaidAt = paidAt;
-        RefundedAt = refundedAt;
-        DiedAt = diedAt;
-        DeathReason = deathReason;
+        this.CreatedAt = CreatedAt;
+        this.PaidAt = PaidAt;
+        this.RefundedAt = RefundedAt;
+        this.DiedAt = DiedAt;
+        this.DeathReason = DeathReason;
     }
 
     public IResult BindToStrawMan(string strawManAccountId)

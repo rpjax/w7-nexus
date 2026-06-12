@@ -8,7 +8,7 @@ internal static class GatewayCredentialsGroupRecordMapping
 {
     public static GatewayCredentialsGroup ToGroup(GatewayCredentialsGroupRecord record) =>
         new(
-            record.GroupId,
+            record.Id.ToString(),
             record.Name,
             record.GatewayCredentialsIds,
             record.CreatedAt,
@@ -16,14 +16,9 @@ internal static class GatewayCredentialsGroupRecordMapping
 
     public static GatewayCredentialsGroupRecord ToRecord(GatewayCredentialsGroup group)
     {
-        var groupId = string.IsNullOrWhiteSpace(group.Id)
-            ? Guid.NewGuid().ToString("N")
-            : group.Id;
-
         return new GatewayCredentialsGroupRecord
         {
-            Id = ObjectId.GenerateNewId(),
-            GroupId = groupId,
+            Id = string.IsNullOrWhiteSpace(group.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(group.Id),
             Name = group.Name,
             GatewayCredentialsIds = group.GatewayCredentialsIds.ToList(),
             CreatedAt = group.CreatedAt,

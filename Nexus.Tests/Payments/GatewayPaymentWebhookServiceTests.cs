@@ -97,13 +97,13 @@ public sealed class GatewayPaymentWebhookServiceTests
             gatewayTransactionId,
             10m,
             PaymentStatus.Pending,
-            operatorAccountId: null,
-            strawManAccountId: null,
+            OperatorAccountId: null,
+            StrawManAccountId: null,
             DateTime.UtcNow,
-            paidAt: null,
-            refundedAt: null,
-            diedAt: null,
-            deathReason: null);
+            PaidAt: null,
+            RefundedAt: null,
+            DiedAt: null,
+            DeathReason: null);
 
     private static GatewayPaymentWebhookService CreateSut(
         StubPaymentRepository? payments = null,
@@ -254,3 +254,4 @@ public sealed class GatewayPaymentWebhookServiceTests
         Assert.Empty(paymentService.KillCalls);
     }
 }
+

@@ -200,13 +200,13 @@ public sealed class GatewayOrchestratorTests
                 request.GatewayPaymentId!,
                 request.Amount,
                 PaymentStatus.Pending,
-                operatorAccountId: null,
-                strawManAccountId: null,
+                OperatorAccountId: null,
+                StrawManAccountId: null,
                 DateTime.UtcNow,
-                paidAt: null,
-                refundedAt: null,
-                diedAt: null,
-                deathReason: null);
+                PaidAt: null,
+                RefundedAt: null,
+                DiedAt: null,
+                DeathReason: null);
             IResult<Payment> ok = Result.Create<Payment>().WithValue(payment).Build();
             return Task.FromResult(ok);
         }
@@ -461,3 +461,4 @@ public sealed class GatewayOrchestratorTests
         public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
     }
 }
+

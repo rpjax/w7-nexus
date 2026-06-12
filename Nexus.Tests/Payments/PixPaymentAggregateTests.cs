@@ -18,13 +18,13 @@ public sealed class PixPaymentAggregateTests
             gatewayPaymentId,
             amount,
             PaymentStatus.Pending,
-            operatorAccountId: null,
-            strawManAccountId: null,
+            OperatorAccountId: null,
+            StrawManAccountId: null,
             DateTime.UtcNow,
-            paidAt: null,
-            refundedAt: null,
-            diedAt: null,
-            deathReason: null);
+            PaidAt: null,
+            RefundedAt: null,
+            DiedAt: null,
+            DeathReason: null);
 
     [Fact]
     public void Constructor_SetsPendingStateAndGatewayFields()
@@ -258,3 +258,4 @@ public sealed class PixPaymentAggregateTests
         Assert.Equal(PaymentGateway.Wintech, Enum.Parse<PaymentGateway>("Wintech"));
     }
 }
+

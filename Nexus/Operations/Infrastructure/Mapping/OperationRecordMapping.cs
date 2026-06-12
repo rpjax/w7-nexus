@@ -8,7 +8,7 @@ internal static class OperationRecordMapping
 {
     public static Operation ToOperation(OperationRecord record) =>
         new(
-            record.OperationId,
+            record.Id.ToString(),
             record.Name,
             record.Description,
             record.AdministratorIds,
@@ -17,14 +17,9 @@ internal static class OperationRecordMapping
 
     public static OperationRecord ToRecord(Operation operation)
     {
-        var operationId = string.IsNullOrWhiteSpace(operation.Id)
-            ? Guid.NewGuid().ToString("N")
-            : operation.Id;
-
         return new OperationRecord
         {
-            Id = ObjectId.GenerateNewId(),
-            OperationId = operationId,
+            Id = string.IsNullOrWhiteSpace(operation.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(operation.Id),
             Name = operation.Name,
             Description = operation.Description,
             AdministratorIds = operation.AdministratorIds.ToList(),
