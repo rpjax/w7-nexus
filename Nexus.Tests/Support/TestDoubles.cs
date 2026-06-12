@@ -92,22 +92,10 @@ internal sealed class InMemoryTeamRepository : ITeamRepository
                 entity.TeamLeaderId,
                 entity.OperatorIds,
                 entity.StrawManIds,
-                (int)entity.GatewaySelectionStrategy,
+                entity.GatewaySelectionStrategy,
                 entity.GatewayCredentialsIds,
                 entity.GatewayCredentialsGroupIds,
-                entity.OperatorProfitShareRules.Values
-                    .Select(rule => new OperatorProfitShareRuleRecord
-                    {
-                        OperatorId = rule.OperatorId,
-                        Cuts = rule.ProfitSplits.Values
-                            .Select(cut => new ProfitSplitRecord
-                            {
-                                AccountId = cut.AccountId,
-                                Percentage = cut.Percentage
-                            })
-                            .ToList()
-                    })
-                    .ToList(),
+                entity.OperatorProfitShareRules.ToList(),
                 entity.CreatedAt,
                 entity.UpdatedAt)
             : entity;
@@ -299,7 +287,7 @@ internal sealed class ActorTestContext
             TeamLeaderId: null,
             OperatorIds: operatorIds ?? Array.Empty<string>(),
             StrawManIds: Array.Empty<string>(),
-            GatewaySelectionStrategy: (int)strategy,
+            GatewaySelectionStrategy: strategy,
             GatewayCredentialsIds: Array.Empty<string>(),
             GatewayCredentialsGroupIds: Array.Empty<string>(),
             OperatorProfitShareRules: Array.Empty<OperatorProfitShareRuleRecord>(),

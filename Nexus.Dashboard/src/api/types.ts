@@ -34,6 +34,9 @@ export type OperationDetails = {
   id: string;
   name: string;
   description?: string | null;
+  administratorIds: string[];
+  createdAt: string;
+  updatedAt: string;
 };
 
 export type PaymentRow = {

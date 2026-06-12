@@ -26,3 +26,17 @@ export async function deleteAdministratorOperation(operationId: string) {
     OperationId: operationId,
   }, { fallbackError: 'Não foi possível excluir a operação.' });
 }
+
+export async function assignOperationAdministrator(operationId: string, administratorId: string) {
+  return apiClient.post<void>('/api/administrator/operations/administrators', {
+    OperationId: operationId,
+    AdministratorId: administratorId,
+  }, { fallbackError: 'Não foi possível vincular o administrador à operação.' });
+}
+
+export async function unassignOperationAdministrator(operationId: string, administratorId: string) {
+  return apiClient.deleteWithBody<void>('/api/administrator/operations/administrators', {
+    OperationId: operationId,
+    AdministratorId: administratorId,
+  }, { fallbackError: 'Não foi possível remover o administrador da operação.' });
+}

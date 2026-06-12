@@ -13,7 +13,7 @@ public sealed class Team
     private readonly List<string> _strawManIds;
     private readonly List<string> _gatewayCredentialsGroupIds;
     private readonly List<string> _gatewayCredentialsIds;
-    private readonly Dictionary<string, ProfitShareRule> _operatorProfitShareRules;
+    private readonly Dictionary<string, OperatorProfitShareRuleRecord> _operatorProfitShareRules;
 
     public string Id { get; }
     public string OperationId { get; }
@@ -24,8 +24,8 @@ public sealed class Team
     public IReadOnlyList<string> StrawManIds => _strawManIds.AsReadOnly();
     public IReadOnlyList<string> GatewayCredentialsGroupIds => _gatewayCredentialsGroupIds.AsReadOnly();
     public IReadOnlyList<string> GatewayCredentialsIds => _gatewayCredentialsIds.AsReadOnly();
-    public IReadOnlyDictionary<string, ProfitShareRule> OperatorProfitShareRules
-        => _operatorProfitShareRules;
+    public IReadOnlyList<OperatorProfitShareRuleRecord> OperatorProfitShareRules
+        => _operatorProfitShareRules.Values.ToList().AsReadOnly();
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
 
@@ -42,7 +42,7 @@ public sealed class Team
         string? TeamLeaderId,
         IReadOnlyList<string> OperatorIds,
         IReadOnlyList<string> StrawManIds,
-        int GatewaySelectionStrategy,
+        GatewaySelectionStrategy GatewaySelectionStrategy,
         IReadOnlyList<string> GatewayCredentialsIds,
         IReadOnlyList<string> GatewayCredentialsGroupIds,
         IReadOnlyList<OperatorProfitShareRuleRecord> OperatorProfitShareRules,
@@ -55,7 +55,7 @@ public sealed class Team
         this.TeamLeaderId = string.IsNullOrWhiteSpace(TeamLeaderId) ? null : TeamLeaderId.Trim();
         _operatorIds = NormalizeIds(OperatorIds);
         _strawManIds = NormalizeIds(StrawManIds);
-        this.GatewaySelectionStrategy = ParseGatewaySelectionStrategy(GatewaySelectionStrategy);
+        this.GatewaySelectionStrategy = GatewaySelectionStrategy;
         _gatewayCredentialsGroupIds = NormalizeIds(GatewayCredentialsGroupIds);
         _gatewayCredentialsIds = NormalizeIds(GatewayCredentialsIds);
         _operatorProfitShareRules = NormalizeProfitShareRules(OperatorProfitShareRules);
@@ -121,7 +121,7 @@ public sealed class Team
                 .Build());
 
         _operatorIds.Add(normalizedOperatorId);
-        _operatorProfitShareRules[normalizedOperatorId] = CreateDefaultProfitShareRule(normalizedOperatorId);
+        _operatorProfitShareRules[normalizedOperatorId] = CreateDefaultRule(normalizedOperatorId);
         Touch();
 
         return Result.Success();
@@ -191,9 +191,11 @@ public sealed class Team
             RulesAreEqual(current, normalizedCuts))
             return Result.Success();
 
-        _operatorProfitShareRules[normalizedOperatorId] = new ProfitShareRule(
-            normalizedOperatorId,
-            normalizedCuts);
+        _operatorProfitShareRules[normalizedOperatorId] = new OperatorProfitShareRuleRecord
+        {
+            OperatorId = normalizedOperatorId,
+            Cuts = normalizedCuts
+        };
         Touch();
 
         return Result.Success();
@@ -357,9 +359,9 @@ public sealed class Team
 
     private static IResult? ValidateProfitShareCuts(
         IReadOnlyList<ProfitSplit>? cuts,
-        out Dictionary<string, ProfitSplit> normalizedCuts)
+        out List<ProfitSplitRecord> normalizedCuts)
     {
-        normalizedCuts = new Dictionary<string, ProfitSplit>(StringComparer.Ordinal);
+        normalizedCuts = new List<ProfitSplitRecord>();
 
         if (cuts is null || cuts.Count == 0)
         {
@@ -370,6 +372,7 @@ public sealed class Team
         }
 
         decimal totalPercentage = 0m;
+        var seenAccounts = new HashSet<string>(StringComparer.Ordinal);
 
         foreach (var cut in cuts)
         {
@@ -383,7 +386,7 @@ public sealed class Team
 
             var accountId = cut.AccountId.Trim();
 
-            if (normalizedCuts.ContainsKey(accountId))
+            if (!seenAccounts.Add(accountId))
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutDuplicateAccount)
@@ -399,7 +402,7 @@ public sealed class Team
                     .Build());
             }
 
-            normalizedCuts[accountId] = new ProfitSplit(accountId, cut.Percentage);
+            normalizedCuts.Add(new ProfitSplitRecord { AccountId = accountId, Percentage = cut.Percentage });
             totalPercentage += cut.Percentage;
         }
 
@@ -414,27 +417,20 @@ public sealed class Team
         return null;
     }
 
-    private static bool RulesAreEqual(ProfitShareRule current, Dictionary<string, ProfitSplit> nextCuts)
+    private static bool RulesAreEqual(OperatorProfitShareRuleRecord current, List<ProfitSplitRecord> nextCuts)
     {
-        if (current.ProfitSplits.Count != nextCuts.Count)
+        if (current.Cuts.Count != nextCuts.Count)
             return false;
 
-        foreach (var entry in nextCuts)
+        foreach (var next in nextCuts)
         {
-            if (!current.ProfitSplits.TryGetValue(entry.Key, out var existing))
-                return false;
-
-            if (existing.Percentage != entry.Value.Percentage)
+            var existing = current.Cuts.FirstOrDefault(c => c.AccountId == next.AccountId);
+            if (existing is null || existing.Percentage != next.Percentage)
                 return false;
         }
 
         return true;
     }
-
-    private static GatewaySelectionStrategy ParseGatewaySelectionStrategy(int strategy)
-        => Enum.IsDefined(typeof(GatewaySelectionStrategy), strategy)
-            ? (GatewaySelectionStrategy)strategy
-            : GatewaySelectionStrategy.PerStrawman;
 
     private static List<string> NormalizeIds(IReadOnlyList<string>? ids)
         => (ids ?? Array.Empty<string>())
@@ -443,18 +439,22 @@ public sealed class Team
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
-    private static Dictionary<string, ProfitShareRule> NormalizeProfitShareRules(
+    private static Dictionary<string, OperatorProfitShareRuleRecord> NormalizeProfitShareRules(
         IReadOnlyList<OperatorProfitShareRuleRecord>? records)
     {
-        var result = new Dictionary<string, ProfitShareRule>(StringComparer.Ordinal);
+        var result = new Dictionary<string, OperatorProfitShareRuleRecord>(StringComparer.Ordinal);
 
         foreach (var record in records ?? Array.Empty<OperatorProfitShareRuleRecord>())
         {
             if (string.IsNullOrWhiteSpace(record.OperatorId))
                 continue;
 
-            var rule = ProfitShareRule.FromRecord(record);
-            result[rule.OperatorId] = rule;
+            var operatorId = record.OperatorId.Trim();
+            result[operatorId] = new OperatorProfitShareRuleRecord
+            {
+                OperatorId = operatorId,
+                Cuts = record.Cuts ?? new List<ProfitSplitRecord>()
+            };
         }
 
         return result;
@@ -474,30 +474,32 @@ public sealed class Team
             if (!_operatorProfitShareRules.TryGetValue(operatorId, out var rule) ||
                 !IsValidProfitShareRule(rule))
             {
-                _operatorProfitShareRules[operatorId] = CreateDefaultProfitShareRule(operatorId);
+                _operatorProfitShareRules[operatorId] = CreateDefaultRule(operatorId);
             }
         }
     }
 
-    private static ProfitShareRule CreateDefaultProfitShareRule(string operatorId)
+    private static OperatorProfitShareRuleRecord CreateDefaultRule(string operatorId)
     {
         var normalizedOperatorId = operatorId.Trim();
-        var cuts = new Dictionary<string, ProfitSplit>(StringComparer.Ordinal)
+        return new OperatorProfitShareRuleRecord
         {
-            [normalizedOperatorId] = new ProfitSplit(normalizedOperatorId, 100m)
+            OperatorId = normalizedOperatorId,
+            Cuts = new List<ProfitSplitRecord>
+            {
+                new ProfitSplitRecord { AccountId = normalizedOperatorId, Percentage = 100m }
+            }
         };
-
-        return new ProfitShareRule(normalizedOperatorId, cuts);
     }
 
-    private static bool IsValidProfitShareRule(ProfitShareRule rule)
+    private static bool IsValidProfitShareRule(OperatorProfitShareRuleRecord rule)
     {
-        if (rule.ProfitSplits.Count == 0)
+        if (rule.Cuts == null || rule.Cuts.Count == 0)
             return false;
 
         decimal totalPercentage = 0m;
 
-        foreach (var cut in rule.ProfitSplits.Values)
+        foreach (var cut in rule.Cuts)
         {
             if (string.IsNullOrWhiteSpace(cut.AccountId))
                 return false;

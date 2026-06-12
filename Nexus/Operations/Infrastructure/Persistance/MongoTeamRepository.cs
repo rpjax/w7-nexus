@@ -84,10 +84,10 @@ public sealed class MongoTeamRepository : ITeamRepository
             .Set(r => r.TeamLeaderId, entity.TeamLeaderId)
             .Set(r => r.OperatorIds, entity.OperatorIds.ToList())
             .Set(r => r.StrawManIds, entity.StrawManIds.ToList())
-            .Set(r => r.GatewaySelectionStrategy, (int)entity.GatewaySelectionStrategy)
+            .Set(r => r.GatewaySelectionStrategy, entity.GatewaySelectionStrategy)
             .Set(r => r.GatewayCredentialsIds, entity.GatewayCredentialsIds.ToList())
             .Set(r => r.GatewayCredentialsGroupIds, entity.GatewayCredentialsGroupIds.ToList())
-            .Set(r => r.OperatorProfitShareRules, TeamRecordMapping.ToProfitShareRuleRecords(entity))
+            .Set(r => r.OperatorProfitShareRules, entity.OperatorProfitShareRules.ToList())
             .Set(r => r.CreatedAt, entity.CreatedAt)
             .Set(r => r.UpdatedAt, entity.UpdatedAt);
 

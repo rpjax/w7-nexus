@@ -326,8 +326,8 @@ public sealed class TeamLeaderTests
 
         Assert.True(result.IsSuccess);
         var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
-        Assert.True(team.OperatorProfitShareRules.ContainsKey("operator-1"));
-        Assert.Equal(100m, team.OperatorProfitShareRules["operator-1"].ProfitSplits["payee-1"].Percentage);
+        Assert.True(team.OperatorProfitShareRules.Any(r => r.OperatorId == "operator-1"));
+        Assert.Equal(100m, team.OperatorProfitShareRules.First(r => r.OperatorId == "operator-1").Cuts.First(c => c.AccountId == "payee-1").Percentage);
     }
 
     [Fact]

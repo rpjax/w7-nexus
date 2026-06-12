@@ -241,7 +241,7 @@ public sealed class TeamServiceTests
             teamLeaderId,
             operatorIds ?? Array.Empty<string>(),
             strawManIds ?? Array.Empty<string>(),
-            (int)strategy,
+            strategy,
             gatewayCredentialsIds ?? Array.Empty<string>(),
             gatewayCredentialsGroupIds ?? Array.Empty<string>(),
             Array.Empty<OperatorProfitShareRuleRecord>(),
@@ -549,7 +549,7 @@ public sealed class TeamServiceTests
         Assert.True(result.IsSuccess);
         var team = ctx.Teams.FindById(TeamId);
         Assert.Contains(OperatorId, team!.OperatorIds);
-        Assert.True(team.OperatorProfitShareRules.ContainsKey(OperatorId));
+        Assert.True(team.OperatorProfitShareRules.Any(r => r.OperatorId == OperatorId));
     }
 
     // UnassignOperatorAsync
@@ -593,7 +593,7 @@ public sealed class TeamServiceTests
         Assert.True(result.IsSuccess);
         var team = ctx.Teams.FindById(TeamId);
         Assert.DoesNotContain(OperatorId, team!.OperatorIds);
-        Assert.False(team.OperatorProfitShareRules.ContainsKey(OperatorId));
+        Assert.False(team.OperatorProfitShareRules.Any(r => r.OperatorId == OperatorId));
     }
 
     // AssignStrawManAsync
@@ -1053,9 +1053,9 @@ public sealed class TeamServiceTests
 
         Assert.True(result.IsSuccess);
         var team = ctx.Teams.FindById(TeamId)!;
-        var rule = team.OperatorProfitShareRules[OperatorId];
-        Assert.Equal(60m, rule.ProfitSplits[AccountA].Percentage);
-        Assert.Equal(40m, rule.ProfitSplits[AccountB].Percentage);
+        var rule = team.OperatorProfitShareRules.First(r => r.OperatorId == OperatorId);
+        Assert.Equal(60m, rule.Cuts.First(c => c.AccountId == AccountA).Percentage);
+        Assert.Equal(40m, rule.Cuts.First(c => c.AccountId == AccountB).Percentage);
     }
 
     [Theory]

@@ -31,27 +31,12 @@ internal static class TeamRecordMapping
             TeamLeaderId = team.TeamLeaderId,
             OperatorIds = team.OperatorIds.ToList(),
             StrawManIds = team.StrawManIds.ToList(),
-            GatewaySelectionStrategy = (int)team.GatewaySelectionStrategy,
+            GatewaySelectionStrategy = team.GatewaySelectionStrategy,
             GatewayCredentialsIds = team.GatewayCredentialsIds.ToList(),
             GatewayCredentialsGroupIds = team.GatewayCredentialsGroupIds.ToList(),
-            OperatorProfitShareRules = ToProfitShareRuleRecords(team),
+            OperatorProfitShareRules = team.OperatorProfitShareRules.ToList(),
             CreatedAt = team.CreatedAt,
             UpdatedAt = team.UpdatedAt
         };
     }
-
-    public static List<OperatorProfitShareRuleRecord> ToProfitShareRuleRecords(Team team)
-        => team.OperatorProfitShareRules.Values
-            .Select(rule => new OperatorProfitShareRuleRecord
-            {
-                OperatorId = rule.OperatorId,
-                Cuts = rule.ProfitSplits.Values
-                    .Select(cut => new ProfitSplitRecord
-                    {
-                        AccountId = cut.AccountId,
-                        Percentage = cut.Percentage
-                    })
-                    .ToList()
-            })
-            .ToList();
 }

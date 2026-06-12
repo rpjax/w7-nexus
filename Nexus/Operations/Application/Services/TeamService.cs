@@ -91,7 +91,7 @@ public sealed class TeamService : ITeamService
             TeamLeaderId: null,
             OperatorIds: Array.Empty<string>(),
             StrawManIds: Array.Empty<string>(),
-            GatewaySelectionStrategy: (int)GatewaySelectionStrategy.PerStrawman,
+            GatewaySelectionStrategy: GatewaySelectionStrategy.PerStrawman,
             GatewayCredentialsIds: Array.Empty<string>(),
             GatewayCredentialsGroupIds: Array.Empty<string>(),
             OperatorProfitShareRules: Array.Empty<OperatorProfitShareRuleRecord>(),

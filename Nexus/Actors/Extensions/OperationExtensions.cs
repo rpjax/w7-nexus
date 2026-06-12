@@ -11,7 +11,10 @@ public static class OperationExtensions
         {
             Id = operation.Id,
             Name = operation.Name,
-            Description = operation.Description
+            Description = operation.Description,
+            AdministratorIds = operation.AdministratorIds.ToArray(),
+            CreatedAt = operation.CreatedAt,
+            UpdatedAt = operation.UpdatedAt,
         };
     }
 }

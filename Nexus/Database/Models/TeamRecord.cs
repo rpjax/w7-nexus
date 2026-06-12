@@ -1,5 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
+using Nexus.Operations.Aggregates;
 
 namespace Nexus.Database.Models;
 
@@ -13,7 +14,7 @@ public sealed class TeamRecord
     public string? TeamLeaderId { get; set; }
     public List<string> OperatorIds { get; set; } = new();
     public List<string> StrawManIds { get; set; } = new();
-    public int GatewaySelectionStrategy { get; set; }
+    public GatewaySelectionStrategy GatewaySelectionStrategy { get; set; }
     public List<string> GatewayCredentialsIds { get; set; } = new();
     public List<string> GatewayCredentialsGroupIds { get; set; } = new();
     public List<OperatorProfitShareRuleRecord> OperatorProfitShareRules { get; set; } = new();
