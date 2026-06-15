@@ -1,7 +1,6 @@
-namespace Nexus.Controllers.Authentication.Requests;
+namespace Nexus.Accounts.Application.Requests;
 
 public class ClearPermissionsRequest
 {
     public string AccountId { get; set; } = string.Empty;
-
 }

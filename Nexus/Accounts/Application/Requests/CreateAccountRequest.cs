@@ -1,4 +1,4 @@
-namespace Nexus.Controllers.Authentication.Requests;
+namespace Nexus.Accounts.Application.Requests;
 
 public class CreateAccountRequest
 {

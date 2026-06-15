@@ -1,6 +1,6 @@
-namespace Nexus.Controllers.Authentication.Requests;
+namespace Nexus.Accounts.Application.Requests;
 
-public class AddPermissionRequest
+public class RemovePermissionRequest
 {
     public string AccountId { get; set; } = string.Empty;
     public string Permission { get; set; } = string.Empty;

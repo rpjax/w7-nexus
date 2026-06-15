@@ -2,8 +2,9 @@ using Aidan.Core.Errors;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Authentication.Application.Contracts;
 using Nexus.Authentication.Application.Requests;
+using Nexus.Controllers;
 
-namespace Nexus.Controllers.Authentication;
+namespace Nexus.Authentication.Presentation;
 
 [Route("api/authentication")]
 public class AuthenticationController : NexusController
@@ -50,5 +51,4 @@ public class AuthenticationController : NexusController
         var result = await _signInService.SignInAsync(request);
         return ToResponse(result);
     }
-
 }

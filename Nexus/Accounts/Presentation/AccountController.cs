@@ -4,11 +4,11 @@ using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Accounts.Aggregates;
-using Nexus.Controllers.Authentication.Requests;
-using Nexus.Accounts.Errors;
 using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Requests;
+using Nexus.Accounts.Errors;
 
-namespace Nexus.Controllers.Authentication;
+namespace Nexus.Accounts.Presentation;
 
 [Route("api/account")]
 public class AccountController : WebController
@@ -166,5 +166,4 @@ public class AccountController : WebController
 
         return ProblemResponse(422, result.Errors);
     }
-
 }
