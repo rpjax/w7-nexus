@@ -1,6 +1,6 @@
 using Nexus.Authentication.Application.Services.Models;
 
-namespace Nexus.Authentication.Application.Services.Contracts;
+namespace Nexus.Authentication.Application.Contracts;
 
 public interface IJwtTokenService
 {

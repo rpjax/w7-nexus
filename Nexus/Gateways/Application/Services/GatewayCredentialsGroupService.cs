@@ -1,5 +1,5 @@
-﻿using Aidan.Core.Errors;
-using Nexus.Gateways.Application.Services.Contracts;
+using Aidan.Core.Errors;
+using Nexus.Gateways.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Aggregates;

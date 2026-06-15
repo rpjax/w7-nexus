@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Nexus.Gateways.SigiloPay.Application.Models;

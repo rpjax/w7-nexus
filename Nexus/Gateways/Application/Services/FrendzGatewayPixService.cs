@@ -1,6 +1,6 @@
 using Nexus.AppHost;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
-using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.AppHost.Contracts;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;

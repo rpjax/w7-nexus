@@ -1,5 +1,5 @@
 using System.Net.Http.Json;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Nexus.Gateways.Wintech.Application.Models;

@@ -1,5 +1,5 @@
 using Microsoft.Extensions.Options;
-using Nexus.Authentication.Application.Services.Contracts;
+using Nexus.Authentication.Application.Contracts;
 using Nexus.Authentication.Application.Services.Models;
 
 namespace Nexus.Authentication.Application.Services;

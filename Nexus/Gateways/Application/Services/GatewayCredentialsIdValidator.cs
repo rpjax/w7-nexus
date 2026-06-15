@@ -1,7 +1,7 @@
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
-using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.Application.Contracts;
 
 namespace Nexus.Gateways.Application.Services;
 

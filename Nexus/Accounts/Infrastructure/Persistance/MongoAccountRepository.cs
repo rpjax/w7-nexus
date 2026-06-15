@@ -5,7 +5,7 @@ using Aidan.Mongo.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Infrastructure.Mapping;
 using Nexus.Database.Models;
 

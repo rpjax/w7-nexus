@@ -1,11 +1,11 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Authentication.Errors;
-using Nexus.Authentication.Application.Services.Contracts;
+using Nexus.Authentication.Application.Contracts;
 using Nexus.Authentication.Application.Services.Models;
-using Nexus.Authentication.Application.Services.Requests;
-using Nexus.Authentication.Application.Services.Responses;
+using Nexus.Authentication.Application.Requests;
+using Nexus.Authentication.Application.Responses;
 
 namespace Nexus.Authentication.Application.Services;
 

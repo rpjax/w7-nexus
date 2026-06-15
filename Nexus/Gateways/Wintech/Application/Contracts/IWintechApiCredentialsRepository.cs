@@ -1,7 +1,7 @@
 using Aidan.Core.Patterns;
 using Nexus.Gateways.Wintech.Application.Models;
 
-namespace Nexus.Gateways.Wintech.Application.Services.Contracts;
+namespace Nexus.Gateways.Wintech.Application.Contracts;
 
 public interface IWintechApiCredentialsRepository : IRepository<WintechApiCredentials>
 {

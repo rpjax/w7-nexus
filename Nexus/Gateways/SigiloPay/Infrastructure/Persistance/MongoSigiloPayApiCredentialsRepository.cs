@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Infrastructure.Mapping;
 
 namespace Nexus.Gateways.SigiloPay.Infrastructure.Persistance;

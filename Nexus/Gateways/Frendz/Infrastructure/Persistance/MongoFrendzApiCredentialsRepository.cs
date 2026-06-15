@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.Frendz.Infrastructure.Mapping;
 
 namespace Nexus.Gateways.Frendz.Infrastructure.Persistance;

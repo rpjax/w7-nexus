@@ -1,9 +1,9 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.Frendz.Errors;
 
 namespace Nexus.Gateways.Frendz.Application.Services;

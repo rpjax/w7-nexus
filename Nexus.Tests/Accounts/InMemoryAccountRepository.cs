@@ -4,7 +4,7 @@ using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 
 namespace Nexus.Tests.Accounts;
 

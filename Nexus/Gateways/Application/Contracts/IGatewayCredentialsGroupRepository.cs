@@ -1,7 +1,7 @@
 using Aidan.Core.Patterns;
 using Nexus.Gateways.Aggregates;
 
-namespace Nexus.Gateways.Application.Services.Contracts;
+namespace Nexus.Gateways.Application.Contracts;
 
 public interface IGatewayCredentialsGroupRepository : IRepository<GatewayCredentialsGroup>
 {

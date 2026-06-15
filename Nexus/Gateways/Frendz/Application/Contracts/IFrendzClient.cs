@@ -1,7 +1,7 @@
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 
-namespace Nexus.Gateways.Frendz.Application.Services.Contracts;
+namespace Nexus.Gateways.Frendz.Application.Contracts;
 
 public interface IFrendzClient
 {

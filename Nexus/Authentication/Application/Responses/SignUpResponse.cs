@@ -1,6 +1,6 @@
 using Nexus.Authentication.Application.Services.Models;
 
-namespace Nexus.Authentication.Application.Services.Responses;
+namespace Nexus.Authentication.Application.Responses;
 
 public class SignUpResponse
 {

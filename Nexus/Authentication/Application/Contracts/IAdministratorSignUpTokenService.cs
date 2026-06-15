@@ -1,4 +1,4 @@
-namespace Nexus.Authentication.Application.Services.Contracts;
+namespace Nexus.Authentication.Application.Contracts;
 
 public interface IAdministratorSignUpTokenService
 {

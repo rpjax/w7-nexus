@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.Wintech.Infrastructure.Mapping;
 
 namespace Nexus.Gateways.Wintech.Infrastructure.Persistance;

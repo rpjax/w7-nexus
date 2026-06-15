@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
-using Nexus.Payments.Application.Services.Contracts;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
@@ -11,7 +11,7 @@ using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Services;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Payments.Errors;
 
 namespace Nexus.Tests.Payments;

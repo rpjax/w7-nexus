@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Infrastructure.Mapping;
 
 namespace Nexus.Payments.Infrastructure.Persistance;

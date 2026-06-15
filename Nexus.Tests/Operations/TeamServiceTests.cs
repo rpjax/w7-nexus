@@ -1,6 +1,6 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Application.Services.Contracts;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Gateways.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
@@ -346,7 +346,7 @@ public sealed class TeamServiceTests
         Assert.NotNull(result.Value);
         Assert.Equal(OperationId, result.Value!.OperationId);
         Assert.Equal("New Team", result.Value.Name);
-        Assert.Null(result.Value.TeamLeader);
+        Assert.Null(result.Value.TeamLeaderId);
 
         var persisted = ctx.Teams.AsQueryable().FirstOrDefault(t => t.Name == "New Team");
         Assert.NotNull(persisted);

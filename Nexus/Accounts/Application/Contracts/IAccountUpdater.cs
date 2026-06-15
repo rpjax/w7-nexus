@@ -1,6 +1,6 @@
 using Aidan.Core.Patterns;
 
-namespace Nexus.Accounts.Application.Services.Contracts;
+namespace Nexus.Accounts.Application.Contracts;
 
 public interface IAccountUpdater
 {

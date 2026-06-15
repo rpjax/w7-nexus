@@ -3,7 +3,7 @@ using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Microsoft.AspNetCore.Http;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Errors;
 using Nexus.Authorization;
 using Nexus.Authorization.Errors;

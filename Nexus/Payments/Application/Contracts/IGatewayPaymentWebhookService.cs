@@ -1,7 +1,7 @@
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
 
-namespace Nexus.Payments.Application.Services.Contracts;
+namespace Nexus.Payments.Application.Contracts;
 
 /// <summary>Processa notificações de gateway e aplica transições via <see cref="IPaymentService"/>.</summary>
 public interface IGatewayPaymentWebhookService

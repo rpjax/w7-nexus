@@ -5,16 +5,19 @@ using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
-using Nexus.Actors;
+using OperationAdministratorRole = Nexus.OperationAdministrator.Application.Services.OperationAdministrator;
+using TeamLeaderRole = Nexus.TeamLeader.Application.Services.TeamLeader;
 using AdministratorRole = Nexus.Administrator.Application.Services.Administrator;
+using OperatorRole = Nexus.Operator.Application.Services.Operator;
+using Nexus.Authentication.Application.Services;
 using Nexus.Administrator.Extensions;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
-using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Payments;
 
@@ -244,13 +247,13 @@ internal sealed class ActorTestContext
             Teams,
             new EmptyTeamGatewayDetailsLoader());
 
-    public OperationAdministrator CreateOperationAdministrator()
+    public OperationAdministratorRole CreateOperationAdministrator()
         => new(CreateTeamService());
 
-    public TeamLeader CreateTeamLeader()
+    public TeamLeaderRole CreateTeamLeader()
         => new(CreateTeamService());
 
-    public Operator CreateOperator(string operatorAccountId)
+    public OperatorRole CreateOperator(string operatorAccountId)
         => new(operatorAccountId, Operations, Teams, Accounts);
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)

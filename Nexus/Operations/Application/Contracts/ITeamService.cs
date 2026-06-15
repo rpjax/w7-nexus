@@ -1,13 +1,11 @@
 using Aidan.Core.Patterns;
-using Nexus.Operations.Application.Services.Contracts;
-using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
 
-namespace Nexus.Operations.Application.Services.Contracts;
+namespace Nexus.Operations.Application.Contracts;
 
 public interface ITeamService
 {
-    Task<IResult<TeamDetails>> CreateTeamAsync(string operationId, string? name);
+    Task<IResult<Team>> CreateTeamAsync(string operationId, string? name);
     Task<IResult> DeleteTeamAsync(string teamId);
     Task<IResult> AssignTeamLeaderAsync(string teamId, string teamLeaderId);
     Task<IResult> UnassignTeamLeaderAsync(string teamId);

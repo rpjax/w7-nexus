@@ -1,6 +1,6 @@
 using Nexus.Gateways.Application.Services;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
-using Nexus.Gateways.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;

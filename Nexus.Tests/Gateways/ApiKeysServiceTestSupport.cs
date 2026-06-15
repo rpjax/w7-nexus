@@ -2,13 +2,13 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Aggregates;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Models;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 
 namespace Nexus.Tests.Gateways;
 

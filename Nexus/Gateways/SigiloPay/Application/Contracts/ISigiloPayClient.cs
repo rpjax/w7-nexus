@@ -1,7 +1,7 @@
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
 
-namespace Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+namespace Nexus.Gateways.SigiloPay.Application.Contracts;
 
 public interface ISigiloPayClient
 {

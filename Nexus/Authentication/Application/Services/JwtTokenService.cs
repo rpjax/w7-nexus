@@ -3,7 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Nexus.Authentication.Application.Services.Contracts;
+using Nexus.Authentication.Application.Contracts;
 using Nexus.Authentication.Application.Services.Models;
 
 namespace Nexus.Authentication.Application.Services;

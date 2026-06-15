@@ -1,8 +1,8 @@
 using Aidan.Core.Patterns;
-using Nexus.Authentication.Application.Services.Requests;
-using Nexus.Authentication.Application.Services.Responses;
+using Nexus.Authentication.Application.Requests;
+using Nexus.Authentication.Application.Responses;
 
-namespace Nexus.Authentication.Application.Services.Contracts;
+namespace Nexus.Authentication.Application.Contracts;
 
 public interface ISignInService
 {

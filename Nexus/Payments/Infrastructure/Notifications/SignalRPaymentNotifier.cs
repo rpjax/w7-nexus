@@ -1,5 +1,5 @@
-﻿using Aidan.Core.Errors;
-using Nexus.Payments.Application.Services.Contracts;
+using Aidan.Core.Errors;
+using Nexus.Payments.Application.Contracts;
 using Aidan.Core.Patterns;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.Extensions.Logging;

@@ -1,8 +1,8 @@
-﻿using Aidan.Core.Errors;
-using Nexus.Operations.Application.Services.Contracts;
+using Aidan.Core.Errors;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Aggregates;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Operations.Errors;
 
 namespace Nexus.Operations.Application.Services;

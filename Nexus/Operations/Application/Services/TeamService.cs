@@ -1,14 +1,12 @@
 ﻿using Aidan.Core.Errors;
-using Nexus.Gateways.Application.Services.Contracts;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Gateways.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
-using Nexus.Actors.Responses.Models;
-using Nexus.Actors.Extensions;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Operations.Errors;
 
 namespace Nexus.Operations.Application.Services;
@@ -35,9 +33,9 @@ public sealed class TeamService : ITeamService
         _gatewayCredentialsIdValidator = gatewayCredentialsIdValidator;
     }
 
-    public async Task<IResult<TeamDetails>> CreateTeamAsync(string operationId, string? name)
+    public async Task<IResult<Team>> CreateTeamAsync(string operationId, string? name)
     {
-        var builder = Result.Create<TeamDetails>();
+        var builder = Result.Create<Team>();
 
         var operationValidation = ValidateOperationId(operationId, out var normalizedOperationId);
         if (operationValidation is not null)
@@ -102,7 +100,7 @@ public sealed class TeamService : ITeamService
         team = await _teams.CreateAsync(team);
 
         return builder
-            .WithValue(TeamDetailsMapper.Map(team, new Dictionary<string, string>(StringComparer.Ordinal)))
+            .WithValue(team)
             .Build();
     }
 

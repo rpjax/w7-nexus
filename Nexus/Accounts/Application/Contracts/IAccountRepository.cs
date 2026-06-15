@@ -1,7 +1,7 @@
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Aggregates;
 
-namespace Nexus.Accounts.Application.Services.Contracts;
+namespace Nexus.Accounts.Application.Contracts;
 
 public interface IAccountRepository : IRepository<Account>
 {

@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;

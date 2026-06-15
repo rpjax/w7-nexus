@@ -1,11 +1,11 @@
-﻿using Aidan.Core.Errors;
-using Nexus.Operations.Application.Services.Contracts;
+using Aidan.Core.Errors;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Aggregates;
 using Nexus.Administrator.Extensions;
 using Nexus.Operations.Errors;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Errors;
 using Nexus.Administrator.Application.Contracts;
 using Nexus.Administrator.Application.Responses;

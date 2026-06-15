@@ -1,9 +1,9 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Errors;
 
 namespace Nexus.Gateways.SigiloPay.Application.Services;

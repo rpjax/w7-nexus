@@ -1,7 +1,7 @@
 using System.Linq.Expressions;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;

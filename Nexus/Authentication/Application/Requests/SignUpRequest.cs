@@ -1,4 +1,4 @@
-namespace Nexus.Authentication.Application.Services.Requests;
+namespace Nexus.Authentication.Application.Requests;
 
 public class SignUpRequest
 {

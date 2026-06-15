@@ -1,9 +1,9 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.Wintech.Errors;
 
 namespace Nexus.Gateways.Wintech.Application.Services;

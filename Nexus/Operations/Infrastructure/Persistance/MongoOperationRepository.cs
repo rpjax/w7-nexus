@@ -6,7 +6,7 @@ using MongoDB.Bson;
 using MongoDB.Driver;
 using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Infrastructure.Mapping;
 
 namespace Nexus.Operations.Infrastructure.Persistance;

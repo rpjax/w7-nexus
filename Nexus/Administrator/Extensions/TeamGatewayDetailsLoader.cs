@@ -1,9 +1,9 @@
 using Aidan.Core.Linq.Extensions;
 using Nexus.Administrator.Application.Responses.Models;
-using Nexus.Gateways.Application.Services.Contracts;
-using Nexus.Gateways.Frendz.Application.Services.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Services.Contracts;
-using Nexus.Gateways.Wintech.Application.Services.Contracts;
+using Nexus.Gateways.Application.Contracts;
+using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Operations.Aggregates;
 
 namespace Nexus.Administrator.Extensions;

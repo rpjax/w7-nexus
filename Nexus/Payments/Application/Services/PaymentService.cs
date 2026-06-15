@@ -1,12 +1,12 @@
-﻿using Aidan.Core.Errors;
-using Nexus.Payments.Application.Services.Contracts;
-using Nexus.Operations.Application.Services.Contracts;
+using Aidan.Core.Errors;
+using Nexus.Payments.Application.Contracts;
+using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Application.Services;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Payments.Errors;
 
 namespace Nexus.Payments.Application.Services;

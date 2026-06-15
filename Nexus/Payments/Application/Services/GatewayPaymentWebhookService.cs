@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Microsoft.Extensions.Logging;

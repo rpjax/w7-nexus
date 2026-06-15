@@ -1,9 +1,9 @@
 using Aidan.Core.Patterns;
-using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Models;
 
-namespace Nexus.Payments.Application.Services.Contracts;
+namespace Nexus.Payments.Application.Contracts;
 
 public interface IPaymentService
 {

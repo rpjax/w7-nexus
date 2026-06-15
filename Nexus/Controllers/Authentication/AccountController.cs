@@ -1,4 +1,4 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
@@ -6,7 +6,7 @@ using Microsoft.AspNetCore.Mvc;
 using Nexus.Accounts.Aggregates;
 using Nexus.Controllers.Authentication.Requests;
 using Nexus.Accounts.Errors;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 
 namespace Nexus.Controllers.Authentication;
 

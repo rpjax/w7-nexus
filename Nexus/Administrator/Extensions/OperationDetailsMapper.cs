@@ -1,8 +1,8 @@
 using Aidan.Core.Linq.Extensions;
-using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Administrator.Application.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Services.Contracts;
+using Nexus.Operations.Application.Contracts;
 
 namespace Nexus.Administrator.Extensions;
 

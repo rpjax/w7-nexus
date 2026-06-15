@@ -1,5 +1,5 @@
 using System.Linq.Expressions;
-using Nexus.Payments.Application.Services.Contracts;
+using Nexus.Payments.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Microsoft.Extensions.Logging.Abstractions;
