@@ -1,7 +1,6 @@
-using Nexus.Actors.Contracts;
 using Nexus.Authorization.Application.Models;
 
-namespace Nexus.Authorization.Application.Services.Contracts;
+namespace Nexus.Administrator.Application.Contracts;
 
 public interface IAdministratorAccess
 {

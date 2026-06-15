@@ -6,6 +6,8 @@ using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
 using Nexus.Actors;
+using AdministratorRole = Nexus.Administrator.Application.Services.Administrator;
+using Nexus.Administrator.Extensions;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Services.Contracts;
@@ -234,8 +236,13 @@ internal sealed class ActorTestContext
             GatewayGroups,
             GatewayCredentialsIdValidator);
 
-    public Administrator CreateAdministrator()
-        => new(CreateOperationService(), Operations, Accounts, Teams);
+    public AdministratorRole CreateAdministrator()
+        => new AdministratorRole(
+            CreateOperationService(),
+            Operations,
+            Accounts,
+            Teams,
+            new EmptyTeamGatewayDetailsLoader());
 
     public OperationAdministrator CreateOperationAdministrator()
         => new(CreateTeamService());
@@ -334,5 +341,11 @@ internal sealed class ActorTestContext
 
     public void RegisterGatewayCredential(string credentialsId) =>
         GatewayCredentialsIdValidator.AddExisting(credentialsId);
+}
+
+internal sealed class EmptyTeamGatewayDetailsLoader : ITeamGatewayDetailsLoader
+{
+    public Task<TeamGatewayLookup> LoadAsync(IReadOnlyList<Team> teams, CancellationToken cancellationToken = default)
+        => Task.FromResult(new TeamGatewayLookup());
 }
 

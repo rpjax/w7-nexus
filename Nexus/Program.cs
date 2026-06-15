@@ -12,6 +12,8 @@ using Nexus.AppHost.Contracts;
 using Nexus.Actors;
 using Nexus.Actors.Contracts;
 using Nexus.Actors.Extensions;
+using Nexus.Administrator.Application.Services;
+using Nexus.Administrator.Extensions;
 using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Services.Contracts;
 using Nexus.Operations.Infrastructure.Persistance;
@@ -45,6 +47,7 @@ using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Infrastructure.Persistance;
 using Nexus.Accounts.Infrastructure.Password;
+using Nexus.Administrator.Application.Contracts;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -133,10 +136,11 @@ builder.Services.AddScoped<IOperationService, OperationService>();
 builder.Services.AddScoped<ITeamRepository, MongoTeamRepository>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IAdministrator, Administrator>();
+builder.Services.AddScoped<Nexus.Administrator.Extensions.ITeamGatewayDetailsLoader, Nexus.Administrator.Extensions.TeamGatewayDetailsLoader>();
 builder.Services.AddScoped<IOperationAdministrator, OperationAdministrator>();
 builder.Services.AddScoped<ITeamLeader, TeamLeader>();
 builder.Services.AddScoped<IOperator, Operator>();
-builder.Services.AddScoped<ITeamGatewayDetailsLoader, TeamGatewayDetailsLoader>();
+builder.Services.AddScoped<Nexus.Actors.Extensions.ITeamGatewayDetailsLoader, Nexus.Actors.Extensions.TeamGatewayDetailsLoader>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, MongoFrendzApiCredentialsRepository>();
 builder.Services.AddScoped<ISigiloPayApiCredentialsRepository, MongoSigiloPayApiCredentialsRepository>();
 builder.Services.AddScoped<IWintechApiCredentialsRepository, MongoWintechApiCredentialsRepository>();

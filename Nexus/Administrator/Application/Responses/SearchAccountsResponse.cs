@@ -1,6 +1,6 @@
-using Nexus.Actors.Responses.Models;
+using Nexus.Administrator.Application.Responses.Models;
 
-namespace Nexus.Actors.Responses;
+namespace Nexus.Administrator.Application.Responses;
 
 public class SearchAccountsResponse : SearchResponse<AccountDetails>
 {

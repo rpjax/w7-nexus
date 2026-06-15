@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Actors.Contracts;
-using Nexus.Actors.Requests;
-using Nexus.Authorization.Application.Services.Contracts;
+using Nexus.Administrator.Application.Contracts;
+using Nexus.Administrator.Application.Requests;
+using Nexus.Controllers;
 
-namespace Nexus.Controllers.Administrator;
+namespace Nexus.Administrator.Presentation;
 
 [Route("api/administrator")]
 [Authorize]

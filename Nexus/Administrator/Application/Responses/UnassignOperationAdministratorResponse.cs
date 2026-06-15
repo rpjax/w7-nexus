@@ -1,3 +1,3 @@
-namespace Nexus.Actors.Responses;
+namespace Nexus.Administrator.Application.Responses;
 
 public class UnassignOperationAdministratorResponse { }

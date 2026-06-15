@@ -346,7 +346,7 @@ public sealed class TeamServiceTests
         Assert.NotNull(result.Value);
         Assert.Equal(OperationId, result.Value!.OperationId);
         Assert.Equal("New Team", result.Value.Name);
-        Assert.Null(result.Value.TeamLeaderId);
+        Assert.Null(result.Value.TeamLeader);
 
         var persisted = ctx.Teams.AsQueryable().FirstOrDefault(t => t.Name == "New Team");
         Assert.NotNull(persisted);

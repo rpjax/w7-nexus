@@ -1,4 +1,4 @@
-namespace Nexus.Actors.Requests;
+namespace Nexus.Administrator.Application.Requests;
 
 public class CreateOperationRequest
 {

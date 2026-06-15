@@ -1,9 +1,9 @@
 using Aidan.Core.Patterns;
-using Nexus.Actors.Requests;
-using Nexus.Actors.Responses;
-using Nexus.Actors.Responses.Models;
+using Nexus.Administrator.Application.Requests;
+using Nexus.Administrator.Application.Responses;
+using Nexus.Administrator.Application.Responses.Models;
 
-namespace Nexus.Actors.Contracts;
+namespace Nexus.Administrator.Application.Contracts;
 
 public interface IAdministrator
 {

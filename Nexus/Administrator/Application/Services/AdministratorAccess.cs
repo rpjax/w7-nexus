@@ -1,16 +1,16 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Errors;
-using Nexus.Actors.Contracts;
+using Nexus.Authorization;
 using Nexus.Authorization.Errors;
 using Nexus.Authorization.Application.Models;
-using Nexus.Authorization.Application.Services.Contracts;
+using Nexus.Administrator.Application.Contracts;
 
-namespace Nexus.Authorization.Application.Services;
+namespace Nexus.Administrator.Application.Services;
 
 public sealed class AdministratorAccess : IAdministratorAccess
 {

@@ -2,17 +2,17 @@
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.Actors.Contracts;
-using Nexus.Actors.Requests;
-using Nexus.Actors.Responses;
-using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Actors.Extensions;
+using Nexus.Administrator.Extensions;
 using Nexus.Operations.Errors;
 using Nexus.Accounts.Application.Services.Contracts;
 using Nexus.Accounts.Errors;
+using Nexus.Administrator.Application.Contracts;
+using Nexus.Administrator.Application.Responses;
+using Nexus.Administrator.Application.Requests;
+using Nexus.Administrator.Application.Responses.Models;
 
-namespace Nexus.Actors;
+namespace Nexus.Administrator.Application.Services;
 
 public class Administrator : IAdministrator
 {
