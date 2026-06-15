@@ -12,6 +12,7 @@ using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services.Contracts;
 using Nexus.Operations.Errors;
+using Nexus.Accounts.Application.Services.Contracts;
 
 namespace Nexus.Actors;
 
@@ -20,26 +21,34 @@ public class Operator : IOperator
     private readonly string? _operatorAccountId;
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
+    private IAccountRepository _accounts { get; }
+    private ITeamGatewayDetailsLoader? _teamGatewayDetailsLoader { get; }
     private IHttpContextAccessor? _httpContextAccessor { get; }
 
     public Operator(
         IOperationRepository operations,
         ITeamRepository teams,
+        IAccountRepository accounts,
+        ITeamGatewayDetailsLoader teamGatewayDetailsLoader,
         IHttpContextAccessor httpContextAccessor)
     {
         _operations = operations;
         _teams = teams;
+        _accounts = accounts;
+        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
         _httpContextAccessor = httpContextAccessor;
     }
 
     internal Operator(
         string operatorAccountId,
         IOperationRepository operations,
-        ITeamRepository teams)
+        ITeamRepository teams,
+        IAccountRepository accounts)
     {
         _operatorAccountId = operatorAccountId;
         _operations = operations;
         _teams = teams;
+        _accounts = accounts;
     }
 
     public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -129,14 +138,14 @@ public class Operator : IOperator
             .Take(limit)
             .ToArrayAsync();
 
+        var items = await OperationDetailsMapper.MapManyAsync(operations, _teams, _accounts, _teamGatewayDetailsLoader);
+
         var response = new SearchOperationsResponse
         {
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = operations
-                .Select(o => o.ToOperationDetails())
-                .ToList()
+            Items = items.ToList()
         };
 
         return builder

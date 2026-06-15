@@ -3,6 +3,7 @@ using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application.Services;
+using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
 using Nexus.Actors;
 using Nexus.Database.Models;
@@ -218,6 +219,7 @@ internal sealed class ActorTestContext
     public InMemoryOperationRepository Operations { get; } = new();
     public InMemoryTeamRepository Teams { get; } = new();
     public InMemoryGatewayCredentialsGroupRepository GatewayGroups { get; } = new();
+    public InMemoryAccountRepository Accounts { get; } = new();
     public FakeAccountIdValidator AccountIdValidator { get; } = new();
     public FakeGatewayCredentialsIdValidator GatewayCredentialsIdValidator { get; } = new();
 
@@ -233,7 +235,7 @@ internal sealed class ActorTestContext
             GatewayCredentialsIdValidator);
 
     public Administrator CreateAdministrator()
-        => new(CreateOperationService(), Operations);
+        => new(CreateOperationService(), Operations, Accounts, Teams);
 
     public OperationAdministrator CreateOperationAdministrator()
         => new(CreateTeamService());
@@ -242,7 +244,7 @@ internal sealed class ActorTestContext
         => new(CreateTeamService());
 
     public Operator CreateOperator(string operatorAccountId)
-        => new(operatorAccountId, Operations, Teams);
+        => new(operatorAccountId, Operations, Teams, Accounts);
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
@@ -311,6 +313,24 @@ internal sealed class ActorTestContext
     }
 
     public void RegisterAccount(string accountId) => AccountIdValidator.AddExisting(accountId);
+
+    public async Task<Account> SeedAccountAsync(
+        string username = "testuser",
+        string? id = null,
+        string[]? roles = null,
+        string[]? permissions = null)
+    {
+        var now = DateTime.UtcNow;
+        var account = new Account(
+            Id: id ?? Guid.NewGuid().ToString("N"),
+            Username: username,
+            PasswordHash: "hash",
+            Roles: roles ?? Array.Empty<string>(),
+            Permissions: permissions ?? Array.Empty<string>(),
+            CreatedAt: now,
+            LastUpdatedAt: now);
+        return await Accounts.CreateAsync(account);
+    }
 
     public void RegisterGatewayCredential(string credentialsId) =>
         GatewayCredentialsIdValidator.AddExisting(credentialsId);

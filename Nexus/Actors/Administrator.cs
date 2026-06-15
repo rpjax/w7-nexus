@@ -9,20 +9,33 @@ using Nexus.Actors.Responses.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Actors.Extensions;
 using Nexus.Operations.Errors;
+using Nexus.Accounts.Application.Services.Contracts;
+using Nexus.Accounts.Errors;
 
 namespace Nexus.Actors;
 
 public class Administrator : IAdministrator
 {
+    private const int SearchKeywordMaxLength = 200;
+
     private IOperationService _operationService { get; }
     private IOperationRepository _operations { get; }
+    private IAccountRepository _accounts { get; }
+    private ITeamRepository _teams { get; }
+    private ITeamGatewayDetailsLoader _teamGatewayDetailsLoader { get; }
 
     public Administrator(
         IOperationService operationService,
-        IOperationRepository operations)
+        IOperationRepository operations,
+        IAccountRepository accounts,
+        ITeamRepository teams,
+        ITeamGatewayDetailsLoader teamGatewayDetailsLoader)
     {
         _operationService = operationService;
         _operations = operations;
+        _accounts = accounts;
+        _teams = teams;
+        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
     }
 
     public async Task<IResult<OperationDetails>> CreateOperationAsync(
@@ -106,14 +119,14 @@ public class Administrator : IAdministrator
             .Take(limit)
             .ToArrayAsync();
 
+        var items = await OperationDetailsMapper.MapManyAsync(operations, _teams, _accounts, _teamGatewayDetailsLoader);
+
         var response = new SearchOperationsResponse
         {
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = operations
-                .Select(o => o.ToOperationDetails())
-                .ToList()
+            Items = items.ToList()
         };
 
         return builder
@@ -166,6 +179,78 @@ public class Administrator : IAdministrator
         return Result<UnassignOperationAdministratorResponse>.Success(new UnassignOperationAdministratorResponse());
     }
 
+    public async Task<IResult<SearchAccountsResponse>> SearchAccountsAsync(
+        SearchAccountsRequest request)
+    {
+        if (request is null)
+            return AccountRequestBodyRequiredResult<SearchAccountsResponse>();
+
+        var builder = Result.Create<SearchAccountsResponse>();
+
+        var limit = request.Limit <= 0 ? 20 : request.Limit;
+        var offset = request.Offset;
+        var keyword = request.Keyword?.Trim();
+
+        if (limit < 1 || limit >= 1000)
+        {
+            builder.WithError(Error.Create()
+                .WithCode(AccountErrorCodes.SearchLimitInvalid)
+                .WithMessage("O limite deve estar entre 1 e 999.")
+                .Build());
+        }
+
+        if (offset < 0)
+        {
+            builder.WithError(Error.Create()
+                .WithCode(AccountErrorCodes.SearchOffsetInvalid)
+                .WithMessage("O deslocamento não pode ser negativo.")
+                .Build());
+        }
+
+        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > SearchKeywordMaxLength)
+        {
+            builder.WithError(Error.Create()
+                .WithCode(AccountErrorCodes.SearchKeywordTooLong)
+                .WithMessage($"A palavra-chave pode ter no máximo {SearchKeywordMaxLength} caracteres.")
+                .Build());
+        }
+
+        if (builder.ContainsError)
+            return builder.Build();
+
+        var query = _accounts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(keyword))
+        {
+            var term = keyword.ToLowerInvariant();
+            query = query.Where(a =>
+                a.Id.ToLower().Contains(term) ||
+                a.Username.ToLower().Contains(term));
+        }
+
+        var total = await query.CountAsync();
+
+        var accounts = await query
+            .OrderByDescending(a => a.LastUpdatedAt)
+            .Skip(offset)
+            .Take(limit)
+            .ToArrayAsync();
+
+        var response = new SearchAccountsResponse
+        {
+            Offset = offset,
+            Limit = limit,
+            Total = total,
+            Items = accounts
+                .Select(a => a.ToAccountDetails())
+                .ToList()
+        };
+
+        return builder
+            .WithValue(response)
+            .Build();
+    }
+
     private static string[] NormalizeFilterIds(string[]? ids)
         => (ids ?? Array.Empty<string>())
             .Where(id => !string.IsNullOrWhiteSpace(id))
@@ -177,6 +262,14 @@ public class Administrator : IAdministrator
     {
         return Result<T>.Failure(Error.Create()
             .WithCode(OperationErrorCodes.RequestBodyRequired)
+            .WithMessage("O corpo da requisição é obrigatório.")
+            .Build());
+    }
+
+    private static IResult<T> AccountRequestBodyRequiredResult<T>()
+    {
+        return Result<T>.Failure(Error.Create()
+            .WithCode(AccountErrorCodes.RequestBodyRequired)
             .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
     }

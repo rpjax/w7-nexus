@@ -2,6 +2,11 @@ namespace Nexus.Accounts.Errors;
 
 public static class AccountErrorCodes
 {
+    public const string RequestBodyRequired = "Account.REQUEST_BODY_REQUIRED";
+    public const string SearchLimitInvalid = "Account.SEARCH_LIMIT_INVALID";
+    public const string SearchOffsetInvalid = "Account.SEARCH_OFFSET_INVALID";
+    public const string SearchKeywordTooLong = "Account.SEARCH_KEYWORD_TOO_LONG";
+
     public const string UsernameEmpty = "Account.USERNAME_EMPTY";
     public const string UsernameUnchanged = "Account.USERNAME_UNCHANGED";
     public const string UsernameAlreadyTaken = "Account.USERNAME_ALREADY_TAKEN";

@@ -1,28 +1,62 @@
+import type { ReactNode } from 'react';
+import { useState } from 'react';
 import type { OperationDetails } from '../../api/types';
 import { formatDateTime, shortId } from '../../utils/format';
+import { AdminTeamPanel, type AdminTeamPanelActions } from './AdminTeamPanel';
 
-type AdminOperationCardProps = {
-  operation: OperationDetails;
-  accountLabels: Record<string, string>;
-  actionBusy: boolean;
+export type AdminOperationCardActions = AdminTeamPanelActions & {
   onAssignAdministrator: (operationId: string) => void;
   onRemoveAdministrator: (operationId: string, administratorId: string) => void;
   onDelete: (operationId: string) => void;
+  onCreateTeam: (operationId: string, name: string) => void;
 };
 
-function adminLabel(id: string, accountLabels: Record<string, string>): string {
-  return accountLabels[id] ? `${accountLabels[id]} · ${shortId(id, 10)}` : shortId(id, 18);
+type AdminOperationCardProps = {
+  operation: OperationDetails;
+  actions: AdminOperationCardActions;
+};
+
+function personInitial(username: string): string {
+  const trimmed = username.trim();
+  return trimmed ? trimmed[0]!.toUpperCase() : '?';
 }
 
-export function AdminOperationCard({
-  operation,
-  accountLabels,
-  actionBusy,
-  onAssignAdministrator,
-  onRemoveAdministrator,
-  onDelete,
-}: AdminOperationCardProps) {
-  const adminCount = operation.administratorIds.length;
+function personLabel(accountId: string, username: string): string {
+  return username && username !== accountId ? username : shortId(accountId, 18);
+}
+
+function countOperators(teams: OperationDetails['teams']): number {
+  return teams.reduce((sum, team) => sum + team.operators.length, 0);
+}
+
+function PersonRow({
+  accountId,
+  username,
+  action,
+}: {
+  accountId: string;
+  username: string;
+  action?: ReactNode;
+}) {
+  return (
+    <li className="admin-op-person">
+      <span className="admin-op-person-avatar" aria-hidden="true">{personInitial(username)}</span>
+      <span className="admin-op-person-meta">
+        <span className="admin-op-person-name">{personLabel(accountId, username)}</span>
+        <span className="admin-op-person-id mono" title={accountId}>{shortId(accountId, 22)}</span>
+      </span>
+      {action ? <span className="admin-op-person-action">{action}</span> : null}
+    </li>
+  );
+}
+
+export function AdminOperationCard({ operation, actions }: AdminOperationCardProps) {
+  const [newTeamName, setNewTeamName] = useState('');
+  const administrators = operation.administrators ?? [];
+  const teams = operation.teams ?? [];
+  const adminCount = administrators.length;
+  const teamCount = teams.length;
+  const operatorCount = countOperators(teams);
   const description = operation.description?.trim();
 
   async function copyId() {
@@ -33,63 +67,153 @@ export function AdminOperationCard({
     }
   }
 
+  function submitCreateTeam() {
+    const name = newTeamName.trim();
+    if (!name) return;
+    actions.onCreateTeam(operation.id, name);
+    setNewTeamName('');
+  }
+
+  const teamActions: AdminTeamPanelActions = {
+    busy: actions.busy,
+    onDeleteTeam: actions.onDeleteTeam,
+    onAssignLeader: actions.onAssignLeader,
+    onUnassignLeader: actions.onUnassignLeader,
+    onAssignOperator: actions.onAssignOperator,
+    onUnassignOperator: actions.onUnassignOperator,
+    onEditProfitShare: actions.onEditProfitShare,
+    onGatewayStrategyChange: actions.onGatewayStrategyChange,
+    onAssignStrawMan: actions.onAssignStrawMan,
+    onUnassignStrawMan: actions.onUnassignStrawMan,
+    onAssignGatewayCredential: actions.onAssignGatewayCredential,
+    onUnassignGatewayCredential: actions.onUnassignGatewayCredential,
+    onAssignGatewayGroup: actions.onAssignGatewayGroup,
+    onUnassignGatewayGroup: actions.onUnassignGatewayGroup,
+  };
+
   return (
     <article className="admin-op-card">
       <header className="admin-op-card-header">
+        <span className="admin-op-card-mark" aria-hidden="true">{personInitial(operation.name)}</span>
         <div className="admin-op-card-heading">
-          <h3 className="admin-op-card-title">{operation.name}</h3>
+          <div className="admin-op-card-title-row">
+            <h3 className="admin-op-card-title">{operation.name}</h3>
+            <div className="admin-op-card-stats">
+              <span className={`admin-op-stat ${adminCount === 0 ? 'admin-op-stat-warn' : ''}`}>
+                <span className="admin-op-stat-value">{adminCount}</span>
+                <span className="admin-op-stat-label">Admin{adminCount === 1 ? '' : 's'}</span>
+              </span>
+              <span className="admin-op-stat">
+                <span className="admin-op-stat-value">{teamCount}</span>
+                <span className="admin-op-stat-label">Equipe{teamCount === 1 ? '' : 's'}</span>
+              </span>
+              <span className="admin-op-stat">
+                <span className="admin-op-stat-value">{operatorCount}</span>
+                <span className="admin-op-stat-label">Operador{operatorCount === 1 ? '' : 'es'}</span>
+              </span>
+            </div>
+          </div>
           <p className="admin-op-card-id">
-            <span className="mono" title={operation.id}>{operation.id}</span>
+            <span className="mono" title={operation.id}>{shortId(operation.id, 24)}</span>
             <button type="button" className="btn btn-ghost btn-small admin-op-copy-id" onClick={() => void copyId()}>
               Copiar ID
             </button>
           </p>
         </div>
-        <span className={`count-pill ${adminCount === 0 ? 'count-pill-warn' : ''}`}>
-          {adminCount === 0 ? 'Sem admins' : `${adminCount} admin${adminCount === 1 ? '' : 's'}`}
-        </span>
       </header>
 
-      <div className="admin-op-card-body">
-        <div className="admin-op-meta-grid">
-          <div className="admin-op-meta-item">
-            <span className="admin-op-meta-label">Descrição</span>
-            <p className="admin-op-meta-value">{description || 'Sem descrição cadastrada.'}</p>
+      <div className="admin-op-card-overview">
+        <div className="admin-op-overview-block">
+          <span className="admin-op-overview-label">Descrição</span>
+          <p className="admin-op-overview-text">{description || 'Sem descrição cadastrada.'}</p>
+        </div>
+        <div className="admin-op-timeline">
+          <div className="admin-op-timeline-item">
+            <span className="admin-op-timeline-label">Criada</span>
+            <time className="admin-op-timeline-value">{formatDateTime(operation.createdAt)}</time>
           </div>
-          <div className="admin-op-meta-item">
-            <span className="admin-op-meta-label">Criada em</span>
-            <p className="admin-op-meta-value">{formatDateTime(operation.createdAt)}</p>
-          </div>
-          <div className="admin-op-meta-item">
-            <span className="admin-op-meta-label">Atualizada em</span>
-            <p className="admin-op-meta-value">{formatDateTime(operation.updatedAt)}</p>
+          <div className="admin-op-timeline-item">
+            <span className="admin-op-timeline-label">Atualizada</span>
+            <time className="admin-op-timeline-value">{formatDateTime(operation.updatedAt)}</time>
           </div>
         </div>
+      </div>
 
-        <section className="admin-op-section">
-          <div className="admin-op-section-head">
-            <h4>Administradores da operação</h4>
-            <p className="muted small">Contas autorizadas a gerenciar equipes e configuração desta operação.</p>
-          </div>
+      <div className="admin-op-card-panels admin-op-card-panels--stacked">
+        <section className="admin-op-panel">
+          <header className="admin-op-panel-head">
+            <h4>Administradores</h4>
+            <p className="muted small">Contas com permissão para gerenciar esta operação (papel Operation Administrator).</p>
+          </header>
 
           {adminCount === 0 ? (
-            <p className="muted small admin-op-empty">Nenhum administrador vinculado.</p>
+            <p className="admin-op-empty muted small">Nenhum administrador vinculado.</p>
           ) : (
-            <ul className="chip-list admin-op-admin-list">
-              {operation.administratorIds.map((adminId) => (
-                <li key={adminId}>
-                  <span>{adminLabel(adminId, accountLabels)}</span>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-small"
-                    disabled={actionBusy}
-                    onClick={() => onRemoveAdministrator(operation.id, adminId)}
-                  >
-                    Remover
-                  </button>
-                </li>
+            <ul className="admin-op-person-list">
+              {administrators.map((admin) => (
+                <PersonRow
+                  key={admin.accountId}
+                  accountId={admin.accountId}
+                  username={admin.username}
+                  action={(
+                    <button
+                      type="button"
+                      className="btn btn-ghost btn-small"
+                      disabled={actions.busy}
+                      onClick={() => actions.onRemoveAdministrator(operation.id, admin.accountId)}
+                    >
+                      Remover
+                    </button>
+                  )}
+                />
               ))}
             </ul>
+          )}
+
+          <div className="admin-op-panel-actions">
+            <button
+              type="button"
+              className="btn btn-primary btn-small"
+              disabled={actions.busy}
+              onClick={() => actions.onAssignAdministrator(operation.id)}
+            >
+              Vincular administrador
+            </button>
+          </div>
+        </section>
+
+        <section className="admin-op-panel admin-op-panel--teams">
+          <header className="admin-op-panel-head">
+            <h4>Equipes e operadores</h4>
+            <p className="muted small">Estrutura completa: líderes, operadores, repasses, laranjas e credenciais de gateway.</p>
+          </header>
+
+          <div className="admin-op-create-team">
+            <input
+              className="nexus-input"
+              value={newTeamName}
+              onChange={(e) => setNewTeamName(e.target.value)}
+              placeholder="Nome da nova equipe…"
+              onKeyDown={(e) => { if (e.key === 'Enter') submitCreateTeam(); }}
+            />
+            <button
+              type="button"
+              className="btn btn-primary btn-small"
+              disabled={actions.busy || !newTeamName.trim()}
+              onClick={submitCreateTeam}
+            >
+              Criar equipe
+            </button>
+          </div>
+
+          {teamCount === 0 ? (
+            <p className="admin-op-empty muted small">Nenhuma equipe vinculada a esta operação.</p>
+          ) : (
+            <div className="admin-op-team-list">
+              {teams.map((team) => (
+                <AdminTeamPanel key={team.id} team={team} actions={teamActions} />
+              ))}
+            </div>
           )}
         </section>
       </div>
@@ -97,17 +221,9 @@ export function AdminOperationCard({
       <footer className="admin-op-card-actions">
         <button
           type="button"
-          className="btn btn-primary btn-small"
-          disabled={actionBusy}
-          onClick={() => onAssignAdministrator(operation.id)}
-        >
-          Vincular administrador
-        </button>
-        <button
-          type="button"
           className="btn btn-danger btn-small"
-          disabled={actionBusy}
-          onClick={() => onDelete(operation.id)}
+          disabled={actions.busy}
+          onClick={() => actions.onDelete(operation.id)}
         >
           Excluir operação
         </button>

@@ -7,7 +7,9 @@ public sealed class ProfitShareRule
     public string OperatorId { get; }
     public IReadOnlyDictionary<string, ProfitSplit> ProfitSplits { get; }
 
-    internal ProfitShareRule(string operatorId, IReadOnlyDictionary<string, ProfitSplit> profitSplits)
+    internal ProfitShareRule(
+        string operatorId, 
+        IReadOnlyDictionary<string, ProfitSplit> profitSplits)
     {
         OperatorId = operatorId;
         ProfitSplits = profitSplits;

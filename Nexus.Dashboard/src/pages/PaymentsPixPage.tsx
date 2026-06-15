@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { searchAccountsPicker } from '../api/accountPickerSources';
 import { generatePix } from '../api/payments';
 import type { GatewayPixResult } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
@@ -133,6 +134,7 @@ export function PaymentsPixPage() {
       <AccountPickerModal
         open={operatorPickerOpen}
         onClose={() => setOperatorPickerOpen(false)}
+        searchAccounts={searchAccountsPicker}
         title="Conta do operador"
         subtitle="Opcional — filtra a cobrança ao operador."
         onSelected={(row) => {
@@ -144,6 +146,7 @@ export function PaymentsPixPage() {
       <AccountPickerModal
         open={strawPickerOpen}
         onClose={() => setStrawPickerOpen(false)}
+        searchAccounts={searchAccountsPicker}
         title="Conta laranja"
         subtitle="Opcional — alinha credenciais de gateway com laranja."
         onSelected={(row) => {

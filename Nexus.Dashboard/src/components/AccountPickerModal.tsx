@@ -1,10 +1,12 @@
 import { useEffect, useId, useState } from 'react';
-import { searchAccountsForPicker } from '../api/accounts';
+import type { AccountPickerSearchFn } from '../api/accountPicker';
 import type { AccountPickerRow } from '../api/types';
+import { shortId } from '../utils/format';
 
 type AccountPickerModalProps = {
   open: boolean;
   onClose: () => void;
+  searchAccounts: AccountPickerSearchFn;
   title?: string;
   subtitle?: string;
   disabledAccountIds?: Set<string>;
@@ -14,9 +16,15 @@ type AccountPickerModalProps = {
 
 const PAGE_SIZE = 8;
 
+function accountInitial(username: string): string {
+  const trimmed = username.trim();
+  return trimmed ? trimmed[0]!.toUpperCase() : '?';
+}
+
 export function AccountPickerModal({
   open,
   onClose,
+  searchAccounts,
   title = 'Selecionar conta',
   subtitle,
   disabledAccountIds,
@@ -29,6 +37,7 @@ export function AccountPickerModal({
   const [totalItems, setTotalItems] = useState(0);
   const [items, setItems] = useState<AccountPickerRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
@@ -36,13 +45,15 @@ export function AccountPickerModal({
     if (!open) return;
     setCurrentPage(1);
     setKeyword('');
+    setLoadError('');
     void load(1, '');
-  }, [open]);
+  }, [open, searchAccounts]);
 
   async function load(page: number, term: string) {
     setLoading(true);
+    setLoadError('');
     try {
-      const result = await searchAccountsForPicker({
+      const result = await searchAccounts({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
         keyword: term.trim() || null,
@@ -50,10 +61,11 @@ export function AccountPickerModal({
       if (!result.ok) {
         setItems([]);
         setTotalItems(0);
+        setLoadError(result.error);
         return;
       }
-      setTotalItems(result.data?.total ?? 0);
-      setItems(result.data?.items ?? []);
+      setTotalItems(result.total);
+      setItems(result.items);
     } finally {
       setLoading(false);
     }
@@ -92,35 +104,58 @@ export function AccountPickerModal({
 
   return (
     <div className="dialog-backdrop dialog-backdrop--picker account-picker-backdrop" onClick={onClose}>
-      <div className="dialog-card account-picker" onClick={(e) => e.stopPropagation()}>
-        <div className="account-picker-header">
-          <div>
-            <h3 className="account-picker-title">{title}</h3>
-            {subtitle ? <p className="account-picker-sub muted">{subtitle}</p> : null}
+      <div
+        className="dialog-card account-picker"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="account-picker-title"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <header className="account-picker-header">
+          <div className="account-picker-heading">
+            <h3 id="account-picker-title" className="account-picker-title">{title}</h3>
+            {subtitle ? <p className="account-picker-sub">{subtitle}</p> : null}
           </div>
-          <button type="button" className="btn btn-ghost btn-small" onClick={onClose}>Fechar</button>
-        </div>
+          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
+            <span aria-hidden="true">×</span>
+          </button>
+        </header>
 
-        <div className="toolbar account-picker-toolbar">
-          <div className="field grow">
-            <label htmlFor={searchInputId}>Pesquisar</label>
-            <input
-              id={searchInputId}
-              className="nexus-input account-picker-search"
-              value={keyword}
-              onChange={(e) => setKeyword(e.target.value)}
-              onKeyDown={(e) => { if (e.key === 'Enter') void search(); }}
-              placeholder="ID ou nome de usuário..."
-            />
-          </div>
-          <button type="button" className="btn btn-primary" onClick={() => void search()}>Buscar</button>
+        <div className="account-picker-search-row">
+          <input
+            id={searchInputId}
+            className="nexus-input account-picker-search"
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') void search(); }}
+            placeholder="Buscar por nome ou ID…"
+            aria-label="Buscar contas"
+          />
+          <button
+            type="button"
+            className="btn btn-primary account-picker-search-btn"
+            onClick={() => void search()}
+            disabled={loading}
+          >
+            {loading ? '…' : 'Buscar'}
+          </button>
         </div>
 
         <div className="account-picker-list" tabIndex={-1}>
           {loading ? (
-            <p className="muted account-picker-hint">Carregando…</p>
+            <div className="account-picker-state">
+              <span className="account-picker-spinner" aria-hidden="true" />
+              <p className="account-picker-hint">Carregando contas…</p>
+            </div>
+          ) : loadError ? (
+            <div className="account-picker-state account-picker-state--error">
+              <p className="account-picker-hint account-picker-error">{loadError}</p>
+            </div>
           ) : items.length === 0 ? (
-            <p className="muted account-picker-hint">Nenhuma conta encontrada.</p>
+            <div className="account-picker-state">
+              <p className="account-picker-hint">Nenhuma conta encontrada.</p>
+              <p className="account-picker-hint-sub">Tente outro termo ou limpe a busca.</p>
+            </div>
           ) : (
             items.map((row) => {
               const disabled = isDisabled(row.id);
@@ -132,22 +167,55 @@ export function AccountPickerModal({
                   disabled={disabled}
                   onClick={() => pick(row)}
                 >
-                  <span className="account-picker-meta">
-                    <span className="account-picker-name">{row.username}</span>
-                    <span className="account-picker-id">{row.id}</span>
+                  <span className="account-picker-avatar" aria-hidden="true">
+                    {accountInitial(row.username)}
                   </span>
-                  {disabled ? <span className="account-picker-badge">{disabledBadgeText}</span> : null}
+                  <span className="account-picker-meta">
+                    <span className="account-picker-name-row">
+                      <span className="account-picker-name">{row.username}</span>
+                      {row.roles?.map((role) => (
+                        <span key={role} className="account-picker-role-pill">{role}</span>
+                      ))}
+                    </span>
+                    <span className="account-picker-id mono" title={row.id}>
+                      {shortId(row.id, 24)}
+                    </span>
+                  </span>
+                  {disabled ? (
+                    <span className="account-picker-badge">{disabledBadgeText}</span>
+                  ) : (
+                    <span className="account-picker-chevron" aria-hidden="true">›</span>
+                  )}
                 </button>
               );
             })
           )}
         </div>
 
-        <div className="pagination account-picker-pagination">
-          <button type="button" className="btn btn-ghost" onClick={() => void prevPage()} disabled={currentPage <= 1 || loading}>Anterior</button>
-          <span className="muted">Página {currentPage} de {totalPages}</span>
-          <button type="button" className="btn btn-ghost" onClick={() => void nextPage()} disabled={currentPage >= totalPages || loading}>Próxima</button>
-        </div>
+        <footer className="account-picker-footer">
+          <span className="account-picker-count">
+            {totalItems === 0 ? 'Sem resultados' : `${totalItems} conta${totalItems === 1 ? '' : 's'}`}
+          </span>
+          <div className="account-picker-pagination">
+            <button
+              type="button"
+              className="btn btn-ghost btn-small"
+              onClick={() => void prevPage()}
+              disabled={currentPage <= 1 || loading}
+            >
+              Anterior
+            </button>
+            <span className="account-picker-page">{currentPage} / {totalPages}</span>
+            <button
+              type="button"
+              className="btn btn-ghost btn-small"
+              onClick={() => void nextPage()}
+              disabled={currentPage >= totalPages || loading}
+            >
+              Próxima
+            </button>
+          </div>
+        </footer>
       </div>
     </div>
   );

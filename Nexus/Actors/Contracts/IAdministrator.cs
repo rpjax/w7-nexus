@@ -21,4 +21,7 @@ public interface IAdministrator
 
     Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
         UnassignOperationAdministratorRequest request);
+
+    Task<IResult<SearchAccountsResponse>> SearchAccountsAsync(
+        SearchAccountsRequest request);
 }

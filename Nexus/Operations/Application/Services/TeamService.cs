@@ -3,6 +3,7 @@ using Nexus.Gateways.Application.Services.Contracts;
 using Nexus.Operations.Application.Services.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Actors.Responses.Models;
+using Nexus.Actors.Extensions;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Operations.Aggregates;
@@ -101,7 +102,7 @@ public sealed class TeamService : ITeamService
         team = await _teams.CreateAsync(team);
 
         return builder
-            .WithValue(TeamDetails.FromTeam(team))
+            .WithValue(TeamDetailsMapper.Map(team, new Dictionary<string, string>(StringComparer.Ordinal)))
             .Build();
     }
 

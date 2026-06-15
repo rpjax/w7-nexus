@@ -1,6 +1,7 @@
 using Nexus.Actors.Requests;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
+using Nexus.Accounts.Errors;
 using Nexus.Tests.Support;
 using Xunit;
 
@@ -208,6 +209,47 @@ public sealed class AdministratorTests
     }
 
     [Fact]
+    public async Task SearchOperationsAsync_ReturnsEnrichedAdministratorsAndTeams()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var admin = await _ctx.SeedAccountAsync("globaladmin", id: "admin-1", roles: ["administrator"]);
+        var leader = await _ctx.SeedAccountAsync("teamleader", id: "leader-1");
+        var operatorAccount = await _ctx.SeedAccountAsync("operator1", id: "operator-1");
+        var operation = await _ctx.SeedOperationAsync("Enriched Op", administratorIds: [admin.Id]);
+        var team = await _ctx.SeedTeamAsync(
+            operation.Id,
+            name: "Alpha Team",
+            operatorIds: [operatorAccount.Id]);
+        _ctx.RegisterAccount(leader.Id);
+        await _ctx.CreateTeamService().AssignTeamLeaderAsync(team.Id, leader.Id);
+
+        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        {
+            Limit = 10,
+            Keyword = "enriched"
+        });
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value!.Items);
+        Assert.Equal("Enriched Op", item.Name);
+
+        var mappedAdmin = Assert.Single(item.Administrators);
+        Assert.Equal(admin.Id, mappedAdmin.AccountId);
+        Assert.Equal("globaladmin", mappedAdmin.Username);
+
+        var mappedTeam = Assert.Single(item.Teams);
+        Assert.Equal("Alpha Team", mappedTeam.Name);
+        Assert.NotNull(mappedTeam.TeamLeader);
+        Assert.Equal(leader.Id, mappedTeam.TeamLeader!.AccountId);
+        Assert.Equal("teamleader", mappedTeam.TeamLeader.Username);
+
+        var mappedOperator = Assert.Single(mappedTeam.Operators);
+        Assert.Equal(operatorAccount.Id, mappedOperator.AccountId);
+        Assert.Equal("operator1", mappedOperator.Username);
+        Assert.Single(mappedOperator.ProfitShareRule.Cuts);
+    }
+
+    [Fact]
     public async Task DeleteOperationAsync_NullRequest_ReturnsRequestBodyRequired()
     {
         var sut = _ctx.CreateAdministrator();
@@ -336,5 +378,126 @@ public sealed class AdministratorTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.AdministratorNotAssigned);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateAdministrator();
+
+        var result = await sut.SearchAccountsAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_LimitZero_UsesDefaultLimitOfTwenty()
+    {
+        var sut = _ctx.CreateAdministrator();
+        for (var i = 0; i < 25; i++)
+            await _ctx.SeedAccountAsync($"user{i:D2}");
+
+        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 0,
+            Offset = 0
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(20, result.Value!.Limit);
+        Assert.Equal(20, result.Value.Items.Count);
+        Assert.Equal(25, result.Value.Total);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_LimitAtOrAboveMaximum_ReturnsSearchLimitInvalid()
+    {
+        var sut = _ctx.CreateAdministrator();
+
+        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 1000,
+            Offset = 0
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchLimitInvalid);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_NegativeOffset_ReturnsSearchOffsetInvalid()
+    {
+        var sut = _ctx.CreateAdministrator();
+
+        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 10,
+            Offset = -1
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchOffsetInvalid);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_KeywordTooLong_ReturnsSearchKeywordTooLong()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var tooLongKeyword = new string('k', 201);
+
+        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 10,
+            Keyword = tooLongKeyword
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchKeywordTooLong);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_KeywordFilter_MatchesUsernameAndId()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var target = await _ctx.SeedAccountAsync("UniqueAlpha");
+        await _ctx.SeedAccountAsync("OtherUser");
+
+        var byUsername = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 10,
+            Keyword = "uniquealpha"
+        });
+        Assert.True(byUsername.IsSuccess);
+        Assert.Single(byUsername.Value!.Items);
+        Assert.Equal(target.Id, byUsername.Value.Items[0].Id);
+
+        var byId = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 10,
+            Keyword = target.Id[..8]
+        });
+        Assert.True(byId.IsSuccess);
+        Assert.Contains(byId.Value!.Items, i => i.Id == target.Id);
+    }
+
+    [Fact]
+    public async Task SearchAccountsAsync_Pagination_ReturnsCorrectPage()
+    {
+        var sut = _ctx.CreateAdministrator();
+        for (var i = 0; i < 5; i++)
+            await _ctx.SeedAccountAsync($"PagedUser{i}");
+
+        var page = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        {
+            Limit = 2,
+            Offset = 2
+        });
+
+        Assert.True(page.IsSuccess);
+        Assert.Equal(2, page.Value!.Limit);
+        Assert.Equal(2, page.Value.Offset);
+        Assert.Equal(5, page.Value.Total);
+        Assert.Equal(2, page.Value.Items.Count);
     }
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   assignOperationAdministrator,
   createAdministratorOperation,
@@ -6,15 +6,42 @@ import {
   searchAdministratorOperations,
   unassignOperationAdministrator,
 } from '../../api/administrator/operations';
-import { searchAccountsForPicker } from '../../api/accounts';
-import type { OperationDetails } from '../../api/types';
-import { AdminOperationCard } from '../../components/admin/AdminOperationCard';
+import { searchAdministratorAccountsPicker } from '../../api/accountPickerSources';
+import {
+  assignOperationTeamLeader,
+  createOperationTeam,
+  deleteOperationTeam,
+  unassignOperationTeamLeader,
+} from '../../api/operationAdministrator/teams';
+import {
+  assignGatewayAccountToTeam,
+  assignGatewayAccountGroupToTeam,
+  assignOperatorToTeam,
+  assignStrawManToTeam,
+  setOperatorProfitShareRule,
+  setTeamGatewaySelectionStrategy,
+  unassignGatewayAccountFromTeam,
+  unassignGatewayAccountGroupFromTeam,
+  unassignOperatorFromTeam,
+  unassignStrawManFromTeam,
+} from '../../api/teamLeader/teams';
+import type { OperationDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
+import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
+import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
+import { GatewayCredentialPickerModal } from '../../components/GatewayCredentialPickerModal';
 import { useNotifications } from '../../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
+
+type AccountPickerMode =
+  | { kind: 'admin'; operationId: string }
+  | { kind: 'leader'; teamId: string }
+  | { kind: 'operator'; teamId: string }
+  | { kind: 'strawMan'; teamId: string }
+  | { kind: 'profitShareCut'; cutIndex: number };
 
 export function AdminOperationsPage() {
   const { notifyError, notifySuccess } = useNotifications();
@@ -25,7 +52,6 @@ export function AdminOperationsPage() {
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [items, setItems] = useState<OperationDetails[]>([]);
-  const [accountLabels, setAccountLabels] = useState<Record<string, string>>({});
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
@@ -33,11 +59,16 @@ export function AdminOperationsPage() {
   const [actionBusy, setActionBusy] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteOperationId, setDeleteOperationId] = useState('');
+  const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
+  const [deleteTeamId, setDeleteTeamId] = useState('');
 
-  const [assignPickerOpen, setAssignPickerOpen] = useState(false);
-  const [assignOperationId, setAssignOperationId] = useState('');
-  const assignOperation = items.find((item) => item.id === assignOperationId) ?? null;
-  const assignDisabledIds = new Set(assignOperation?.administratorIds ?? []);
+  const [accountPickerMode, setAccountPickerMode] = useState<AccountPickerMode | null>(null);
+  const [gatewayPickerTeamId, setGatewayPickerTeamId] = useState<string | null>(null);
+
+  const [profitShareOpen, setProfitShareOpen] = useState(false);
+  const [profitShareTeamId, setProfitShareTeamId] = useState('');
+  const [profitShareOperator, setProfitShareOperator] = useState<OperatorDetails | null>(null);
+  const [profitShareCuts, setProfitShareCuts] = useState<ProfitShareCutDraft[]>([]);
 
   const load = useCallback(async (page: number, keyword: string) => {
     const result = await searchAdministratorOperations({
@@ -57,23 +88,34 @@ export function AdminOperationsPage() {
     void load(currentPage, query);
   }, [currentPage, query, load]);
 
-  useEffect(() => {
-    const adminIds = [...new Set(items.flatMap((item) => item.administratorIds))];
-    if (adminIds.length === 0) return;
+  const assignOperation = useMemo(() => {
+    if (accountPickerMode?.kind !== 'admin') return null;
+    return items.find((item) => item.id === accountPickerMode.operationId) ?? null;
+  }, [accountPickerMode, items]);
 
-    void (async () => {
-      const result = await searchAccountsForPicker({ limit: 500, offset: 0, keyword: null });
-      if (!result.ok) return;
+  const assignDisabledIds = useMemo(
+    () => new Set(assignOperation?.administrators.map((admin) => admin.accountId) ?? []),
+    [assignOperation],
+  );
 
-      const labels: Record<string, string> = {};
-      for (const account of result.data?.items ?? []) {
-        if (adminIds.includes(account.id)) {
-          labels[account.id] = account.username;
-        }
+  async function refresh() {
+    await load(currentPage, query);
+  }
+
+  async function runAction(task: () => Promise<{ ok: boolean; error?: string }>, successMessage: string) {
+    setActionBusy(true);
+    try {
+      const result = await task();
+      if (!result.ok) {
+        notifyError(result.error ?? 'Não foi possível concluir a ação.');
+        return;
       }
-      setAccountLabels((prev) => ({ ...prev, ...labels }));
-    })();
-  }, [items]);
+      notifySuccess(successMessage);
+      await refresh();
+    } finally {
+      setActionBusy(false);
+    }
+  }
 
   async function handleSearch() {
     setCurrentPage(1);
@@ -88,7 +130,7 @@ export function AdminOperationsPage() {
         createDescription.trim() || null,
       );
       if (!result.ok) {
-        notifyError(result.error);
+        notifyError(result.error ?? 'Não foi possível concluir a ação.');
         return;
       }
       notifySuccess('Operação registrada no sistema.');
@@ -111,61 +153,179 @@ export function AdminOperationsPage() {
   async function confirmDelete() {
     setDeleteDialogOpen(false);
     if (!deleteOperationId) return;
+    await runAction(
+      () => deleteAdministratorOperation(deleteOperationId),
+      'Operação excluída do sistema.',
+    );
+    setDeleteOperationId('');
+  }
 
+  function openProfitShare(teamId: string, operator: OperatorDetails) {
+    setProfitShareTeamId(teamId);
+    setProfitShareOperator(operator);
+    setProfitShareCuts((operator.profitShareRule?.cuts ?? []).map((cut) => ({
+      accountId: cut.accountId,
+      percentage: cut.percentage,
+      label: cut.username,
+    })));
+    setProfitShareOpen(true);
+  }
+
+  async function saveProfitShare(cuts: ProfitShareCutInput[]) {
+    if (!profitShareOperator) return;
     setActionBusy(true);
     try {
-      const result = await deleteAdministratorOperation(deleteOperationId);
+      const result = await setOperatorProfitShareRule(profitShareTeamId, profitShareOperator.accountId, cuts);
       if (!result.ok) {
-        notifyError(result.error);
+        notifyError(result.error ?? 'Não foi possível concluir a ação.');
         return;
       }
-      notifySuccess('Operação excluída do sistema.');
-      setDeleteOperationId('');
-      await load(currentPage, query);
+      notifySuccess('Regra de repasse atualizada.');
+      setProfitShareOpen(false);
+      setProfitShareOperator(null);
+      await refresh();
     } finally {
       setActionBusy(false);
     }
   }
 
-  function openAssignPicker(operationId: string) {
-    setAssignOperationId(operationId);
-    setAssignPickerOpen(true);
-  }
+  async function handleAccountPicked(accountId: string, username: string) {
+    if (!accountPickerMode) return;
 
-  async function handleAssignAdministrator(administratorId: string, username: string) {
-    if (!assignOperationId) return;
+    if (accountPickerMode.kind === 'profitShareCut') {
+      setProfitShareCuts((prev) => prev.map((cut, index) => (
+        index === accountPickerMode.cutIndex
+          ? { ...cut, accountId, label: username }
+          : cut
+      )));
+      setAccountPickerMode(null);
+      return;
+    }
 
     setActionBusy(true);
     try {
-      const result = await assignOperationAdministrator(assignOperationId, administratorId);
+      let result: { ok: boolean; error?: string };
+      switch (accountPickerMode.kind) {
+        case 'admin':
+          result = await assignOperationAdministrator(accountPickerMode.operationId, accountId);
+          break;
+        case 'leader':
+          result = await assignOperationTeamLeader(accountPickerMode.teamId, accountId);
+          break;
+        case 'operator':
+          result = await assignOperatorToTeam(accountPickerMode.teamId, accountId);
+          break;
+        case 'strawMan':
+          result = await assignStrawManToTeam(accountPickerMode.teamId, accountId);
+          break;
+        default:
+          return;
+      }
+
       if (!result.ok) {
-        notifyError(result.error);
+        notifyError(result.error ?? 'Não foi possível concluir a ação.');
         return;
       }
-      notifySuccess('Administrador vinculado à operação.');
-      setAccountLabels((prev) => ({ ...prev, [administratorId]: username }));
-      await load(currentPage, query);
+
+      const messages = {
+        admin: 'Administrador vinculado à operação.',
+        leader: 'Líder vinculado à equipe.',
+        operator: 'Operador alocado na equipe.',
+        strawMan: 'Laranja vinculado à equipe.',
+      } as const;
+      notifySuccess(messages[accountPickerMode.kind]);
+      await refresh();
     } finally {
       setActionBusy(false);
-      setAssignPickerOpen(false);
-      setAssignOperationId('');
+      setAccountPickerMode(null);
     }
   }
 
-  async function handleRemoveAdministrator(operationId: string, administratorId: string) {
-    setActionBusy(true);
-    try {
-      const result = await unassignOperationAdministrator(operationId, administratorId);
-      if (!result.ok) {
-        notifyError(result.error);
-        return;
-      }
-      notifySuccess('Administrador removido da operação.');
-      await load(currentPage, query);
-    } finally {
-      setActionBusy(false);
-    }
-  }
+  const cardActions: AdminOperationCardActions = {
+    busy: actionBusy,
+    onAssignAdministrator: (operationId) => setAccountPickerMode({ kind: 'admin', operationId }),
+    onRemoveAdministrator: (operationId, administratorId) => {
+      void runAction(
+        () => unassignOperationAdministrator(operationId, administratorId),
+        'Administrador removido da operação.',
+      );
+    },
+    onDelete: openDeleteDialog,
+    onCreateTeam: (operationId, name) => {
+      void runAction(() => createOperationTeam(operationId, name), 'Equipe criada.');
+    },
+    onDeleteTeam: (teamId) => {
+      setDeleteTeamId(teamId);
+      setDeleteTeamDialogOpen(true);
+    },
+    onAssignLeader: (teamId) => setAccountPickerMode({ kind: 'leader', teamId }),
+    onUnassignLeader: (teamId) => {
+      void runAction(() => unassignOperationTeamLeader(teamId), 'Líder removido da equipe.');
+    },
+    onAssignOperator: (teamId) => setAccountPickerMode({ kind: 'operator', teamId }),
+    onUnassignOperator: (teamId, operatorId) => {
+      void runAction(
+        () => unassignOperatorFromTeam(teamId, operatorId),
+        'Operador removido da equipe.',
+      );
+    },
+    onEditProfitShare: openProfitShare,
+    onGatewayStrategyChange: (teamId, strategy) => {
+      void runAction(
+        () => setTeamGatewaySelectionStrategy(teamId, strategy),
+        'Estratégia de gateway atualizada.',
+      );
+    },
+    onAssignStrawMan: (teamId) => setAccountPickerMode({ kind: 'strawMan', teamId }),
+    onUnassignStrawMan: (teamId, accountId) => {
+      void runAction(
+        () => unassignStrawManFromTeam(teamId, accountId),
+        'Laranja removido da equipe.',
+      );
+    },
+    onAssignGatewayCredential: (teamId) => setGatewayPickerTeamId(teamId),
+    onUnassignGatewayCredential: (teamId, credentialId) => {
+      void runAction(
+        () => unassignGatewayAccountFromTeam(teamId, credentialId),
+        'Credencial removida da equipe.',
+      );
+    },
+    onAssignGatewayGroup: (teamId, groupId) => {
+      void runAction(
+        () => assignGatewayAccountGroupToTeam(teamId, groupId),
+        'Grupo de credenciais vinculado.',
+      );
+    },
+    onUnassignGatewayGroup: (teamId, groupId) => {
+      void runAction(
+        () => unassignGatewayAccountGroupFromTeam(teamId, groupId),
+        'Grupo de credenciais removido.',
+      );
+    },
+  };
+
+  const pickerKind = accountPickerMode && accountPickerMode.kind !== 'profitShareCut'
+    ? accountPickerMode.kind
+    : null;
+
+  const accountPickerTitles = {
+    admin: {
+      title: 'Vincular administrador',
+      subtitle: 'Conta que administrará esta operação.',
+    },
+    leader: {
+      title: 'Vincular líder',
+      subtitle: 'Conta responsável por liderar a equipe.',
+    },
+    operator: {
+      title: 'Alocar operador',
+      subtitle: 'Conta que operará nesta equipe.',
+    },
+    strawMan: {
+      title: 'Vincular laranja',
+      subtitle: 'Conta laranja usada na estratégia de gateway.',
+    },
+  } as const;
 
   return (
     <>
@@ -174,7 +334,7 @@ export function AdminOperationsPage() {
           <p className="page-kicker page-kicker-admin">Administração</p>
           <h1>Todas as operações</h1>
           <p className="muted page-lead">
-            Visão global do repositório. Registre operações, vincule administradores responsáveis ou remova registros obsoletos.
+            Gestão completa do repositório: administradores, equipes, operadores, repasses e configuração de gateway.
           </p>
         </div>
       </section>
@@ -227,7 +387,7 @@ export function AdminOperationsPage() {
             />
           </div>
           <button type="button" className="btn btn-ghost" onClick={() => void handleSearch()}>Buscar</button>
-          <button type="button" className="btn btn-ghost" onClick={() => void load(currentPage, query)}>Atualizar</button>
+          <button type="button" className="btn btn-ghost" onClick={() => void refresh()}>Atualizar</button>
         </div>
 
         <div className="card-title-row">
@@ -245,17 +405,9 @@ export function AdminOperationsPage() {
           />
         ) : (
           <>
-            <div className="admin-op-list">
+            <div className="admin-op-list admin-op-list--single">
               {items.map((op) => (
-                <AdminOperationCard
-                  key={op.id}
-                  operation={op}
-                  accountLabels={accountLabels}
-                  actionBusy={actionBusy}
-                  onAssignAdministrator={openAssignPicker}
-                  onRemoveAdministrator={(operationId, administratorId) => void handleRemoveAdministrator(operationId, administratorId)}
-                  onDelete={openDeleteDialog}
-                />
+                <AdminOperationCard key={op.id} operation={op} actions={cardActions} />
               ))}
             </div>
 
@@ -271,16 +423,53 @@ export function AdminOperationsPage() {
       </section>
 
       <AccountPickerModal
-        open={assignPickerOpen}
-        onClose={() => {
-          setAssignPickerOpen(false);
-          setAssignOperationId('');
-        }}
-        title="Vincular administrador"
-        subtitle="Selecione a conta que passará a administrar esta operação."
-        disabledAccountIds={assignDisabledIds}
+        open={pickerKind !== null}
+        onClose={() => setAccountPickerMode(null)}
+        searchAccounts={searchAdministratorAccountsPicker}
+        title={pickerKind ? accountPickerTitles[pickerKind].title : 'Selecionar conta'}
+        subtitle={pickerKind ? accountPickerTitles[pickerKind].subtitle : undefined}
+        disabledAccountIds={pickerKind === 'admin' ? assignDisabledIds : undefined}
         disabledBadgeText="Já vinculado"
-        onSelected={(row) => void handleAssignAdministrator(row.id, row.username)}
+        onSelected={(row) => void handleAccountPicked(row.id, row.username)}
+      />
+
+      <AccountPickerModal
+        open={accountPickerMode?.kind === 'profitShareCut'}
+        onClose={() => setAccountPickerMode(null)}
+        searchAccounts={searchAdministratorAccountsPicker}
+        title="Conta do repasse"
+        subtitle="Beneficiário desta fatia da regra de repasse."
+        onSelected={(row) => void handleAccountPicked(row.id, row.username)}
+      />
+
+      <GatewayCredentialPickerModal
+        open={gatewayPickerTeamId !== null}
+        onClose={() => setGatewayPickerTeamId(null)}
+        title="Vincular credencial"
+        subtitle="Credencial de gateway para seleção manual da equipe."
+        onSelected={(row) => {
+          const teamId = gatewayPickerTeamId;
+          setGatewayPickerTeamId(null);
+          if (!teamId) return;
+          void runAction(
+            () => assignGatewayAccountToTeam(teamId, row.id),
+            'Credencial vinculada à equipe.',
+          );
+        }}
+      />
+
+      <ProfitShareRuleModal
+        open={profitShareOpen}
+        operatorName={profitShareOperator?.username ?? 'Operador'}
+        cuts={profitShareCuts}
+        onCutsChange={setProfitShareCuts}
+        busy={actionBusy}
+        onClose={() => {
+          setProfitShareOpen(false);
+          setProfitShareOperator(null);
+        }}
+        onPickAccount={(cutIndex) => setAccountPickerMode({ kind: 'profitShareCut', cutIndex })}
+        onSave={(cuts) => void saveProfitShare(cuts)}
       />
 
       <ConfirmDialog
@@ -289,6 +478,20 @@ export function AdminOperationsPage() {
         message="Esta ação remove a operação do sistema. Deseja continuar?"
         onCancel={() => { setDeleteDialogOpen(false); setDeleteOperationId(''); }}
         onConfirm={() => void confirmDelete()}
+      />
+
+      <ConfirmDialog
+        open={deleteTeamDialogOpen}
+        title="Excluir equipe"
+        message="Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?"
+        onCancel={() => { setDeleteTeamDialogOpen(false); setDeleteTeamId(''); }}
+        onConfirm={() => {
+          setDeleteTeamDialogOpen(false);
+          const teamId = deleteTeamId;
+          setDeleteTeamId('');
+          if (!teamId) return;
+          void runAction(() => deleteOperationTeam(teamId), 'Equipe excluída.');
+        }}
       />
     </>
   );

@@ -39,6 +39,17 @@ public class AdministratorController : NexusController
         return ToResponse(result);
     }
 
+    [HttpPost("accounts/search")]
+    public async Task<ActionResult> SearchAccountsAsync([FromBody] SearchAccountsRequest request)
+    {
+        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
+        if (accessError is not null)
+            return accessError;
+
+        var result = await administrator.SearchAccountsAsync(request);
+        return ToResponse(result);
+    }
+
     [HttpDelete("operations")]
     public async Task<ActionResult> DeleteOperationAsync([FromBody] DeleteOperationRequest request)
     {

@@ -30,11 +30,74 @@ export type OperationRow = {
   updatedAt: string;
 };
 
+export type OperationAdministratorDetails = {
+  accountId: string;
+  username: string;
+};
+
+export type TeamLeaderDetails = {
+  accountId: string;
+  username: string;
+};
+
+export type ProfitSplitDetails = {
+  accountId: string;
+  username: string;
+  percentage: number;
+};
+
+export type ProfitShareRuleDetails = {
+  cuts: ProfitSplitDetails[];
+};
+
+export type OperatorDetails = {
+  accountId: string;
+  username: string;
+  profitShareRule: ProfitShareRuleDetails;
+};
+
+export type TeamAccountDetails = {
+  accountId: string;
+  username: string;
+};
+
+export type GatewaySelectionStrategy = 'PerStrawman' | 'PerGroup' | 'Manual';
+
+export type ProfitShareCutInput = {
+  accountId: string;
+  percentage: number;
+};
+
+export type TeamGatewayCredentialDetails = {
+  id: string;
+  name: string;
+  gateway: string;
+};
+
+export type TeamGatewayGroupDetails = {
+  id: string;
+  name: string;
+  credentialCount: number;
+};
+
+export type TeamDetails = {
+  id: string;
+  operationId: string;
+  name: string;
+  teamLeader?: TeamLeaderDetails | null;
+  operators: OperatorDetails[];
+  gatewaySelectionStrategy: GatewaySelectionStrategy;
+  strawMen: TeamAccountDetails[];
+  gatewayCredentials: TeamGatewayCredentialDetails[];
+  gatewayCredentialsGroups: TeamGatewayGroupDetails[];
+};
+
 export type OperationDetails = {
   id: string;
   name: string;
   description?: string | null;
-  administratorIds: string[];
+  administrators: OperationAdministratorDetails[];
+  teams: TeamDetails[];
   createdAt: string;
   updatedAt: string;
 };
@@ -78,6 +141,7 @@ export type GatewayPrefix = 'frendz' | 'sigilopay' | 'wintech';
 export type AccountPickerRow = {
   id: string;
   username: string;
+  roles?: string[];
 };
 
 export type OperationPickerRow = {

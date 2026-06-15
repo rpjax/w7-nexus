@@ -6,15 +6,8 @@ namespace Nexus.Actors.Extensions;
 public static class OperationExtensions
 {
     public static OperationDetails ToOperationDetails(this Operation operation)
-    {
-        return new OperationDetails
-        {
-            Id = operation.Id,
-            Name = operation.Name,
-            Description = operation.Description,
-            AdministratorIds = operation.AdministratorIds.ToArray(),
-            CreatedAt = operation.CreatedAt,
-            UpdatedAt = operation.UpdatedAt,
-        };
-    }
+        => OperationDetailsMapper.Map(
+            operation,
+            Array.Empty<Team>(),
+            new Dictionary<string, string>(StringComparer.Ordinal));
 }
