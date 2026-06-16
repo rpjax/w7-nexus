@@ -1,41 +1,25 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { useOperationCapabilities } from '../auth/OperationCapabilitiesContext';
 import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
 
 export function NavMenu() {
   const { user } = useAuth();
-  const { operationAdministrator, teamLeader, loading: capabilitiesLoading } = useOperationCapabilities();
   const showOperatorPanel = canUseOperatorPanel(user);
   const showGlobalAdminItems = isAdministrator(user);
-  const showOperationAdminItems = !showGlobalAdminItems && operationAdministrator;
-  const showTeamLeaderItems = !showGlobalAdminItems && teamLeader;
 
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
 
-  const showOperationsMenu = showOperatorPanel
-    || showGlobalAdminItems
-    || showOperationAdminItems
-    || showTeamLeaderItems
-    || capabilitiesLoading;
-
   const brandSubtitle = showGlobalAdminItems && showOperatorPanel
     ? 'Operações, pagamentos e administração'
     : showGlobalAdminItems
       ? 'Administração e operação'
-      : showOperationAdminItems && showTeamLeaderItems
-        ? 'Administração e liderança de equipes'
-        : showOperationAdminItems
-          ? 'Administração de operações'
-          : showTeamLeaderItems
-            ? 'Liderança de equipes'
-            : showOperatorPanel
-              ? 'Operações e pagamentos'
-              : 'Dashboard';
+      : showOperatorPanel
+        ? 'Operações e pagamentos'
+        : 'Dashboard';
 
   return (
     <nav className="nav-shell">
@@ -50,7 +34,7 @@ export function NavMenu() {
       <div className="nav-links">
         <NavLink to="/dashboard" end className={({ isActive }) => (isActive ? 'active' : undefined)}>Visão geral</NavLink>
 
-        {showOperationsMenu ? (
+        {showOperatorPanel || showGlobalAdminItems ? (
           <div className="nav-group nav-group-gateways">
             <button
               type="button"
@@ -76,17 +60,17 @@ export function NavMenu() {
                     Todas as operações
                   </NavLink>
                 ) : null}
-                {showOperationAdminItems ? (
-                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/operation-admin/operations" onClick={() => setOperationsOpen(true)}>
-                    <span className="submenu-bullet" aria-hidden="true" />
-                    Administração de operações
-                  </NavLink>
-                ) : null}
-                {showTeamLeaderItems ? (
-                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/team-leader/operations" onClick={() => setOperationsOpen(true)}>
-                    <span className="submenu-bullet" aria-hidden="true" />
-                    Liderança de equipes
-                  </NavLink>
+                {showOperatorPanel ? (
+                  <>
+                    <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/operation-admin/operations" onClick={() => setOperationsOpen(true)}>
+                      <span className="submenu-bullet" aria-hidden="true" />
+                      Administração de operações
+                    </NavLink>
+                    <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/team-leader/operations" onClick={() => setOperationsOpen(true)}>
+                      <span className="submenu-bullet" aria-hidden="true" />
+                      Liderança de equipes
+                    </NavLink>
+                  </>
                 ) : null}
               </div>
             </div>
