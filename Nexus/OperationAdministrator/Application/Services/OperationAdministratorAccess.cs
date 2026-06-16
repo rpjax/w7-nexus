@@ -36,6 +36,59 @@ public sealed class OperationAdministratorAccess : IOperationAdministratorAccess
         _operationAdministrator = operationAdministrator;
     }
 
+    public async Task<IAccessEvaluationResult<IOperationAdministrator>> ResolveAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
+                .WithCode(AuthorizationErrorCodes.IdentityRequired)
+                .WithMessage("É necessário estar autenticado para realizar esta ação.")
+                .Build());
+        }
+
+        var accountId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(accountId))
+        {
+            return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
+                .WithCode(AuthorizationErrorCodes.AccountIdClaimMissing)
+                .WithMessage("A identidade da conta não foi encontrada no token de acesso.")
+                .Build());
+        }
+
+        var account = await _accounts.AsQueryable()
+            .Where(a => a.Id == accountId)
+            .FirstOrDefaultAsync();
+
+        if (account is null)
+        {
+            return AccessEvaluationResult<IOperationAdministrator>.Failure(Error.Create()
+                .WithCode(AccountErrorCodes.AccountNotFound)
+                .WithMessage($"A conta '{accountId}' não foi encontrada.")
+                .Build());
+        }
+
+        if (RoleAuthorization.IsGlobalAdministrator(account.Roles))
+            return AccessEvaluationResult<IOperationAdministrator>.Authorized(_operationAdministrator);
+
+        var hasAssignedOperation = await _operations.AsQueryable()
+            .Where(o => o.AdministratorIds.Contains(accountId))
+            .AnyAsync();
+
+        if (!hasAssignedOperation)
+        {
+            return AccessEvaluationResult<IOperationAdministrator>.Unauthorized(Error.Create()
+                .WithCode(AuthorizationErrorCodes.NotOperationAdministrator)
+                .WithMessage("Acesso de administrador de operação necessário para realizar esta ação.")
+                .Build());
+        }
+
+        return AccessEvaluationResult<IOperationAdministrator>.Authorized(_operationAdministrator);
+    }
+
     public Task<IAccessEvaluationResult<IOperationAdministrator>> ResolveForOperationAsync(
         string operationId,
         CancellationToken cancellationToken = default)

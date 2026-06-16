@@ -13,7 +13,6 @@ using Nexus.Operator.Extensions;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;
-using Nexus.Payments.Application.Contracts;
 
 namespace Nexus.Operator.Application.Services;
 
@@ -23,23 +22,17 @@ public class Operator : IOperator
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
-    private IPaymentRepository _payments { get; }
-    private ITeamGatewayDetailsLoader? _teamGatewayDetailsLoader { get; }
     private IHttpContextAccessor? _httpContextAccessor { get; }
 
     public Operator(
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts,
-        IPaymentRepository payments,
-        ITeamGatewayDetailsLoader teamGatewayDetailsLoader,
         IHttpContextAccessor httpContextAccessor)
     {
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
-        _payments = payments;
-        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -47,14 +40,12 @@ public class Operator : IOperator
         string operatorAccountId,
         IOperationRepository operations,
         ITeamRepository teams,
-        IAccountRepository accounts,
-        IPaymentRepository payments)
+        IAccountRepository accounts)
     {
         _operatorAccountId = operatorAccountId;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
-        _payments = payments;
     }
 
     public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -105,12 +96,11 @@ public class Operator : IOperator
         if (builder.ContainsError)
             return builder.Build();
 
-        var visibleOperationIds = await OperatorOperationResolver.ResolveOperationIdsAsync(
+        var assignedTeams = await OperatorOperationResolver.ResolveAssignedTeamsAsync(
             operatorAccountId,
-            _teams,
-            _payments);
+            _teams);
 
-        if (visibleOperationIds.Length == 0)
+        if (assignedTeams.Length == 0)
         {
             return builder
                 .WithValue(new SearchOperationsResponse
@@ -123,27 +113,49 @@ public class Operator : IOperator
                 .Build();
         }
 
-        var query = _operations.AsQueryable()
-            .Where(o => visibleOperationIds.Contains(o.Id));
+        var operationIds = assignedTeams
+            .Select(t => t.OperationId)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        var operations = await _operations.AsQueryable()
+            .Where(o => operationIds.Contains(o.Id))
+            .ToArrayAsync();
+
+        var operationsById = operations.ToDictionary(o => o.Id, StringComparer.Ordinal);
+
+        var memberships = assignedTeams
+            .Where(t => operationsById.ContainsKey(t.OperationId))
+            .Select(t => new OperationTeamMembership(operationsById[t.OperationId], t))
+            .ToList();
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var term = keyword.ToLowerInvariant();
-            query = query.Where(o =>
-                o.Id.ToLower().Contains(term) ||
-                o.Name.ToLower().Contains(term) ||
-                (o.Description != null && o.Description.ToLower().Contains(term)));
+            memberships = memberships
+                .Where(m =>
+                    m.Operation.Id.ToLower().Contains(term) ||
+                    m.Operation.Name.ToLower().Contains(term) ||
+                    (m.Operation.Description != null && m.Operation.Description.ToLower().Contains(term)))
+                .ToList();
         }
 
-        var total = await query.CountAsync();
+        var orderedMemberships = memberships
+            .OrderByDescending(m => m.Operation.UpdatedAt)
+            .ThenBy(m => m.Team.Name)
+            .ToList();
 
-        var operations = await query
-            .OrderByDescending(o => o.UpdatedAt)
+        var total = orderedMemberships.Count;
+
+        var page = orderedMemberships
             .Skip(offset)
             .Take(limit)
-            .ToArrayAsync();
+            .ToArray();
 
-        var items = await OperationDetailsMapper.MapManyAsync(operations, _teams, _accounts, _teamGatewayDetailsLoader);
+        var items = await OperationDetailsMapper.MapManyAsync(
+            page,
+            _accounts,
+            operatorAccountId);
 
         var response = new SearchOperationsResponse
         {

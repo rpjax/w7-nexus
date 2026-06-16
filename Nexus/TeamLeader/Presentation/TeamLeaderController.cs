@@ -18,6 +18,17 @@ public class TeamLeaderController : NexusController
         _teamLeaderAccess = teamLeaderAccess;
     }
 
+    [HttpPost("operations/search")]
+    public async Task<ActionResult> SearchLedTeamsAsync([FromBody] SearchLedTeamsRequest request)
+    {
+        var (accessError, teamLeader) = await ResolveForSearchAsync();
+        if (accessError is not null)
+            return accessError;
+
+        var result = await teamLeader.SearchLedTeamsAsync(request);
+        return ToResponse(result);
+    }
+
     [HttpPost("teams/operators")]
     public async Task<ActionResult> AssignOperatorToTeamAsync([FromBody] AssignOperatorToTeamRequest request)
     {
@@ -132,6 +143,12 @@ public class TeamLeaderController : NexusController
 
         var result = await teamLeader.SetOperatorProfitShareRuleAsync(request!);
         return ToResponse(result);
+    }
+
+    private async Task<(ActionResult? Error, ITeamLeader TeamLeader)> ResolveForSearchAsync()
+    {
+        var access = await _teamLeaderAccess.ResolveAsync();
+        return ToAccessResult(access);
     }
 
     private async Task<(ActionResult? Error, ITeamLeader TeamLeader)> ResolveForTeamAsync(string? teamId)

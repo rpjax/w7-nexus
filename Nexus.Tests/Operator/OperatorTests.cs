@@ -56,7 +56,30 @@ public sealed class OperatorTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal("Assigned Operation", result.Value.Items[0].Name);
+        Assert.Equal("Test Team", result.Value.Items[0].Team.Name);
         Assert.Equal(1, result.Value.Total);
+    }
+
+    [Fact]
+    public async Task SearchOperationsAsync_OperatorInMultipleTeamsOfSameOperation_ReturnsOneItemPerTeam()
+    {
+        var operation = await _ctx.SeedOperationAsync("Shared Operation");
+        await _ctx.SeedTeamAsync(operation.Id, name: "Team A", operatorIds: new[] { "operator-1" });
+        await _ctx.SeedTeamAsync(operation.Id, name: "Team B", operatorIds: new[] { "operator-1" });
+        var sut = _ctx.CreateOperator("operator-1");
+
+        var result = await sut.SearchOperationsAsync(new SearchOperatorOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Items.Count);
+        Assert.Equal(2, result.Value.Total);
+        Assert.All(result.Value.Items, item => Assert.Equal(operation.Id, item.Id));
+        Assert.Contains(result.Value.Items, item => item.Team.Name == "Team A");
+        Assert.Contains(result.Value.Items, item => item.Team.Name == "Team B");
     }
 
     [Fact]
@@ -133,7 +156,7 @@ public sealed class OperatorTests
     }
 
     [Fact]
-    public async Task SearchOperationsAsync_OperatorMentionedInProfitShareCut_ReturnsOperation()
+    public async Task SearchOperationsAsync_OperatorMentionedInProfitShareCut_ReturnsEmptyList()
     {
         var operation = await _ctx.SeedOperationAsync("Profit Share Operation");
         var team = await _ctx.SeedTeamAsync(operation.Id, operatorIds: new[] { "operator-2" });
@@ -156,12 +179,12 @@ public sealed class OperatorTests
         });
 
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value!.Items);
-        Assert.Equal(operation.Id, result.Value.Items[0].Id);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(0, result.Value.Total);
     }
 
     [Fact]
-    public async Task SearchOperationsAsync_OperatorMentionedInPayment_ReturnsOperation()
+    public async Task SearchOperationsAsync_OperatorMentionedInPayment_ReturnsEmptyList()
     {
         var operation = await _ctx.SeedOperationAsync("Payment Operation");
         await _ctx.SeedPaymentAsync(operation.Id, operatorAccountId: "operator-1");
@@ -174,7 +197,47 @@ public sealed class OperatorTests
         });
 
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value!.Items);
-        Assert.Equal(operation.Id, result.Value.Items[0].Id);
+        Assert.Empty(result.Value!.Items);
+        Assert.Equal(0, result.Value.Total);
+    }
+
+    [Fact]
+    public async Task SearchOperationsAsync_ShowsViewerProfitShareOnTeamOnly()
+    {
+        var operation = await _ctx.SeedOperationAsync("Profit Share Operation");
+        var team = await _ctx.SeedTeamAsync(
+            operation.Id,
+            operatorIds: new[] { "operator-1", "operator-2" });
+        await _ctx.SeedAccountAsync("viewer", id: "operator-1");
+        await _ctx.SeedAccountAsync("other", id: "operator-2");
+        _ctx.RegisterAccount("operator-1");
+        _ctx.RegisterAccount("operator-2");
+
+        var teamService = _ctx.CreateTeamService();
+        Assert.True((await teamService.SetOperatorProfitShareRuleAsync(
+            team.Id,
+            "operator-1",
+            new[] { new ProfitSplit("operator-1", 100m) })).IsSuccess);
+        Assert.True((await teamService.SetOperatorProfitShareRuleAsync(
+            team.Id,
+            "operator-2",
+            new[] { new ProfitSplit("operator-2", 100m) })).IsSuccess);
+
+        var sut = _ctx.CreateOperator("operator-1");
+
+        var result = await sut.SearchOperationsAsync(new SearchOperatorOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.True(result.IsSuccess);
+        var item = Assert.Single(result.Value!.Items);
+        Assert.Equal(2, item.Team.Operators.Length);
+        Assert.Contains(item.Team.Operators, o => o.AccountId == "operator-1" && o.Username == "viewer");
+        Assert.Contains(item.Team.Operators, o => o.AccountId == "operator-2" && o.Username == "other");
+        Assert.Single(item.Team.ProfitShareRule.Cuts);
+        Assert.Equal(100m, item.Team.ProfitShareRule.Cuts[0].Percentage);
+        Assert.Equal("operator-1", item.Team.ProfitShareRule.Cuts[0].AccountId);
     }
 }

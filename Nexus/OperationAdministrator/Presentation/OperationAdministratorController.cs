@@ -18,6 +18,18 @@ public class OperationAdministratorController : NexusController
         _operationAdministratorAccess = operationAdministratorAccess;
     }
 
+    [HttpPost("operations/search")]
+    public async Task<ActionResult> SearchOperationsAsync(
+        [FromBody] SearchOperationAdministratorOperationsRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForSearchAsync();
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.SearchOperationsAsync(request);
+        return ToResponse(result);
+    }
+
     [HttpPost("teams")]
     public async Task<ActionResult> CreateOperationTeamAsync([FromBody] CreateOperationTeamRequest request)
     {
@@ -62,6 +74,12 @@ public class OperationAdministratorController : NexusController
 
         var result = await operationAdministrator.UnassignOperationTeamLeaderAsync(request!);
         return ToResponse(result);
+    }
+
+    private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForSearchAsync()
+    {
+        var access = await _operationAdministratorAccess.ResolveAsync();
+        return ToAccessResult(access);
     }
 
     private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForOperationAsync(

@@ -6,6 +6,8 @@ namespace Nexus.TeamLeader.Application.Contracts;
 
 public interface ITeamLeader
 {
+    Task<IResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(SearchLedTeamsRequest request);
+
     Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
         AssignOperatorToTeamRequest request);
 

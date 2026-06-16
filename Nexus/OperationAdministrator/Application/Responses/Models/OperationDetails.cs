@@ -1,4 +1,4 @@
-namespace Nexus.Operator.Application.Responses.Models;
+namespace Nexus.OperationAdministrator.Application.Responses.Models;
 
 public class OperationDetails
 {
@@ -6,7 +6,13 @@ public class OperationDetails
     public string Name { get; init; } = default!;
     public string? Description { get; init; }
     public OperationAdministratorDetails[] Administrators { get; init; } = Array.Empty<OperationAdministratorDetails>();
-    public TeamDetails Team { get; init; } = default!;
+    public TeamDetails[] Teams { get; init; } = Array.Empty<TeamDetails>();
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
+}
+
+public class OperationAdministratorDetails
+{
+    public string AccountId { get; set; } = default!;
+    public string Username { get; init; } = default!;
 }

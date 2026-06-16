@@ -33,6 +33,59 @@ public sealed class TeamLeaderAccess : ITeamLeaderAccess
         _teamLeader = teamLeader;
     }
 
+    public async Task<IAccessEvaluationResult<ITeamLeader>> ResolveAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var user = _httpContextAccessor.HttpContext?.User;
+        if (user?.Identity?.IsAuthenticated != true)
+        {
+            return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
+                .WithCode(AuthorizationErrorCodes.IdentityRequired)
+                .WithMessage("É necessário estar autenticado para realizar esta ação.")
+                .Build());
+        }
+
+        var accountId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
+            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+        if (string.IsNullOrWhiteSpace(accountId))
+        {
+            return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
+                .WithCode(AuthorizationErrorCodes.AccountIdClaimMissing)
+                .WithMessage("A identidade da conta não foi encontrada no token de acesso.")
+                .Build());
+        }
+
+        var account = await _accounts.AsQueryable()
+            .Where(a => a.Id == accountId)
+            .FirstOrDefaultAsync();
+
+        if (account is null)
+        {
+            return AccessEvaluationResult<ITeamLeader>.Failure(Error.Create()
+                .WithCode(AccountErrorCodes.AccountNotFound)
+                .WithMessage($"A conta '{accountId}' não foi encontrada.")
+                .Build());
+        }
+
+        if (RoleAuthorization.IsGlobalAdministrator(account.Roles))
+            return AccessEvaluationResult<ITeamLeader>.Authorized(_teamLeader);
+
+        var leadsAnyTeam = await _teams.AsQueryable()
+            .Where(t => t.TeamLeaderId == accountId)
+            .AnyAsync();
+
+        if (!leadsAnyTeam)
+        {
+            return AccessEvaluationResult<ITeamLeader>.Unauthorized(Error.Create()
+                .WithCode(AuthorizationErrorCodes.NotTeamLeader)
+                .WithMessage("Acesso de líder de equipe necessário para realizar esta ação.")
+                .Build());
+        }
+
+        return AccessEvaluationResult<ITeamLeader>.Authorized(_teamLeader);
+    }
+
     public async Task<IAccessEvaluationResult<ITeamLeader>> ResolveForTeamAsync(
         string teamId,
         CancellationToken cancellationToken = default)

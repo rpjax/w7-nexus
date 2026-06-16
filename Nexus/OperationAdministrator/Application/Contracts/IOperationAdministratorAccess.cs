@@ -4,6 +4,9 @@ namespace Nexus.OperationAdministrator.Application.Contracts;
 
 public interface IOperationAdministratorAccess
 {
+    Task<IAccessEvaluationResult<IOperationAdministrator>> ResolveAsync(
+        CancellationToken cancellationToken = default);
+
     Task<IAccessEvaluationResult<IOperationAdministrator>> ResolveForOperationAsync(
         string operationId,
         CancellationToken cancellationToken = default);

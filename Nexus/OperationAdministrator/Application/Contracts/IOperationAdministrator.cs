@@ -6,6 +6,9 @@ namespace Nexus.OperationAdministrator.Application.Contracts;
 
 public interface IOperationAdministrator
 {
+    Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
+        SearchOperationAdministratorOperationsRequest request);
+
     Task<IResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
         CreateOperationTeamRequest request);
 

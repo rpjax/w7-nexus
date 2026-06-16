@@ -315,14 +315,29 @@ internal sealed class ActorTestContext
             Teams,
             new EmptyTeamGatewayDetailsLoader());
 
-    public OperationAdministratorRole CreateOperationAdministrator()
-        => new(CreateTeamService());
+    public OperationAdministratorRole CreateOperationAdministrator(
+        string accountId = "op-admin-1",
+        bool isGlobalAdministrator = false)
+        => new(
+            accountId,
+            isGlobalAdministrator,
+            CreateTeamService(),
+            Operations,
+            Teams,
+            Accounts,
+            new EmptyOperationAdministratorTeamGatewayDetailsLoader());
 
-    public TeamLeaderRole CreateTeamLeader()
-        => new(CreateTeamService());
+    public TeamLeaderRole CreateTeamLeader(string accountId = "team-leader-1")
+        => new(
+            accountId,
+            CreateTeamService(),
+            Operations,
+            Teams,
+            Accounts,
+            new EmptyTeamLeaderTeamGatewayDetailsLoader());
 
     public OperatorRole CreateOperator(string operatorAccountId)
-        => new(operatorAccountId, Operations, Teams, Accounts, Payments);
+        => new(operatorAccountId, Operations, Teams, Accounts);
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
@@ -357,14 +372,15 @@ internal sealed class ActorTestContext
         string name = "Test Team",
         GatewaySelectionStrategy strategy = GatewaySelectionStrategy.PerStrawman,
         string? id = null,
-        string[]? operatorIds = null)
+        string[]? operatorIds = null,
+        string? teamLeaderId = null)
     {
         var now = DateTime.UtcNow;
         var team = new Team(
             Id: id ?? Guid.NewGuid().ToString("N"),
             OperationId: operationId,
             Name: name,
-            TeamLeaderId: null,
+            TeamLeaderId: teamLeaderId,
             OperatorIds: operatorIds ?? Array.Empty<string>(),
             StrawManIds: Array.Empty<string>(),
             GatewaySelectionStrategy: strategy,
@@ -437,9 +453,29 @@ internal sealed class ActorTestContext
         GatewayCredentialsIdValidator.AddExisting(credentialsId);
 }
 
-internal sealed class EmptyTeamGatewayDetailsLoader : ITeamGatewayDetailsLoader
+internal sealed class EmptyTeamGatewayDetailsLoader : Nexus.Administrator.Extensions.ITeamGatewayDetailsLoader
 {
-    public Task<TeamGatewayLookup> LoadAsync(IReadOnlyList<Team> teams, CancellationToken cancellationToken = default)
-        => Task.FromResult(new TeamGatewayLookup());
+    public Task<Nexus.Administrator.Extensions.TeamGatewayLookup> LoadAsync(
+        IReadOnlyList<Team> teams,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new Nexus.Administrator.Extensions.TeamGatewayLookup());
+}
+
+internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
+    : Nexus.OperationAdministrator.Extensions.ITeamGatewayDetailsLoader
+{
+    public Task<Nexus.OperationAdministrator.Extensions.TeamGatewayLookup> LoadAsync(
+        IReadOnlyList<Team> teams,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new Nexus.OperationAdministrator.Extensions.TeamGatewayLookup());
+}
+
+internal sealed class EmptyTeamLeaderTeamGatewayDetailsLoader
+    : Nexus.TeamLeader.Extensions.ITeamGatewayDetailsLoader
+{
+    public Task<Nexus.TeamLeader.Extensions.TeamGatewayLookup> LoadAsync(
+        IReadOnlyList<Team> teams,
+        CancellationToken cancellationToken = default)
+        => Task.FromResult(new Nexus.TeamLeader.Extensions.TeamGatewayLookup());
 }
 
