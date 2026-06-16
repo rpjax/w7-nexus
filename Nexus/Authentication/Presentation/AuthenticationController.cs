@@ -45,6 +45,13 @@ public class AuthenticationController : NexusController
         return ToResponse(result);
     }
 
+    [HttpPost("sign-up/strawman")]
+    public async Task<ActionResult> SignUpAsStrawManAsync([FromBody] SignUpRequest request)
+    {
+        var result = await _signUpService.SignUpAsStrawManAsync(request);
+        return ToResponse(result);
+    }
+
     [HttpPost("sign-in")]
     public async Task<ActionResult> SignInAsync([FromBody] SignInRequest request)
     {

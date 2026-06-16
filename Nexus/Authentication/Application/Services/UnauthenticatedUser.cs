@@ -51,4 +51,22 @@ public class UnauthenticatedUser : IUnauthenticatedUser
 
         return Result<CreateOperatorAccountResponse>.Success(new CreateOperatorAccountResponse());
     }
+
+    public async Task<IResult<CreateStrawManAccountResponse>> CreateStrawManAccountAsync(
+        CreateStrawManAccountRequest request)
+    {
+        var roles = new[] { Roles.StrawMan };
+        var permissions = new string[0];
+
+        var createAccountResult = await _accountCreator.CreateAccountAsync(
+            username: request.Username,
+            password: request.Password,
+            roles: roles,
+            permissions: permissions);
+
+        if (createAccountResult.IsFailure)
+            return Result<CreateStrawManAccountResponse>.Failure(createAccountResult.Errors);
+
+        return Result<CreateStrawManAccountResponse>.Success(new CreateStrawManAccountResponse());
+    }
 }

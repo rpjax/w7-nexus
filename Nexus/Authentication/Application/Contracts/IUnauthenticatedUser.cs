@@ -11,4 +11,7 @@ public interface IUnauthenticatedUser
 
     Task<IResult<CreateOperatorAccountResponse>> CreateOperatorAccountAsync(
         CreateOperatorAccountRequest request);
+
+    Task<IResult<CreateStrawManAccountResponse>> CreateStrawManAccountAsync(
+        CreateStrawManAccountRequest request);
 }

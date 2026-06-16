@@ -7,6 +7,7 @@ using Nexus.Authorization.Application.Models;
 using Nexus.OperationAdministrator.Application.Services;
 using Nexus.TeamLeader.Application.Services;
 using Nexus.Operator.Application.Services;
+using Nexus.StrawMan.Application.Services;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Support;
 using Xunit;
@@ -114,6 +115,47 @@ public sealed class AccessResolverTests
         Assert.False(result.IsAuthorized);
     }
 
+    [Fact]
+    public async Task StrawManAccess_GlobalAdministrator_AuthorizedWithoutStrawManRole()
+    {
+        const string adminId = "global-admin";
+        await SeedAccountAsync(adminId, Roles.Administrator);
+        var sut = CreateStrawManAccess();
+
+        var result = await InvokeAsUser(adminId, () => sut.ResolveAsync());
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.IsAuthorized);
+        Assert.NotNull(result.Role);
+    }
+
+    [Fact]
+    public async Task StrawManAccess_AccountWithStrawManRole_Authorized()
+    {
+        const string strawManId = "strawman-1";
+        await SeedAccountAsync(strawManId, Roles.StrawMan);
+        var sut = CreateStrawManAccess();
+
+        var result = await InvokeAsUser(strawManId, () => sut.ResolveAsync());
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.IsAuthorized);
+        Assert.NotNull(result.Role);
+    }
+
+    [Fact]
+    public async Task StrawManAccess_NonAdministratorWithoutStrawManRole_Unauthorized()
+    {
+        const string userId = "regular-user";
+        await SeedAccountAsync(userId);
+        var sut = CreateStrawManAccess();
+
+        var result = await InvokeAsUser(userId, () => sut.ResolveAsync());
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.IsAuthorized);
+    }
+
     private OperationAdministratorAccess CreateOperationAdministratorAccess()
         => new(
             _httpContextAccessor,
@@ -134,6 +176,12 @@ public sealed class AccessResolverTests
             _httpContextAccessor,
             _accounts,
             _ctx.CreateOperator("operator-1"));
+
+    private StrawManAccess CreateStrawManAccess()
+        => new(
+            _httpContextAccessor,
+            _accounts,
+            new Nexus.StrawMan.Application.Services.StrawMan());
 
     private async Task SeedAccountAsync(string accountId, params string[] roles)
     {

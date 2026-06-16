@@ -86,4 +86,25 @@ public sealed class UnauthenticatedUserTests
         Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.PasswordTooShort);
         Assert.Empty(accounts.AsQueryable().ToArray());
     }
+
+    [Fact]
+    public async Task CreateStrawManAccountAsync_ValidRequest_CreatesAccountWithStrawManRole()
+    {
+        var accounts = new InMemoryAccountRepository();
+        var sut = new ActorTestContext().CreateUnauthenticatedUser(accounts);
+
+        var result = await sut.CreateStrawManAccountAsync(new CreateStrawManAccountRequest
+        {
+            Username = "newstrawman",
+            Password = "password123"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+
+        var persisted = accounts.AsQueryable().Single();
+        Assert.Equal("newstrawman", persisted.Username);
+        Assert.Contains(Roles.StrawMan, persisted.Roles);
+        Assert.Empty(persisted.Permissions);
+    }
 }

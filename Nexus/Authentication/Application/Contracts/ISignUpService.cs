@@ -9,4 +9,6 @@ public interface ISignUpService
     Task<IResult<SignUpResponse>> SignUpAsAdministratorAsync(SignUpRequest request);
     
     Task<IResult<SignUpResponse>> SignUpAsOperatorAsync(SignUpRequest request);
+
+    Task<IResult<SignUpResponse>> SignUpAsStrawManAsync(SignUpRequest request);
 }

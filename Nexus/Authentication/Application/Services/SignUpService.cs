@@ -55,6 +55,21 @@ public sealed class SignUpService : ISignUpService
         return await BuildSignUpResponseAsync(createResult, request.Username);
     }
 
+    public async Task<IResult<SignUpResponse>> SignUpAsStrawManAsync(SignUpRequest request)
+    {
+        if (request is null)
+            return RequestRequiredResult<SignUpResponse>();
+
+        var createResult = await _unauthenticatedUser.CreateStrawManAccountAsync(
+            new CreateStrawManAccountRequest
+            {
+                Username = request.Username,
+                Password = request.Password
+            });
+
+        return await BuildSignUpResponseAsync(createResult, request.Username);
+    }
+
     private Task<IResult<SignUpResponse>> BuildSignUpResponseAsync<TActorResponse>(
         IResult<TActorResponse> createResult,
         string username)
