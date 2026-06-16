@@ -1,4 +1,4 @@
-namespace Nexus.TeamLeader.Application.Requests;
+namespace Nexus.OperationAdministrator.Application.Requests;
 
 public class AssignGatewayAccountToTeamRequest
 {

@@ -1,10 +1,17 @@
 import { useCallback, useEffect, useState } from 'react';
 import { searchOperationAdministratorOperations } from '../../api/operationAdministrator/operations';
 import {
+  assignGatewayAccountToTeam,
+  assignGatewayAccountGroupToTeam,
   assignOperationTeamLeader,
+  assignStrawManToTeam,
   createOperationTeam,
   deleteOperationTeam,
+  setTeamGatewaySelectionStrategy,
+  unassignGatewayAccountFromTeam,
+  unassignGatewayAccountGroupFromTeam,
   unassignOperationTeamLeader,
+  unassignStrawManFromTeam,
 } from '../../api/operationAdministrator/teams';
 import { searchAccountsPicker } from '../../api/accountPickerSources';
 import type { OperationDetails } from '../../api/types';
@@ -12,13 +19,16 @@ import { AdminOperationCard, type AdminOperationCardActions } from '../../compon
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
+import { GatewayCredentialPickerModal } from '../../components/GatewayCredentialPickerModal';
 import { useNotifications } from '../../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
 
 const noop = () => undefined;
 
-type AccountPickerMode = { kind: 'leader'; teamId: string };
+type AccountPickerMode =
+  | { kind: 'leader'; teamId: string }
+  | { kind: 'strawMan'; teamId: string };
 
 export function OperationAdminOperationsPage() {
   const { notifyError, notifySuccess } = useNotifications();
@@ -33,6 +43,7 @@ export function OperationAdminOperationsPage() {
   const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
   const [deleteTeamId, setDeleteTeamId] = useState('');
   const [accountPickerMode, setAccountPickerMode] = useState<AccountPickerMode | null>(null);
+  const [gatewayPickerTeamId, setGatewayPickerTeamId] = useState<string | null>(null);
 
   const load = useCallback(async (page: number, keyword: string) => {
     const result = await searchOperationAdministratorOperations({
@@ -81,12 +92,28 @@ export function OperationAdminOperationsPage() {
 
     setActionBusy(true);
     try {
-      const result = await assignOperationTeamLeader(accountPickerMode.teamId, accountId);
+      let result: { ok: boolean; error?: string };
+      switch (accountPickerMode.kind) {
+        case 'leader':
+          result = await assignOperationTeamLeader(accountPickerMode.teamId, accountId);
+          break;
+        case 'strawMan':
+          result = await assignStrawManToTeam(accountPickerMode.teamId, accountId);
+          break;
+        default:
+          return;
+      }
+
       if (!result.ok) {
         notifyError(result.error ?? 'Não foi possível concluir a ação.');
         return;
       }
-      notifySuccess('Líder vinculado à equipe.');
+
+      const messages = {
+        leader: 'Líder vinculado à equipe.',
+        strawMan: 'Laranja vinculado à equipe.',
+      } as const;
+      notifySuccess(messages[accountPickerMode.kind]);
       await refresh();
     } finally {
       setActionBusy(false);
@@ -113,14 +140,52 @@ export function OperationAdminOperationsPage() {
     onAssignOperator: noop,
     onUnassignOperator: noop,
     onEditProfitShare: noop,
-    onGatewayStrategyChange: noop,
-    onAssignStrawMan: noop,
-    onUnassignStrawMan: noop,
-    onAssignGatewayCredential: noop,
-    onUnassignGatewayCredential: noop,
-    onAssignGatewayGroup: noop,
-    onUnassignGatewayGroup: noop,
+    onGatewayStrategyChange: (teamId, strategy) => {
+      void runAction(
+        () => setTeamGatewaySelectionStrategy(teamId, strategy),
+        'Estratégia de gateway atualizada.',
+      );
+    },
+    onAssignStrawMan: (teamId) => setAccountPickerMode({ kind: 'strawMan', teamId }),
+    onUnassignStrawMan: (teamId, accountId) => {
+      void runAction(
+        () => unassignStrawManFromTeam(teamId, accountId),
+        'Laranja removido da equipe.',
+      );
+    },
+    onAssignGatewayCredential: (teamId) => setGatewayPickerTeamId(teamId),
+    onUnassignGatewayCredential: (teamId, credentialId) => {
+      void runAction(
+        () => unassignGatewayAccountFromTeam(teamId, credentialId),
+        'Credencial removida da equipe.',
+      );
+    },
+    onAssignGatewayGroup: (teamId, groupId) => {
+      void runAction(
+        () => assignGatewayAccountGroupToTeam(teamId, groupId),
+        'Grupo de credenciais vinculado.',
+      );
+    },
+    onUnassignGatewayGroup: (teamId, groupId) => {
+      void runAction(
+        () => unassignGatewayAccountGroupFromTeam(teamId, groupId),
+        'Grupo de credenciais removido.',
+      );
+    },
   };
+
+  const pickerKind = accountPickerMode?.kind ?? null;
+
+  const accountPickerTitles = {
+    leader: {
+      title: 'Vincular líder',
+      subtitle: 'Conta responsável por liderar a equipe.',
+    },
+    strawMan: {
+      title: 'Vincular laranja',
+      subtitle: 'Conta laranja usada na estratégia de gateway.',
+    },
+  } as const;
 
   return (
     <>
@@ -129,7 +194,7 @@ export function OperationAdminOperationsPage() {
           <p className="page-kicker">Administração de operações</p>
           <h1>Operações administradas</h1>
           <p className="muted page-lead">
-            Operações em que você é administrador: crie equipes e defina líderes. Operadores, repasses e gateway ficam com cada líder.
+            Operações em que você é administrador: crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder.
           </p>
         </div>
       </section>
@@ -183,12 +248,28 @@ export function OperationAdminOperationsPage() {
       </section>
 
       <AccountPickerModal
-        open={accountPickerMode !== null}
+        open={pickerKind !== null}
         onClose={() => setAccountPickerMode(null)}
         searchAccounts={searchAccountsPicker}
-        title="Vincular líder"
-        subtitle="Conta responsável por liderar a equipe."
+        title={pickerKind ? accountPickerTitles[pickerKind].title : 'Selecionar conta'}
+        subtitle={pickerKind ? accountPickerTitles[pickerKind].subtitle : undefined}
         onSelected={(row) => void handleAccountPicked(row.id)}
+      />
+
+      <GatewayCredentialPickerModal
+        open={gatewayPickerTeamId !== null}
+        onClose={() => setGatewayPickerTeamId(null)}
+        title="Vincular credencial"
+        subtitle="Credencial de gateway para seleção manual da equipe."
+        onSelected={(row) => {
+          const teamId = gatewayPickerTeamId;
+          setGatewayPickerTeamId(null);
+          if (!teamId) return;
+          void runAction(
+            () => assignGatewayAccountToTeam(teamId, row.id),
+            'Credencial vinculada à equipe.',
+          );
+        }}
       />
 
       <ConfirmDialog

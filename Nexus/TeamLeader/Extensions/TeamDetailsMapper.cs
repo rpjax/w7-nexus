@@ -2,7 +2,6 @@ using Aidan.Core.Linq.Extensions;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Database.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Contracts;
 using Nexus.TeamLeader.Application.Responses.Models;
 
 namespace Nexus.TeamLeader.Extensions;
@@ -11,11 +10,8 @@ public static class TeamDetailsMapper
 {
     public static TeamDetails Map(
         Team team,
-        IReadOnlyDictionary<string, string> usernamesByAccountId,
-        TeamGatewayLookup? gatewayLookup = null)
+        IReadOnlyDictionary<string, string> usernamesByAccountId)
     {
-        gatewayLookup ??= new TeamGatewayLookup();
-
         return new TeamDetails
         {
             Id = team.Id,
@@ -30,24 +26,6 @@ public static class TeamDetailsMapper
                 },
             Operators = team.OperatorIds
                 .Select(operatorId => MapOperator(team, operatorId, usernamesByAccountId))
-                .ToArray(),
-            GatewaySelectionStrategy = team.GatewaySelectionStrategy.ToString(),
-            StrawMen = team.StrawManIds
-                .Select(id => new TeamAccountDetails
-                {
-                    AccountId = id,
-                    Username = ResolveUsername(usernamesByAccountId, id),
-                })
-                .ToArray(),
-            GatewayCredentials = team.GatewayCredentialsIds
-                .Select(id => gatewayLookup.CredentialsById.TryGetValue(id, out var credential)
-                    ? credential
-                    : new TeamGatewayCredentialDetails { Id = id, Name = id, Gateway = "desconhecido" })
-                .ToArray(),
-            GatewayCredentialsGroups = team.GatewayCredentialsGroupIds
-                .Select(id => gatewayLookup.GroupsById.TryGetValue(id, out var group)
-                    ? group
-                    : new TeamGatewayGroupDetails { Id = id, Name = id, CredentialCount = 0 })
                 .ToArray(),
         };
     }
@@ -82,9 +60,6 @@ public static class TeamDetailsMapper
 
             foreach (var operatorId in team.OperatorIds)
                 ids.Add(operatorId);
-
-            foreach (var strawManId in team.StrawManIds)
-                ids.Add(strawManId);
 
             foreach (var rule in team.OperatorProfitShareRules)
             {
@@ -138,16 +113,12 @@ public static class OperationWithLedTeamsDetailsMapper
     public static async Task<IReadOnlyList<OperationWithLedTeamsDetails>> MapManyAsync(
         IReadOnlyList<Operation> operations,
         IReadOnlyList<Team> ledTeams,
-        IAccountRepository accounts,
-        ITeamGatewayDetailsLoader? gatewayLoader = null)
+        IAccountRepository accounts)
     {
         if (operations.Count == 0)
             return Array.Empty<OperationWithLedTeamsDetails>();
 
         var usernames = await TeamDetailsMapper.LoadUsernamesAsync(accounts, ledTeams);
-        var gatewayLookup = gatewayLoader is null
-            ? new TeamGatewayLookup()
-            : await gatewayLoader.LoadAsync(ledTeams);
 
         return operations
             .Select(operation =>
@@ -155,7 +126,7 @@ public static class OperationWithLedTeamsDetailsMapper
                 var operationTeams = ledTeams
                     .Where(t => t.OperationId == operation.Id)
                     .OrderBy(t => t.Name)
-                    .Select(t => TeamDetailsMapper.Map(t, usernames, gatewayLookup))
+                    .Select(t => TeamDetailsMapper.Map(t, usernames))
                     .ToArray();
 
                 return new OperationWithLedTeamsDetails

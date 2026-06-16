@@ -333,8 +333,7 @@ internal sealed class ActorTestContext
             CreateTeamService(),
             Operations,
             Teams,
-            Accounts,
-            new EmptyTeamLeaderTeamGatewayDetailsLoader());
+            Accounts);
 
     public OperatorRole CreateOperator(string operatorAccountId)
         => new(operatorAccountId, Operations, Teams, Accounts);
@@ -468,14 +467,5 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
         IReadOnlyList<Team> teams,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new Nexus.OperationAdministrator.Extensions.TeamGatewayLookup());
-}
-
-internal sealed class EmptyTeamLeaderTeamGatewayDetailsLoader
-    : Nexus.TeamLeader.Extensions.ITeamGatewayDetailsLoader
-{
-    public Task<Nexus.TeamLeader.Extensions.TeamGatewayLookup> LoadAsync(
-        IReadOnlyList<Team> teams,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(new Nexus.TeamLeader.Extensions.TeamGatewayLookup());
 }
 

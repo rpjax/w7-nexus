@@ -1,6 +1,6 @@
 using Nexus.Operations.Aggregates;
 
-namespace Nexus.TeamLeader.Application.Requests;
+namespace Nexus.OperationAdministrator.Application.Requests;
 
 public class SetTeamGatewaySelectionStrategyRequest
 {

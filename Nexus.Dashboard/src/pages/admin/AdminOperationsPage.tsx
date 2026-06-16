@@ -9,21 +9,21 @@ import {
 import { searchAdministratorAccountsPicker } from '../../api/accountPickerSources';
 import {
   assignOperationTeamLeader,
-  createOperationTeam,
-  deleteOperationTeam,
-  unassignOperationTeamLeader,
-} from '../../api/operationAdministrator/teams';
-import {
   assignGatewayAccountToTeam,
   assignGatewayAccountGroupToTeam,
-  assignOperatorToTeam,
   assignStrawManToTeam,
-  setOperatorProfitShareRule,
+  createOperationTeam,
+  deleteOperationTeam,
   setTeamGatewaySelectionStrategy,
   unassignGatewayAccountFromTeam,
   unassignGatewayAccountGroupFromTeam,
-  unassignOperatorFromTeam,
+  unassignOperationTeamLeader,
   unassignStrawManFromTeam,
+} from '../../api/operationAdministrator/teams';
+import {
+  assignOperatorToTeam,
+  setOperatorProfitShareRule,
+  unassignOperatorFromTeam,
 } from '../../api/teamLeader/teams';
 import type { OperationDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';

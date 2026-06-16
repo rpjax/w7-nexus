@@ -1,3 +1,3 @@
-namespace Nexus.TeamLeader.Application.Responses;
+namespace Nexus.OperationAdministrator.Application.Responses;
 
 public class UnassignGatewayAccountGroupFromTeamResponse { }

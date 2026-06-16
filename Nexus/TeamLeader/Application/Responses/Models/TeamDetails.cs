@@ -7,16 +7,6 @@ public class TeamDetails
     public string Name { get; init; } = default!;
     public TeamLeaderDetails? TeamLeader { get; init; }
     public OperatorDetails[] Operators { get; init; } = Array.Empty<OperatorDetails>();
-    public string GatewaySelectionStrategy { get; init; } = default!;
-    public TeamAccountDetails[] StrawMen { get; init; } = Array.Empty<TeamAccountDetails>();
-    public TeamGatewayCredentialDetails[] GatewayCredentials { get; init; } = Array.Empty<TeamGatewayCredentialDetails>();
-    public TeamGatewayGroupDetails[] GatewayCredentialsGroups { get; init; } = Array.Empty<TeamGatewayGroupDetails>();
-}
-
-public class TeamAccountDetails
-{
-    public string AccountId { get; set; } = default!;
-    public string Username { get; init; } = default!;
 }
 
 public class TeamLeaderDetails

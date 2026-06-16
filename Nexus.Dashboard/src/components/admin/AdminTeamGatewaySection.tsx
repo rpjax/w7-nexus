@@ -167,7 +167,7 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
             </div>
           ) : (
             <ul className="admin-op-person-list">
-              {team.strawMen.map((straw) => (
+              {(team.strawMen ?? []).map((straw) => (
                 <StrawManRow
                   key={straw.accountId}
                   straw={straw}
@@ -216,7 +216,7 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
             </div>
           ) : (
             <ul className="admin-op-gateway-item-list">
-              {team.gatewayCredentialsGroups.map((group) => (
+              {(team.gatewayCredentialsGroups ?? []).map((group) => (
                 <li key={group.id} className="admin-op-gateway-item">
                   <div className="admin-op-gateway-item-main">
                     <strong>{group.name}</strong>
@@ -266,7 +266,7 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
             </div>
           ) : (
             <ul className="admin-op-gateway-item-list">
-              {team.gatewayCredentials.map((credential) => (
+              {(team.gatewayCredentials ?? []).map((credential) => (
                 <li key={credential.id} className="admin-op-gateway-item">
                   <div className="admin-op-gateway-item-main">
                     <strong>{credential.name}</strong>

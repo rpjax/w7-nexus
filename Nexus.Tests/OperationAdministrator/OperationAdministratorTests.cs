@@ -1,4 +1,5 @@
 using Nexus.OperationAdministrator.Application.Requests;
+using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.Tests.Support;
 using Xunit;
@@ -190,5 +191,230 @@ public sealed class OperationAdministratorTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.TeamLeaderNotAssigned);
+    }
+
+    [Fact]
+    public async Task SetTeamGatewaySelectionStrategyAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.SetTeamGatewaySelectionStrategyAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task SetTeamGatewaySelectionStrategyAsync_ValidRequest_UpdatesStrategy()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync();
+
+        var result = await sut.SetTeamGatewaySelectionStrategyAsync(new SetTeamGatewaySelectionStrategyRequest
+        {
+            TeamId = teamId,
+            Strategy = GatewaySelectionStrategy.Manual
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.Equal(GatewaySelectionStrategy.Manual, team.GatewaySelectionStrategy);
+    }
+
+    [Fact]
+    public async Task AssignStrawManToTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.AssignStrawManToTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task AssignStrawManToTeamAsync_ValidRequest_AssignsStrawMan()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync();
+        _ctx.RegisterAccount("straw-1");
+
+        var result = await sut.AssignStrawManToTeamAsync(new AssignStrawManToTeamRequest
+        {
+            TeamId = teamId,
+            StrawManId = "straw-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.Contains("straw-1", team.StrawManIds);
+    }
+
+    [Fact]
+    public async Task UnassignStrawManFromTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.UnassignStrawManFromTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task UnassignStrawManFromTeamAsync_ValidRequest_UnassignsStrawMan()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync();
+        _ctx.RegisterAccount("straw-1");
+        await sut.AssignStrawManToTeamAsync(new AssignStrawManToTeamRequest
+        {
+            TeamId = teamId,
+            StrawManId = "straw-1"
+        });
+
+        var result = await sut.UnassignStrawManFromTeamAsync(new UnassignStrawManFromTeamRequest
+        {
+            TeamId = teamId,
+            StrawManId = "straw-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.DoesNotContain("straw-1", team.StrawManIds);
+    }
+
+    [Fact]
+    public async Task AssignGatewayAccountGroupToTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.AssignGatewayAccountGroupToTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task AssignGatewayAccountGroupToTeamAsync_ValidRequest_AssignsGroup()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync(strategy: GatewaySelectionStrategy.PerGroup);
+        var group = await _ctx.SeedGatewayGroupAsync();
+
+        var result = await sut.AssignGatewayAccountGroupToTeamAsync(new AssignGatewayAccountGroupToTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsGroupId = group.Id
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.Contains(group.Id, team.GatewayCredentialsGroupIds);
+    }
+
+    [Fact]
+    public async Task UnassignGatewayAccountGroupFromTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.UnassignGatewayAccountGroupFromTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task UnassignGatewayAccountGroupFromTeamAsync_ValidRequest_UnassignsGroup()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync(strategy: GatewaySelectionStrategy.PerGroup);
+        var group = await _ctx.SeedGatewayGroupAsync();
+        await sut.AssignGatewayAccountGroupToTeamAsync(new AssignGatewayAccountGroupToTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsGroupId = group.Id
+        });
+
+        var result = await sut.UnassignGatewayAccountGroupFromTeamAsync(new UnassignGatewayAccountGroupFromTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsGroupId = group.Id
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.DoesNotContain(group.Id, team.GatewayCredentialsGroupIds);
+    }
+
+    [Fact]
+    public async Task AssignGatewayAccountToTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.AssignGatewayAccountToTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task AssignGatewayAccountToTeamAsync_ValidRequest_AssignsCredential()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync(strategy: GatewaySelectionStrategy.Manual);
+        _ctx.RegisterGatewayCredential("cred-1");
+
+        var result = await sut.AssignGatewayAccountToTeamAsync(new AssignGatewayAccountToTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsId = "cred-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.Contains("cred-1", team.GatewayCredentialsIds);
+    }
+
+    [Fact]
+    public async Task UnassignGatewayAccountFromTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.UnassignGatewayAccountFromTeamAsync(null!);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task UnassignGatewayAccountFromTeamAsync_ValidRequest_UnassignsCredential()
+    {
+        var sut = _ctx.CreateOperationAdministrator();
+        var (teamId, _) = await SeedTeamAsync(strategy: GatewaySelectionStrategy.Manual);
+        _ctx.RegisterGatewayCredential("cred-1");
+        await sut.AssignGatewayAccountToTeamAsync(new AssignGatewayAccountToTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsId = "cred-1"
+        });
+
+        var result = await sut.UnassignGatewayAccountFromTeamAsync(new UnassignGatewayAccountFromTeamRequest
+        {
+            TeamId = teamId,
+            GatewayCredentialsId = "cred-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
+        Assert.DoesNotContain("cred-1", team.GatewayCredentialsIds);
+    }
+
+    private async Task<(string TeamId, string OperationId)> SeedTeamAsync(
+        GatewaySelectionStrategy strategy = GatewaySelectionStrategy.PerStrawman)
+    {
+        var operation = await _ctx.SeedOperationAsync("Team Parent Operation");
+        var team = await _ctx.SeedTeamAsync(operation.Id, strategy: strategy);
+        return (team.Id, operation.Id);
     }
 }

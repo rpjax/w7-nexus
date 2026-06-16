@@ -209,8 +209,8 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
             </h4>
             <p className="muted small">
               {scope === 'global-admin' && 'Estrutura completa: líderes, operadores, repasses, laranjas e credenciais de gateway.'}
-              {scope === 'operation-admin' && 'Crie equipes e defina líderes. Operadores, repasses e gateway ficam com o líder de cada equipe.'}
-              {scope === 'team-leader' && 'Gerencie operadores, repasses e configuração de gateway das equipes que você lidera.'}
+              {scope === 'operation-admin' && 'Crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder.'}
+              {scope === 'team-leader' && 'Gerencie operadores e regras de repasse das equipes que você lidera.'}
             </p>
           </header>
 

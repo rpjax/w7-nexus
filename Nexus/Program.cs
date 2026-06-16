@@ -140,7 +140,6 @@ builder.Services.AddScoped<Nexus.Administrator.Extensions.ITeamGatewayDetailsLoa
 builder.Services.AddScoped<IOperationAdministrator, Nexus.OperationAdministrator.Application.Services.OperationAdministrator>();
 builder.Services.AddScoped<Nexus.OperationAdministrator.Extensions.ITeamGatewayDetailsLoader, Nexus.OperationAdministrator.Extensions.TeamGatewayDetailsLoader>();
 builder.Services.AddScoped<ITeamLeader, Nexus.TeamLeader.Application.Services.TeamLeader>();
-builder.Services.AddScoped<Nexus.TeamLeader.Extensions.ITeamGatewayDetailsLoader, Nexus.TeamLeader.Extensions.TeamGatewayDetailsLoader>();
 builder.Services.AddScoped<IOperator, Nexus.Operator.Application.Services.Operator>();
 builder.Services.AddScoped<IStrawMan, StrawMan>();
 builder.Services.AddScoped<IFrendzApiCredentialsRepository, MongoFrendzApiCredentialsRepository>();

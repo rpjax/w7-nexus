@@ -24,7 +24,6 @@ public class TeamLeader : ITeamLeader
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
-    private ITeamGatewayDetailsLoader? _teamGatewayDetailsLoader { get; }
     private IHttpContextAccessor? _httpContextAccessor { get; }
 
     public TeamLeader(
@@ -32,14 +31,12 @@ public class TeamLeader : ITeamLeader
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts,
-        ITeamGatewayDetailsLoader teamGatewayDetailsLoader,
         IHttpContextAccessor httpContextAccessor)
     {
         _teamService = teamService;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
-        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
         _httpContextAccessor = httpContextAccessor;
     }
 
@@ -48,15 +45,13 @@ public class TeamLeader : ITeamLeader
         ITeamService teamService,
         IOperationRepository operations,
         ITeamRepository teams,
-        IAccountRepository accounts,
-        ITeamGatewayDetailsLoader? teamGatewayDetailsLoader = null)
+        IAccountRepository accounts)
     {
         _accountId = accountId;
         _teamService = teamService;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
-        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
     }
 
     public async Task<IResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(SearchLedTeamsRequest request)
@@ -156,8 +151,7 @@ public class TeamLeader : ITeamLeader
         var items = await OperationWithLedTeamsDetailsMapper.MapManyAsync(
             operations,
             pageLedTeams,
-            _accounts,
-            _teamGatewayDetailsLoader);
+            _accounts);
 
         var response = new SearchLedTeamsResponse
         {
@@ -190,84 +184,6 @@ public class TeamLeader : ITeamLeader
 
         var result = await _teamService.UnassignOperatorAsync(request.TeamId, request.OperatorId);
         return ToResponse<UnassignOperatorFromTeamResponse>(result);
-    }
-
-    public async Task<IResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
-        SetTeamGatewaySelectionStrategyRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<SetTeamGatewaySelectionStrategyResponse>();
-
-        var result = await _teamService.SetGatewaySelectionStrategyAsync(request.TeamId, request.Strategy);
-        return ToResponse<SetTeamGatewaySelectionStrategyResponse>(result);
-    }
-
-    public async Task<IResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
-        AssignStrawManToTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<AssignStrawManToTeamResponse>();
-
-        var result = await _teamService.AssignStrawManAsync(request.TeamId, request.StrawManId);
-        return ToResponse<AssignStrawManToTeamResponse>(result);
-    }
-
-    public async Task<IResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
-        UnassignStrawManFromTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<UnassignStrawManFromTeamResponse>();
-
-        var result = await _teamService.UnassignStrawManAsync(request.TeamId, request.StrawManId);
-        return ToResponse<UnassignStrawManFromTeamResponse>(result);
-    }
-
-    public async Task<IResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
-        AssignGatewayAccountGroupToTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<AssignGatewayAccountGroupToTeamResponse>();
-
-        var result = await _teamService.AssignGatewayCredentialsGroupAsync(
-            request.TeamId,
-            request.GatewayCredentialsGroupId);
-        return ToResponse<AssignGatewayAccountGroupToTeamResponse>(result);
-    }
-
-    public async Task<IResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
-        UnassignGatewayAccountGroupFromTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<UnassignGatewayAccountGroupFromTeamResponse>();
-
-        var result = await _teamService.UnassignGatewayCredentialsGroupAsync(
-            request.TeamId,
-            request.GatewayCredentialsGroupId);
-        return ToResponse<UnassignGatewayAccountGroupFromTeamResponse>(result);
-    }
-
-    public async Task<IResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
-        AssignGatewayAccountToTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<AssignGatewayAccountToTeamResponse>();
-
-        var result = await _teamService.AssignGatewayCredentialsAsync(
-            request.TeamId,
-            request.GatewayCredentialsId);
-        return ToResponse<AssignGatewayAccountToTeamResponse>(result);
-    }
-
-    public async Task<IResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
-        UnassignGatewayAccountFromTeamRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<UnassignGatewayAccountFromTeamResponse>();
-
-        var result = await _teamService.UnassignGatewayCredentialsAsync(
-            request.TeamId,
-            request.GatewayCredentialsId);
-        return ToResponse<UnassignGatewayAccountFromTeamResponse>(result);
     }
 
     public async Task<IResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(

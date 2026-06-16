@@ -86,10 +86,10 @@ export type TeamDetails = {
   name: string;
   teamLeader?: TeamLeaderDetails | null;
   operators: OperatorDetails[];
-  gatewaySelectionStrategy: GatewaySelectionStrategy;
-  strawMen: TeamAccountDetails[];
-  gatewayCredentials: TeamGatewayCredentialDetails[];
-  gatewayCredentialsGroups: TeamGatewayGroupDetails[];
+  gatewaySelectionStrategy?: GatewaySelectionStrategy;
+  strawMen?: TeamAccountDetails[];
+  gatewayCredentials?: TeamGatewayCredentialDetails[];
+  gatewayCredentialsGroups?: TeamGatewayGroupDetails[];
 };
 
 export type OperationDetails = {

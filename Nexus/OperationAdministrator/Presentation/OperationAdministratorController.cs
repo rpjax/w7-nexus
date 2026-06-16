@@ -76,6 +76,88 @@ public class OperationAdministratorController : NexusController
         return ToResponse(result);
     }
 
+    [HttpPatch("teams/gateway-selection-strategy")]
+    public async Task<ActionResult> SetTeamGatewaySelectionStrategyAsync(
+        [FromBody] SetTeamGatewaySelectionStrategyRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.SetTeamGatewaySelectionStrategyAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpPost("teams/straw-men")]
+    public async Task<ActionResult> AssignStrawManToTeamAsync([FromBody] AssignStrawManToTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.AssignStrawManToTeamAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpDelete("teams/straw-men")]
+    public async Task<ActionResult> UnassignStrawManFromTeamAsync([FromBody] UnassignStrawManFromTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.UnassignStrawManFromTeamAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpPost("teams/gateway-account-groups")]
+    public async Task<ActionResult> AssignGatewayAccountGroupToTeamAsync(
+        [FromBody] AssignGatewayAccountGroupToTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.AssignGatewayAccountGroupToTeamAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpDelete("teams/gateway-account-groups")]
+    public async Task<ActionResult> UnassignGatewayAccountGroupFromTeamAsync(
+        [FromBody] UnassignGatewayAccountGroupFromTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.UnassignGatewayAccountGroupFromTeamAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpPost("teams/gateway-accounts")]
+    public async Task<ActionResult> AssignGatewayAccountToTeamAsync(
+        [FromBody] AssignGatewayAccountToTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.AssignGatewayAccountToTeamAsync(request!);
+        return ToResponse(result);
+    }
+
+    [HttpDelete("teams/gateway-accounts")]
+    public async Task<ActionResult> UnassignGatewayAccountFromTeamAsync(
+        [FromBody] UnassignGatewayAccountFromTeamRequest request)
+    {
+        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
+        if (accessError is not null)
+            return accessError;
+
+        var result = await operationAdministrator.UnassignGatewayAccountFromTeamAsync(request!);
+        return ToResponse(result);
+    }
+
     private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForSearchAsync()
     {
         var access = await _operationAdministratorAccess.ResolveAsync();
