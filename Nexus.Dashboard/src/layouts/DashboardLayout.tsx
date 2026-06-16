@@ -9,6 +9,8 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard': 'Visão geral',
     '/dashboard/operations': 'Minhas operações',
     '/dashboard/admin/operations': 'Todas as operações',
+    '/dashboard/operation-admin/operations': 'Administração de operações',
+    '/dashboard/team-leader/operations': 'Liderança de equipes',
     '/dashboard/accounts': 'Contas',
     '/dashboard/payments': 'Pagamentos',
     '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',

@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
-import type { OperationDetails } from '../../api/types';
+import type { OperationDetails, OperationWithLedTeamsDetails } from '../../api/types';
 import { formatDateTime, shortId } from '../../utils/format';
-import { AdminTeamPanel, type AdminTeamPanelActions } from './AdminTeamPanel';
+import { AdminTeamPanel, type AdminTeamPanelActions, type AdminTeamPanelScope } from './AdminTeamPanel';
+
+export type OperationCardScope = 'global-admin' | 'operation-admin' | 'team-leader';
 
 export type AdminOperationCardActions = AdminTeamPanelActions & {
   onAssignAdministrator: (operationId: string) => void;
@@ -12,7 +14,8 @@ export type AdminOperationCardActions = AdminTeamPanelActions & {
 };
 
 type AdminOperationCardProps = {
-  operation: OperationDetails;
+  operation: OperationDetails | OperationWithLedTeamsDetails;
+  scope: OperationCardScope;
   actions: AdminOperationCardActions;
 };
 
@@ -25,9 +28,11 @@ function personLabel(accountId: string, username: string): string {
   return username && username !== accountId ? username : shortId(accountId, 18);
 }
 
-function countOperators(teams: OperationDetails['teams']): number {
+function countOperators(teams: TeamDetailsLike[]): number {
   return teams.reduce((sum, team) => sum + team.operators.length, 0);
 }
+
+type TeamDetailsLike = OperationDetails['teams'][number];
 
 function PersonRow({
   accountId,
@@ -50,14 +55,21 @@ function PersonRow({
   );
 }
 
-export function AdminOperationCard({ operation, actions }: AdminOperationCardProps) {
+function teamPanelScope(scope: OperationCardScope): AdminTeamPanelScope {
+  if (scope === 'operation-admin') return 'operation-admin';
+  if (scope === 'team-leader') return 'team-leader';
+  return 'full';
+}
+
+export function AdminOperationCard({ operation, scope, actions }: AdminOperationCardProps) {
   const [newTeamName, setNewTeamName] = useState('');
-  const administrators = operation.administrators ?? [];
+  const administrators = 'administrators' in operation ? (operation.administrators ?? []) : [];
   const teams = operation.teams ?? [];
   const adminCount = administrators.length;
   const teamCount = teams.length;
   const operatorCount = countOperators(teams);
   const description = operation.description?.trim();
+  const panelScope = teamPanelScope(scope);
 
   async function copyId() {
     try {
@@ -99,18 +111,24 @@ export function AdminOperationCard({ operation, actions }: AdminOperationCardPro
           <div className="admin-op-card-title-row">
             <h3 className="admin-op-card-title">{operation.name}</h3>
             <div className="admin-op-card-stats">
-              <span className={`admin-op-stat ${adminCount === 0 ? 'admin-op-stat-warn' : ''}`}>
-                <span className="admin-op-stat-value">{adminCount}</span>
-                <span className="admin-op-stat-label">Admin{adminCount === 1 ? '' : 's'}</span>
-              </span>
+              {scope === 'global-admin' ? (
+                <span className={`admin-op-stat ${adminCount === 0 ? 'admin-op-stat-warn' : ''}`}>
+                  <span className="admin-op-stat-value">{adminCount}</span>
+                  <span className="admin-op-stat-label">Admin{adminCount === 1 ? '' : 's'}</span>
+                </span>
+              ) : null}
               <span className="admin-op-stat">
                 <span className="admin-op-stat-value">{teamCount}</span>
-                <span className="admin-op-stat-label">Equipe{teamCount === 1 ? '' : 's'}</span>
+                <span className="admin-op-stat-label">
+                  {scope === 'team-leader' ? 'Equipe liderada' : 'Equipe'}{teamCount === 1 ? '' : 's'}
+                </span>
               </span>
-              <span className="admin-op-stat">
-                <span className="admin-op-stat-value">{operatorCount}</span>
-                <span className="admin-op-stat-label">Operador{operatorCount === 1 ? '' : 'es'}</span>
-              </span>
+              {scope !== 'operation-admin' ? (
+                <span className="admin-op-stat">
+                  <span className="admin-op-stat-value">{operatorCount}</span>
+                  <span className="admin-op-stat-label">Operador{operatorCount === 1 ? '' : 'es'}</span>
+                </span>
+              ) : null}
             </div>
           </div>
           <p className="admin-op-card-id">
@@ -140,94 +158,110 @@ export function AdminOperationCard({ operation, actions }: AdminOperationCardPro
       </div>
 
       <div className="admin-op-card-panels admin-op-card-panels--stacked">
-        <section className="admin-op-panel">
-          <header className="admin-op-panel-head">
-            <h4>Administradores</h4>
-            <p className="muted small">Contas com permissão para gerenciar esta operação (papel Operation Administrator).</p>
-          </header>
+        {scope === 'global-admin' ? (
+          <section className="admin-op-panel">
+            <header className="admin-op-panel-head">
+              <h4>Administradores</h4>
+              <p className="muted small">Contas com permissão para gerenciar esta operação (papel Operation Administrator).</p>
+            </header>
 
-          {adminCount === 0 ? (
-            <p className="admin-op-empty muted small">Nenhum administrador vinculado.</p>
-          ) : (
-            <ul className="admin-op-person-list">
-              {administrators.map((admin) => (
-                <PersonRow
-                  key={admin.accountId}
-                  accountId={admin.accountId}
-                  username={admin.username}
-                  action={(
-                    <button
-                      type="button"
-                      className="btn btn-ghost btn-small"
-                      disabled={actions.busy}
-                      onClick={() => actions.onRemoveAdministrator(operation.id, admin.accountId)}
-                    >
-                      Remover
-                    </button>
-                  )}
-                />
-              ))}
-            </ul>
-          )}
+            {adminCount === 0 ? (
+              <p className="admin-op-empty muted small">Nenhum administrador vinculado.</p>
+            ) : (
+              <ul className="admin-op-person-list">
+                {administrators.map((admin) => (
+                  <PersonRow
+                    key={admin.accountId}
+                    accountId={admin.accountId}
+                    username={admin.username}
+                    action={(
+                      <button
+                        type="button"
+                        className="btn btn-ghost btn-small"
+                        disabled={actions.busy}
+                        onClick={() => actions.onRemoveAdministrator(operation.id, admin.accountId)}
+                      >
+                        Remover
+                      </button>
+                    )}
+                  />
+                ))}
+              </ul>
+            )}
 
-          <div className="admin-op-panel-actions">
-            <button
-              type="button"
-              className="btn btn-primary btn-small"
-              disabled={actions.busy}
-              onClick={() => actions.onAssignAdministrator(operation.id)}
-            >
-              Vincular administrador
-            </button>
-          </div>
-        </section>
+            <div className="admin-op-panel-actions">
+              <button
+                type="button"
+                className="btn btn-primary btn-small"
+                disabled={actions.busy}
+                onClick={() => actions.onAssignAdministrator(operation.id)}
+              >
+                Vincular administrador
+              </button>
+            </div>
+          </section>
+        ) : null}
 
         <section className="admin-op-panel admin-op-panel--teams">
           <header className="admin-op-panel-head">
-            <h4>Equipes e operadores</h4>
-            <p className="muted small">Estrutura completa: líderes, operadores, repasses, laranjas e credenciais de gateway.</p>
+            <h4>
+              {scope === 'team-leader' ? 'Suas equipes nesta operação' : 'Equipes e operadores'}
+            </h4>
+            <p className="muted small">
+              {scope === 'global-admin' && 'Estrutura completa: líderes, operadores, repasses, laranjas e credenciais de gateway.'}
+              {scope === 'operation-admin' && 'Crie equipes e defina líderes. Operadores, repasses e gateway ficam com o líder de cada equipe.'}
+              {scope === 'team-leader' && 'Gerencie operadores, repasses e configuração de gateway das equipes que você lidera.'}
+            </p>
           </header>
 
-          <div className="admin-op-create-team">
-            <input
-              className="nexus-input"
-              value={newTeamName}
-              onChange={(e) => setNewTeamName(e.target.value)}
-              placeholder="Nome da nova equipe…"
-              onKeyDown={(e) => { if (e.key === 'Enter') submitCreateTeam(); }}
-            />
-            <button
-              type="button"
-              className="btn btn-primary btn-small"
-              disabled={actions.busy || !newTeamName.trim()}
-              onClick={submitCreateTeam}
-            >
-              Criar equipe
-            </button>
-          </div>
+          {scope !== 'team-leader' ? (
+            <div className="admin-op-create-team">
+              <input
+                className="nexus-input"
+                value={newTeamName}
+                onChange={(e) => setNewTeamName(e.target.value)}
+                placeholder="Nome da nova equipe…"
+                onKeyDown={(e) => { if (e.key === 'Enter') submitCreateTeam(); }}
+              />
+              <button
+                type="button"
+                className="btn btn-primary btn-small"
+                disabled={actions.busy || !newTeamName.trim()}
+                onClick={submitCreateTeam}
+              >
+                Criar equipe
+              </button>
+            </div>
+          ) : null}
 
           {teamCount === 0 ? (
-            <p className="admin-op-empty muted small">Nenhuma equipe vinculada a esta operação.</p>
+            <p className="admin-op-empty muted small">
+              {scope === 'team-leader'
+                ? 'Nenhuma equipe liderada nesta operação.'
+                : 'Nenhuma equipe vinculada a esta operação.'}
+            </p>
           ) : (
             <div className="admin-op-team-list">
               {teams.map((team) => (
-                <AdminTeamPanel key={team.id} team={team} actions={teamActions} />
+                <AdminTeamPanel key={team.id} team={team} scope={panelScope} actions={teamActions} />
               ))}
             </div>
           )}
         </section>
       </div>
 
-      <footer className="admin-op-card-actions">
-        <button
-          type="button"
-          className="btn btn-danger btn-small"
-          disabled={actions.busy}
-          onClick={() => actions.onDelete(operation.id)}
-        >
-          Excluir operação
-        </button>
-      </footer>
+      {scope === 'global-admin' ? (
+        <footer className="admin-op-card-actions">
+          <button
+            type="button"
+            className="btn btn-danger btn-small"
+            disabled={actions.busy}
+            onClick={() => actions.onDelete(operation.id)}
+          >
+            Excluir operação
+          </button>
+        </footer>
+      ) : null}
     </article>
   );
 }

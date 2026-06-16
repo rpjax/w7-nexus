@@ -1,19 +1,41 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
+import { useOperationCapabilities } from '../auth/OperationCapabilitiesContext';
 import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
 
 export function NavMenu() {
   const { user } = useAuth();
+  const { operationAdministrator, teamLeader, loading: capabilitiesLoading } = useOperationCapabilities();
   const showOperatorPanel = canUseOperatorPanel(user);
-  const showAdminItems = isAdministrator(user);
+  const showGlobalAdminItems = isAdministrator(user);
+  const showOperationAdminItems = !showGlobalAdminItems && operationAdministrator;
+  const showTeamLeaderItems = !showGlobalAdminItems && teamLeader;
 
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
 
-  const showOperationsMenu = showOperatorPanel || showAdminItems;
+  const showOperationsMenu = showOperatorPanel
+    || showGlobalAdminItems
+    || showOperationAdminItems
+    || showTeamLeaderItems
+    || capabilitiesLoading;
+
+  const brandSubtitle = showGlobalAdminItems && showOperatorPanel
+    ? 'Operações, pagamentos e administração'
+    : showGlobalAdminItems
+      ? 'Administração e operação'
+      : showOperationAdminItems && showTeamLeaderItems
+        ? 'Administração e liderança de equipes'
+        : showOperationAdminItems
+          ? 'Administração de operações'
+          : showTeamLeaderItems
+            ? 'Liderança de equipes'
+            : showOperatorPanel
+              ? 'Operações e pagamentos'
+              : 'Dashboard';
 
   return (
     <nav className="nav-shell">
@@ -21,15 +43,7 @@ export function NavMenu() {
         <div className="brand-mark" aria-hidden="true" />
         <div>
           <p className="brand">Websete Nexus</p>
-          <p className="brand-subtitle">
-            {showAdminItems && showOperatorPanel
-              ? 'Operações, pagamentos e administração'
-              : showAdminItems
-                ? 'Administração e operação'
-                : showOperatorPanel
-                  ? 'Operações e pagamentos'
-                  : 'Dashboard'}
-          </p>
+          <p className="brand-subtitle">{brandSubtitle}</p>
         </div>
       </div>
 
@@ -56,10 +70,22 @@ export function NavMenu() {
                     Minhas operações
                   </NavLink>
                 ) : null}
-                {showAdminItems ? (
+                {showGlobalAdminItems ? (
                   <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/admin/operations" onClick={() => setOperationsOpen(true)}>
                     <span className="submenu-bullet" aria-hidden="true" />
                     Todas as operações
+                  </NavLink>
+                ) : null}
+                {showOperationAdminItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/operation-admin/operations" onClick={() => setOperationsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Administração de operações
+                  </NavLink>
+                ) : null}
+                {showTeamLeaderItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/team-leader/operations" onClick={() => setOperationsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Liderança de equipes
                   </NavLink>
                 ) : null}
               </div>
@@ -67,7 +93,7 @@ export function NavMenu() {
           </div>
         ) : null}
 
-        {showAdminItems ? (
+        {showGlobalAdminItems ? (
           <div className="nav-group nav-group-gateways">
             <button
               type="button"

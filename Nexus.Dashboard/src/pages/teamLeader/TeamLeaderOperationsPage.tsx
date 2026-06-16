@@ -1,18 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import {
-  assignOperationAdministrator,
-  createAdministratorOperation,
-  deleteAdministratorOperation,
-  searchAdministratorOperations,
-  unassignOperationAdministrator,
-} from '../../api/administrator/operations';
-import { searchAdministratorAccountsPicker } from '../../api/accountPickerSources';
-import {
-  assignOperationTeamLeader,
-  createOperationTeam,
-  deleteOperationTeam,
-  unassignOperationTeamLeader,
-} from '../../api/operationAdministrator/teams';
+import { useCallback, useEffect, useState } from 'react';
+import { searchTeamLeaderLedTeams } from '../../api/teamLeader/operations';
 import {
   assignGatewayAccountToTeam,
   assignGatewayAccountGroupToTeam,
@@ -25,43 +12,34 @@ import {
   unassignOperatorFromTeam,
   unassignStrawManFromTeam,
 } from '../../api/teamLeader/teams';
-import type { OperationDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
+import { searchAccountsPicker } from '../../api/accountPickerSources';
+import type { OperationWithLedTeamsDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { GatewayCredentialPickerModal } from '../../components/GatewayCredentialPickerModal';
 import { useNotifications } from '../../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
 
+const noop = () => undefined;
+
 type AccountPickerMode =
-  | { kind: 'admin'; operationId: string }
-  | { kind: 'leader'; teamId: string }
   | { kind: 'operator'; teamId: string }
   | { kind: 'strawMan'; teamId: string }
   | { kind: 'profitShareCut'; cutIndex: number };
 
-export function AdminOperationsPage() {
+export function TeamLeaderOperationsPage() {
   const { notifyError, notifySuccess } = useNotifications();
-  const [createName, setCreateName] = useState('');
-  const [createDescription, setCreateDescription] = useState('');
-  const [createBusy, setCreateBusy] = useState(false);
-
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
-  const [items, setItems] = useState<OperationDetails[]>([]);
+  const [items, setItems] = useState<OperationWithLedTeamsDetails[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
   const [actionBusy, setActionBusy] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deleteOperationId, setDeleteOperationId] = useState('');
-  const [deleteTeamDialogOpen, setDeleteTeamDialogOpen] = useState(false);
-  const [deleteTeamId, setDeleteTeamId] = useState('');
-
   const [accountPickerMode, setAccountPickerMode] = useState<AccountPickerMode | null>(null);
   const [gatewayPickerTeamId, setGatewayPickerTeamId] = useState<string | null>(null);
 
@@ -71,7 +49,7 @@ export function AdminOperationsPage() {
   const [profitShareCuts, setProfitShareCuts] = useState<ProfitShareCutDraft[]>([]);
 
   const load = useCallback(async (page: number, keyword: string) => {
-    const result = await searchAdministratorOperations({
+    const result = await searchTeamLeaderLedTeams({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
       keyword: keyword.trim() || null,
@@ -87,16 +65,6 @@ export function AdminOperationsPage() {
   useEffect(() => {
     void load(currentPage, query);
   }, [currentPage, query, load]);
-
-  const assignOperation = useMemo(() => {
-    if (accountPickerMode?.kind !== 'admin') return null;
-    return items.find((item) => item.id === accountPickerMode.operationId) ?? null;
-  }, [accountPickerMode, items]);
-
-  const assignDisabledIds = useMemo(
-    () => new Set(assignOperation?.administrators.map((admin) => admin.accountId) ?? []),
-    [assignOperation],
-  );
 
   async function refresh() {
     await load(currentPage, query);
@@ -120,44 +88,6 @@ export function AdminOperationsPage() {
   async function handleSearch() {
     setCurrentPage(1);
     setQuery(search);
-  }
-
-  async function handleCreate() {
-    setCreateBusy(true);
-    try {
-      const result = await createAdministratorOperation(
-        createName.trim(),
-        createDescription.trim() || null,
-      );
-      if (!result.ok) {
-        notifyError(result.error ?? 'Não foi possível concluir a ação.');
-        return;
-      }
-      notifySuccess('Operação registrada no sistema.');
-      setCreateName('');
-      setCreateDescription('');
-      setCurrentPage(1);
-      setQuery('');
-      setSearch('');
-      await load(1, '');
-    } finally {
-      setCreateBusy(false);
-    }
-  }
-
-  function openDeleteDialog(operationId: string) {
-    setDeleteOperationId(operationId);
-    setDeleteDialogOpen(true);
-  }
-
-  async function confirmDelete() {
-    setDeleteDialogOpen(false);
-    if (!deleteOperationId) return;
-    await runAction(
-      () => deleteAdministratorOperation(deleteOperationId),
-      'Operação excluída do sistema.',
-    );
-    setDeleteOperationId('');
   }
 
   function openProfitShare(teamId: string, operator: OperatorDetails) {
@@ -206,12 +136,6 @@ export function AdminOperationsPage() {
     try {
       let result: { ok: boolean; error?: string };
       switch (accountPickerMode.kind) {
-        case 'admin':
-          result = await assignOperationAdministrator(accountPickerMode.operationId, accountId);
-          break;
-        case 'leader':
-          result = await assignOperationTeamLeader(accountPickerMode.teamId, accountId);
-          break;
         case 'operator':
           result = await assignOperatorToTeam(accountPickerMode.teamId, accountId);
           break;
@@ -228,8 +152,6 @@ export function AdminOperationsPage() {
       }
 
       const messages = {
-        admin: 'Administrador vinculado à operação.',
-        leader: 'Líder vinculado à equipe.',
         operator: 'Operador alocado na equipe.',
         strawMan: 'Laranja vinculado à equipe.',
       } as const;
@@ -243,25 +165,13 @@ export function AdminOperationsPage() {
 
   const cardActions: AdminOperationCardActions = {
     busy: actionBusy,
-    onAssignAdministrator: (operationId) => setAccountPickerMode({ kind: 'admin', operationId }),
-    onRemoveAdministrator: (operationId, administratorId) => {
-      void runAction(
-        () => unassignOperationAdministrator(operationId, administratorId),
-        'Administrador removido da operação.',
-      );
-    },
-    onDelete: openDeleteDialog,
-    onCreateTeam: (operationId, name) => {
-      void runAction(() => createOperationTeam(operationId, name), 'Equipe criada.');
-    },
-    onDeleteTeam: (teamId) => {
-      setDeleteTeamId(teamId);
-      setDeleteTeamDialogOpen(true);
-    },
-    onAssignLeader: (teamId) => setAccountPickerMode({ kind: 'leader', teamId }),
-    onUnassignLeader: (teamId) => {
-      void runAction(() => unassignOperationTeamLeader(teamId), 'Líder removido da equipe.');
-    },
+    onAssignAdministrator: noop,
+    onRemoveAdministrator: noop,
+    onDelete: noop,
+    onCreateTeam: noop,
+    onDeleteTeam: noop,
+    onAssignLeader: noop,
+    onUnassignLeader: noop,
     onAssignOperator: (teamId) => setAccountPickerMode({ kind: 'operator', teamId }),
     onUnassignOperator: (teamId, operatorId) => {
       void runAction(
@@ -309,14 +219,6 @@ export function AdminOperationsPage() {
     : null;
 
   const accountPickerTitles = {
-    admin: {
-      title: 'Vincular administrador',
-      subtitle: 'Conta que administrará esta operação.',
-    },
-    leader: {
-      title: 'Vincular líder',
-      subtitle: 'Conta responsável por liderar a equipe.',
-    },
     operator: {
       title: 'Alocar operador',
       subtitle: 'Conta que operará nesta equipe.',
@@ -331,55 +233,20 @@ export function AdminOperationsPage() {
     <>
       <section className="page-header ops-page-header">
         <div>
-          <p className="page-kicker page-kicker-admin">Administração</p>
-          <h1>Todas as operações</h1>
+          <p className="page-kicker">Liderança de equipes</p>
+          <h1>Equipes lideradas</h1>
           <p className="muted page-lead">
-            Gestão completa do repositório: administradores, equipes, operadores, repasses e configuração de gateway.
+            Operações agrupadas com as equipes que você lidera. Gerencie operadores, repasses e configuração de gateway.
           </p>
         </div>
       </section>
 
-      <section className="card ops-card ops-create admin-surface">
-        <div className="card-title-row">
-          <h2>Registrar operação</h2>
-          <span className="post-badge">POST /api/administrator/operations</span>
-        </div>
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="adminOpName">Nome</label>
-            <input
-              id="adminOpName"
-              className="nexus-input"
-              value={createName}
-              onChange={(e) => setCreateName(e.target.value)}
-              placeholder="Ex.: Operação Atlas"
-            />
-          </div>
-          <div className="field span-2">
-            <label htmlFor="adminOpDesc">Descrição</label>
-            <textarea
-              id="adminOpDesc"
-              className="nexus-input"
-              rows={2}
-              value={createDescription}
-              onChange={(e) => setCreateDescription(e.target.value)}
-              placeholder="Contexto e escopo da operação"
-            />
-          </div>
-        </div>
-        <div className="card-actions">
-          <button type="button" className="btn btn-primary" onClick={() => void handleCreate()} disabled={createBusy}>
-            {createBusy ? 'Registrando…' : 'Registrar operação'}
-          </button>
-        </div>
-      </section>
-
-      <section className="card ops-card admin-surface">
+      <section className="card ops-card">
         <div className="toolbar">
           <div className="field grow">
-            <label htmlFor="adminOpSearch">Buscar no sistema</label>
+            <label htmlFor="teamLeaderSearch">Buscar operações</label>
             <input
-              id="adminOpSearch"
+              id="teamLeaderSearch"
               className="nexus-input"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -392,22 +259,22 @@ export function AdminOperationsPage() {
 
         <div className="card-title-row">
           <div className="card-title-group">
-            <h2 className="section-title">Operações do sistema</h2>
-            <span className="post-badge">POST /api/administrator/operations/search</span>
+            <h2 className="section-title">Operações e equipes</h2>
+            <span className="post-badge">POST /api/team-leader/operations/search</span>
           </div>
-          <span className="muted small">{totalItems} registro(s) no repositório</span>
+          <span className="muted small">{totalItems} operação(ões)</span>
         </div>
 
         {items.length === 0 ? (
           <EmptyState
-            title="Nenhuma operação encontrada"
-            message="Registre uma operação acima ou ajuste o filtro de busca."
+            title="Nenhuma equipe liderada"
+            message="Você ainda não lidera nenhuma equipe ou o filtro não retornou resultados."
           />
         ) : (
           <>
             <div className="admin-op-list admin-op-list--single">
               {items.map((op) => (
-                <AdminOperationCard key={op.id} operation={op} scope="global-admin" actions={cardActions} />
+                <AdminOperationCard key={op.id} operation={op} scope="team-leader" actions={cardActions} />
               ))}
             </div>
 
@@ -425,18 +292,16 @@ export function AdminOperationsPage() {
       <AccountPickerModal
         open={pickerKind !== null}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAdministratorAccountsPicker}
+        searchAccounts={searchAccountsPicker}
         title={pickerKind ? accountPickerTitles[pickerKind].title : 'Selecionar conta'}
         subtitle={pickerKind ? accountPickerTitles[pickerKind].subtitle : undefined}
-        disabledAccountIds={pickerKind === 'admin' ? assignDisabledIds : undefined}
-        disabledBadgeText="Já vinculado"
         onSelected={(row) => void handleAccountPicked(row.id, row.username)}
       />
 
       <AccountPickerModal
         open={accountPickerMode?.kind === 'profitShareCut'}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAdministratorAccountsPicker}
+        searchAccounts={searchAccountsPicker}
         title="Conta do repasse"
         subtitle="Beneficiário desta fatia da regra de repasse."
         onSelected={(row) => void handleAccountPicked(row.id, row.username)}
@@ -470,28 +335,6 @@ export function AdminOperationsPage() {
         }}
         onPickAccount={(cutIndex) => setAccountPickerMode({ kind: 'profitShareCut', cutIndex })}
         onSave={(cuts) => void saveProfitShare(cuts)}
-      />
-
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Excluir operação"
-        message="Esta ação remove a operação do sistema. Deseja continuar?"
-        onCancel={() => { setDeleteDialogOpen(false); setDeleteOperationId(''); }}
-        onConfirm={() => void confirmDelete()}
-      />
-
-      <ConfirmDialog
-        open={deleteTeamDialogOpen}
-        title="Excluir equipe"
-        message="Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?"
-        onCancel={() => { setDeleteTeamDialogOpen(false); setDeleteTeamId(''); }}
-        onConfirm={() => {
-          setDeleteTeamDialogOpen(false);
-          const teamId = deleteTeamId;
-          setDeleteTeamId('');
-          if (!teamId) return;
-          void runAction(() => deleteOperationTeam(teamId), 'Equipe excluída.');
-        }}
       />
     </>
   );

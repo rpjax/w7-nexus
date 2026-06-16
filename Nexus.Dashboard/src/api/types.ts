@@ -102,6 +102,16 @@ export type OperationDetails = {
   updatedAt: string;
 };
 
+/** Operação com apenas as equipes lideradas pelo usuário (Team Leader). */
+export type OperationWithLedTeamsDetails = {
+  id: string;
+  name: string;
+  description?: string | null;
+  teams: TeamDetails[];
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type PaymentRow = {
   id: string;
   operationId: string;

@@ -1,5 +1,7 @@
 import type { GatewaySelectionStrategy, OperatorDetails } from '../../api/types';
 
+export type AdminTeamPanelScope = 'full' | 'operation-admin' | 'team-leader';
+
 export type AdminTeamPanelActions = {
   busy: boolean;
   onDeleteTeam: (teamId: string) => void;
