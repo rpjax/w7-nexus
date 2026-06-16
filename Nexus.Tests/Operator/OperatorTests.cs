@@ -131,4 +131,50 @@ public sealed class OperatorTests
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.SearchKeywordTooLong);
     }
+
+    [Fact]
+    public async Task SearchOperationsAsync_OperatorMentionedInProfitShareCut_ReturnsOperation()
+    {
+        var operation = await _ctx.SeedOperationAsync("Profit Share Operation");
+        var team = await _ctx.SeedTeamAsync(operation.Id, operatorIds: new[] { "operator-2" });
+        _ctx.RegisterAccount("operator-1");
+        _ctx.RegisterAccount("operator-2");
+
+        var teamService = _ctx.CreateTeamService();
+        var setRuleResult = await teamService.SetOperatorProfitShareRuleAsync(
+            team.Id,
+            "operator-2",
+            new[] { new ProfitSplit("operator-1", 100m) });
+        Assert.True(setRuleResult.IsSuccess);
+
+        var sut = _ctx.CreateOperator("operator-1");
+
+        var result = await sut.SearchOperationsAsync(new SearchOperatorOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal(operation.Id, result.Value.Items[0].Id);
+    }
+
+    [Fact]
+    public async Task SearchOperationsAsync_OperatorMentionedInPayment_ReturnsOperation()
+    {
+        var operation = await _ctx.SeedOperationAsync("Payment Operation");
+        await _ctx.SeedPaymentAsync(operation.Id, operatorAccountId: "operator-1");
+        var sut = _ctx.CreateOperator("operator-1");
+
+        var result = await sut.SearchOperationsAsync(new SearchOperatorOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal(operation.Id, result.Value.Items[0].Id);
+    }
 }

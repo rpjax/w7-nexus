@@ -10,9 +10,3 @@ public class OperationDetails
     public DateTime CreatedAt { get; init; }
     public DateTime UpdatedAt { get; init; }
 }
-
-public class OperationAdministratorDetails
-{
-    public string AccountId { get; set; } = default!;
-    public string Username { get; init; } = default!;
-}

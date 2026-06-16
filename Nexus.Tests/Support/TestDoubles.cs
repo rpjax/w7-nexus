@@ -18,6 +18,8 @@ using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Contracts;
+using Nexus.Payments.Aggregates;
+using Nexus.Payments.Application.Contracts;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Payments;
 
@@ -145,6 +147,71 @@ internal sealed class InMemoryTeamRepository : ITeamRepository
     public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
 }
 
+internal sealed class InMemoryPaymentRepository : IPaymentRepository
+{
+    private readonly List<Payment> _store = new();
+
+    public IAsyncQueryable<Payment> AsQueryable()
+        => new QueryableToAsyncQueryableAdapter<Payment>(_store.AsQueryable());
+
+    public Task<Payment> CreateAsync(Payment entity)
+    {
+        var persisted = string.IsNullOrWhiteSpace(entity.Id)
+            ? new Payment(
+                Guid.NewGuid().ToString("N"),
+                entity.OperationId,
+                entity.Gateway,
+                entity.GatewayTransactionId,
+                entity.Amount,
+                entity.Status,
+                entity.OperatorAccountId,
+                entity.StrawManAccountId,
+                entity.CreatedAt,
+                entity.PaidAt,
+                entity.RefundedAt,
+                entity.DiedAt,
+                entity.DeathReason)
+            : entity;
+
+        _store.Add(persisted);
+        return Task.FromResult(persisted);
+    }
+
+    async Task IRepository<Payment>.CreateAsync(Payment entity)
+    {
+        await CreateAsync(entity);
+    }
+
+    public Task CreateAsync(IEnumerable<Payment> entities)
+    {
+        _store.AddRange(entities);
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Payment entity)
+    {
+        _store.RemoveAll(x => x.Id == entity.Id);
+        return Task.CompletedTask;
+    }
+
+    public Task<long> DeleteAsync(Expression<Func<Payment, bool>> predicate)
+    {
+        var compiled = predicate.Compile();
+        var removed = _store.RemoveAll(x => compiled(x));
+        return Task.FromResult((long)removed);
+    }
+
+    public Task UpdateAsync(Payment entity)
+    {
+        var index = _store.FindIndex(x => x.Id == entity.Id);
+        if (index >= 0)
+            _store[index] = entity;
+        return Task.CompletedTask;
+    }
+
+    public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+}
+
 internal sealed class InMemoryGatewayCredentialsGroupRepository : IGatewayCredentialsGroupRepository
 {
     private readonly List<GatewayCredentialsGroup> _store = new();
@@ -223,6 +290,7 @@ internal sealed class ActorTestContext
 {
     public InMemoryOperationRepository Operations { get; } = new();
     public InMemoryTeamRepository Teams { get; } = new();
+    public InMemoryPaymentRepository Payments { get; } = new();
     public InMemoryGatewayCredentialsGroupRepository GatewayGroups { get; } = new();
     public InMemoryAccountRepository Accounts { get; } = new();
     public FakeAccountIdValidator AccountIdValidator { get; } = new();
@@ -254,7 +322,7 @@ internal sealed class ActorTestContext
         => new(CreateTeamService());
 
     public OperatorRole CreateOperator(string operatorAccountId)
-        => new(operatorAccountId, Operations, Teams, Accounts);
+        => new(operatorAccountId, Operations, Teams, Accounts, Payments);
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
@@ -306,6 +374,29 @@ internal sealed class ActorTestContext
             CreatedAt: now,
             UpdatedAt: now);
         return await Teams.CreateAsync(team);
+    }
+
+    public async Task<Payment> SeedPaymentAsync(
+        string operationId,
+        string? operatorAccountId = null,
+        string? id = null)
+    {
+        var now = DateTime.UtcNow;
+        var payment = new Payment(
+            Id: id ?? Guid.NewGuid().ToString("N"),
+            OperationId: operationId,
+            Gateway: PaymentGateway.None,
+            GatewayTransactionId: string.Empty,
+            Amount: 100m,
+            Status: PaymentStatus.Pending,
+            OperatorAccountId: operatorAccountId,
+            StrawManAccountId: null,
+            CreatedAt: now,
+            PaidAt: null,
+            RefundedAt: null,
+            DiedAt: null,
+            DeathReason: null);
+        return await Payments.CreateAsync(payment);
     }
 
     public async Task<GatewayCredentialsGroup> SeedGatewayGroupAsync(

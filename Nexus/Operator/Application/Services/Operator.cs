@@ -13,6 +13,7 @@ using Nexus.Operator.Extensions;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;
+using Nexus.Payments.Application.Contracts;
 
 namespace Nexus.Operator.Application.Services;
 
@@ -22,6 +23,7 @@ public class Operator : IOperator
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
+    private IPaymentRepository _payments { get; }
     private ITeamGatewayDetailsLoader? _teamGatewayDetailsLoader { get; }
     private IHttpContextAccessor? _httpContextAccessor { get; }
 
@@ -29,12 +31,14 @@ public class Operator : IOperator
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts,
+        IPaymentRepository payments,
         ITeamGatewayDetailsLoader teamGatewayDetailsLoader,
         IHttpContextAccessor httpContextAccessor)
     {
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
+        _payments = payments;
         _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
         _httpContextAccessor = httpContextAccessor;
     }
@@ -43,12 +47,14 @@ public class Operator : IOperator
         string operatorAccountId,
         IOperationRepository operations,
         ITeamRepository teams,
-        IAccountRepository accounts)
+        IAccountRepository accounts,
+        IPaymentRepository payments)
     {
         _operatorAccountId = operatorAccountId;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
+        _payments = payments;
     }
 
     public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -99,13 +105,12 @@ public class Operator : IOperator
         if (builder.ContainsError)
             return builder.Build();
 
-        var assignedOperationIds = await _teams.AsQueryable()
-            .Where(t => t.OperatorIds.Contains(operatorAccountId))
-            .Select(t => t.OperationId)
-            .Distinct()
-            .ToArrayAsync();
+        var visibleOperationIds = await OperatorOperationResolver.ResolveOperationIdsAsync(
+            operatorAccountId,
+            _teams,
+            _payments);
 
-        if (assignedOperationIds.Length == 0)
+        if (visibleOperationIds.Length == 0)
         {
             return builder
                 .WithValue(new SearchOperationsResponse
@@ -119,7 +124,7 @@ public class Operator : IOperator
         }
 
         var query = _operations.AsQueryable()
-            .Where(o => assignedOperationIds.Contains(o.Id));
+            .Where(o => visibleOperationIds.Contains(o.Id));
 
         if (!string.IsNullOrWhiteSpace(keyword))
         {
