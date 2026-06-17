@@ -1,7 +1,7 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
+using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.OperationAdministrators.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;

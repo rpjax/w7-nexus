@@ -180,8 +180,8 @@ public sealed class Account
 
     private static string DescribeRole(string role) => role switch
     {
-        global::Nexus.Authorizations.Roles.Administrator => "administrador",
-        global::Nexus.Authorizations.Roles.Operator => "operador",
+        global::Nexus.Authorization.Roles.Administrator => "administrador",
+        global::Nexus.Authorization.Roles.Operator => "operador",
         _ => role,
     };
 }

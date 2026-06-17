@@ -1,6 +1,6 @@
 using Nexus.Accounts.Errors;
-using Nexus.Authentications.Application.Requests;
-using Nexus.Authorizations;
+using Nexus.Authentication.Application.Requests;
+using Nexus.Authorization;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Support;
 using Xunit;

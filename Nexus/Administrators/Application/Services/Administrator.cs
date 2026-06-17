@@ -3,7 +3,7 @@ using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Administrators.Application.Services;
 

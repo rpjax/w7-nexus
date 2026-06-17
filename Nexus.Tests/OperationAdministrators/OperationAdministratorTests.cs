@@ -1,5 +1,5 @@
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
+using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.OperationAdministrators.Application.Requests;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;

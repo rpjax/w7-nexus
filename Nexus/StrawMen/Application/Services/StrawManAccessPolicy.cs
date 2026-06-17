@@ -1,7 +1,7 @@
 using Aidan.Core.Errors;
-using Nexus.Authorizations;
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
+using Nexus.Authorization;
+using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.StrawMen.Application.Contracts;
 
 namespace Nexus.StrawMen.Application.Services;

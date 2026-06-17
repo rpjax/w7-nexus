@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
-using Nexus.Authorizations.Application.Contracts;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 
 namespace Nexus.Administrators.Presentation;

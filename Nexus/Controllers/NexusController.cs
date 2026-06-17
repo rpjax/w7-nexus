@@ -1,8 +1,8 @@
 using Aidan.Core.Patterns;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Authorizations.Application.Contracts;
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Contracts;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Controllers;
 

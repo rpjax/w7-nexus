@@ -1,4 +1,4 @@
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.TeamLeaders.Application.Contracts;
 

@@ -1,9 +1,9 @@
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
 using Nexus.TeamLeaders.Application.Requests;
 using Nexus.Operations.Errors;
 using Nexus.Tests.Support;
 using Xunit;
+using Nexus.Authorization.Errors;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Tests.TeamLeaders;
 

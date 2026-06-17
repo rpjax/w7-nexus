@@ -3,8 +3,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Errors;
-using Nexus.Authorizations.Application.Services;
-using Nexus.Authorizations.Errors;
+using Nexus.Authorization.Application.Services;
+using Nexus.Authorization.Errors;
 using Nexus.Tests.Accounts;
 using Xunit;
 

@@ -2,8 +2,8 @@ using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Infrastructure.Password;
 using Nexus.Accounts.Infrastructure.Persistance;
-using Nexus.Authentications.Application.Contracts;
-using Nexus.Authentications.Application.Services;
+using Nexus.Authentication.Application.Contracts;
+using Nexus.Authentication.Application.Services;
 
 namespace Nexus.Composition;
 

@@ -1,5 +1,5 @@
 using Nexus.Administrators.Composition;
-using Nexus.Authorizations.Composition;
+using Nexus.Authorization.Composition;
 using Nexus.OperationAdministrators.Composition;
 using Nexus.Operators.Composition;
 using Nexus.StrawMen.Composition;

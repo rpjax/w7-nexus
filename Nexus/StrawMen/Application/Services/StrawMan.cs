@@ -1,5 +1,5 @@
 using Aidan.Core.Patterns;
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 
 namespace Nexus.StrawMen.Application.Services;

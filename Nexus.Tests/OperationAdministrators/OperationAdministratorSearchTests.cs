@@ -1,8 +1,8 @@
 using Nexus.OperationAdministrators.Application.Requests;
 using Nexus.Operations.Errors;
-using Nexus.Authorizations.Errors;
 using Nexus.Tests.Support;
 using Xunit;
+using Nexus.Authorization.Errors;
 
 namespace Nexus.Tests.OperationAdministrators;
 

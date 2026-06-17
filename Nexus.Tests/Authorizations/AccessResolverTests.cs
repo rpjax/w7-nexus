@@ -1,7 +1,4 @@
 using Nexus.Accounts.Aggregates;
-using Nexus.Authorizations;
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
 using Nexus.OperationAdministrators.Application.Services;
 using Nexus.Administrators.Application.Services;
 using Nexus.TeamLeaders.Application.Services;
@@ -11,6 +8,9 @@ using Nexus.Operations.Errors;
 using Nexus.Tests.Accounts;
 using Nexus.Tests.Support;
 using Xunit;
+using Nexus.Authorization;
+using Nexus.Authorization.Errors;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Tests.Authorizations;
 

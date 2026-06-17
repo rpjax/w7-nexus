@@ -1,4 +1,4 @@
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Models;
 using Nexus.Operators.Application.Requests;
 using Nexus.Operators.Application.Responses;
 

@@ -2,10 +2,10 @@ using Aidan.Core.Linq.Extensions;
 using Nexus.Administrators.Application.Requests;
 using AdminAssignOperatorToTeamRequest = Nexus.Administrators.Application.Requests.AssignOperatorToTeamRequest;
 using AdminSearchOperatorsToAssignRequest = Nexus.Administrators.Application.Requests.SearchOperatorsToAssignRequest;
-using Nexus.Authorizations;
 using TeamLeaderSearchOperatorsToAssignRequest = Nexus.TeamLeaders.Application.Requests.SearchOperatorsToAssignRequest;
 using Nexus.Tests.Support;
 using Xunit;
+using Nexus.Authorization;
 
 namespace Nexus.Tests.Administrators;
 

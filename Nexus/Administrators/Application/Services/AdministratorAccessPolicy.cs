@@ -1,8 +1,8 @@
 using Aidan.Core.Errors;
-using Nexus.Authorizations;
-using Nexus.Authorizations.Application.Models;
-using Nexus.Authorizations.Errors;
 using Nexus.Administrators.Application.Contracts;
+using Nexus.Authorization;
+using Nexus.Authorization.Errors;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Administrators.Application.Services;
 

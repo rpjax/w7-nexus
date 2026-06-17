@@ -1,5 +1,5 @@
 using Aidan.Core.Patterns;
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Models;
 using Nexus.TeamLeaders.Application.Requests;
 using Nexus.TeamLeaders.Application.Responses;
 

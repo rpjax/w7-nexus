@@ -7,7 +7,7 @@ using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Mapping;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
-using Nexus.Authorizations;
+using Nexus.Authorization;
 
 namespace Nexus.Administrators.Application.Services;
 

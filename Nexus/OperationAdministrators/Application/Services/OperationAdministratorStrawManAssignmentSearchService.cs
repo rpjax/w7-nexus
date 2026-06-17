@@ -3,7 +3,7 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Errors;
-using Nexus.Authorizations;
+using Nexus.Authorization;
 using Nexus.OperationAdministrators.Application.Contracts;
 using Nexus.OperationAdministrators.Application.Mapping;
 using Nexus.OperationAdministrators.Application.Requests;

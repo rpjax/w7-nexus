@@ -1,7 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
-using Nexus.Authentications.Application.Services.Models;
+using Nexus.Authentication.Application.Services.Models;
 
 namespace Nexus.Composition;
 

@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Authorizations.Application.Contracts;
-using Nexus.Authorizations.Application.Models;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 using Nexus.OperationAdministrators.Application.Contracts;
 using Nexus.OperationAdministrators.Application.Requests;

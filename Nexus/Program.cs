@@ -25,7 +25,6 @@ builder.Services
 
 var app = builder.Build();
 
-await app.BackfillGatewayCredentialEnabledFieldsAsync();
 app.UseNexusPipeline();
 
 app.Run();
