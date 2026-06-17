@@ -111,10 +111,9 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
   }
 
   return (
-    <div className="admin-op-subsection admin-op-subsection--gateway">
-      <div className="admin-op-subsection-head">
-        <span className="admin-op-subsection-label">Gateway</span>
-      </div>
+    <div className="admin-op-gateway-block">
+      <h6 className="admin-op-col-title">Gateway</h6>
+      <p className="admin-op-col-desc muted small">Estratégia de roteamento e credenciais.</p>
 
       <div className={`admin-op-gateway-status admin-op-gateway-status--${status.tone}`}>
         {status.message}

@@ -227,142 +227,151 @@ body {
     overflow: hidden;
 }
 
-.admin-op-card--compact .admin-op-card-header {
-    padding-bottom: 0.75rem;
-}
-
-.admin-op-card-header {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.85rem;
-    padding: 1rem 1.1rem 0.85rem;
-}
-
-.admin-op-card-mark {
-    flex-shrink: 0;
+/* ── Operação: identidade ── */
+.admin-op-identity {
     display: grid;
-    place-items: center;
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 10px;
-    background: linear-gradient(145deg, rgba(242, 187, 90, 0.22), rgba(242, 187, 90, 0.08));
-    border: 1px solid rgba(242, 187, 90, 0.22);
-    font-size: 1rem;
-    font-weight: 700;
-    color: #ffe8b8;
+    gap: 0.85rem;
+    padding: 1rem 1.1rem;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.1);
+    background: rgba(255, 255, 255, 0.015);
 }
 
-.admin-op-card-heading {
-    min-width: 0;
-    flex: 1;
-}
-
-.admin-op-card-title-row {
+.admin-op-identity__primary {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.55rem 1rem;
-    margin-bottom: 0.45rem;
+    gap: 0.65rem 0.85rem;
+}
+
+.admin-op-level-badge {
+    flex-shrink: 0;
+    display: inline-flex;
+    align-items: center;
+    padding: 0.2rem 0.55rem;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: #f2d18a;
+    background: rgba(242, 187, 90, 0.12);
+    border: 1px solid rgba(242, 187, 90, 0.28);
+}
+
+.admin-op-level-badge--team {
+    color: #b8cff8;
+    background: rgba(74, 134, 255, 0.12);
+    border-color: rgba(74, 134, 255, 0.28);
+}
+
+.admin-op-identity__title-block {
+    min-width: 0;
+    flex: 1 1 14rem;
 }
 
 .admin-op-card-title {
-    margin: 0;
-    font-size: 1.12rem;
+    margin: 0 0 0.25rem;
+    font-size: 1.15rem;
     font-weight: 650;
     letter-spacing: -0.02em;
     line-height: 1.2;
 }
 
-.admin-op-card-stats {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.35rem;
+.admin-op-identity__desc {
+    margin: 0;
+    font-size: 0.9rem;
+    line-height: 1.45;
+    max-width: 52ch;
 }
 
-.admin-op-stat {
-    display: inline-flex;
-    align-items: baseline;
-    gap: 0.28rem;
-    padding: 0.15rem 0.5rem;
-    border-radius: 999px;
+.admin-op-identity__facts {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(9rem, 1fr));
+    gap: 0.55rem 1rem;
+    margin: 0;
+}
+
+.admin-op-fact {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.admin-op-fact dt {
+    margin: 0;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(156, 176, 216, 0.72);
+}
+
+.admin-op-fact dd {
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.admin-op-copy-id {
+    min-height: 1.65rem;
+    padding-inline: 0.45rem;
+}
+
+.admin-op-identity__stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.admin-op-summary-stat {
+    display: grid;
+    gap: 0.05rem;
+    min-width: 5.5rem;
+    padding: 0.45rem 0.65rem;
+    border-radius: 10px;
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid rgba(132, 162, 220, 0.12);
 }
 
-.admin-op-stat-warn {
-    border-color: rgba(255, 95, 128, 0.32);
+.admin-op-summary-stat--warn {
+    border-color: rgba(255, 95, 128, 0.35);
     background: rgba(255, 95, 128, 0.08);
 }
 
-.admin-op-stat-value {
-    font-size: 0.84rem;
+.admin-op-summary-stat__value {
+    font-size: 1.15rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    line-height: 1;
 }
 
-.admin-op-stat-label {
-    font-size: 0.65rem;
+.admin-op-summary-stat__label {
+    font-size: 0.68rem;
     font-weight: 600;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.82);
+    color: rgba(156, 176, 216, 0.85);
 }
 
-.admin-op-card-meta {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.35rem 0.5rem;
+/* ── Layout operação ── */
+.admin-op-layout {
+    display: grid;
+    gap: 0;
 }
 
-.admin-op-meta-chip {
-    display: inline-flex;
-    align-items: center;
-    max-width: 100%;
-    padding: 0.18rem 0.5rem;
-    border-radius: 999px;
-    font-size: 0.74rem;
-    line-height: 1.3;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(132, 162, 220, 0.1);
-    color: var(--text);
+.admin-op-layout--split {
+    grid-template-columns: 1fr;
 }
 
-.admin-op-meta-chip--grow {
-    flex: 1 1 12rem;
-    min-width: 0;
-    border-radius: 8px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.admin-op-meta-chip--muted {
-    color: rgba(156, 176, 216, 0.88);
-    background: transparent;
-    border-color: transparent;
-    padding-inline: 0;
-}
-
-.admin-op-copy-id {
-    min-height: 1.75rem;
-    padding-inline: 0.5rem;
-}
-
-.admin-op-card-body {
-    border-top: 1px solid rgba(132, 162, 220, 0.08);
-}
-
-.admin-op-section {
+.admin-op-aside {
     padding: 0.85rem 1.1rem;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.08);
+    background: rgba(0, 0, 0, 0.08);
 }
 
-.admin-op-section + .admin-op-section {
-    border-top: 1px solid rgba(132, 162, 220, 0.08);
-}
-
-.admin-op-section-head {
+.admin-op-aside__head {
     display: flex;
     flex-wrap: wrap;
     align-items: flex-start;
@@ -371,37 +380,64 @@ body {
     margin-bottom: 0.65rem;
 }
 
+.admin-op-main {
+    padding: 0.85rem 1.1rem 1rem;
+    min-width: 0;
+}
+
+.admin-op-main__head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.65rem 1rem;
+    margin-bottom: 0.85rem;
+}
+
 .admin-op-section-title {
     margin: 0;
-    font-size: 0.88rem;
+    font-size: 0.92rem;
     font-weight: 650;
-    letter-spacing: 0.01em;
 }
 
 .admin-op-section-desc {
-    margin: 0.15rem 0 0;
-    max-width: 42ch;
+    margin: 0.2rem 0 0;
+    max-width: 44ch;
+    line-height: 1.4;
 }
 
 .admin-op-empty {
     margin: 0;
 }
 
+.admin-op-create-team {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    flex: 1 1 14rem;
+    max-width: 22rem;
+}
+
+.admin-op-create-team .nexus-input {
+    flex: 1 1 9rem;
+    min-width: 0;
+}
+
+/* ── Pessoas (lista simples) ── */
 .admin-op-person-list {
     list-style: none;
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.25rem;
+    gap: 0.15rem;
 }
 
 .admin-op-person {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
-    padding: 0.45rem 0.35rem;
+    gap: 0.6rem;
+    padding: 0.4rem 0.25rem;
     border-radius: 8px;
-    transition: background 0.12s ease;
 }
 
 .admin-op-person:hover {
@@ -422,211 +458,217 @@ body {
     color: #c8dcff;
 }
 
+.admin-op-person-avatar--sm {
+    width: 1.55rem;
+    height: 1.55rem;
+    font-size: 0.7rem;
+}
+
 .admin-op-person-meta {
     display: grid;
-    gap: 0.05rem;
+    gap: 0.04rem;
     min-width: 0;
     flex: 1;
 }
 
 .admin-op-person-name {
+    display: block;
     font-weight: 600;
-    font-size: 0.88rem;
+    font-size: 0.86rem;
     line-height: 1.2;
 }
 
 .admin-op-person-id {
-    font-size: 0.72rem;
-    color: rgba(156, 176, 216, 0.78);
+    display: block;
+    font-size: 0.7rem;
+    color: rgba(156, 176, 216, 0.75);
 }
 
 .admin-op-person-action {
     flex-shrink: 0;
 }
 
-.admin-op-teams-rail {
+/* ── Equipes ── */
+.admin-op-team-stack {
     display: grid;
-    gap: 0;
+    gap: 0.85rem;
 }
 
-.admin-op-team {
-    display: grid;
-    grid-template-columns: 1.25rem minmax(0, 1fr);
-    gap: 0 0.65rem;
-    padding: 0.65rem 0 0.85rem;
+.admin-op-team-card {
+    border: 1px solid rgba(132, 162, 220, 0.12);
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.12);
+    overflow: hidden;
 }
 
-.admin-op-team:not(.admin-op-team--last) {
-    border-bottom: 1px solid rgba(132, 162, 220, 0.07);
-}
-
-.admin-op-team-rail {
-    position: relative;
+.admin-op-team-card__head {
     display: flex;
-    justify-content: center;
-    padding-top: 0.35rem;
-}
-
-.admin-op-team-rail::before {
-    content: "";
-    position: absolute;
-    top: 0.65rem;
-    bottom: -0.85rem;
-    width: 2px;
-    border-radius: 999px;
-    background: linear-gradient(180deg, rgba(74, 134, 255, 0.45), rgba(74, 134, 255, 0.08));
-}
-
-.admin-op-team--last .admin-op-team-rail::before {
-    bottom: 50%;
-}
-
-.admin-op-team-rail-dot {
-    position: relative;
-    z-index: 1;
-    width: 0.55rem;
-    height: 0.55rem;
-    border-radius: 999px;
-    background: #6a9cff;
-    box-shadow: 0 0 0 3px rgba(74, 134, 255, 0.18);
-}
-
-.admin-op-team-body {
-    min-width: 0;
-}
-
-.admin-op-team-header {
-    display: flex;
-    align-items: flex-start;
+    flex-wrap: wrap;
+    align-items: center;
     justify-content: space-between;
-    gap: 0.5rem;
-    margin-bottom: 0.45rem;
+    gap: 0.55rem 0.75rem;
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.08);
+    background: rgba(74, 134, 255, 0.04);
 }
 
-.admin-op-team-heading {
+.admin-op-team-card__identity {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem 0.65rem;
     min-width: 0;
 }
 
 .admin-op-team-name {
-    margin: 0 0 0.1rem;
+    margin: 0;
     font-size: 0.95rem;
     font-weight: 650;
 }
 
 .admin-op-team-id {
-    font-size: 0.7rem;
+    display: block;
+    font-size: 0.68rem;
     color: rgba(156, 176, 216, 0.72);
 }
 
-.admin-op-team-count {
-    flex-shrink: 0;
-    font-size: 0.68rem;
-    font-weight: 600;
-    padding: 0.12rem 0.4rem;
-    border-radius: 999px;
-    color: #b8cff8;
-    background: rgba(74, 134, 255, 0.1);
-    border: 1px solid rgba(74, 134, 255, 0.16);
-}
-
-.admin-op-team-leader-value {
-    font-size: 0.84rem;
-    font-weight: 600;
-}
-
-.admin-op-team-sections {
-    display: grid;
-    gap: 0.65rem;
-}
-
-.admin-op-subsection {
-    display: grid;
-    gap: 0.45rem;
-}
-
-.admin-op-subsection-head {
+.admin-op-team-card__snapshot {
     display: flex;
     flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.4rem 0.65rem;
-}
-
-.admin-op-subsection-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.78);
-}
-
-.admin-op-operator-list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: grid;
     gap: 0.35rem;
+    flex: 1 1 auto;
+    justify-content: center;
 }
 
-.admin-op-operator {
-    display: grid;
-    gap: 0.35rem;
-    padding: 0.35rem 0;
-}
-
-.admin-op-operator + .admin-op-operator {
-    border-top: 1px solid rgba(132, 162, 220, 0.06);
-    padding-top: 0.55rem;
-}
-
-.admin-op-profit-list {
-    list-style: none;
-    margin: 0;
-    padding: 0 0 0 2.5rem;
-    display: grid;
-    gap: 0.3rem;
-}
-
-.admin-op-profit-item {
-    display: grid;
-    gap: 0.18rem;
-}
-
-.admin-op-profit-track {
-    height: 0.3rem;
+.admin-op-team-chip {
+    font-size: 0.72rem;
+    padding: 0.15rem 0.45rem;
     border-radius: 999px;
-    background: rgba(132, 162, 220, 0.1);
-    overflow: hidden;
-}
-
-.admin-op-profit-fill {
-    display: block;
-    height: 100%;
-    border-radius: inherit;
-    background: linear-gradient(90deg, rgba(74, 134, 255, 0.85), rgba(101, 193, 141, 0.75));
-}
-
-.admin-op-profit-meta {
-    display: flex;
-    align-items: baseline;
-    justify-content: space-between;
-    gap: 0.5rem;
-    font-size: 0.76rem;
-}
-
-.admin-op-profit-user {
-    color: rgba(156, 176, 216, 0.9);
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(132, 162, 220, 0.1);
+    color: rgba(156, 176, 216, 0.92);
     white-space: nowrap;
 }
 
-.admin-op-profit-pct {
-    flex-shrink: 0;
+.admin-op-team-chip--gateway {
+    color: #f2d18a;
+    border-color: rgba(242, 187, 90, 0.22);
+    background: rgba(242, 187, 90, 0.08);
+}
+
+.admin-op-team-grid {
+    display: grid;
+    gap: 0;
+}
+
+.admin-op-team-col {
+    padding: 0.75rem 0.85rem;
+    min-width: 0;
+}
+
+.admin-op-team-col + .admin-op-team-col {
+    border-top: 1px solid rgba(132, 162, 220, 0.07);
+}
+
+.admin-op-col-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.45rem 0.65rem;
+    margin-bottom: 0.55rem;
+}
+
+.admin-op-col-title {
+    margin: 0;
+    font-size: 0.78rem;
     font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: #b8cff8;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(156, 176, 216, 0.88);
+}
+
+.admin-op-col-desc {
+    margin: 0.15rem 0 0;
+    font-size: 0.78rem;
+    line-height: 1.35;
+}
+
+.admin-op-leader-slot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.55rem;
+}
+
+.admin-op-leader-slot .admin-op-empty {
+    flex: 1 1 100%;
+}
+
+/* ── Tabela de operadores ── */
+.admin-op-table-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.admin-op-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.84rem;
+}
+
+.admin-op-table th {
+    text-align: left;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: rgba(156, 176, 216, 0.72);
+    padding: 0 0.35rem 0.45rem;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.12);
+}
+
+.admin-op-table td {
+    padding: 0.5rem 0.35rem;
+    vertical-align: top;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.06);
+}
+
+.admin-op-table tbody tr:last-child td {
+    border-bottom: 0;
+}
+
+.admin-op-table-person {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 8rem;
+}
+
+.admin-op-table-actions {
+    text-align: right;
+    white-space: nowrap;
+}
+
+.admin-op-table-actions .btn + .btn {
+    margin-left: 0.2rem;
+}
+
+.admin-op-repasse-summary {
+    display: block;
+    font-weight: 600;
+    font-size: 0.82rem;
+    margin-bottom: 0.15rem;
+}
+
+.admin-op-profit-inline {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.74rem;
+    color: rgba(156, 176, 216, 0.88);
+    display: grid;
+    gap: 0.1rem;
 }
 
 .admin-op-card-footer {
@@ -637,54 +679,58 @@ body {
     border-top: 1px solid rgba(132, 162, 220, 0.08);
 }
 
-@media (min-width: 720px) {
-    .admin-op-card-meta {
-        padding-right: 1rem;
+@media (min-width: 840px) {
+    .admin-op-identity {
+        grid-template-columns: 1fr auto;
+        grid-template-areas:
+            "primary stats"
+            "facts facts";
+        align-items: start;
+    }
+
+    .admin-op-identity__primary { grid-area: primary; }
+    .admin-op-identity__stats {
+        grid-area: stats;
+        justify-content: flex-end;
+    }
+    .admin-op-identity__facts { grid-area: facts; }
+
+    .admin-op-layout--split {
+        grid-template-columns: minmax(13rem, 17rem) minmax(0, 1fr);
+    }
+
+    .admin-op-aside {
+        border-bottom: 0;
+        border-right: 1px solid rgba(132, 162, 220, 0.08);
+    }
+
+    .admin-op-team-grid--full {
+        grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 1fr);
+    }
+
+    .admin-op-team-grid--structure-gateway {
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    }
+
+    .admin-op-team-grid--full .admin-op-team-col + .admin-op-team-col,
+    .admin-op-team-grid--structure-gateway .admin-op-team-col + .admin-op-team-col {
+        border-top: 0;
+        border-left: 1px solid rgba(132, 162, 220, 0.07);
+    }
+}
+
+@media (min-width: 1100px) {
+    .admin-op-main__head {
+        align-items: center;
+    }
+
+    .admin-op-create-team {
+        max-width: 26rem;
     }
 }
 
 .admin-op-list--single {
     grid-template-columns: 1fr !important;
-}
-
-.admin-op-create-team {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    margin-bottom: 0.75rem;
-}
-
-.admin-op-create-team .nexus-input {
-    flex: 1 1 12rem;
-    min-width: 0;
-}
-
-.admin-op-team-actions-top {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: flex-end;
-    gap: 0.35rem;
-}
-
-.admin-op-inline-actions {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.4rem;
-}
-
-.admin-op-operator-head {
-    display: flex;
-    align-items: center;
-    gap: 0.55rem;
-}
-
-.admin-op-operator-actions {
-    margin-left: auto;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.3rem;
 }
 
 .admin-op-gateway-strategy {
@@ -829,7 +875,8 @@ body {
     font-size: 0.88rem;
 }
 
-.admin-op-subsection--gateway .admin-op-gateway-status {
+.admin-op-subsection--gateway .admin-op-gateway-status,
+.admin-op-gateway-block .admin-op-gateway-status {
     margin-bottom: 0.55rem;
 }
 

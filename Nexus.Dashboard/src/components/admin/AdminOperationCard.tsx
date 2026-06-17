@@ -70,7 +70,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
   const operatorCount = countOperators(teams);
   const description = operation.description?.trim();
   const panelScope = teamPanelScope(scope);
-  const compact = scope === 'team-leader';
+  const showAdminSection = scope === 'global-admin';
 
   async function copyId() {
     try {
@@ -105,65 +105,69 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
   };
 
   return (
-    <article className={`admin-op-card${compact ? ' admin-op-card--compact' : ''}`}>
-      <header className="admin-op-card-header">
-        <span className="admin-op-card-mark" aria-hidden="true">{personInitial(operation.name)}</span>
-        <div className="admin-op-card-heading">
-          <div className="admin-op-card-title-row">
+    <article className={`admin-op-card admin-op-card--${scope}`}>
+      <header className="admin-op-identity">
+        <div className="admin-op-identity__primary">
+          <span className="admin-op-level-badge">Operação</span>
+          <div className="admin-op-identity__title-block">
             <h3 className="admin-op-card-title">{operation.name}</h3>
-            <div className="admin-op-card-stats">
-              {scope === 'global-admin' ? (
-                <span className={`admin-op-stat ${adminCount === 0 ? 'admin-op-stat-warn' : ''}`}>
-                  <span className="admin-op-stat-value">{adminCount}</span>
-                  <span className="admin-op-stat-label">Admin{adminCount === 1 ? '' : 's'}</span>
-                </span>
-              ) : null}
-              <span className="admin-op-stat">
-                <span className="admin-op-stat-value">{teamCount}</span>
-                <span className="admin-op-stat-label">
-                  {scope === 'team-leader' ? 'Equipe' : 'Equipe'}{teamCount === 1 ? '' : 's'}
-                </span>
-              </span>
-              {scope !== 'operation-admin' ? (
-                <span className="admin-op-stat">
-                  <span className="admin-op-stat-value">{operatorCount}</span>
-                  <span className="admin-op-stat-label">Operador{operatorCount === 1 ? '' : 'es'}</span>
-                </span>
-              ) : null}
-            </div>
+            {description ? (
+              <p className="admin-op-identity__desc">{description}</p>
+            ) : (
+              <p className="admin-op-identity__desc muted">Sem descrição cadastrada.</p>
+            )}
           </div>
+        </div>
 
-          <div className="admin-op-card-meta">
-            <span className="admin-op-meta-chip mono" title={operation.id}>
-              {shortId(operation.id, 22)}
-            </span>
-            <button type="button" className="btn btn-ghost btn-small admin-op-copy-id" onClick={() => void copyId()}>
-              Copiar ID
-            </button>
-            {!compact && description ? (
-              <span className="admin-op-meta-chip admin-op-meta-chip--grow">{description}</span>
-            ) : null}
-            <span className="admin-op-meta-chip admin-op-meta-chip--muted">
-              Criada {formatDateTime(operation.createdAt)}
-            </span>
-            {!compact ? (
-              <span className="admin-op-meta-chip admin-op-meta-chip--muted">
-                Atualizada {formatDateTime(operation.updatedAt)}
-              </span>
-            ) : null}
+        <dl className="admin-op-identity__facts">
+          <div className="admin-op-fact">
+            <dt>ID</dt>
+            <dd className="mono" title={operation.id}>
+              {shortId(operation.id, 24)}
+              <button type="button" className="btn btn-ghost btn-small admin-op-copy-id" onClick={() => void copyId()}>
+                Copiar
+              </button>
+            </dd>
           </div>
+          <div className="admin-op-fact">
+            <dt>Criada</dt>
+            <dd>{formatDateTime(operation.createdAt)}</dd>
+          </div>
+          {scope !== 'team-leader' ? (
+            <div className="admin-op-fact">
+              <dt>Atualizada</dt>
+              <dd>{formatDateTime(operation.updatedAt)}</dd>
+            </div>
+          ) : null}
+        </dl>
+
+        <div className="admin-op-identity__stats" aria-label="Resumo da operação">
+          {scope === 'global-admin' ? (
+            <div className={`admin-op-summary-stat${adminCount === 0 ? ' admin-op-summary-stat--warn' : ''}`}>
+              <span className="admin-op-summary-stat__value">{adminCount}</span>
+              <span className="admin-op-summary-stat__label">Administradores</span>
+            </div>
+          ) : null}
+          <div className="admin-op-summary-stat">
+            <span className="admin-op-summary-stat__value">{teamCount}</span>
+            <span className="admin-op-summary-stat__label">Equipes</span>
+          </div>
+          {scope !== 'operation-admin' ? (
+            <div className="admin-op-summary-stat">
+              <span className="admin-op-summary-stat__value">{operatorCount}</span>
+              <span className="admin-op-summary-stat__label">Operadores</span>
+            </div>
+          ) : null}
         </div>
       </header>
 
-      <div className="admin-op-card-body">
-        {scope === 'global-admin' ? (
-          <section className="admin-op-section">
-            <div className="admin-op-section-head">
+      <div className={`admin-op-layout${showAdminSection ? ' admin-op-layout--split' : ''}`}>
+        {showAdminSection ? (
+          <aside className="admin-op-aside">
+            <div className="admin-op-aside__head">
               <div>
                 <h4 className="admin-op-section-title">Administradores</h4>
-                <p className="admin-op-section-desc muted small">
-                  Contas com permissão para gerenciar esta operação.
-                </p>
+                <p className="admin-op-section-desc muted small">Quem administra esta operação.</p>
               </div>
               <button
                 type="button"
@@ -198,61 +202,57 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
                 ))}
               </ul>
             )}
-          </section>
+          </aside>
         ) : null}
 
-        <section className="admin-op-section admin-op-section--teams">
-          <div className="admin-op-section-head">
+        <section className="admin-op-main">
+          <div className="admin-op-main__head">
             <div>
-              <h4 className="admin-op-section-title">
-                {scope === 'team-leader' ? 'Equipes lideradas' : 'Equipes'}
-              </h4>
-              {!compact ? (
-                <p className="admin-op-section-desc muted small">
-                  {scope === 'global-admin' && 'Líderes, operadores, repasses e gateway por equipe.'}
-                  {scope === 'operation-admin' && 'Estrutura, líderes e configuração de gateway.'}
-                </p>
-              ) : (
-                <p className="admin-op-section-desc muted small">Operadores e repasses das suas equipes.</p>
-              )}
+              <h4 className="admin-op-section-title">Equipes</h4>
+              <p className="admin-op-section-desc muted small">
+                {scope === 'global-admin' && 'Cada equipe agrupa líder, operadores e configuração de gateway.'}
+                {scope === 'operation-admin' && 'Defina líderes e configure gateway por equipe.'}
+                {scope === 'team-leader' && 'Suas equipes nesta operação — operadores e repasses.'}
+              </p>
             </div>
-          </div>
 
-          {scope !== 'team-leader' ? (
-            <div className="admin-op-create-team">
-              <input
-                className="nexus-input"
-                value={newTeamName}
-                onChange={(e) => setNewTeamName(e.target.value)}
-                placeholder="Nome da nova equipe…"
-                onKeyDown={(e) => { if (e.key === 'Enter') submitCreateTeam(); }}
-              />
-              <button
-                type="button"
-                className="btn btn-primary btn-small"
-                disabled={actions.busy || !newTeamName.trim()}
-                onClick={submitCreateTeam}
-              >
-                Criar equipe
-              </button>
-            </div>
-          ) : null}
+            {scope !== 'team-leader' ? (
+              <div className="admin-op-create-team">
+                <input
+                  className="nexus-input"
+                  value={newTeamName}
+                  onChange={(e) => setNewTeamName(e.target.value)}
+                  placeholder="Nova equipe…"
+                  aria-label="Nome da nova equipe"
+                  onKeyDown={(e) => { if (e.key === 'Enter') submitCreateTeam(); }}
+                />
+                <button
+                  type="button"
+                  className="btn btn-primary btn-small"
+                  disabled={actions.busy || !newTeamName.trim()}
+                  onClick={submitCreateTeam}
+                >
+                  Criar
+                </button>
+              </div>
+            ) : null}
+          </div>
 
           {teamCount === 0 ? (
             <p className="admin-op-empty muted small">
               {scope === 'team-leader'
                 ? 'Nenhuma equipe liderada nesta operação.'
-                : 'Nenhuma equipe vinculada a esta operação.'}
+                : 'Nenhuma equipe vinculada. Crie a primeira acima.'}
             </p>
           ) : (
-            <div className="admin-op-teams-rail">
+            <div className="admin-op-team-stack">
               {teams.map((team, index) => (
                 <AdminTeamPanel
                   key={team.id}
                   team={team}
                   scope={panelScope}
                   actions={teamActions}
-                  isLast={index === teams.length - 1}
+                  index={index + 1}
                 />
               ))}
             </div>
