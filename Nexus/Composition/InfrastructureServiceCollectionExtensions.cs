@@ -1,7 +1,7 @@
 using Microsoft.AspNetCore.DataProtection;
 using Nexus.AppHost;
 using Nexus.AppHost.Contracts;
-using Nexus.Authentication.Application.Services.Models;
+using Nexus.Authentications.Application.Services.Models;
 
 namespace Nexus.Composition;
 

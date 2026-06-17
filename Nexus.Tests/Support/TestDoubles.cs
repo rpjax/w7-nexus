@@ -5,26 +5,26 @@ using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
-using OperationAdministratorRole = Nexus.OperationAdministrator.Application.Services.OperationAdministrator;
-using Nexus.TeamLeader.Application.Services;
-using TeamLeaderRole = Nexus.TeamLeader.Application.Services.TeamLeader;
-using AdministratorRole = Nexus.Administrator.Application.Services.Administrator;
-using Nexus.Authorization;
-using OperatorRole = Nexus.Operator.Application.Services.Operator;
-using Nexus.Authentication.Application.Services;
-using Nexus.Administrator.Application.Contracts;
-using AdministratorTeamGatewayDetailsLoader = Nexus.Administrator.Application.Contracts.ITeamGatewayDetailsLoader;
-using AdministratorTeamGatewayLookup = Nexus.Administrator.Application.Models.TeamGatewayLookup;
-using Nexus.OperationAdministrator.Application.Contracts;
-using OperationAdministratorTeamGatewayLookup = Nexus.OperationAdministrator.Application.Models.TeamGatewayLookup;
-using Nexus.Administrator.Application.Services;
+using OperationAdministratorRole = Nexus.OperationAdministrators.Application.Services.OperationAdministrator;
+using Nexus.TeamLeaders.Application.Services;
+using TeamLeaderRole = Nexus.TeamLeaders.Application.Services.TeamLeader;
+using AdministratorRole = Nexus.Administrators.Application.Services.Administrator;
+using Nexus.Authorizations;
+using OperatorRole = Nexus.Operators.Application.Services.Operator;
+using Nexus.Authentications.Application.Services;
+using Nexus.Administrators.Application.Contracts;
+using AdministratorTeamGatewayDetailsLoader = Nexus.Administrators.Application.Contracts.ITeamGatewayDetailsLoader;
+using AdministratorTeamGatewayLookup = Nexus.Administrators.Application.Models.TeamGatewayLookup;
+using Nexus.OperationAdministrators.Application.Contracts;
+using OperationAdministratorTeamGatewayLookup = Nexus.OperationAdministrators.Application.Models.TeamGatewayLookup;
+using Nexus.Administrators.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Aggregates;
-using Nexus.Authorization.Application.Models;
-using Nexus.OperationAdministrator.Application.Services;
-using Nexus.Operator.Application.Services;
+using Nexus.Authorizations.Application.Models;
+using Nexus.OperationAdministrators.Application.Services;
+using Nexus.Operators.Application.Services;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Contracts;
@@ -491,7 +491,7 @@ internal sealed class EmptyTeamGatewayDetailsLoader : AdministratorTeamGatewayDe
 }
 
 internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
-    : Nexus.OperationAdministrator.Application.Contracts.ITeamGatewayDetailsLoader
+    : Nexus.OperationAdministrators.Application.Contracts.ITeamGatewayDetailsLoader
 {
     public Task<OperationAdministratorTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
