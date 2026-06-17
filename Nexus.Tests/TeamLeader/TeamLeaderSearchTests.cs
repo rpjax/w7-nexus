@@ -18,10 +18,11 @@ public sealed class TeamLeaderSearchTests
     [Fact]
     public async Task SearchLedTeamsAsync_NullRequest_ReturnsRequestBodyRequired()
     {
+        var operation = await _ctx.SeedOperationAsync();
+        await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "team-leader-1");
         var sut = _ctx.CreateTeamLeader();
-        var identity = _ctx.CreateRequesterIdentity(isGlobalAdministrator: true);
 
-        var result = await sut.SearchLedTeamsAsync(identity, default(SearchLedTeamsRequest));
+        var result = await sut.SearchLedTeamsAsync(Identity(), default(SearchLedTeamsRequest));
 
         Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);

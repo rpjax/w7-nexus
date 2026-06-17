@@ -22,7 +22,7 @@ public sealed class AccessResolverTests
     #region OperationAdministrator
 
     [Fact]
-    public async Task OperationAdministratorPolicy_GlobalAdministrator_AuthorizedWithoutOperationAssignment()
+    public async Task OperationAdministratorPolicy_GlobalAdministratorWithoutAssignment_Unauthorized()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
@@ -32,7 +32,7 @@ public sealed class AccessResolverTests
 
         var result = await sut.AuthorizeManageOperationAsync(identity, operationId: operation.Id);
 
-        AuthorizationTestHelpers.AssertAuthorized(result);
+        AuthorizationTestHelpers.AssertUnauthorized(result, AuthorizationErrorCodes.NotOperationAdministrator);
     }
 
     [Fact]
@@ -149,14 +149,14 @@ public sealed class AccessResolverTests
     }
 
     [Fact]
-    public async Task OperationAdministratorPolicy_SearchOperations_GlobalAdministrator_Authorized()
+    public async Task OperationAdministratorPolicy_SearchOperations_GlobalAdministratorWithoutAssignment_Unauthorized()
     {
         var sut = CreateOperationAdministratorPolicy();
         var identity = CreateIdentity("global-admin", Roles.Administrator);
 
         var result = await sut.AuthorizeSearchOperationsAsync(identity);
 
-        AuthorizationTestHelpers.AssertAuthorized(result);
+        AuthorizationTestHelpers.AssertUnauthorized(result, AuthorizationErrorCodes.NotOperationAdministrator);
     }
 
     #endregion
@@ -207,17 +207,6 @@ public sealed class AccessResolverTests
     #region TeamLeader
 
     [Fact]
-    public async Task TeamLeaderPolicy_SearchLedTeams_GlobalAdministrator_Authorized()
-    {
-        var sut = CreateTeamLeaderPolicy();
-        var identity = CreateIdentity("global-admin", Roles.Administrator);
-
-        var result = await sut.AuthorizeSearchLedTeamsAsync(identity);
-
-        AuthorizationTestHelpers.AssertAuthorized(result);
-    }
-
-    [Fact]
     public async Task TeamLeaderPolicy_SearchLedTeams_TeamLeaderLeadsAnyTeam_Authorized()
     {
         var operation = await _ctx.SeedOperationAsync();
@@ -241,21 +230,6 @@ public sealed class AccessResolverTests
         var result = await sut.AuthorizeSearchLedTeamsAsync(identity);
 
         AuthorizationTestHelpers.AssertUnauthorized(result, AuthorizationErrorCodes.NotTeamLeader);
-    }
-
-    [Fact]
-    public async Task TeamLeaderPolicy_ManageTeam_GlobalAdministrator_AuthorizedWithoutTeamLeaderAssignment()
-    {
-        const string adminId = "global-admin";
-        await SeedAccountAsync(adminId, Roles.Administrator);
-        var operation = await _ctx.SeedOperationAsync();
-        var team = await _ctx.SeedTeamAsync(operation.Id);
-        var sut = CreateTeamLeaderPolicy();
-        var identity = CreateIdentity(adminId, Roles.Administrator);
-
-        var result = await sut.AuthorizeManageTeamAsync(identity, team.Id);
-
-        AuthorizationTestHelpers.AssertAuthorized(result);
     }
 
     [Fact]
@@ -327,7 +301,7 @@ public sealed class AccessResolverTests
     #region Operator
 
     [Fact]
-    public async Task OperatorPolicy_GlobalAdministrator_AuthorizedWithoutOperatorRole()
+    public async Task OperatorPolicy_GlobalAdministrator_UnauthorizedWithoutOperatorRole()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
@@ -336,7 +310,7 @@ public sealed class AccessResolverTests
 
         var result = await sut.AuthorizeSearchOperationsAsync(identity, CancellationToken.None);
 
-        AuthorizationTestHelpers.AssertAuthorized(result);
+        AuthorizationTestHelpers.AssertUnauthorized(result, AuthorizationErrorCodes.NotOperator);
     }
 
     [Fact]
@@ -370,7 +344,7 @@ public sealed class AccessResolverTests
     #region StrawMan
 
     [Fact]
-    public async Task StrawManPolicy_GlobalAdministrator_AuthorizedWithoutStrawManRole()
+    public async Task StrawManPolicy_GlobalAdministrator_UnauthorizedWithoutStrawManRole()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
@@ -379,7 +353,7 @@ public sealed class AccessResolverTests
 
         var result = await sut.AuthorizeStrawManAsync(identity);
 
-        AuthorizationTestHelpers.AssertAuthorized(result);
+        AuthorizationTestHelpers.AssertUnauthorized(result, AuthorizationErrorCodes.NotStrawMan);
     }
 
     [Fact]

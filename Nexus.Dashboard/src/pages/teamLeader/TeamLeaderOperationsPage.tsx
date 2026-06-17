@@ -1,11 +1,14 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { searchTeamLeaderLedTeams } from '../../api/teamLeader/operations';
 import {
   assignOperatorToTeam,
   setOperatorProfitShareRule,
   unassignOperatorFromTeam,
 } from '../../api/teamLeader/teams';
-import { searchAccountsPicker } from '../../api/accountPickerSources';
+import {
+  createTeamLeaderOperatorsPicker,
+  createTeamLeaderProfitShareAccountsPicker,
+} from '../../api/accountPickerSources';
 import type { OperationWithLedTeamsDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
@@ -137,6 +140,18 @@ export function TeamLeaderOperationsPage() {
     }
   }
 
+  const operatorPickerSearch = useMemo(
+    () => accountPickerMode?.kind === 'operator'
+      ? createTeamLeaderOperatorsPicker(accountPickerMode.teamId)
+      : createTeamLeaderOperatorsPicker(''),
+    [accountPickerMode],
+  );
+
+  const profitSharePickerSearch = useMemo(
+    () => createTeamLeaderProfitShareAccountsPicker(profitShareTeamId),
+    [profitShareTeamId],
+  );
+
   const cardActions: AdminOperationCardActions = {
     busy: actionBusy,
     onAssignAdministrator: noop,
@@ -226,7 +241,7 @@ export function TeamLeaderOperationsPage() {
       <AccountPickerModal
         open={accountPickerMode?.kind === 'operator'}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={operatorPickerSearch}
         title="Alocar operador"
         subtitle="Conta que operará nesta equipe."
         onSelected={(row) => void handleAccountPicked(row.id, row.username)}
@@ -235,7 +250,7 @@ export function TeamLeaderOperationsPage() {
       <AccountPickerModal
         open={accountPickerMode?.kind === 'profitShareCut'}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={profitSharePickerSearch}
         title="Conta do repasse"
         subtitle="Beneficiário desta fatia da regra de repasse."
         onSelected={(row) => void handleAccountPicked(row.id, row.username)}

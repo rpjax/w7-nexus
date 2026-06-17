@@ -6,25 +6,27 @@ import {
   searchAdministratorOperations,
   unassignOperationAdministrator,
 } from '../../api/administrator/operations';
-import { searchAdministratorAccountsPicker } from '../../api/accountPickerSources';
+import {
+  searchAdministratorAccountsPicker,
+  searchAdministratorOperatorsPicker,
+  searchAdministratorProfitShareAccountsPicker,
+} from '../../api/accountPickerSources';
 import {
   assignOperationTeamLeader,
   assignGatewayAccountToTeam,
   assignGatewayAccountGroupToTeam,
   assignStrawManToTeam,
+  assignOperatorToTeam,
   createOperationTeam,
   deleteOperationTeam,
+  setOperatorProfitShareRule,
   setTeamGatewaySelectionStrategy,
   unassignGatewayAccountFromTeam,
   unassignGatewayAccountGroupFromTeam,
   unassignOperationTeamLeader,
-  unassignStrawManFromTeam,
-} from '../../api/operationAdministrator/teams';
-import {
-  assignOperatorToTeam,
-  setOperatorProfitShareRule,
   unassignOperatorFromTeam,
-} from '../../api/teamLeader/teams';
+  unassignStrawManFromTeam,
+} from '../../api/administrator/teams';
 import type { OperationDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
@@ -308,6 +310,10 @@ export function AdminOperationsPage() {
     ? accountPickerMode.kind
     : null;
 
+  const accountPickerSearch = pickerKind === 'operator'
+    ? searchAdministratorOperatorsPicker
+    : searchAdministratorAccountsPicker;
+
   const accountPickerTitles = {
     admin: {
       title: 'Vincular administrador',
@@ -425,7 +431,7 @@ export function AdminOperationsPage() {
       <AccountPickerModal
         open={pickerKind !== null}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAdministratorAccountsPicker}
+        searchAccounts={accountPickerSearch}
         title={pickerKind ? accountPickerTitles[pickerKind].title : 'Selecionar conta'}
         subtitle={pickerKind ? accountPickerTitles[pickerKind].subtitle : undefined}
         disabledAccountIds={pickerKind === 'admin' ? assignDisabledIds : undefined}
@@ -436,7 +442,7 @@ export function AdminOperationsPage() {
       <AccountPickerModal
         open={accountPickerMode?.kind === 'profitShareCut'}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAdministratorAccountsPicker}
+        searchAccounts={searchAdministratorProfitShareAccountsPicker}
         title="Conta do repasse"
         subtitle="Beneficiário desta fatia da regra de repasse."
         onSelected={(row) => void handleAccountPicked(row.id, row.username)}

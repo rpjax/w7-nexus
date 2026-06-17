@@ -1,6 +1,5 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
-using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
 using Nexus.Authorization.Errors;
 using Nexus.Operations.Application.Contracts;
@@ -20,9 +19,6 @@ public sealed class TeamLeaderAccessPolicy : ITeamLeaderAccessPolicy
 
     public async Task<IAuthorizationResult> AuthorizeSearchLedTeamsAsync(RequesterIdentity identity)
     {
-        if (RoleAuthorization.IsGlobalAdministrator(identity.Roles))
-            return AuthorizationResult.Authorized();
-
         var leadsAnyTeam = await _teams.AsQueryable()
             .Where(t => t.TeamLeaderId == identity.AccountId)
             .AnyAsync();
@@ -61,9 +57,8 @@ public sealed class TeamLeaderAccessPolicy : ITeamLeaderAccessPolicy
                 .Build());
         }
 
-        if (!RoleAuthorization.IsGlobalAdministrator(identity.Roles)
-            && (team.TeamLeaderId is null ||
-                !string.Equals(team.TeamLeaderId, identity.AccountId, StringComparison.Ordinal)))
+        if (team.TeamLeaderId is null ||
+            !string.Equals(team.TeamLeaderId, identity.AccountId, StringComparison.Ordinal))
         {
             return AuthorizationResult.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotTeamLeader)

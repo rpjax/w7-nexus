@@ -1,15 +1,7 @@
-using Aidan.Core.Errors;
-using Nexus.Operations.Application.Contracts;
-using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.Operations.Aggregates;
-using Nexus.Administrator.Application.Mapping;
-using Nexus.Operations.Errors;
-using Nexus.Accounts.Application.Contracts;
-using Nexus.Accounts.Errors;
 using Nexus.Administrator.Application.Contracts;
-using Nexus.Administrator.Application.Responses;
 using Nexus.Administrator.Application.Requests;
+using Nexus.Administrator.Application.Responses;
 using Nexus.Administrator.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
 
@@ -17,29 +9,33 @@ namespace Nexus.Administrator.Application.Services;
 
 public class Administrator : IAdministrator
 {
-    private const int SearchKeywordMaxLength = 200;
-
     private IAdministratorAccessPolicy _policy { get; }
-    private IOperationService _operationService { get; }
-    private IOperationRepository _operations { get; }
-    private IAccountRepository _accounts { get; }
-    private ITeamRepository _teams { get; }
-    private ITeamGatewayDetailsLoader _teamGatewayDetailsLoader { get; }
+    private IAdministratorOperationSearchService _operationSearch { get; }
+    private IAdministratorAccountSearchService _accountSearch { get; }
+    private IAdministratorOperationCommandService _operationCommands { get; }
+    private IAdministratorTeamCommandService _teamCommands { get; }
+    private IAdministratorTeamOperatorCommandService _teamOperatorCommands { get; }
+    private IAdministratorOperatorAssignmentSearchService _operatorAssignmentSearch { get; }
+    private IAdministratorProfitShareAccountSearchService _profitShareAccountSearch { get; }
 
     public Administrator(
         IAdministratorAccessPolicy policy,
-        IOperationService operationService,
-        IOperationRepository operations,
-        IAccountRepository accounts,
-        ITeamRepository teams,
-        ITeamGatewayDetailsLoader teamGatewayDetailsLoader)
+        IAdministratorOperationSearchService operationSearch,
+        IAdministratorAccountSearchService accountSearch,
+        IAdministratorOperationCommandService operationCommands,
+        IAdministratorTeamCommandService teamCommands,
+        IAdministratorTeamOperatorCommandService teamOperatorCommands,
+        IAdministratorOperatorAssignmentSearchService operatorAssignmentSearch,
+        IAdministratorProfitShareAccountSearchService profitShareAccountSearch)
     {
         _policy = policy;
-        _operationService = operationService;
-        _operations = operations;
-        _accounts = accounts;
-        _teams = teams;
-        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
+        _operationSearch = operationSearch;
+        _accountSearch = accountSearch;
+        _operationCommands = operationCommands;
+        _teamCommands = teamCommands;
+        _teamOperatorCommands = teamOperatorCommands;
+        _operatorAssignmentSearch = operatorAssignmentSearch;
+        _profitShareAccountSearch = profitShareAccountSearch;
     }
 
     public Task<IOperationResult<OperationDetails>> CreateOperationAsync(
@@ -50,7 +46,7 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => CreateOperationCoreAsync(request),
+            () => _operationCommands.CreateOperationAsync(request),
             cancellationToken);
     }
 
@@ -62,7 +58,7 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => SearchOperationsCoreAsync(request),
+            () => _operationSearch.SearchOperationsAsync(request),
             cancellationToken);
     }
 
@@ -74,7 +70,7 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => DeleteOperationCoreAsync(request),
+            () => _operationCommands.DeleteOperationAsync(request),
             cancellationToken);
     }
 
@@ -86,7 +82,7 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => AssignOperationAdministratorCoreAsync(request),
+            () => _operationCommands.AssignOperationAdministratorAsync(request),
             cancellationToken);
     }
 
@@ -98,7 +94,7 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => UnassignOperationAdministratorCoreAsync(request),
+            () => _operationCommands.UnassignOperationAdministratorAsync(request),
             cancellationToken);
     }
 
@@ -110,7 +106,199 @@ public class Administrator : IAdministrator
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => SearchAccountsCoreAsync(request),
+            () => _accountSearch.SearchAccountsAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
+        RequesterIdentity identity,
+        CreateOperationTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.CreateOperationTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<DeleteOperationTeamResponse>> DeleteOperationTeamAsync(
+        RequesterIdentity identity,
+        DeleteOperationTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.DeleteOperationTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderAsync(
+        RequesterIdentity identity,
+        AssignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.AssignOperationTeamLeaderAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderAsync(
+        RequesterIdentity identity,
+        UnassignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.UnassignOperationTeamLeaderAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
+        RequesterIdentity identity,
+        SetTeamGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.SetTeamGatewaySelectionStrategyAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
+        RequesterIdentity identity,
+        AssignStrawManToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.AssignStrawManToTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignStrawManFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.UnassignStrawManFromTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountGroupToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.AssignGatewayAccountGroupToTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountGroupFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.UnassignGatewayAccountGroupFromTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.AssignGatewayAccountToTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamCommands.UnassignGatewayAccountFromTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+        RequesterIdentity identity,
+        AssignOperatorToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamOperatorCommands.AssignOperatorToTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignOperatorFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamOperatorCommands.UnassignOperatorFromTeamAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
+        RequesterIdentity identity,
+        SetOperatorProfitShareRuleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _teamOperatorCommands.SetOperatorProfitShareRuleAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchOperatorsToAssignResponse>> SearchOperatorsToAssignAsync(
+        RequesterIdentity identity,
+        SearchOperatorsToAssignRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operatorAssignmentSearch.SearchOperatorsToAssignAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchProfitShareAccountsToAssignResponse>> SearchProfitShareAccountsToAssignAsync(
+        RequesterIdentity identity,
+        SearchProfitShareAccountsToAssignRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _profitShareAccountSearch.SearchProfitShareAccountsToAssignAsync(request),
             cancellationToken);
     }
 
@@ -137,241 +325,5 @@ public class Administrator : IAdministrator
             return OperationResult<T>.Failure(result.Errors);
 
         return OperationResult<T>.Success(value);
-    }
-
-    private async Task<IResult<OperationDetails>> CreateOperationCoreAsync(
-        CreateOperationRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<OperationDetails>();
-
-        var result = await _operationService.CreateOperationAsync(
-            name: request.Name,
-            description: request.Description);
-
-        if (result.IsFailure)
-            return Result<OperationDetails>.Failure(result.Errors);
-
-        return Result<OperationDetails>.Success(result.Value!.ToOperationDetails());
-    }
-
-    private async Task<IResult<SearchOperationsResponse>> SearchOperationsCoreAsync(
-        SearchOperationsRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<SearchOperationsResponse>();
-
-        var builder = Result.Create<SearchOperationsResponse>();
-
-        var limit = request.Limit <= 0 ? 20 : request.Limit;
-        var offset = request.Offset;
-        var keyword = request.Keyword?.Trim();
-
-        if (limit < 1 || limit >= 1000)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(OperationErrorCodes.SearchLimitInvalid)
-                .WithMessage("O limite deve estar entre 1 e 999.")
-                .Build());
-        }
-
-        if (offset < 0)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(OperationErrorCodes.SearchOffsetInvalid)
-                .WithMessage("O deslocamento não pode ser negativo.")
-                .Build());
-        }
-
-        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > Operation.MaxNameLength)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(OperationErrorCodes.SearchKeywordTooLong)
-                .WithMessage($"A palavra-chave pode ter no máximo {Operation.MaxNameLength} caracteres.")
-                .Build());
-        }
-
-        if (builder.ContainsError)
-            return builder.Build();
-
-        var query = _operations.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            var term = keyword.ToLowerInvariant();
-            query = query.Where(o =>
-                o.Id.ToLower().Contains(term) ||
-                o.Name.ToLower().Contains(term) ||
-                (o.Description != null && o.Description.ToLower().Contains(term)));
-        }
-
-        var administratorIds = NormalizeFilterIds(request.AdministratorIds);
-        if (administratorIds.Length > 0)
-        {
-            query = query.Where(o =>
-                o.AdministratorIds.Any(id => administratorIds.Contains(id)));
-        }
-
-        var total = await query.CountAsync();
-
-        var operations = await query
-            .OrderByDescending(o => o.UpdatedAt)
-            .Skip(offset)
-            .Take(limit)
-            .ToArrayAsync();
-
-        var items = await OperationDetailsMapper.MapManyAsync(operations, _teams, _accounts, _teamGatewayDetailsLoader);
-
-        var response = new SearchOperationsResponse
-        {
-            Offset = offset,
-            Limit = limit,
-            Total = total,
-            Items = items.ToList()
-        };
-
-        return builder
-            .WithValue(response)
-            .Build();
-    }
-
-    private async Task<IResult<DeleteOperationResponse>> DeleteOperationCoreAsync(
-        DeleteOperationRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<DeleteOperationResponse>();
-
-        var result = await _operationService.DeleteOperationAsync(request.OperationId);
-        if (result.IsFailure)
-            return Result<DeleteOperationResponse>.Failure(result.Errors);
-
-        return Result<DeleteOperationResponse>.Success(new DeleteOperationResponse());
-    }
-
-    private async Task<IResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorCoreAsync(
-        AssignOperationAdministratorRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<AssignOperationAdministratorResponse>();
-
-        var result = await _operationService.AssignAdministratorAsync(
-            request.OperationId,
-            request.AdministratorId);
-
-        if (result.IsFailure)
-            return Result<AssignOperationAdministratorResponse>.Failure(result.Errors);
-
-        return Result<AssignOperationAdministratorResponse>.Success(new AssignOperationAdministratorResponse());
-    }
-
-    private async Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorCoreAsync(
-        UnassignOperationAdministratorRequest request)
-    {
-        if (request is null)
-            return RequestBodyRequiredResult<UnassignOperationAdministratorResponse>();
-
-        var result = await _operationService.UnassignAdministratorAsync(
-            request.OperationId,
-            request.AdministratorId);
-
-        if (result.IsFailure)
-            return Result<UnassignOperationAdministratorResponse>.Failure(result.Errors);
-
-        return Result<UnassignOperationAdministratorResponse>.Success(new UnassignOperationAdministratorResponse());
-    }
-
-    private async Task<IResult<SearchAccountsResponse>> SearchAccountsCoreAsync(
-        SearchAccountsRequest request)
-    {
-        if (request is null)
-            return AccountRequestBodyRequiredResult<SearchAccountsResponse>();
-
-        var builder = Result.Create<SearchAccountsResponse>();
-
-        var limit = request.Limit <= 0 ? 20 : request.Limit;
-        var offset = request.Offset;
-        var keyword = request.Keyword?.Trim();
-
-        if (limit < 1 || limit >= 1000)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(AccountErrorCodes.SearchLimitInvalid)
-                .WithMessage("O limite deve estar entre 1 e 999.")
-                .Build());
-        }
-
-        if (offset < 0)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(AccountErrorCodes.SearchOffsetInvalid)
-                .WithMessage("O deslocamento não pode ser negativo.")
-                .Build());
-        }
-
-        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > SearchKeywordMaxLength)
-        {
-            builder.WithError(Error.Create()
-                .WithCode(AccountErrorCodes.SearchKeywordTooLong)
-                .WithMessage($"A palavra-chave pode ter no máximo {SearchKeywordMaxLength} caracteres.")
-                .Build());
-        }
-
-        if (builder.ContainsError)
-            return builder.Build();
-
-        var query = _accounts.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            var term = keyword.ToLowerInvariant();
-            query = query.Where(a =>
-                a.Id.ToLower().Contains(term) ||
-                a.Username.ToLower().Contains(term));
-        }
-
-        var total = await query.CountAsync();
-
-        var accounts = await query
-            .OrderByDescending(a => a.LastUpdatedAt)
-            .Skip(offset)
-            .Take(limit)
-            .ToArrayAsync();
-
-        var response = new SearchAccountsResponse
-        {
-            Offset = offset,
-            Limit = limit,
-            Total = total,
-            Items = accounts
-                .Select(a => a.ToAccountDetails())
-                .ToList()
-        };
-
-        return builder
-            .WithValue(response)
-            .Build();
-    }
-
-    private static string[] NormalizeFilterIds(string[]? ids)
-        => (ids ?? Array.Empty<string>())
-            .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select(id => id.Trim())
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-
-    private static IResult<T> RequestBodyRequiredResult<T>()
-    {
-        return Result<T>.Failure(Error.Create()
-            .WithCode(OperationErrorCodes.RequestBodyRequired)
-            .WithMessage("O corpo da requisição é obrigatório.")
-            .Build());
-    }
-
-    private static IResult<T> AccountRequestBodyRequiredResult<T>()
-    {
-        return Result<T>.Failure(Error.Create()
-            .WithCode(AccountErrorCodes.RequestBodyRequired)
-            .WithMessage("O corpo da requisição é obrigatório.")
-            .Build());
     }
 }

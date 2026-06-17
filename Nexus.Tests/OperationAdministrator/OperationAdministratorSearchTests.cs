@@ -13,8 +13,9 @@ public sealed class OperationAdministratorSearchTests
     [Fact]
     public async Task SearchOperationsAsync_NullRequest_ReturnsRequestBodyRequired()
     {
+        await _ctx.SeedOperationAsync(administratorIds: new[] { "op-admin-1" });
         var sut = _ctx.CreateOperationAdministrator();
-        var identity = _ctx.CreateRequesterIdentity(isGlobalAdministrator: true);
+        var identity = _ctx.CreateRequesterIdentity("op-admin-1");
 
         var result = await sut.SearchOperationsAsync(identity, default(SearchOperationsRequest));
 
@@ -64,9 +65,9 @@ public sealed class OperationAdministratorSearchTests
     }
 
     [Fact]
-    public async Task SearchOperationsAsync_GlobalAdministratorSeesAllOperations()
+    public async Task SearchOperationsAsync_GlobalAdministratorSeesOnlyAssignedOperations()
     {
-        await _ctx.SeedOperationAsync("Op A", administratorIds: new[] { "op-admin-1" });
+        await _ctx.SeedOperationAsync("Op A", administratorIds: new[] { "global-admin" });
         await _ctx.SeedOperationAsync("Op B", administratorIds: new[] { "other-admin" });
         var sut = _ctx.CreateOperationAdministrator();
         var identity = _ctx.CreateRequesterIdentity("global-admin", isGlobalAdministrator: true);
@@ -80,8 +81,9 @@ public sealed class OperationAdministratorSearchTests
         Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal(2, result.Value.Items.Count);
-        Assert.Equal(2, result.Value.Total);
+        Assert.Single(result.Value.Items);
+        Assert.Equal("Op A", result.Value.Items[0].Name);
+        Assert.Equal(1, result.Value.Total);
     }
 
     [Fact]

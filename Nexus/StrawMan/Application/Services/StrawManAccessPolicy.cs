@@ -10,8 +10,7 @@ public sealed class StrawManAccessPolicy : IStrawManAccessPolicy
 {
     public Task<IAuthorizationResult> AuthorizeStrawManAsync(RequesterIdentity identity)
     {
-        if (RoleAuthorization.IsGlobalAdministrator(identity.Roles)
-            || identity.Roles.Contains(Roles.StrawMan, StringComparer.Ordinal))
+        if (identity.Roles.Contains(Roles.StrawMan, StringComparer.Ordinal))
         {
             return Task.FromResult<IAuthorizationResult>(AuthorizationResult.Authorized());
         }

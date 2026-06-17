@@ -1,6 +1,5 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
-using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
 using Nexus.Authorization.Errors;
 using Nexus.OperationAdministrator.Application.Contracts;
@@ -26,9 +25,6 @@ public sealed class OperationAdministratorAccessPolicy : IOperationAdministrator
         RequesterIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        if (RoleAuthorization.IsGlobalAdministrator(identity.Roles))
-            return AuthorizationResult.Authorized();
-
         var hasAssignedOperation = await _operations.AsQueryable()
             .Where(o => o.AdministratorIds.Contains(identity.AccountId))
             .AnyAsync();
@@ -111,8 +107,7 @@ public sealed class OperationAdministratorAccessPolicy : IOperationAdministrator
                 .Build());
         }
 
-        if (!RoleAuthorization.IsGlobalAdministrator(identity.Roles)
-            && !operation.AdministratorIds.Contains(identity.AccountId, StringComparer.Ordinal))
+        if (!operation.AdministratorIds.Contains(identity.AccountId, StringComparer.Ordinal))
         {
             return AuthorizationResult.Unauthorized(Error.Create()
                 .WithCode(AuthorizationErrorCodes.NotOperationAdministrator)

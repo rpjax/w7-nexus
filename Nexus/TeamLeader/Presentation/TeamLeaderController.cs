@@ -35,6 +35,32 @@ public class TeamLeaderController : NexusController
             cancellationToken));
     }
 
+    [HttpPost("teams/operators/search")]
+    public async Task<ActionResult> SearchOperatorsToAssignAsync(
+        [FromBody] SearchOperatorsToAssignRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _teamLeader.SearchOperatorsToAssignAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("teams/profit-share-accounts/search")]
+    public async Task<ActionResult> SearchProfitShareAccountsToAssignAsync(
+        [FromBody] SearchProfitShareAccountsToAssignRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _teamLeader.SearchProfitShareAccountsToAssignAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
     [HttpPost("teams/operators")]
     public async Task<ActionResult> AssignOperatorToTeamAsync(
         [FromBody] AssignOperatorToTeamRequest request,

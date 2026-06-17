@@ -36,6 +36,32 @@ public class OperationAdministratorController : NexusController
             cancellationToken));
     }
 
+    [HttpPost("accounts/team-leader-candidates/search")]
+    public async Task<ActionResult> SearchTeamLeaderCandidatesAsync(
+        [FromBody] SearchTeamLeaderCandidatesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.SearchTeamLeaderCandidatesAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("accounts/straw-men/search")]
+    public async Task<ActionResult> SearchStrawMenToAssignAsync(
+        [FromBody] SearchStrawMenToAssignRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.SearchStrawMenToAssignAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
     [HttpPost("teams")]
     public async Task<ActionResult> CreateOperationTeamAsync(
         [FromBody] CreateOperationTeamRequest request,

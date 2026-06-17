@@ -12,8 +12,7 @@ public sealed class OperatorAccessPolicy : IOperatorAccessPolicy
         RequesterIdentity identity,
         CancellationToken cancellationToken = default)
     {
-        if (RoleAuthorization.IsGlobalAdministrator(identity.Roles)
-            || identity.Roles.Contains(Roles.Operator, StringComparer.Ordinal))
+        if (identity.Roles.Contains(Roles.Operator, StringComparer.Ordinal))
         {
             return Task.FromResult<IAuthorizationResult>(AuthorizationResult.Authorized());
         }

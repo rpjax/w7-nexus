@@ -13,7 +13,10 @@ import {
   unassignOperationTeamLeader,
   unassignStrawManFromTeam,
 } from '../../api/operationAdministrator/teams';
-import { searchAccountsPicker } from '../../api/accountPickerSources';
+import {
+  searchOpAdminStrawMenPicker,
+  searchOpAdminTeamLeaderCandidatesPicker,
+} from '../../api/accountPickerSources';
 import type { OperationDetails } from '../../api/types';
 import { AdminOperationCard, type AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
@@ -176,6 +179,10 @@ export function OperationAdminOperationsPage() {
 
   const pickerKind = accountPickerMode?.kind ?? null;
 
+  const accountPickerSearch = pickerKind === 'strawMan'
+    ? searchOpAdminStrawMenPicker
+    : searchOpAdminTeamLeaderCandidatesPicker;
+
   const accountPickerTitles = {
     leader: {
       title: 'Vincular líder',
@@ -250,7 +257,7 @@ export function OperationAdminOperationsPage() {
       <AccountPickerModal
         open={pickerKind !== null}
         onClose={() => setAccountPickerMode(null)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={accountPickerSearch}
         title={pickerKind ? accountPickerTitles[pickerKind].title : 'Selecionar conta'}
         subtitle={pickerKind ? accountPickerTitles[pickerKind].subtitle : undefined}
         onSelected={(row) => void handleAccountPicked(row.id)}

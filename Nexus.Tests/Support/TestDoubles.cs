@@ -318,22 +318,30 @@ internal sealed class ActorTestContext
             GatewayCredentialsIdValidator);
 
     public AdministratorRole CreateAdministrator()
-        => new AdministratorRole(
+    {
+        var teamGatewayLoader = new EmptyTeamGatewayDetailsLoader();
+        return new AdministratorRole(
             new AdministratorAccessPolicy(),
-            CreateOperationService(),
-            Operations,
-            Accounts,
-            Teams,
-            new EmptyTeamGatewayDetailsLoader());
+            new AdministratorOperationSearchService(Operations, Teams, Accounts, teamGatewayLoader),
+            new AdministratorAccountSearchService(Accounts),
+            new AdministratorOperationCommandService(CreateOperationService()),
+            new AdministratorTeamCommandService(CreateTeamService()),
+            new AdministratorTeamOperatorCommandService(CreateTeamService()),
+            new AdministratorOperatorAssignmentSearchService(Accounts),
+            new AdministratorProfitShareAccountSearchService(Accounts));
+    }
 
     public OperationAdministratorRole CreateOperationAdministrator()
-        => new(
+    {
+        var teamGatewayLoader = new EmptyOperationAdministratorTeamGatewayDetailsLoader();
+        var accountSearch = new OperationAdministratorAccountSearchService(Accounts);
+        return new OperationAdministratorRole(
             new OperationAdministratorAccessPolicy(Operations, Teams),
-            CreateTeamService(),
-            Operations,
-            Teams,
-            Accounts,
-            new EmptyOperationAdministratorTeamGatewayDetailsLoader());
+            new OperationAdministratorOperationSearchService(Operations, Teams, Accounts, teamGatewayLoader),
+            new OperationAdministratorTeamCommandService(CreateTeamService()),
+            new OperationAdministratorTeamLeaderCandidateSearchService(accountSearch),
+            new OperationAdministratorStrawManAssignmentSearchService(Accounts));
+    }
 
     public RequesterIdentity CreateRequesterIdentity(
         string accountId = "op-admin-1",
@@ -350,13 +358,15 @@ internal sealed class ActorTestContext
     public TeamLeaderRole CreateTeamLeader()
         => new(
             new TeamLeaderAccessPolicy(Teams),
-            CreateTeamService(),
-            Operations,
-            Teams,
-            Accounts);
+            new TeamLeaderLedTeamsSearchService(Operations, Teams, Accounts),
+            new TeamLeaderTeamCommandService(CreateTeamService()),
+            new TeamLeaderOperatorAssignmentSearchService(Teams, Accounts),
+            new TeamLeaderProfitShareAccountSearchService(Teams, Accounts));
 
     public OperatorRole CreateOperator()
-        => new(new OperatorAccessPolicy(), Operations, Teams, Accounts);
+        => new(
+            new OperatorAccessPolicy(),
+            new OperatorOperationSearchService(Operations, Teams, Accounts));
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {

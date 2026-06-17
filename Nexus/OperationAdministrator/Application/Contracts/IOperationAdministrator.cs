@@ -11,6 +11,16 @@ public interface IOperationAdministrator
         SearchOperationsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<IOperationResult<SearchTeamLeaderCandidatesResponse>> SearchTeamLeaderCandidatesAsync(
+        RequesterIdentity identity,
+        SearchTeamLeaderCandidatesRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchStrawMenToAssignResponse>> SearchStrawMenToAssignAsync(
+        RequesterIdentity identity,
+        SearchStrawMenToAssignRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
         RequesterIdentity identity,
         CreateOperationTeamRequest request,

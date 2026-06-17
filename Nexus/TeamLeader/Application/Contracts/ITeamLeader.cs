@@ -26,4 +26,14 @@ public interface ITeamLeader
         RequesterIdentity identity,
         SetOperatorProfitShareRuleRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchOperatorsToAssignResponse>> SearchOperatorsToAssignAsync(
+        RequesterIdentity identity,
+        SearchOperatorsToAssignRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchProfitShareAccountsToAssignResponse>> SearchProfitShareAccountsToAssignAsync(
+        RequesterIdentity identity,
+        SearchProfitShareAccountsToAssignRequest request,
+        CancellationToken cancellationToken = default);
 }
