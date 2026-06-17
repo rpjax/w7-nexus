@@ -10,7 +10,7 @@ using Nexus.TeamLeader.Application.Contracts;
 using Nexus.TeamLeader.Application.Requests;
 using Nexus.TeamLeader.Application.Responses;
 using Nexus.TeamLeader.Application.Responses.Models;
-using Nexus.TeamLeader.Extensions;
+using Nexus.TeamLeader.Application.Mapping;
 
 namespace Nexus.TeamLeader.Application.Services;
 

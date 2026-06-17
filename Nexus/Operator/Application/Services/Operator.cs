@@ -7,7 +7,7 @@ using Nexus.Operator.Application.Contracts;
 using Nexus.Operator.Application.Requests;
 using Nexus.Operator.Application.Responses;
 using Nexus.Operator.Application.Responses.Models;
-using Nexus.Operator.Extensions;
+using Nexus.Operator.Application.Mapping;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;

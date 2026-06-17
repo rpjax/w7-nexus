@@ -1,9 +1,9 @@
 using Nexus.Administrator.Application.Responses.Models;
 using Nexus.Operations.Aggregates;
 
-namespace Nexus.Administrator.Extensions;
+namespace Nexus.Administrator.Application.Mapping;
 
-public static class OperationExtensions
+public static class OperationMapping
 {
     public static OperationDetails ToOperationDetails(this Operation operation)
         => OperationDetailsMapper.Map(

@@ -1,8 +1,8 @@
-using Nexus.Operator.Application.Responses.Models;
 using Nexus.Database.Models;
+using Nexus.Operator.Application.Responses.Models;
 using Nexus.Operations.Aggregates;
 
-namespace Nexus.Operator.Extensions;
+namespace Nexus.Operator.Application.Mapping;
 
 public static class TeamDetailsMapper
 {

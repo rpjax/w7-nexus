@@ -1,9 +1,9 @@
 using Nexus.Accounts.Aggregates;
 using Nexus.Administrator.Application.Responses.Models;
 
-namespace Nexus.Administrator.Extensions;
+namespace Nexus.Administrator.Application.Mapping;
 
-public static class AccountExtensions
+public static class AccountDetailsMapper
 {
     public static AccountDetails ToAccountDetails(this Account account)
     {

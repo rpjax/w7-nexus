@@ -7,7 +7,7 @@ using Nexus.Authorization.Application.Models;
 using Nexus.OperationAdministrator.Application.Contracts;
 using Nexus.OperationAdministrator.Application.Requests;
 using Nexus.OperationAdministrator.Application.Responses;
-using Nexus.OperationAdministrator.Extensions;
+using Nexus.OperationAdministrator.Application.Mapping;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;

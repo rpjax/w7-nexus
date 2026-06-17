@@ -1,4 +1,6 @@
 using Aidan.Core.Linq.Extensions;
+using Nexus.Administrator.Application.Contracts;
+using Nexus.Administrator.Application.Models;
 using Nexus.Administrator.Application.Responses.Models;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Contracts;
@@ -6,21 +8,7 @@ using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Operations.Aggregates;
 
-namespace Nexus.Administrator.Extensions;
-
-public interface ITeamGatewayDetailsLoader
-{
-    Task<TeamGatewayLookup> LoadAsync(IReadOnlyList<Team> teams, CancellationToken cancellationToken = default);
-}
-
-public sealed class TeamGatewayLookup
-{
-    public IReadOnlyDictionary<string, TeamGatewayCredentialDetails> CredentialsById { get; init; }
-        = new Dictionary<string, TeamGatewayCredentialDetails>(StringComparer.Ordinal);
-
-    public IReadOnlyDictionary<string, TeamGatewayGroupDetails> GroupsById { get; init; }
-        = new Dictionary<string, TeamGatewayGroupDetails>(StringComparer.Ordinal);
-}
+namespace Nexus.Administrator.Application.Services;
 
 public sealed class TeamGatewayDetailsLoader : ITeamGatewayDetailsLoader
 {

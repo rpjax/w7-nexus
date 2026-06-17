@@ -1,25 +1,18 @@
 using Aidan.Core.Linq.Extensions;
 using Nexus.Accounts.Application.Contracts;
-using Nexus.OperationAdministrator.Application.Responses.Models;
+using Nexus.Operator.Application.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Contracts;
 
-namespace Nexus.OperationAdministrator.Extensions;
+namespace Nexus.Operator.Application.Mapping;
 
 public static class OperationDetailsMapper
 {
     public static OperationDetails Map(
         Operation operation,
-        IReadOnlyList<Team> teams,
+        Team team,
         IReadOnlyDictionary<string, string> usernamesByAccountId,
-        TeamGatewayLookup? gatewayLookup = null)
+        string viewerOperatorAccountId)
     {
-        var operationTeams = teams
-            .Where(t => t.OperationId == operation.Id)
-            .OrderBy(t => t.Name)
-            .Select(t => TeamDetailsMapper.MapEnriched(t, usernamesByAccountId, gatewayLookup))
-            .ToArray();
-
         return new OperationDetails
         {
             Id = operation.Id,
@@ -32,34 +25,27 @@ public static class OperationDetailsMapper
                     Username = ResolveUsername(usernamesByAccountId, id),
                 })
                 .ToArray(),
-            Teams = operationTeams,
+            Team = TeamDetailsMapper.Map(team, usernamesByAccountId, viewerOperatorAccountId),
             CreatedAt = operation.CreatedAt,
             UpdatedAt = operation.UpdatedAt,
         };
     }
 
     public static async Task<IReadOnlyList<OperationDetails>> MapManyAsync(
-        IReadOnlyList<Operation> operations,
-        ITeamRepository teams,
+        IReadOnlyList<OperationTeamMembership> memberships,
         IAccountRepository accounts,
-        ITeamGatewayDetailsLoader? gatewayLoader = null)
+        string viewerOperatorAccountId)
     {
-        if (operations.Count == 0)
+        if (memberships.Count == 0)
             return Array.Empty<OperationDetails>();
 
-        var operationIds = operations.Select(o => o.Id).ToArray();
+        var teams = memberships.Select(m => m.Team).ToArray();
+        var operations = memberships.Select(m => m.Operation).ToArray();
 
-        var operationTeams = await teams.AsQueryable()
-            .Where(t => operationIds.Contains(t.OperationId))
-            .ToArrayAsync();
+        var usernames = await LoadUsernamesAsync(accounts, CollectAccountIds(operations, teams));
 
-        var usernames = await LoadUsernamesAsync(accounts, CollectAccountIds(operations, operationTeams));
-        var gatewayLookup = gatewayLoader is null
-            ? new TeamGatewayLookup()
-            : await gatewayLoader.LoadAsync(operationTeams);
-
-        return operations
-            .Select(o => Map(o, operationTeams, usernames, gatewayLookup))
+        return memberships
+            .Select(m => Map(m.Operation, m.Team, usernames, viewerOperatorAccountId))
             .ToList();
     }
 
@@ -82,9 +68,6 @@ public static class OperationDetailsMapper
 
             foreach (var operatorId in team.OperatorIds)
                 ids.Add(operatorId);
-
-            foreach (var strawManId in team.StrawManIds)
-                ids.Add(strawManId);
 
             foreach (var rule in team.OperatorProfitShareRules)
             {
@@ -124,3 +107,5 @@ public static class OperationDetailsMapper
             ? username
             : accountId;
 }
+
+public readonly record struct OperationTeamMembership(Operation Operation, Team Team);

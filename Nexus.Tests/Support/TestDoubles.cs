@@ -12,7 +12,11 @@ using AdministratorRole = Nexus.Administrator.Application.Services.Administrator
 using Nexus.Authorization;
 using OperatorRole = Nexus.Operator.Application.Services.Operator;
 using Nexus.Authentication.Application.Services;
-using Nexus.Administrator.Extensions;
+using Nexus.Administrator.Application.Contracts;
+using AdministratorTeamGatewayDetailsLoader = Nexus.Administrator.Application.Contracts.ITeamGatewayDetailsLoader;
+using AdministratorTeamGatewayLookup = Nexus.Administrator.Application.Models.TeamGatewayLookup;
+using Nexus.OperationAdministrator.Application.Contracts;
+using OperationAdministratorTeamGatewayLookup = Nexus.OperationAdministrator.Application.Models.TeamGatewayLookup;
 using Nexus.Administrator.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
@@ -468,20 +472,20 @@ internal sealed class ActorTestContext
         GatewayCredentialsIdValidator.AddExisting(credentialsId);
 }
 
-internal sealed class EmptyTeamGatewayDetailsLoader : Nexus.Administrator.Extensions.ITeamGatewayDetailsLoader
+internal sealed class EmptyTeamGatewayDetailsLoader : AdministratorTeamGatewayDetailsLoader
 {
-    public Task<Nexus.Administrator.Extensions.TeamGatewayLookup> LoadAsync(
+    public Task<AdministratorTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(new Nexus.Administrator.Extensions.TeamGatewayLookup());
+        => Task.FromResult(new AdministratorTeamGatewayLookup());
 }
 
 internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
-    : Nexus.OperationAdministrator.Extensions.ITeamGatewayDetailsLoader
+    : Nexus.OperationAdministrator.Application.Contracts.ITeamGatewayDetailsLoader
 {
-    public Task<Nexus.OperationAdministrator.Extensions.TeamGatewayLookup> LoadAsync(
+    public Task<OperationAdministratorTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(new Nexus.OperationAdministrator.Extensions.TeamGatewayLookup());
+        => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
 }
 
