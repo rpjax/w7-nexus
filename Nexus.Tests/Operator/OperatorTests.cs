@@ -1,5 +1,6 @@
 using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.Operator.Application.Requests;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
@@ -14,6 +15,22 @@ public sealed class OperatorTests
 
     private RequesterIdentity Identity(string accountId = "operator-1")
         => _ctx.CreateRequesterIdentity(accountId, additionalRoles: Roles.Operator);
+
+    [Fact]
+    public async Task SearchOperationsAsync_WithoutOperatorRole_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateOperator();
+        var identity = _ctx.CreateRequesterIdentity("regular-user");
+
+        var result = await sut.SearchOperationsAsync(identity, new SearchOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotOperator);
+    }
 
     [Fact]
     public async Task SearchOperationsAsync_NullRequest_ReturnsRequestBodyRequired()

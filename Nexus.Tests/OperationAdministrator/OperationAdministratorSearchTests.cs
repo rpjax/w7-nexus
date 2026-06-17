@@ -1,5 +1,6 @@
 using Nexus.OperationAdministrator.Application.Requests;
 using Nexus.Operations.Errors;
+using Nexus.Authorization.Errors;
 using Nexus.Tests.Support;
 using Xunit;
 
@@ -58,6 +59,7 @@ public sealed class OperationAdministratorSearchTests
         });
 
         Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotOperationAdministrator);
         Assert.True(result.IsFailure);
     }
 

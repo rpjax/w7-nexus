@@ -1,6 +1,7 @@
 using Nexus.Administrator.Application.Requests;
 using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.Accounts.Errors;
@@ -15,6 +16,38 @@ public sealed class AdministratorTests
 
     private RequesterIdentity Identity(string accountId = "admin-1")
         => _ctx.CreateRequesterIdentity(accountId, additionalRoles: Roles.Administrator);
+
+    [Fact]
+    public async Task CreateOperationAsync_WithoutAdministratorRole_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var identity = _ctx.CreateRequesterIdentity("global-admin", isGlobalAdministrator: false);
+
+        var result = await sut.CreateOperationAsync(identity, new CreateOperationRequest
+        {
+            Name = "Denied Operation",
+            Description = "desc"
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotAdministrator);
+    }
+
+    [Fact]
+    public async Task SearchOperationsAsync_WithoutAdministratorRole_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var identity = _ctx.CreateRequesterIdentity("regular-user");
+
+        var result = await sut.SearchOperationsAsync(identity, new SearchOperationsRequest
+        {
+            Limit = 20,
+            Offset = 0
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotAdministrator);
+    }
 
     [Fact]
     public async Task CreateOperationAsync_NullRequest_ReturnsRequestBodyRequired()

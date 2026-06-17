@@ -2,6 +2,7 @@ using Nexus.Authorization.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.TeamLeader.Application.Requests;
+using Nexus.Authorization.Errors;
 using Nexus.Tests.Support;
 using Xunit;
 
@@ -73,6 +74,7 @@ public sealed class TeamLeaderSearchTests
         });
 
         Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotTeamLeader);
     }
 
     [Fact]

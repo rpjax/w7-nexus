@@ -1,4 +1,5 @@
 using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.OperationAdministrator.Application.Requests;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
@@ -26,6 +27,56 @@ public sealed class OperationAdministratorTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.OperationIdInvalid);
+    }
+
+    [Fact]
+    public async Task CreateOperationTeamAsync_UnassignedOpAdmin_ReturnsUnauthorized()
+    {
+        var operation = await _ctx.SeedOperationAsync("Other Operation", administratorIds: ["other-admin"]);
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.CreateOperationTeamAsync(_identity, new CreateOperationTeamRequest
+        {
+            OperationId = operation.Id,
+            Name = "Denied Team"
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotOperationAdministrator);
+    }
+
+    [Fact]
+    public async Task DeleteOperationTeamAsync_UnassignedOpAdmin_ReturnsUnauthorized()
+    {
+        var operation = await _ctx.SeedOperationAsync("Other Operation", administratorIds: ["other-admin"]);
+        var team = await _ctx.SeedTeamAsync(operation.Id);
+        var sut = _ctx.CreateOperationAdministrator();
+
+        var result = await sut.DeleteOperationTeamAsync(_identity, new DeleteOperationTeamRequest
+        {
+            TeamId = team.Id
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotOperationAdministrator);
+    }
+
+    [Fact]
+    public async Task AssignOperationTeamLeaderAsync_UnassignedOpAdmin_ReturnsUnauthorized()
+    {
+        var operation = await _ctx.SeedOperationAsync("Other Operation", administratorIds: ["other-admin"]);
+        var team = await _ctx.SeedTeamAsync(operation.Id);
+        var sut = _ctx.CreateOperationAdministrator();
+        _ctx.RegisterAccount("leader-1");
+
+        var result = await sut.AssignOperationTeamLeaderAsync(_identity, new AssignOperationTeamLeaderRequest
+        {
+            TeamId = team.Id,
+            TeamLeaderId = "leader-1"
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotOperationAdministrator);
     }
 
     [Fact]

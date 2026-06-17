@@ -1,4 +1,5 @@
 using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Errors;
 using Nexus.TeamLeader.Application.Requests;
 using Nexus.Operations.Errors;
 using Nexus.Tests.Support;
@@ -22,6 +23,60 @@ public sealed class TeamLeaderTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.TeamIdInvalid);
+    }
+
+    [Fact]
+    public async Task AssignOperatorToTeamAsync_WrongTeamLeader_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateTeamLeader();
+        var operation = await _ctx.SeedOperationAsync("Team Parent Operation");
+        var team = await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "other-leader");
+        _ctx.RegisterAccount("operator-1");
+
+        var result = await sut.AssignOperatorToTeamAsync(Identity(), new AssignOperatorToTeamRequest
+        {
+            TeamId = team.Id,
+            OperatorId = "operator-1"
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotTeamLeader);
+    }
+
+    [Fact]
+    public async Task UnassignOperatorFromTeamAsync_WrongTeamLeader_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateTeamLeader();
+        var operation = await _ctx.SeedOperationAsync("Team Parent Operation");
+        var team = await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "other-leader", operatorIds: ["operator-1"]);
+
+        var result = await sut.UnassignOperatorFromTeamAsync(Identity(), new UnassignOperatorFromTeamRequest
+        {
+            TeamId = team.Id,
+            OperatorId = "operator-1"
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotTeamLeader);
+    }
+
+    [Fact]
+    public async Task SetOperatorProfitShareRuleAsync_WrongTeamLeader_ReturnsUnauthorized()
+    {
+        var sut = _ctx.CreateTeamLeader();
+        var operation = await _ctx.SeedOperationAsync("Team Parent Operation");
+        var team = await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "other-leader", operatorIds: ["operator-1"]);
+        _ctx.RegisterAccount("payee-1");
+
+        var result = await sut.SetOperatorProfitShareRuleAsync(Identity(), new SetOperatorProfitShareRuleRequest
+        {
+            TeamId = team.Id,
+            OperatorId = "operator-1",
+            Cuts = [new ProfitShareCutRequest { AccountId = "payee-1", Percentage = 100m }]
+        });
+
+        Assert.False(result.IsAuthorized);
+        Assert.Contains(result.AuthorizationErrors, e => e.Code == AuthorizationErrorCodes.NotTeamLeader);
     }
 
     [Fact]
