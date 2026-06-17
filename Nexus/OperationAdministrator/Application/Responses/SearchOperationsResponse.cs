@@ -1,8 +1,6 @@
+using Nexus.Shared.Application.Models;
 using Nexus.OperationAdministrator.Application.Responses.Models;
 
 namespace Nexus.OperationAdministrator.Application.Responses;
 
-public class SearchOperationsResponse : SearchResponse<OperationDetails>
-{
-    public int Total { get; set; }
-}
+public class SearchOperationsResponse : SearchResponse<OperationDetails>;

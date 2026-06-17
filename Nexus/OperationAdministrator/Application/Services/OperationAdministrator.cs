@@ -1,9 +1,9 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
+using Nexus.Authorization.Application.Models;
 using Nexus.OperationAdministrator.Application.Contracts;
 using Nexus.OperationAdministrator.Application.Requests;
 using Nexus.OperationAdministrator.Application.Responses;
@@ -11,49 +11,27 @@ using Nexus.OperationAdministrator.Extensions;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Nexus.OperationAdministrator.Application.Services;
 
 public class OperationAdministrator : IOperationAdministrator
 {
-    private readonly string? _accountId;
-    private readonly bool _isGlobalAdministrator;
+    private IOperationAdministratorAccessPolicy _policy { get; }
     private ITeamService _teamService { get; }
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
-    private ITeamGatewayDetailsLoader? _teamGatewayDetailsLoader { get; }
-    private IHttpContextAccessor? _httpContextAccessor { get; }
+    private ITeamGatewayDetailsLoader _teamGatewayDetailsLoader { get; }
 
     public OperationAdministrator(
+        IOperationAdministratorAccessPolicy policy,
         ITeamService teamService,
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts,
-        ITeamGatewayDetailsLoader teamGatewayDetailsLoader,
-        IHttpContextAccessor httpContextAccessor)
+        ITeamGatewayDetailsLoader teamGatewayDetailsLoader)
     {
-        _teamService = teamService;
-        _operations = operations;
-        _teams = teams;
-        _accounts = accounts;
-        _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    internal OperationAdministrator(
-        string accountId,
-        bool isGlobalAdministrator,
-        ITeamService teamService,
-        IOperationRepository operations,
-        ITeamRepository teams,
-        IAccountRepository accounts,
-        ITeamGatewayDetailsLoader? teamGatewayDetailsLoader = null)
-    {
-        _accountId = accountId;
-        _isGlobalAdministrator = isGlobalAdministrator;
+        _policy = policy;
         _teamService = teamService;
         _operations = operations;
         _teams = teams;
@@ -61,20 +39,181 @@ public class OperationAdministrator : IOperationAdministrator
         _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
     }
 
-    public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
-        SearchOperationAdministratorOperationsRequest request)
+    public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeSearchOperationsAsync(identity, ct),
+            () => SearchOperationsCoreAsync(identity, request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
+        RequesterIdentity identity,
+        CreateOperationTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, operationId: request?.OperationId ?? string.Empty, cancellationToken: ct),
+            () => CreateOperationTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<DeleteOperationTeamResponse>> DeleteOperationTeamAsync(
+        RequesterIdentity identity,
+        DeleteOperationTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => DeleteOperationTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderAsync(
+        RequesterIdentity identity,
+        AssignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => AssignOperationTeamLeaderCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderAsync(
+        RequesterIdentity identity,
+        UnassignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => UnassignOperationTeamLeaderCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
+        RequesterIdentity identity,
+        SetTeamGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => SetTeamGatewaySelectionStrategyCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
+        RequesterIdentity identity,
+        AssignStrawManToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => AssignStrawManToTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignStrawManFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => UnassignStrawManFromTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountGroupToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => AssignGatewayAccountGroupToTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountGroupFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => UnassignGatewayAccountGroupFromTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => AssignGatewayAccountToTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            ct => _policy.AuthorizeManageOperationAsync(identity, teamId: request?.TeamId ?? string.Empty, cancellationToken: ct),
+            () => UnassignGatewayAccountFromTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    private async Task<IOperationResult<T>> ExecuteAsync<T>(
+        RequesterIdentity identity,
+        Func<CancellationToken, Task<IAuthorizationResult>> authorizeAsync,
+        Func<Task<IResult<T>>> executeAsync,
+        CancellationToken cancellationToken)
+    {
+        var authorization = await authorizeAsync(cancellationToken);
+
+        if (authorization.IsFailure)
+            return OperationResult<T>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<T>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await executeAsync();
+
+        if (result.IsFailure)
+            return OperationResult<T>.Failure(result.Errors);
+
+        if (result.Value is not T value)
+            return OperationResult<T>.Failure(result.Errors);
+
+        return OperationResult<T>.Success(value);
+    }
+
+    private async Task<IResult<SearchOperationsResponse>> SearchOperationsCoreAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<SearchOperationsResponse>();
-
-        var (accountId, isGlobalAdministrator) = await ResolveAccountContextAsync();
-        if (string.IsNullOrWhiteSpace(accountId))
-        {
-            return Result<SearchOperationsResponse>.Failure(Error.Create()
-                .WithCode(OperationErrorCodes.AdministratorInvalid)
-                .WithMessage("A identidade do administrador de operação não foi encontrada.")
-                .Build());
-        }
 
         var builder = Result.Create<SearchOperationsResponse>();
 
@@ -111,9 +250,9 @@ public class OperationAdministrator : IOperationAdministrator
 
         var query = _operations.AsQueryable();
 
-        if (!isGlobalAdministrator)
+        if (!RoleAuthorization.IsGlobalAdministrator(identity.Roles))
         {
-            query = query.Where(o => o.AdministratorIds.Contains(accountId));
+            query = query.Where(o => o.AdministratorIds.Contains(identity.AccountId));
         }
 
         if (!string.IsNullOrWhiteSpace(keyword))
@@ -152,7 +291,7 @@ public class OperationAdministrator : IOperationAdministrator
             .Build();
     }
 
-    public async Task<IResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
+    private async Task<IResult<CreateOperationTeamResponse>> CreateOperationTeamCoreAsync(
         CreateOperationTeamRequest request)
     {
         if (request is null)
@@ -162,146 +301,123 @@ public class OperationAdministrator : IOperationAdministrator
         if (result.IsFailure)
             return Result<CreateOperationTeamResponse>.Failure(result.Errors);
 
+        if (result.Value is not Operations.Aggregates.Team team)
+            return Result<CreateOperationTeamResponse>.Failure(result.Errors);
+
         return Result<CreateOperationTeamResponse>.Success(new CreateOperationTeamResponse
         {
-            Team = TeamDetailsMapper.Map(result.Value!)
+            Team = TeamDetailsMapper.Map(team)
         });
     }
 
-    public async Task<IResult<DeleteOperationTeamResponse>> DeleteOperationTeamAsync(
+    private async Task<IResult<DeleteOperationTeamResponse>> DeleteOperationTeamCoreAsync(
         DeleteOperationTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<DeleteOperationTeamResponse>();
 
-        var result = await _teamService.DeleteTeamAsync(request.TeamId);
-        return ToResponse<DeleteOperationTeamResponse>(result);
+        return ToResponse<DeleteOperationTeamResponse>(await _teamService.DeleteTeamAsync(request.TeamId));
     }
 
-    public async Task<IResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderAsync(
+    private async Task<IResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderCoreAsync(
         AssignOperationTeamLeaderRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<AssignOperationTeamLeaderResponse>();
 
-        var result = await _teamService.AssignTeamLeaderAsync(request.TeamId, request.TeamLeaderId);
-        return ToResponse<AssignOperationTeamLeaderResponse>(result);
+        return ToResponse<AssignOperationTeamLeaderResponse>(
+            await _teamService.AssignTeamLeaderAsync(request.TeamId, request.TeamLeaderId));
     }
 
-    public async Task<IResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderAsync(
+    private async Task<IResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderCoreAsync(
         UnassignOperationTeamLeaderRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<UnassignOperationTeamLeaderResponse>();
 
-        var result = await _teamService.UnassignTeamLeaderAsync(request.TeamId);
-        return ToResponse<UnassignOperationTeamLeaderResponse>(result);
+        return ToResponse<UnassignOperationTeamLeaderResponse>(
+            await _teamService.UnassignTeamLeaderAsync(request.TeamId));
     }
 
-    public async Task<IResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
+    private async Task<IResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyCoreAsync(
         SetTeamGatewaySelectionStrategyRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<SetTeamGatewaySelectionStrategyResponse>();
 
-        var result = await _teamService.SetGatewaySelectionStrategyAsync(request.TeamId, request.Strategy);
-        return ToResponse<SetTeamGatewaySelectionStrategyResponse>(result);
+        return ToResponse<SetTeamGatewaySelectionStrategyResponse>(
+            await _teamService.SetGatewaySelectionStrategyAsync(request.TeamId, request.Strategy));
     }
 
-    public async Task<IResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
+    private async Task<IResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamCoreAsync(
         AssignStrawManToTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<AssignStrawManToTeamResponse>();
 
-        var result = await _teamService.AssignStrawManAsync(request.TeamId, request.StrawManId);
-        return ToResponse<AssignStrawManToTeamResponse>(result);
+        return ToResponse<AssignStrawManToTeamResponse>(
+            await _teamService.AssignStrawManAsync(request.TeamId, request.StrawManId));
     }
 
-    public async Task<IResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
+    private async Task<IResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamCoreAsync(
         UnassignStrawManFromTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<UnassignStrawManFromTeamResponse>();
 
-        var result = await _teamService.UnassignStrawManAsync(request.TeamId, request.StrawManId);
-        return ToResponse<UnassignStrawManFromTeamResponse>(result);
+        return ToResponse<UnassignStrawManFromTeamResponse>(
+            await _teamService.UnassignStrawManAsync(request.TeamId, request.StrawManId));
     }
 
-    public async Task<IResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
+    private async Task<IResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamCoreAsync(
         AssignGatewayAccountGroupToTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<AssignGatewayAccountGroupToTeamResponse>();
 
-        var result = await _teamService.AssignGatewayCredentialsGroupAsync(
-            request.TeamId,
-            request.GatewayCredentialsGroupId);
-        return ToResponse<AssignGatewayAccountGroupToTeamResponse>(result);
+        return ToResponse<AssignGatewayAccountGroupToTeamResponse>(
+            await _teamService.AssignGatewayCredentialsGroupAsync(
+                request.TeamId,
+                request.GatewayCredentialsGroupId));
     }
 
-    public async Task<IResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
+    private async Task<IResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamCoreAsync(
         UnassignGatewayAccountGroupFromTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<UnassignGatewayAccountGroupFromTeamResponse>();
 
-        var result = await _teamService.UnassignGatewayCredentialsGroupAsync(
-            request.TeamId,
-            request.GatewayCredentialsGroupId);
-        return ToResponse<UnassignGatewayAccountGroupFromTeamResponse>(result);
+        return ToResponse<UnassignGatewayAccountGroupFromTeamResponse>(
+            await _teamService.UnassignGatewayCredentialsGroupAsync(
+                request.TeamId,
+                request.GatewayCredentialsGroupId));
     }
 
-    public async Task<IResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
+    private async Task<IResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamCoreAsync(
         AssignGatewayAccountToTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<AssignGatewayAccountToTeamResponse>();
 
-        var result = await _teamService.AssignGatewayCredentialsAsync(
-            request.TeamId,
-            request.GatewayCredentialsId);
-        return ToResponse<AssignGatewayAccountToTeamResponse>(result);
+        return ToResponse<AssignGatewayAccountToTeamResponse>(
+            await _teamService.AssignGatewayCredentialsAsync(
+                request.TeamId,
+                request.GatewayCredentialsId));
     }
 
-    public async Task<IResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
+    private async Task<IResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamCoreAsync(
         UnassignGatewayAccountFromTeamRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<UnassignGatewayAccountFromTeamResponse>();
 
-        var result = await _teamService.UnassignGatewayCredentialsAsync(
-            request.TeamId,
-            request.GatewayCredentialsId);
-        return ToResponse<UnassignGatewayAccountFromTeamResponse>(result);
+        return ToResponse<UnassignGatewayAccountFromTeamResponse>(
+            await _teamService.UnassignGatewayCredentialsAsync(
+                request.TeamId,
+                request.GatewayCredentialsId));
     }
 
-    private async Task<(string? AccountId, bool IsGlobalAdministrator)> ResolveAccountContextAsync()
-    {
-        if (!string.IsNullOrWhiteSpace(_accountId))
-            return (_accountId.Trim(), _isGlobalAdministrator);
-
-        var user = _httpContextAccessor?.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-            return (null, false);
-
-        var accountId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrWhiteSpace(accountId))
-            return (null, false);
-
-        var account = await _accounts.AsQueryable()
-            .Where(a => a.Id == accountId)
-            .FirstOrDefaultAsync();
-
-        if (account is null)
-            return (accountId.Trim(), false);
-
-        return (accountId.Trim(), RoleAuthorization.IsGlobalAdministrator(account.Roles));
-    }
-
-    private static IResult<TResponse> ToResponse<TResponse>(Aidan.Core.Patterns.IResult result)
+    private static IResult<TResponse> ToResponse<TResponse>(IResult result)
         where TResponse : new()
     {
         if (result.IsFailure)

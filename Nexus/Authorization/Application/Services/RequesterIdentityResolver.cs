@@ -2,39 +2,35 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
+using Aidan.Core.Patterns;
 using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Errors;
-using Nexus.Authorization;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Authorization.Application.Models;
 using Nexus.Authorization.Errors;
-using Nexus.StrawMan.Application.Contracts;
 
-namespace Nexus.StrawMan.Application.Services;
+namespace Nexus.Authorization.Application.Services;
 
-public sealed class StrawManAccess : IStrawManAccess
+public sealed class RequesterIdentityResolver : IRequesterIdentityResolver
 {
     private IHttpContextAccessor _httpContextAccessor { get; }
     private IAccountRepository _accounts { get; }
-    private IStrawMan _strawMan { get; }
 
-    public StrawManAccess(
+    public RequesterIdentityResolver(
         IHttpContextAccessor httpContextAccessor,
-        IAccountRepository accounts,
-        IStrawMan strawMan)
+        IAccountRepository accounts)
     {
         _httpContextAccessor = httpContextAccessor;
         _accounts = accounts;
-        _strawMan = strawMan;
     }
 
-    public async Task<IAccessEvaluationResult<IStrawMan>> ResolveAsync(
-        CancellationToken cancellationToken = default)
+    public async Task<IResult<RequesterIdentity>> ResolveAsync(CancellationToken cancellationToken = default)
     {
         var user = _httpContextAccessor.HttpContext?.User;
         if (user?.Identity?.IsAuthenticated != true)
         {
-            return AccessEvaluationResult<IStrawMan>.Failure(Error.Create()
+            return Result<RequesterIdentity>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.IdentityRequired)
                 .WithMessage("É necessário estar autenticado para realizar esta ação.")
                 .Build());
@@ -45,33 +41,24 @@ public sealed class StrawManAccess : IStrawManAccess
 
         if (string.IsNullOrWhiteSpace(accountId))
         {
-            return AccessEvaluationResult<IStrawMan>.Failure(Error.Create()
+            return Result<RequesterIdentity>.Failure(Error.Create()
                 .WithCode(AuthorizationErrorCodes.AccountIdClaimMissing)
                 .WithMessage("A identidade da conta não foi encontrada no token de acesso.")
                 .Build());
         }
 
         var account = await _accounts.AsQueryable()
-            .Where(a => a.Id == accountId)
+            .Where(a => a.Id == accountId.Trim())
             .FirstOrDefaultAsync();
 
         if (account is null)
         {
-            return AccessEvaluationResult<IStrawMan>.Failure(Error.Create()
+            return Result<RequesterIdentity>.Failure(Error.Create()
                 .WithCode(AccountErrorCodes.AccountNotFound)
-                .WithMessage($"A conta '{accountId}' não foi encontrada.")
+                .WithMessage($"A conta '{accountId.Trim()}' não foi encontrada.")
                 .Build());
         }
 
-        if (!RoleAuthorization.IsGlobalAdministrator(account.Roles)
-            && !account.Roles.Contains(Roles.StrawMan, StringComparer.Ordinal))
-        {
-            return AccessEvaluationResult<IStrawMan>.Unauthorized(Error.Create()
-                .WithCode(AuthorizationErrorCodes.NotStrawMan)
-                .WithMessage("Acesso de laranja necessário para realizar esta ação.")
-                .Build());
-        }
-
-        return AccessEvaluationResult<IStrawMan>.Authorized(_strawMan);
+        return Result<RequesterIdentity>.Success(RequesterIdentity.FromAccount(account));
     }
 }

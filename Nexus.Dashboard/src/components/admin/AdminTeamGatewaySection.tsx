@@ -111,9 +111,9 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
   }
 
   return (
-    <section className="admin-op-team-block admin-op-gateway-section">
-      <div className="admin-op-team-block-head">
-        <h6>Gateway e credenciais</h6>
+    <div className="admin-op-subsection admin-op-subsection--gateway">
+      <div className="admin-op-subsection-head">
+        <span className="admin-op-subsection-label">Gateway</span>
       </div>
 
       <div className={`admin-op-gateway-status admin-op-gateway-status--${status.tone}`}>
@@ -289,6 +289,6 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
           )}
         </div>
       ) : null}
-    </section>
+    </div>
   );
 }

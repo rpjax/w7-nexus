@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Authorization.Application.Models;
 using Nexus.Controllers;
 using Nexus.OperationAdministrator.Application.Contracts;
@@ -11,185 +12,171 @@ namespace Nexus.OperationAdministrator.Presentation;
 [Authorize]
 public class OperationAdministratorController : NexusController
 {
-    private IOperationAdministratorAccess _operationAdministratorAccess { get; }
+    private IOperationAdministrator _operationAdministrator { get; }
+    private IRequesterIdentityResolver _identityResolver { get; }
 
-    public OperationAdministratorController(IOperationAdministratorAccess operationAdministratorAccess)
+    public OperationAdministratorController(
+        IOperationAdministrator operationAdministrator,
+        IRequesterIdentityResolver identityResolver)
     {
-        _operationAdministratorAccess = operationAdministratorAccess;
+        _operationAdministrator = operationAdministrator;
+        _identityResolver = identityResolver;
     }
 
     [HttpPost("operations/search")]
     public async Task<ActionResult> SearchOperationsAsync(
-        [FromBody] SearchOperationAdministratorOperationsRequest request)
+        [FromBody] SearchOperationsRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForSearchAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.SearchOperationsAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.SearchOperationsAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams")]
-    public async Task<ActionResult> CreateOperationTeamAsync([FromBody] CreateOperationTeamRequest request)
+    public async Task<ActionResult> CreateOperationTeamAsync(
+        [FromBody] CreateOperationTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForOperationAsync(request?.OperationId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.CreateOperationTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.CreateOperationTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams")]
-    public async Task<ActionResult> DeleteOperationTeamAsync([FromBody] DeleteOperationTeamRequest request)
+    public async Task<ActionResult> DeleteOperationTeamAsync(
+        [FromBody] DeleteOperationTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.DeleteOperationTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.DeleteOperationTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams/leaders")]
     public async Task<ActionResult> AssignOperationTeamLeaderAsync(
-        [FromBody] AssignOperationTeamLeaderRequest request)
+        [FromBody] AssignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.AssignOperationTeamLeaderAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.AssignOperationTeamLeaderAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams/leaders")]
     public async Task<ActionResult> UnassignOperationTeamLeaderAsync(
-        [FromBody] UnassignOperationTeamLeaderRequest request)
+        [FromBody] UnassignOperationTeamLeaderRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.UnassignOperationTeamLeaderAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.UnassignOperationTeamLeaderAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPatch("teams/gateway-selection-strategy")]
     public async Task<ActionResult> SetTeamGatewaySelectionStrategyAsync(
-        [FromBody] SetTeamGatewaySelectionStrategyRequest request)
+        [FromBody] SetTeamGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.SetTeamGatewaySelectionStrategyAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.SetTeamGatewaySelectionStrategyAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams/straw-men")]
-    public async Task<ActionResult> AssignStrawManToTeamAsync([FromBody] AssignStrawManToTeamRequest request)
+    public async Task<ActionResult> AssignStrawManToTeamAsync(
+        [FromBody] AssignStrawManToTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.AssignStrawManToTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.AssignStrawManToTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams/straw-men")]
-    public async Task<ActionResult> UnassignStrawManFromTeamAsync([FromBody] UnassignStrawManFromTeamRequest request)
+    public async Task<ActionResult> UnassignStrawManFromTeamAsync(
+        [FromBody] UnassignStrawManFromTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.UnassignStrawManFromTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.UnassignStrawManFromTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams/gateway-account-groups")]
     public async Task<ActionResult> AssignGatewayAccountGroupToTeamAsync(
-        [FromBody] AssignGatewayAccountGroupToTeamRequest request)
+        [FromBody] AssignGatewayAccountGroupToTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.AssignGatewayAccountGroupToTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.AssignGatewayAccountGroupToTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams/gateway-account-groups")]
     public async Task<ActionResult> UnassignGatewayAccountGroupFromTeamAsync(
-        [FromBody] UnassignGatewayAccountGroupFromTeamRequest request)
+        [FromBody] UnassignGatewayAccountGroupFromTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.UnassignGatewayAccountGroupFromTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.UnassignGatewayAccountGroupFromTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams/gateway-accounts")]
     public async Task<ActionResult> AssignGatewayAccountToTeamAsync(
-        [FromBody] AssignGatewayAccountToTeamRequest request)
+        [FromBody] AssignGatewayAccountToTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.AssignGatewayAccountToTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.AssignGatewayAccountToTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams/gateway-accounts")]
     public async Task<ActionResult> UnassignGatewayAccountFromTeamAsync(
-        [FromBody] UnassignGatewayAccountFromTeamRequest request)
+        [FromBody] UnassignGatewayAccountFromTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, operationAdministrator) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await operationAdministrator.UnassignGatewayAccountFromTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _operationAdministrator.UnassignGatewayAccountFromTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
-    private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForSearchAsync()
-    {
-        var access = await _operationAdministratorAccess.ResolveAsync();
-        return ToAccessResult(access);
-    }
-
-    private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForOperationAsync(
-        string? operationId)
-    {
-        var access = await _operationAdministratorAccess.ResolveForOperationAsync(operationId ?? string.Empty);
-        return ToAccessResult(access);
-    }
-
-    private async Task<(ActionResult? Error, IOperationAdministrator OperationAdministrator)> ResolveForTeamAsync(
-        string? teamId)
-    {
-        var access = await _operationAdministratorAccess.ResolveForTeamAsync(teamId ?? string.Empty);
-        return ToAccessResult(access);
-    }
-
-    private (ActionResult? Error, IOperationAdministrator OperationAdministrator) ToAccessResult(
-        IAccessEvaluationResult<IOperationAdministrator> access)
-    {
-        if (access.IsFailure)
-            return (ProblemResponse(422, access.Errors), default!);
-
-        if (!access.IsAuthorized)
-            return (ProblemResponse(403, access.AuthorizationErrors), default!);
-
-        if (access.Role is null)
-            throw new InvalidOperationException("Operation administrator role is missing after successful access evaluation.");
-
-        return (null, access.Role);
-    }
 }

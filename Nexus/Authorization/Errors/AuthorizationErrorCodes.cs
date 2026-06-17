@@ -9,4 +9,5 @@ public static class AuthorizationErrorCodes
     public const string NotTeamLeader = "Authorization.NOT_TEAM_LEADER";
     public const string NotOperator = "Authorization.NOT_OPERATOR";
     public const string NotStrawMan = "Authorization.NOT_STRAW_MAN";
+    public const string ScopeMismatch = "Authorization.SCOPE_MISMATCH";
 }

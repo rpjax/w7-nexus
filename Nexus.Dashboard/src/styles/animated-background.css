@@ -1,0 +1,221 @@
+/* Fundo animado global — malha operacional / rede (decorativo) */
+
+.nexus-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    isolation: isolate;
+}
+
+.app-frame {
+    position: relative;
+    z-index: 1;
+    min-height: 100vh;
+    min-height: 100dvh;
+}
+
+.nexus-bg__gradient {
+    position: absolute;
+    inset: -20%;
+    background:
+        radial-gradient(ellipse 55% 45% at 15% 10%, rgba(35, 58, 116, 0.55) 0%, transparent 58%),
+        radial-gradient(ellipse 50% 40% at 88% 8%, rgba(29, 37, 68, 0.65) 0%, transparent 55%),
+        radial-gradient(ellipse 45% 35% at 72% 92%, rgba(242, 187, 90, 0.08) 0%, transparent 60%),
+        linear-gradient(168deg, #0d1428 0%, #070b16 48%, #060912 100%);
+    animation: nexus-bg-gradient-shift 48s ease-in-out infinite alternate;
+}
+
+.nexus-bg__hex {
+    position: absolute;
+    inset: -10%;
+    opacity: 0.045;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='100' viewBox='0 0 56 100'%3E%3Cg fill='none' stroke='%238eb4ff' stroke-width='0.6'%3E%3Cpath d='M28 1 L55 15 L55 43 L28 57 L1 43 L1 15 Z'/%3E%3Cpath d='M28 57 L55 71 L55 99 L28 85 L1 99 L1 71 Z'/%3E%3C/g%3E%3C/svg%3E");
+    background-size: 56px 100px;
+    animation: nexus-bg-hex-drift 90s linear infinite;
+}
+
+.nexus-bg__noise {
+    position: absolute;
+    inset: 0;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    mix-blend-mode: soft-light;
+}
+
+.nexus-bg__mesh {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0.42;
+}
+
+.nexus-bg__links line {
+    stroke: url(#nexus-edge-blue);
+    stroke-opacity: 0.22;
+    animation: nexus-bg-link-pulse 6s ease-in-out infinite;
+}
+
+.nexus-bg__links line:nth-child(odd) {
+    animation-delay: -2s;
+    stroke: url(#nexus-edge-gold);
+    stroke-opacity: 0.14;
+}
+
+.nexus-bg__node {
+    transform-origin: center;
+    transform-box: fill-box;
+}
+
+.nexus-bg__node--hub {
+    fill: #f2bb5a;
+    animation: nexus-bg-node-pulse 5s ease-in-out infinite;
+}
+
+.nexus-bg__node--relay {
+    fill: #6a9cff;
+    animation: nexus-bg-node-pulse 7s ease-in-out infinite;
+}
+
+.nexus-bg__node--cell {
+    fill: #5b8fd9;
+    animation: nexus-bg-node-pulse 8.5s ease-in-out infinite;
+}
+
+.nexus-bg__node--terminal {
+    fill: #9cb0d8;
+    animation: nexus-bg-node-pulse 10s ease-in-out infinite;
+}
+
+.nexus-bg__node--relay:nth-child(3) { animation-delay: -1.5s; }
+.nexus-bg__node--relay:nth-child(4) { animation-delay: -3s; }
+.nexus-bg__node--cell:nth-child(6) { animation-delay: -2s; }
+.nexus-bg__node--cell:nth-child(8) { animation-delay: -4s; }
+.nexus-bg__node--terminal:nth-child(12) { animation-delay: -1s; }
+.nexus-bg__node--terminal:nth-child(15) { animation-delay: -3.5s; }
+
+.nexus-bg__packet--gold {
+    fill: #f2bb5a;
+    opacity: 0.55;
+    filter: drop-shadow(0 0 4px rgba(242, 187, 90, 0.45));
+}
+
+.nexus-bg__packet--blue {
+    fill: #6a9cff;
+    opacity: 0.5;
+    filter: drop-shadow(0 0 4px rgba(74, 134, 255, 0.4));
+}
+
+.nexus-bg__orb {
+    position: absolute;
+    border-radius: 999px;
+    filter: blur(80px);
+    opacity: 0.35;
+    will-change: transform;
+}
+
+.nexus-bg__orb--gold {
+    width: min(42vw, 420px);
+    height: min(42vw, 420px);
+    top: 8%;
+    right: -8%;
+    background: radial-gradient(circle, rgba(242, 187, 90, 0.35) 0%, transparent 68%);
+    animation: nexus-bg-orb-float-a 42s ease-in-out infinite;
+}
+
+.nexus-bg__orb--blue {
+    width: min(50vw, 520px);
+    height: min(50vw, 520px);
+    bottom: -12%;
+    left: -10%;
+    background: radial-gradient(circle, rgba(74, 134, 255, 0.32) 0%, transparent 70%);
+    animation: nexus-bg-orb-float-b 52s ease-in-out infinite;
+}
+
+.nexus-bg__orb--violet {
+    width: min(36vw, 360px);
+    height: min(36vw, 360px);
+    top: 42%;
+    left: 38%;
+    background: radial-gradient(circle, rgba(120, 90, 220, 0.18) 0%, transparent 72%);
+    animation: nexus-bg-orb-float-c 58s ease-in-out infinite;
+}
+
+.nexus-bg__scan {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+        180deg,
+        transparent 0%,
+        rgba(74, 134, 255, 0.03) 48%,
+        transparent 52%
+    );
+    background-size: 100% 220%;
+    animation: nexus-bg-scan 14s linear infinite;
+    opacity: 0.5;
+}
+
+.nexus-bg__vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 85% 75% at 50% 45%, transparent 35%, rgba(4, 7, 14, 0.72) 100%);
+}
+
+@keyframes nexus-bg-gradient-shift {
+    0% { transform: translate(0, 0) scale(1); }
+    100% { transform: translate(-2%, 1.5%) scale(1.04); }
+}
+
+@keyframes nexus-bg-hex-drift {
+    0% { transform: translate(0, 0); }
+    100% { transform: translate(56px, 100px); }
+}
+
+@keyframes nexus-bg-node-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(1); }
+    50% { opacity: 0.95; transform: scale(1.35); }
+}
+
+@keyframes nexus-bg-link-pulse {
+    0%, 100% { stroke-opacity: 0.12; }
+    50% { stroke-opacity: 0.28; }
+}
+
+@keyframes nexus-bg-orb-float-a {
+    0%, 100% { transform: translate(0, 0); }
+    33% { transform: translate(-4%, 3%); }
+    66% { transform: translate(2%, -2%); }
+}
+
+@keyframes nexus-bg-orb-float-b {
+    0%, 100% { transform: translate(0, 0); }
+    40% { transform: translate(5%, -3%); }
+    70% { transform: translate(-3%, 2%); }
+}
+
+@keyframes nexus-bg-orb-float-c {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(2%, -2%) scale(1.08); }
+}
+
+@keyframes nexus-bg-scan {
+    0% { background-position: 0 -120%; }
+    100% { background-position: 0 120%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .nexus-bg__gradient,
+    .nexus-bg__hex,
+    .nexus-bg__orb,
+    .nexus-bg__scan,
+    .nexus-bg__node,
+    .nexus-bg__links line {
+        animation: none !important;
+    }
+
+    .nexus-bg__flows {
+        display: none;
+    }
+}

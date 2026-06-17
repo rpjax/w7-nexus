@@ -1,6 +1,6 @@
 namespace Nexus.Operator.Application.Requests;
 
-public class SearchOperatorOperationsRequest
+public class SearchOperationsRequest
 {
     public int Limit { get; set; }
     public int Offset { get; set; }

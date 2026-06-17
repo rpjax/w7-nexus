@@ -18,6 +18,7 @@ using Nexus.AppHost.Contracts;
 using Nexus.Authentication.Application.Contracts;
 using Nexus.Authentication.Application.Services;
 using Nexus.Authentication.Application.Services.Models;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Services;
@@ -118,11 +119,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 builder.Services.AddAuthorization();
 builder.Services.AddHttpContextAccessor();
-builder.Services.AddScoped<IAdministratorAccess, AdministratorAccess>();
-builder.Services.AddScoped<IOperationAdministratorAccess, Nexus.OperationAdministrator.Application.Services.OperationAdministratorAccess>();
-builder.Services.AddScoped<ITeamLeaderAccess, Nexus.TeamLeader.Application.Services.TeamLeaderAccess>();
-builder.Services.AddScoped<IOperatorAccess, Nexus.Operator.Application.Services.OperatorAccess>();
-builder.Services.AddScoped<IStrawManAccess, StrawManAccess>();
+builder.Services.AddScoped<IAdministratorAccessPolicy, Nexus.Administrator.Application.Services.AdministratorAccessPolicy>();
+builder.Services.AddScoped<IRequesterIdentityResolver, Nexus.Authorization.Application.Services.RequesterIdentityResolver>();
+builder.Services.AddScoped<IOperationAdministratorAccessPolicy, Nexus.OperationAdministrator.Application.Services.OperationAdministratorAccessPolicy>();
+builder.Services.AddScoped<IOperationAdministrator, Nexus.OperationAdministrator.Application.Services.OperationAdministrator>();
+builder.Services.AddScoped<ITeamLeaderAccessPolicy, Nexus.TeamLeader.Application.Services.TeamLeaderAccessPolicy>();
+builder.Services.AddScoped<IOperatorAccessPolicy, Nexus.Operator.Application.Services.OperatorAccessPolicy>();
+builder.Services.AddScoped<IStrawManAccessPolicy, StrawManAccessPolicy>();
 
 // Payment services
 builder.Services.AddScoped<IPaymentService, PaymentService>();
@@ -137,7 +140,6 @@ builder.Services.AddScoped<ITeamRepository, MongoTeamRepository>();
 builder.Services.AddScoped<ITeamService, TeamService>();
 builder.Services.AddScoped<IAdministrator, Administrator>();
 builder.Services.AddScoped<Nexus.Administrator.Extensions.ITeamGatewayDetailsLoader, Nexus.Administrator.Extensions.TeamGatewayDetailsLoader>();
-builder.Services.AddScoped<IOperationAdministrator, Nexus.OperationAdministrator.Application.Services.OperationAdministrator>();
 builder.Services.AddScoped<Nexus.OperationAdministrator.Extensions.ITeamGatewayDetailsLoader, Nexus.OperationAdministrator.Extensions.TeamGatewayDetailsLoader>();
 builder.Services.AddScoped<ITeamLeader, Nexus.TeamLeader.Application.Services.TeamLeader>();
 builder.Services.AddScoped<IOperator, Nexus.Operator.Application.Services.Operator>();

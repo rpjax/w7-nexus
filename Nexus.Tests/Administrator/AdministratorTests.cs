@@ -1,4 +1,6 @@
 using Nexus.Administrator.Application.Requests;
+using Nexus.Authorization;
+using Nexus.Authorization.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.Accounts.Errors;
@@ -11,13 +13,17 @@ public sealed class AdministratorTests
 {
     private readonly ActorTestContext _ctx = new();
 
+    private RequesterIdentity Identity(string accountId = "admin-1")
+        => _ctx.CreateRequesterIdentity(accountId, additionalRoles: Roles.Administrator);
+
     [Fact]
     public async Task CreateOperationAsync_NullRequest_ReturnsRequestBodyRequired()
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.CreateOperationAsync(null!);
+        var result = await sut.CreateOperationAsync(Identity(), default(CreateOperationRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -27,15 +33,16 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.CreateOperationAsync(new CreateOperationRequest
+        var result = await sut.CreateOperationAsync(Identity(), new CreateOperationRequest
         {
             Name = "Alpha Operation",
             Description = "Primary test operation"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal("Alpha Operation", result.Value!.Name);
+        Assert.Equal("Alpha Operation", result.Value.Name);
         Assert.Equal("Primary test operation", result.Value.Description);
         Assert.False(string.IsNullOrWhiteSpace(result.Value.Id));
     }
@@ -46,12 +53,13 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var tooLongName = new string('A', Operation.MaxNameLength + 1);
 
-        var result = await sut.CreateOperationAsync(new CreateOperationRequest
+        var result = await sut.CreateOperationAsync(Identity(), new CreateOperationRequest
         {
             Name = tooLongName,
             Description = "desc"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.NameTooLong);
     }
@@ -61,8 +69,9 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchOperationsAsync(null!);
+        var result = await sut.SearchOperationsAsync(Identity(), default(SearchOperationsRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -74,14 +83,16 @@ public sealed class AdministratorTests
         for (var i = 0; i < 25; i++)
             await _ctx.SeedOperationAsync($"Operation {i:D2}");
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 0,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Equal(20, result.Value!.Limit);
+        Assert.NotNull(result.Value);
+        Assert.Equal(20, result.Value.Limit);
         Assert.Equal(20, result.Value.Items.Count);
         Assert.Equal(25, result.Value.Total);
     }
@@ -91,12 +102,13 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 1000,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.SearchLimitInvalid);
     }
@@ -106,12 +118,13 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Offset = -1
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.SearchOffsetInvalid);
     }
@@ -122,12 +135,13 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var tooLongKeyword = new string('k', Operation.MaxNameLength + 1);
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Keyword = tooLongKeyword
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.SearchKeywordTooLong);
     }
@@ -139,31 +153,37 @@ public sealed class AdministratorTests
         var target = await _ctx.SeedOperationAsync("UniqueAlpha", "beta description");
         await _ctx.SeedOperationAsync("Other Operation", "unrelated");
 
-        var byName = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var byName = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Keyword = "uniquealpha"
         });
+        Assert.True(byName.IsAuthorized);
         Assert.True(byName.IsSuccess);
-        Assert.Single(byName.Value!.Items);
+        Assert.NotNull(byName.Value);
+        Assert.Single(byName.Value.Items);
         Assert.Equal(target.Id, byName.Value.Items[0].Id);
 
-        var byDescription = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var byDescription = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Keyword = "beta desc"
         });
+        Assert.True(byDescription.IsAuthorized);
         Assert.True(byDescription.IsSuccess);
-        Assert.Single(byDescription.Value!.Items);
+        Assert.NotNull(byDescription.Value);
+        Assert.Single(byDescription.Value.Items);
         Assert.Equal(target.Id, byDescription.Value.Items[0].Id);
 
-        var byId = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var byId = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Keyword = target.Id[..8]
         });
+        Assert.True(byId.IsAuthorized);
         Assert.True(byId.IsSuccess);
-        Assert.Contains(byId.Value!.Items, i => i.Id == target.Id);
+        Assert.NotNull(byId.Value);
+        Assert.Contains(byId.Value.Items, i => i.Id == target.Id);
     }
 
     [Fact]
@@ -174,14 +194,16 @@ public sealed class AdministratorTests
         await _ctx.SeedOperationAsync("Op B", administratorIds: ["admin-3"]);
         await _ctx.SeedOperationAsync("Op C", administratorIds: ["admin-1"]);
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 50,
             AdministratorIds = [" admin-1 ", "admin-1"]
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value!.Total);
+        Assert.NotNull(result.Value);
+        Assert.Equal(2, result.Value.Total);
         var names = result.Value.Items.Select(i => i.Name).ToArray();
         Assert.Contains("Op A", names);
         Assert.Contains("Op C", names);
@@ -195,14 +217,16 @@ public sealed class AdministratorTests
         for (var i = 0; i < 5; i++)
             await _ctx.SeedOperationAsync($"Paged Op {i}");
 
-        var page = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var page = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 2,
             Offset = 2
         });
 
+        Assert.True(page.IsAuthorized);
         Assert.True(page.IsSuccess);
-        Assert.Equal(2, page.Value!.Limit);
+        Assert.NotNull(page.Value);
+        Assert.Equal(2, page.Value.Limit);
         Assert.Equal(2, page.Value.Offset);
         Assert.Equal(5, page.Value.Total);
         Assert.Equal(2, page.Value.Items.Count);
@@ -223,14 +247,16 @@ public sealed class AdministratorTests
         _ctx.RegisterAccount(leader.Id);
         await _ctx.CreateTeamService().AssignTeamLeaderAsync(team.Id, leader.Id);
 
-        var result = await sut.SearchOperationsAsync(new SearchOperationsRequest
+        var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
             Limit = 10,
             Keyword = "enriched"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        var item = Assert.Single(result.Value!.Items);
+        Assert.NotNull(result.Value);
+        var item = Assert.Single(result.Value.Items);
         Assert.Equal("Enriched Op", item.Name);
 
         var mappedAdmin = Assert.Single(item.Administrators);
@@ -254,8 +280,9 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.DeleteOperationAsync(null!);
+        var result = await sut.DeleteOperationAsync(Identity(), default(DeleteOperationRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -266,11 +293,12 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var operation = await _ctx.SeedOperationAsync("To Delete");
 
-        var result = await sut.DeleteOperationAsync(new DeleteOperationRequest
+        var result = await sut.DeleteOperationAsync(Identity(), new DeleteOperationRequest
         {
             OperationId = operation.Id
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Empty(_ctx.Operations.AsQueryable().ToArray());
@@ -281,11 +309,12 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.DeleteOperationAsync(new DeleteOperationRequest
+        var result = await sut.DeleteOperationAsync(Identity(), new DeleteOperationRequest
         {
             OperationId = "missing-op"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.OperationNotFound);
     }
@@ -295,8 +324,9 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.AssignOperationAdministratorAsync(null!);
+        var result = await sut.AssignOperationAdministratorAsync(Identity(), default(AssignOperationAdministratorRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -308,12 +338,13 @@ public sealed class AdministratorTests
         var operation = await _ctx.SeedOperationAsync("Managed Op");
         _ctx.RegisterAccount("admin-42");
 
-        var result = await sut.AssignOperationAdministratorAsync(new AssignOperationAdministratorRequest
+        var result = await sut.AssignOperationAdministratorAsync(Identity(), new AssignOperationAdministratorRequest
         {
             OperationId = operation.Id,
             AdministratorId = "admin-42"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         var updated = _ctx.Operations.AsQueryable().First(o => o.Id == operation.Id);
         Assert.Contains("admin-42", updated.AdministratorIds);
@@ -326,12 +357,13 @@ public sealed class AdministratorTests
         var operation = await _ctx.SeedOperationAsync("Managed Op", administratorIds: ["admin-42"]);
         _ctx.RegisterAccount("admin-42");
 
-        var result = await sut.AssignOperationAdministratorAsync(new AssignOperationAdministratorRequest
+        var result = await sut.AssignOperationAdministratorAsync(Identity(), new AssignOperationAdministratorRequest
         {
             OperationId = operation.Id,
             AdministratorId = "admin-42"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.AdministratorAlreadyAssigned);
     }
@@ -341,8 +373,9 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.UnassignOperationAdministratorAsync(null!);
+        var result = await sut.UnassignOperationAdministratorAsync(Identity(), default(UnassignOperationAdministratorRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -353,12 +386,13 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op", administratorIds: ["admin-42"]);
 
-        var result = await sut.UnassignOperationAdministratorAsync(new UnassignOperationAdministratorRequest
+        var result = await sut.UnassignOperationAdministratorAsync(Identity(), new UnassignOperationAdministratorRequest
         {
             OperationId = operation.Id,
             AdministratorId = "admin-42"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         var updated = _ctx.Operations.AsQueryable().First(o => o.Id == operation.Id);
         Assert.DoesNotContain("admin-42", updated.AdministratorIds);
@@ -370,12 +404,13 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op");
 
-        var result = await sut.UnassignOperationAdministratorAsync(new UnassignOperationAdministratorRequest
+        var result = await sut.UnassignOperationAdministratorAsync(Identity(), new UnassignOperationAdministratorRequest
         {
             OperationId = operation.Id,
             AdministratorId = "admin-42"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.AdministratorNotAssigned);
     }
@@ -385,8 +420,9 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchAccountsAsync(null!);
+        var result = await sut.SearchAccountsAsync(Identity(), default(SearchAccountsRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.RequestBodyRequired);
     }
@@ -398,14 +434,16 @@ public sealed class AdministratorTests
         for (var i = 0; i < 25; i++)
             await _ctx.SeedAccountAsync($"user{i:D2}");
 
-        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 0,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Equal(20, result.Value!.Limit);
+        Assert.NotNull(result.Value);
+        Assert.Equal(20, result.Value.Limit);
         Assert.Equal(20, result.Value.Items.Count);
         Assert.Equal(25, result.Value.Total);
     }
@@ -415,12 +453,13 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 1000,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchLimitInvalid);
     }
@@ -430,12 +469,13 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
 
-        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 10,
             Offset = -1
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchOffsetInvalid);
     }
@@ -446,12 +486,13 @@ public sealed class AdministratorTests
         var sut = _ctx.CreateAdministrator();
         var tooLongKeyword = new string('k', 201);
 
-        var result = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 10,
             Keyword = tooLongKeyword
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == AccountErrorCodes.SearchKeywordTooLong);
     }
@@ -463,22 +504,26 @@ public sealed class AdministratorTests
         var target = await _ctx.SeedAccountAsync("UniqueAlpha");
         await _ctx.SeedAccountAsync("OtherUser");
 
-        var byUsername = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var byUsername = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 10,
             Keyword = "uniquealpha"
         });
+        Assert.True(byUsername.IsAuthorized);
         Assert.True(byUsername.IsSuccess);
-        Assert.Single(byUsername.Value!.Items);
+        Assert.NotNull(byUsername.Value);
+        Assert.Single(byUsername.Value.Items);
         Assert.Equal(target.Id, byUsername.Value.Items[0].Id);
 
-        var byId = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var byId = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 10,
             Keyword = target.Id[..8]
         });
+        Assert.True(byId.IsAuthorized);
         Assert.True(byId.IsSuccess);
-        Assert.Contains(byId.Value!.Items, i => i.Id == target.Id);
+        Assert.NotNull(byId.Value);
+        Assert.Contains(byId.Value.Items, i => i.Id == target.Id);
     }
 
     [Fact]
@@ -488,14 +533,16 @@ public sealed class AdministratorTests
         for (var i = 0; i < 5; i++)
             await _ctx.SeedAccountAsync($"PagedUser{i}");
 
-        var page = await sut.SearchAccountsAsync(new SearchAccountsRequest
+        var page = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
             Limit = 2,
             Offset = 2
         });
 
+        Assert.True(page.IsAuthorized);
         Assert.True(page.IsSuccess);
-        Assert.Equal(2, page.Value!.Limit);
+        Assert.NotNull(page.Value);
+        Assert.Equal(2, page.Value.Limit);
         Assert.Equal(2, page.Value.Offset);
         Assert.Equal(5, page.Value.Total);
         Assert.Equal(2, page.Value.Items.Count);

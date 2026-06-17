@@ -1,4 +1,5 @@
 using Aidan.Core.Patterns;
+using Nexus.Authorization.Application.Models;
 using Nexus.TeamLeader.Application.Requests;
 using Nexus.TeamLeader.Application.Responses;
 
@@ -6,14 +7,23 @@ namespace Nexus.TeamLeader.Application.Contracts;
 
 public interface ITeamLeader
 {
-    Task<IResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(SearchLedTeamsRequest request);
+    Task<IOperationResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(
+        RequesterIdentity identity,
+        SearchLedTeamsRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
-        AssignOperatorToTeamRequest request);
+    Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+        RequesterIdentity identity,
+        AssignOperatorToTeamRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
-        UnassignOperatorFromTeamRequest request);
+    Task<IOperationResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignOperatorFromTeamRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
-        SetOperatorProfitShareRuleRequest request);
+    Task<IOperationResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
+        RequesterIdentity identity,
+        SetOperatorProfitShareRuleRequest request,
+        CancellationToken cancellationToken = default);
 }

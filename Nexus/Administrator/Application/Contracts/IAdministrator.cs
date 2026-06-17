@@ -2,26 +2,39 @@ using Aidan.Core.Patterns;
 using Nexus.Administrator.Application.Requests;
 using Nexus.Administrator.Application.Responses;
 using Nexus.Administrator.Application.Responses.Models;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Administrator.Application.Contracts;
 
 public interface IAdministrator
 {
-    Task<IResult<OperationDetails>> CreateOperationAsync(
-        CreateOperationRequest request);
+    Task<IOperationResult<OperationDetails>> CreateOperationAsync(
+        RequesterIdentity identity,
+        CreateOperationRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
-        SearchOperationsRequest request);
+    Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<DeleteOperationResponse>> DeleteOperationAsync(
-        DeleteOperationRequest request);
+    Task<IOperationResult<DeleteOperationResponse>> DeleteOperationAsync(
+        RequesterIdentity identity,
+        DeleteOperationRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
-        AssignOperationAdministratorRequest request);
+    Task<IOperationResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
+        RequesterIdentity identity,
+        AssignOperationAdministratorRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
-        UnassignOperationAdministratorRequest request);
+    Task<IOperationResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
+        RequesterIdentity identity,
+        UnassignOperationAdministratorRequest request,
+        CancellationToken cancellationToken = default);
 
-    Task<IResult<SearchAccountsResponse>> SearchAccountsAsync(
-        SearchAccountsRequest request);
+    Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
+        RequesterIdentity identity,
+        SearchAccountsRequest request,
+        CancellationToken cancellationToken = default);
 }

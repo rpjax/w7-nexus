@@ -70,6 +70,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
   const operatorCount = countOperators(teams);
   const description = operation.description?.trim();
   const panelScope = teamPanelScope(scope);
+  const compact = scope === 'team-leader';
 
   async function copyId() {
     try {
@@ -104,7 +105,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
   };
 
   return (
-    <article className="admin-op-card">
+    <article className={`admin-op-card${compact ? ' admin-op-card--compact' : ''}`}>
       <header className="admin-op-card-header">
         <span className="admin-op-card-mark" aria-hidden="true">{personInitial(operation.name)}</span>
         <div className="admin-op-card-heading">
@@ -120,7 +121,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
               <span className="admin-op-stat">
                 <span className="admin-op-stat-value">{teamCount}</span>
                 <span className="admin-op-stat-label">
-                  {scope === 'team-leader' ? 'Equipe liderada' : 'Equipe'}{teamCount === 1 ? '' : 's'}
+                  {scope === 'team-leader' ? 'Equipe' : 'Equipe'}{teamCount === 1 ? '' : 's'}
                 </span>
               </span>
               {scope !== 'operation-admin' ? (
@@ -131,39 +132,48 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
               ) : null}
             </div>
           </div>
-          <p className="admin-op-card-id">
-            <span className="mono" title={operation.id}>{shortId(operation.id, 24)}</span>
+
+          <div className="admin-op-card-meta">
+            <span className="admin-op-meta-chip mono" title={operation.id}>
+              {shortId(operation.id, 22)}
+            </span>
             <button type="button" className="btn btn-ghost btn-small admin-op-copy-id" onClick={() => void copyId()}>
               Copiar ID
             </button>
-          </p>
+            {!compact && description ? (
+              <span className="admin-op-meta-chip admin-op-meta-chip--grow">{description}</span>
+            ) : null}
+            <span className="admin-op-meta-chip admin-op-meta-chip--muted">
+              Criada {formatDateTime(operation.createdAt)}
+            </span>
+            {!compact ? (
+              <span className="admin-op-meta-chip admin-op-meta-chip--muted">
+                Atualizada {formatDateTime(operation.updatedAt)}
+              </span>
+            ) : null}
+          </div>
         </div>
       </header>
 
-      <div className="admin-op-card-overview">
-        <div className="admin-op-overview-block">
-          <span className="admin-op-overview-label">Descrição</span>
-          <p className="admin-op-overview-text">{description || 'Sem descrição cadastrada.'}</p>
-        </div>
-        <div className="admin-op-timeline">
-          <div className="admin-op-timeline-item">
-            <span className="admin-op-timeline-label">Criada</span>
-            <time className="admin-op-timeline-value">{formatDateTime(operation.createdAt)}</time>
-          </div>
-          <div className="admin-op-timeline-item">
-            <span className="admin-op-timeline-label">Atualizada</span>
-            <time className="admin-op-timeline-value">{formatDateTime(operation.updatedAt)}</time>
-          </div>
-        </div>
-      </div>
-
-      <div className="admin-op-card-panels admin-op-card-panels--stacked">
+      <div className="admin-op-card-body">
         {scope === 'global-admin' ? (
-          <section className="admin-op-panel">
-            <header className="admin-op-panel-head">
-              <h4>Administradores</h4>
-              <p className="muted small">Contas com permissão para gerenciar esta operação (papel Operation Administrator).</p>
-            </header>
+          <section className="admin-op-section">
+            <div className="admin-op-section-head">
+              <div>
+                <h4 className="admin-op-section-title">Administradores</h4>
+                <p className="admin-op-section-desc muted small">
+                  Contas com permissão para gerenciar esta operação.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="btn btn-primary btn-small"
+                disabled={actions.busy}
+                onClick={() => actions.onAssignAdministrator(operation.id)}
+              >
+                Vincular
+              </button>
+            </div>
 
             {adminCount === 0 ? (
               <p className="admin-op-empty muted small">Nenhum administrador vinculado.</p>
@@ -188,31 +198,25 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
                 ))}
               </ul>
             )}
-
-            <div className="admin-op-panel-actions">
-              <button
-                type="button"
-                className="btn btn-primary btn-small"
-                disabled={actions.busy}
-                onClick={() => actions.onAssignAdministrator(operation.id)}
-              >
-                Vincular administrador
-              </button>
-            </div>
           </section>
         ) : null}
 
-        <section className="admin-op-panel admin-op-panel--teams">
-          <header className="admin-op-panel-head">
-            <h4>
-              {scope === 'team-leader' ? 'Suas equipes nesta operação' : 'Equipes e operadores'}
-            </h4>
-            <p className="muted small">
-              {scope === 'global-admin' && 'Estrutura completa: líderes, operadores, repasses, laranjas e credenciais de gateway.'}
-              {scope === 'operation-admin' && 'Crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder.'}
-              {scope === 'team-leader' && 'Gerencie operadores e regras de repasse das equipes que você lidera.'}
-            </p>
-          </header>
+        <section className="admin-op-section admin-op-section--teams">
+          <div className="admin-op-section-head">
+            <div>
+              <h4 className="admin-op-section-title">
+                {scope === 'team-leader' ? 'Equipes lideradas' : 'Equipes'}
+              </h4>
+              {!compact ? (
+                <p className="admin-op-section-desc muted small">
+                  {scope === 'global-admin' && 'Líderes, operadores, repasses e gateway por equipe.'}
+                  {scope === 'operation-admin' && 'Estrutura, líderes e configuração de gateway.'}
+                </p>
+              ) : (
+                <p className="admin-op-section-desc muted small">Operadores e repasses das suas equipes.</p>
+              )}
+            </div>
+          </div>
 
           {scope !== 'team-leader' ? (
             <div className="admin-op-create-team">
@@ -241,9 +245,15 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
                 : 'Nenhuma equipe vinculada a esta operação.'}
             </p>
           ) : (
-            <div className="admin-op-team-list">
-              {teams.map((team) => (
-                <AdminTeamPanel key={team.id} team={team} scope={panelScope} actions={teamActions} />
+            <div className="admin-op-teams-rail">
+              {teams.map((team, index) => (
+                <AdminTeamPanel
+                  key={team.id}
+                  team={team}
+                  scope={panelScope}
+                  actions={teamActions}
+                  isLast={index === teams.length - 1}
+                />
               ))}
             </div>
           )}
@@ -251,7 +261,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
       </div>
 
       {scope === 'global-admin' ? (
-        <footer className="admin-op-card-actions">
+        <footer className="admin-op-card-footer">
           <button
             type="button"
             className="btn btn-danger btn-small"

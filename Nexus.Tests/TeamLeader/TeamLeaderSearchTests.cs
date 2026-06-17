@@ -1,3 +1,4 @@
+using Nexus.Authorization.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.TeamLeader.Application.Requests;
@@ -10,13 +11,18 @@ public sealed class TeamLeaderSearchTests
 {
     private readonly ActorTestContext _ctx = new();
 
+    private RequesterIdentity Identity(string accountId = "team-leader-1")
+        => _ctx.CreateRequesterIdentity(accountId);
+
     [Fact]
     public async Task SearchLedTeamsAsync_NullRequest_ReturnsRequestBodyRequired()
     {
         var sut = _ctx.CreateTeamLeader();
+        var identity = _ctx.CreateRequesterIdentity(isGlobalAdministrator: true);
 
-        var result = await sut.SearchLedTeamsAsync(null!);
+        var result = await sut.SearchLedTeamsAsync(identity, default(SearchLedTeamsRequest));
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
     }
@@ -30,16 +36,18 @@ public sealed class TeamLeaderSearchTests
         await _ctx.SeedTeamAsync(operationA.Id, name: "Team A2", teamLeaderId: "team-leader-1");
         await _ctx.SeedTeamAsync(operationB.Id, name: "Team B1", teamLeaderId: "team-leader-1");
         await _ctx.SeedTeamAsync(operationB.Id, name: "Other Team", teamLeaderId: "other-leader");
-        var sut = _ctx.CreateTeamLeader("team-leader-1");
+        var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.SearchLedTeamsAsync(new SearchLedTeamsRequest
+        var result = await sut.SearchLedTeamsAsync(Identity("team-leader-1"), new SearchLedTeamsRequest
         {
             Limit = 20,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value!.Items.Count);
+        Assert.NotNull(result.Value);
+        Assert.Equal(2, result.Value.Items.Count);
         Assert.Equal(2, result.Value.Total);
 
         var opA = result.Value.Items.Single(i => i.Name == "Operation A");
@@ -52,21 +60,19 @@ public sealed class TeamLeaderSearchTests
     }
 
     [Fact]
-    public async Task SearchLedTeamsAsync_NoLedTeams_ReturnsEmptyList()
+    public async Task SearchLedTeamsAsync_NonTeamLeader_Unauthorized()
     {
         var operation = await _ctx.SeedOperationAsync("Operation A");
         await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "other-leader");
-        var sut = _ctx.CreateTeamLeader("team-leader-1");
+        var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.SearchLedTeamsAsync(new SearchLedTeamsRequest
+        var result = await sut.SearchLedTeamsAsync(Identity("team-leader-1"), new SearchLedTeamsRequest
         {
             Limit = 20,
             Offset = 0
         });
 
-        Assert.True(result.IsSuccess);
-        Assert.Empty(result.Value!.Items);
-        Assert.Equal(0, result.Value.Total);
+        Assert.False(result.IsAuthorized);
     }
 
     [Fact]
@@ -76,38 +82,42 @@ public sealed class TeamLeaderSearchTests
         var beta = await _ctx.SeedOperationAsync("Beta Operation");
         await _ctx.SeedTeamAsync(alpha.Id, teamLeaderId: "team-leader-1");
         await _ctx.SeedTeamAsync(beta.Id, teamLeaderId: "team-leader-1");
-        var sut = _ctx.CreateTeamLeader("team-leader-1");
+        var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.SearchLedTeamsAsync(new SearchLedTeamsRequest
+        var result = await sut.SearchLedTeamsAsync(Identity("team-leader-1"), new SearchLedTeamsRequest
         {
             Limit = 20,
             Offset = 0,
             Keyword = "alpha"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Single(result.Value!.Items);
+        Assert.NotNull(result.Value);
+        Assert.Single(result.Value.Items);
         Assert.Equal("Alpha Operation", result.Value.Items[0].Name);
     }
 
     [Fact]
     public async Task SearchLedTeamsAsync_Pagination_PaginatesByOperation()
     {
-        var sut = _ctx.CreateTeamLeader("team-leader-1");
+        var sut = _ctx.CreateTeamLeader();
         for (var i = 0; i < 5; i++)
         {
             var operation = await _ctx.SeedOperationAsync($"Operation {i:D2}");
             await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "team-leader-1");
         }
 
-        var result = await sut.SearchLedTeamsAsync(new SearchLedTeamsRequest
+        var result = await sut.SearchLedTeamsAsync(Identity("team-leader-1"), new SearchLedTeamsRequest
         {
             Limit = 2,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        Assert.Equal(2, result.Value!.Items.Count);
+        Assert.NotNull(result.Value);
+        Assert.Equal(2, result.Value.Items.Count);
         Assert.Equal(5, result.Value.Total);
     }
 
@@ -121,16 +131,18 @@ public sealed class TeamLeaderSearchTests
             operatorIds: new[] { "operator-1" });
         await _ctx.SeedAccountAsync("leader", id: "team-leader-1");
         await _ctx.SeedAccountAsync("operator1", id: "operator-1");
-        var sut = _ctx.CreateTeamLeader("team-leader-1");
+        var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.SearchLedTeamsAsync(new SearchLedTeamsRequest
+        var result = await sut.SearchLedTeamsAsync(Identity("team-leader-1"), new SearchLedTeamsRequest
         {
             Limit = 20,
             Offset = 0
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
-        var item = Assert.Single(result.Value!.Items);
+        Assert.NotNull(result.Value);
+        var item = Assert.Single(result.Value.Items);
         var team = Assert.Single(item.Teams);
         Assert.Equal("leader", team.TeamLeader!.Username);
         Assert.Single(team.Operators);

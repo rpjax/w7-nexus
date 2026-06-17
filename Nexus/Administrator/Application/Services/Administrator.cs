@@ -11,6 +11,7 @@ using Nexus.Administrator.Application.Contracts;
 using Nexus.Administrator.Application.Responses;
 using Nexus.Administrator.Application.Requests;
 using Nexus.Administrator.Application.Responses.Models;
+using Nexus.Authorization.Application.Models;
 
 namespace Nexus.Administrator.Application.Services;
 
@@ -18,6 +19,7 @@ public class Administrator : IAdministrator
 {
     private const int SearchKeywordMaxLength = 200;
 
+    private IAdministratorAccessPolicy _policy { get; }
     private IOperationService _operationService { get; }
     private IOperationRepository _operations { get; }
     private IAccountRepository _accounts { get; }
@@ -25,12 +27,14 @@ public class Administrator : IAdministrator
     private ITeamGatewayDetailsLoader _teamGatewayDetailsLoader { get; }
 
     public Administrator(
+        IAdministratorAccessPolicy policy,
         IOperationService operationService,
         IOperationRepository operations,
         IAccountRepository accounts,
         ITeamRepository teams,
         ITeamGatewayDetailsLoader teamGatewayDetailsLoader)
     {
+        _policy = policy;
         _operationService = operationService;
         _operations = operations;
         _accounts = accounts;
@@ -38,7 +42,104 @@ public class Administrator : IAdministrator
         _teamGatewayDetailsLoader = teamGatewayDetailsLoader;
     }
 
-    public async Task<IResult<OperationDetails>> CreateOperationAsync(
+    public Task<IOperationResult<OperationDetails>> CreateOperationAsync(
+        RequesterIdentity identity,
+        CreateOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => CreateOperationCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => SearchOperationsCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<DeleteOperationResponse>> DeleteOperationAsync(
+        RequesterIdentity identity,
+        DeleteOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => DeleteOperationCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
+        RequesterIdentity identity,
+        AssignOperationAdministratorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => AssignOperationAdministratorCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
+        RequesterIdentity identity,
+        UnassignOperationAdministratorRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => UnassignOperationAdministratorCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
+        RequesterIdentity identity,
+        SearchAccountsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => SearchAccountsCoreAsync(request),
+            cancellationToken);
+    }
+
+    private async Task<IOperationResult<T>> ExecuteAsync<T>(
+        RequesterIdentity identity,
+        Func<CancellationToken, Task<IAuthorizationResult>> authorizeAsync,
+        Func<Task<IResult<T>>> executeAsync,
+        CancellationToken cancellationToken)
+    {
+        var authorization = await authorizeAsync(cancellationToken);
+
+        if (authorization.IsFailure)
+            return OperationResult<T>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<T>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await executeAsync();
+
+        if (result.IsFailure)
+            return OperationResult<T>.Failure(result.Errors);
+
+        if (result.Value is not T value)
+            return OperationResult<T>.Failure(result.Errors);
+
+        return OperationResult<T>.Success(value);
+    }
+
+    private async Task<IResult<OperationDetails>> CreateOperationCoreAsync(
         CreateOperationRequest request)
     {
         if (request is null)
@@ -54,7 +155,7 @@ public class Administrator : IAdministrator
         return Result<OperationDetails>.Success(result.Value!.ToOperationDetails());
     }
 
-    public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
+    private async Task<IResult<SearchOperationsResponse>> SearchOperationsCoreAsync(
         SearchOperationsRequest request)
     {
         if (request is null)
@@ -134,7 +235,7 @@ public class Administrator : IAdministrator
             .Build();
     }
 
-    public async Task<IResult<DeleteOperationResponse>> DeleteOperationAsync(
+    private async Task<IResult<DeleteOperationResponse>> DeleteOperationCoreAsync(
         DeleteOperationRequest request)
     {
         if (request is null)
@@ -147,7 +248,7 @@ public class Administrator : IAdministrator
         return Result<DeleteOperationResponse>.Success(new DeleteOperationResponse());
     }
 
-    public async Task<IResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
+    private async Task<IResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorCoreAsync(
         AssignOperationAdministratorRequest request)
     {
         if (request is null)
@@ -163,7 +264,7 @@ public class Administrator : IAdministrator
         return Result<AssignOperationAdministratorResponse>.Success(new AssignOperationAdministratorResponse());
     }
 
-    public async Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
+    private async Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorCoreAsync(
         UnassignOperationAdministratorRequest request)
     {
         if (request is null)
@@ -179,7 +280,7 @@ public class Administrator : IAdministrator
         return Result<UnassignOperationAdministratorResponse>.Success(new UnassignOperationAdministratorResponse());
     }
 
-    public async Task<IResult<SearchAccountsResponse>> SearchAccountsAsync(
+    private async Task<IResult<SearchAccountsResponse>> SearchAccountsCoreAsync(
         SearchAccountsRequest request)
     {
         if (request is null)

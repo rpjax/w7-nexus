@@ -6,15 +6,21 @@ using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
 using OperationAdministratorRole = Nexus.OperationAdministrator.Application.Services.OperationAdministrator;
+using Nexus.TeamLeader.Application.Services;
 using TeamLeaderRole = Nexus.TeamLeader.Application.Services.TeamLeader;
 using AdministratorRole = Nexus.Administrator.Application.Services.Administrator;
+using Nexus.Authorization;
 using OperatorRole = Nexus.Operator.Application.Services.Operator;
 using Nexus.Authentication.Application.Services;
 using Nexus.Administrator.Extensions;
+using Nexus.Administrator.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Aggregates;
+using Nexus.Authorization.Application.Models;
+using Nexus.OperationAdministrator.Application.Services;
+using Nexus.Operator.Application.Services;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Contracts;
@@ -309,34 +315,44 @@ internal sealed class ActorTestContext
 
     public AdministratorRole CreateAdministrator()
         => new AdministratorRole(
+            new AdministratorAccessPolicy(),
             CreateOperationService(),
             Operations,
             Accounts,
             Teams,
             new EmptyTeamGatewayDetailsLoader());
 
-    public OperationAdministratorRole CreateOperationAdministrator(
-        string accountId = "op-admin-1",
-        bool isGlobalAdministrator = false)
+    public OperationAdministratorRole CreateOperationAdministrator()
         => new(
-            accountId,
-            isGlobalAdministrator,
+            new OperationAdministratorAccessPolicy(Operations, Teams),
             CreateTeamService(),
             Operations,
             Teams,
             Accounts,
             new EmptyOperationAdministratorTeamGatewayDetailsLoader());
 
-    public TeamLeaderRole CreateTeamLeader(string accountId = "team-leader-1")
+    public RequesterIdentity CreateRequesterIdentity(
+        string accountId = "op-admin-1",
+        bool isGlobalAdministrator = false,
+        params string[] additionalRoles)
+    {
+        var roles = new List<string>(additionalRoles);
+        if (isGlobalAdministrator && !roles.Contains(Roles.Administrator, StringComparer.Ordinal))
+            roles.Add(Roles.Administrator);
+
+        return new RequesterIdentity(accountId, roles, Array.Empty<string>());
+    }
+
+    public TeamLeaderRole CreateTeamLeader()
         => new(
-            accountId,
+            new TeamLeaderAccessPolicy(Teams),
             CreateTeamService(),
             Operations,
             Teams,
             Accounts);
 
-    public OperatorRole CreateOperator(string operatorAccountId)
-        => new(operatorAccountId, Operations, Teams, Accounts);
+    public OperatorRole CreateOperator()
+        => new(new OperatorAccessPolicy(), Operations, Teams, Accounts);
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {

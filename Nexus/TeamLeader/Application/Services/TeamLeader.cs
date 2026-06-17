@@ -1,9 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Application.Contracts;
-using Nexus.Authorization;
+using Nexus.Authorization.Application.Models;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Operations.Errors;
@@ -12,61 +11,112 @@ using Nexus.TeamLeader.Application.Requests;
 using Nexus.TeamLeader.Application.Responses;
 using Nexus.TeamLeader.Application.Responses.Models;
 using Nexus.TeamLeader.Extensions;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 
 namespace Nexus.TeamLeader.Application.Services;
 
 public class TeamLeader : ITeamLeader
 {
-    private readonly string? _accountId;
+    private ITeamLeaderAccessPolicy _policy { get; }
     private ITeamService _teamService { get; }
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
-    private IHttpContextAccessor? _httpContextAccessor { get; }
 
     public TeamLeader(
-        ITeamService teamService,
-        IOperationRepository operations,
-        ITeamRepository teams,
-        IAccountRepository accounts,
-        IHttpContextAccessor httpContextAccessor)
-    {
-        _teamService = teamService;
-        _operations = operations;
-        _teams = teams;
-        _accounts = accounts;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    internal TeamLeader(
-        string accountId,
+        ITeamLeaderAccessPolicy policy,
         ITeamService teamService,
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts)
     {
-        _accountId = accountId;
+        _policy = policy;
         _teamService = teamService;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
     }
 
-    public async Task<IResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(SearchLedTeamsRequest request)
+    public Task<IOperationResult<SearchLedTeamsResponse>> SearchLedTeamsAsync(
+        RequesterIdentity identity,
+        SearchLedTeamsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeSearchLedTeamsAsync(identity),
+            () => SearchLedTeamsCoreAsync(identity, request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+        RequesterIdentity identity,
+        AssignOperatorToTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeManageTeamAsync(identity, teamId: request?.TeamId ?? string.Empty),
+            () => AssignOperatorToTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+        RequesterIdentity identity,
+        UnassignOperatorFromTeamRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeManageTeamAsync(identity, teamId: request?.TeamId ?? string.Empty),
+            () => UnassignOperatorFromTeamCoreAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
+        RequesterIdentity identity,
+        SetOperatorProfitShareRuleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeManageTeamAsync(identity, teamId: request?.TeamId ?? string.Empty),
+            () => SetOperatorProfitShareRuleCoreAsync(request),
+            cancellationToken);
+    }
+
+    private async Task<IOperationResult<T>> ExecuteAsync<T>(
+        RequesterIdentity identity,
+        Func<CancellationToken, Task<IAuthorizationResult>> authorizeAsync,
+        Func<Task<IResult<T>>> executeAsync,
+        CancellationToken cancellationToken)
+    {
+        var authorization = await authorizeAsync(cancellationToken);
+
+        if (authorization.IsFailure)
+            return OperationResult<T>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<T>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await executeAsync();
+
+        if (result.IsFailure)
+            return OperationResult<T>.Failure(result.Errors);
+
+        if (result.Value is not T value)
+            return OperationResult<T>.Failure(result.Errors);
+
+        return OperationResult<T>.Success(value);
+    }
+
+    private async Task<IResult<SearchLedTeamsResponse>> SearchLedTeamsCoreAsync(
+        RequesterIdentity identity,
+        SearchLedTeamsRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<SearchLedTeamsResponse>();
 
-        var accountId = await ResolveAccountIdAsync();
-        if (string.IsNullOrWhiteSpace(accountId))
-        {
-            return Result<SearchLedTeamsResponse>.Failure(Error.Create()
-                .WithCode(TeamErrorCodes.TeamLeaderInvalid)
-                .WithMessage("A identidade do líder de equipe não foi encontrada.")
-                .Build());
-        }
+        var accountId = identity.AccountId;
 
         var builder = Result.Create<SearchLedTeamsResponse>();
 
@@ -166,7 +216,7 @@ public class TeamLeader : ITeamLeader
             .Build();
     }
 
-    public async Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+    private async Task<IResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamCoreAsync(
         AssignOperatorToTeamRequest request)
     {
         if (request is null)
@@ -176,7 +226,7 @@ public class TeamLeader : ITeamLeader
         return ToResponse<AssignOperatorToTeamResponse>(result);
     }
 
-    public async Task<IResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+    private async Task<IResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamCoreAsync(
         UnassignOperatorFromTeamRequest request)
     {
         if (request is null)
@@ -186,7 +236,7 @@ public class TeamLeader : ITeamLeader
         return ToResponse<UnassignOperatorFromTeamResponse>(result);
     }
 
-    public async Task<IResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
+    private async Task<IResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleCoreAsync(
         SetOperatorProfitShareRuleRequest request)
     {
         if (request is null)
@@ -203,29 +253,7 @@ public class TeamLeader : ITeamLeader
         return ToResponse<SetOperatorProfitShareRuleResponse>(result);
     }
 
-    private async Task<string?> ResolveAccountIdAsync()
-    {
-        if (!string.IsNullOrWhiteSpace(_accountId))
-            return _accountId.Trim();
-
-        var user = _httpContextAccessor?.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-            return null;
-
-        var accountId = user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-        if (string.IsNullOrWhiteSpace(accountId))
-            return null;
-
-        var account = await _accounts.AsQueryable()
-            .Where(a => a.Id == accountId)
-            .FirstOrDefaultAsync();
-
-        return account is null ? accountId.Trim() : accountId.Trim();
-    }
-
-    private static IResult<TResponse> ToResponse<TResponse>(Aidan.Core.Patterns.IResult result)
+    private static IResult<TResponse> ToResponse<TResponse>(IResult result)
         where TResponse : new()
     {
         if (result.IsFailure)

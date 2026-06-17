@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Application.Contracts;
+using Nexus.Authorization.Application.Models;
 using Nexus.Operator.Application.Contracts;
 using Nexus.Operator.Application.Requests;
 using Nexus.Operator.Application.Responses;
@@ -18,50 +16,64 @@ namespace Nexus.Operator.Application.Services;
 
 public class Operator : IOperator
 {
-    private readonly string? _operatorAccountId;
+    private IOperatorAccessPolicy _policy { get; }
     private IOperationRepository _operations { get; }
     private ITeamRepository _teams { get; }
     private IAccountRepository _accounts { get; }
-    private IHttpContextAccessor? _httpContextAccessor { get; }
 
     public Operator(
-        IOperationRepository operations,
-        ITeamRepository teams,
-        IAccountRepository accounts,
-        IHttpContextAccessor httpContextAccessor)
-    {
-        _operations = operations;
-        _teams = teams;
-        _accounts = accounts;
-        _httpContextAccessor = httpContextAccessor;
-    }
-
-    internal Operator(
-        string operatorAccountId,
+        IOperatorAccessPolicy policy,
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts)
     {
-        _operatorAccountId = operatorAccountId;
+        _policy = policy;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
     }
 
-    public async Task<IResult<SearchOperationsResponse>> SearchOperationsAsync(
-        SearchOperatorOperationsRequest request)
+    public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            ct => _policy.AuthorizeSearchOperationsAsync(identity, ct),
+            () => SearchOperationsCoreAsync(identity, request),
+            cancellationToken);
+    }
+
+    private async Task<IOperationResult<T>> ExecuteAsync<T>(
+        Func<CancellationToken, Task<IAuthorizationResult>> authorizeAsync,
+        Func<Task<IResult<T>>> executeAsync,
+        CancellationToken cancellationToken)
+    {
+        var authorization = await authorizeAsync(cancellationToken);
+
+        if (authorization.IsFailure)
+            return OperationResult<T>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<T>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await executeAsync();
+
+        if (result.IsFailure)
+            return OperationResult<T>.Failure(result.Errors);
+
+        if (result.Value is not T value)
+            return OperationResult<T>.Failure(result.Errors);
+
+        return OperationResult<T>.Success(value);
+    }
+
+    private async Task<IResult<SearchOperationsResponse>> SearchOperationsCoreAsync(
+        RequesterIdentity identity,
+        SearchOperationsRequest request)
     {
         if (request is null)
             return RequestBodyRequiredResult<SearchOperationsResponse>();
-
-        var operatorAccountId = ResolveOperatorAccountId();
-        if (string.IsNullOrWhiteSpace(operatorAccountId))
-        {
-            return Result<SearchOperationsResponse>.Failure(Error.Create()
-                .WithCode(OperationErrorCodes.OperatorInvalid)
-                .WithMessage("A identidade do operador não foi encontrada.")
-                .Build());
-        }
 
         var builder = Result.Create<SearchOperationsResponse>();
 
@@ -97,7 +109,7 @@ public class Operator : IOperator
             return builder.Build();
 
         var assignedTeams = await OperatorOperationResolver.ResolveAssignedTeamsAsync(
-            operatorAccountId,
+            identity.AccountId,
             _teams);
 
         if (assignedTeams.Length == 0)
@@ -155,7 +167,7 @@ public class Operator : IOperator
         var items = await OperationDetailsMapper.MapManyAsync(
             page,
             _accounts,
-            operatorAccountId);
+            identity.AccountId);
 
         var response = new SearchOperationsResponse
         {
@@ -168,19 +180,6 @@ public class Operator : IOperator
         return builder
             .WithValue(response)
             .Build();
-    }
-
-    private string? ResolveOperatorAccountId()
-    {
-        if (!string.IsNullOrWhiteSpace(_operatorAccountId))
-            return _operatorAccountId.Trim();
-
-        var user = _httpContextAccessor?.HttpContext?.User;
-        if (user?.Identity?.IsAuthenticated != true)
-            return null;
-
-        return user.FindFirst(JwtRegisteredClaimNames.Sub)?.Value
-            ?? user.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     }
 
     private static IResult<T> RequestBodyRequiredResult<T>()

@@ -1,3 +1,4 @@
+using Nexus.Authorization.Application.Models;
 using Nexus.TeamLeader.Application.Requests;
 using Nexus.Operations.Errors;
 using Nexus.Tests.Support;
@@ -9,15 +10,18 @@ public sealed class TeamLeaderTests
 {
     private readonly ActorTestContext _ctx = new();
 
+    private RequesterIdentity Identity(string accountId = "team-leader-1")
+        => _ctx.CreateRequesterIdentity(accountId);
+
     [Fact]
-    public async Task AssignOperatorToTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    public async Task AssignOperatorToTeamAsync_NullRequest_ReturnsTeamIdInvalid()
     {
         var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.AssignOperatorToTeamAsync(null!);
+        var result = await sut.AssignOperatorToTeamAsync(Identity(), default(AssignOperatorToTeamRequest));
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+        Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.TeamIdInvalid);
     }
 
     [Fact]
@@ -27,26 +31,27 @@ public sealed class TeamLeaderTests
         var (teamId, _) = await SeedTeamAsync();
         _ctx.RegisterAccount("operator-1");
 
-        var result = await sut.AssignOperatorToTeamAsync(new AssignOperatorToTeamRequest
+        var result = await sut.AssignOperatorToTeamAsync(Identity(), new AssignOperatorToTeamRequest
         {
             TeamId = teamId,
             OperatorId = "operator-1"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
         Assert.Contains("operator-1", team.OperatorIds);
     }
 
     [Fact]
-    public async Task UnassignOperatorFromTeamAsync_NullRequest_ReturnsRequestBodyRequired()
+    public async Task UnassignOperatorFromTeamAsync_NullRequest_ReturnsTeamIdInvalid()
     {
         var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.UnassignOperatorFromTeamAsync(null!);
+        var result = await sut.UnassignOperatorFromTeamAsync(Identity(), default(UnassignOperatorFromTeamRequest));
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+        Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.TeamIdInvalid);
     }
 
     [Fact]
@@ -55,32 +60,33 @@ public sealed class TeamLeaderTests
         var sut = _ctx.CreateTeamLeader();
         var (teamId, _) = await SeedTeamAsync();
         _ctx.RegisterAccount("operator-1");
-        await sut.AssignOperatorToTeamAsync(new AssignOperatorToTeamRequest
+        await sut.AssignOperatorToTeamAsync(Identity(), new AssignOperatorToTeamRequest
         {
             TeamId = teamId,
             OperatorId = "operator-1"
         });
 
-        var result = await sut.UnassignOperatorFromTeamAsync(new UnassignOperatorFromTeamRequest
+        var result = await sut.UnassignOperatorFromTeamAsync(Identity(), new UnassignOperatorFromTeamRequest
         {
             TeamId = teamId,
             OperatorId = "operator-1"
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
         Assert.DoesNotContain("operator-1", team.OperatorIds);
     }
 
     [Fact]
-    public async Task SetOperatorProfitShareRuleAsync_NullRequest_ReturnsRequestBodyRequired()
+    public async Task SetOperatorProfitShareRuleAsync_NullRequest_ReturnsTeamIdInvalid()
     {
         var sut = _ctx.CreateTeamLeader();
 
-        var result = await sut.SetOperatorProfitShareRuleAsync(null!);
+        var result = await sut.SetOperatorProfitShareRuleAsync(Identity(), default(SetOperatorProfitShareRuleRequest));
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+        Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.TeamIdInvalid);
     }
 
     [Fact]
@@ -90,13 +96,13 @@ public sealed class TeamLeaderTests
         var (teamId, _) = await SeedTeamAsync();
         _ctx.RegisterAccount("operator-1");
         _ctx.RegisterAccount("payee-1");
-        await sut.AssignOperatorToTeamAsync(new AssignOperatorToTeamRequest
+        await sut.AssignOperatorToTeamAsync(Identity(), new AssignOperatorToTeamRequest
         {
             TeamId = teamId,
             OperatorId = "operator-1"
         });
 
-        var result = await sut.SetOperatorProfitShareRuleAsync(new SetOperatorProfitShareRuleRequest
+        var result = await sut.SetOperatorProfitShareRuleAsync(Identity(), new SetOperatorProfitShareRuleRequest
         {
             TeamId = teamId,
             OperatorId = "operator-1",
@@ -106,9 +112,10 @@ public sealed class TeamLeaderTests
             ]
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsSuccess);
         var team = _ctx.Teams.AsQueryable().First(t => t.Id == teamId);
-        Assert.True(team.OperatorProfitShareRules.Any(r => r.OperatorId == "operator-1"));
+        Assert.Contains(team.OperatorProfitShareRules, r => r.OperatorId == "operator-1");
         Assert.Equal(100m, team.OperatorProfitShareRules.First(r => r.OperatorId == "operator-1").Cuts.First(c => c.AccountId == "payee-1").Percentage);
     }
 
@@ -119,7 +126,7 @@ public sealed class TeamLeaderTests
         var (teamId, _) = await SeedTeamAsync();
         _ctx.RegisterAccount("payee-1");
 
-        var result = await sut.SetOperatorProfitShareRuleAsync(new SetOperatorProfitShareRuleRequest
+        var result = await sut.SetOperatorProfitShareRuleAsync(Identity(), new SetOperatorProfitShareRuleRequest
         {
             TeamId = teamId,
             OperatorId = "missing-operator",
@@ -129,6 +136,7 @@ public sealed class TeamLeaderTests
             ]
         });
 
+        Assert.True(result.IsAuthorized);
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == TeamErrorCodes.OperatorNotAssigned);
     }
@@ -136,7 +144,7 @@ public sealed class TeamLeaderTests
     private async Task<(string TeamId, string OperationId)> SeedTeamAsync()
     {
         var operation = await _ctx.SeedOperationAsync("Team Parent Operation");
-        var team = await _ctx.SeedTeamAsync(operation.Id);
+        var team = await _ctx.SeedTeamAsync(operation.Id, teamLeaderId: "team-leader-1");
         return (team.Id, operation.Id);
     }
 }

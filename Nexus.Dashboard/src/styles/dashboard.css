@@ -20,9 +20,7 @@ body {
     margin: 0;
     min-height: 100%;
     font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-    background: radial-gradient(1200px 520px at 10% -5%, #233a74 0%, transparent 60%),
-                radial-gradient(900px 460px at 100% 0%, #1d2544 0%, transparent 55%),
-                linear-gradient(180deg, var(--bg-1), var(--bg-0));
+    background: var(--bg-0);
     color: var(--text);
 }
 
@@ -201,36 +199,55 @@ body {
 
 .admin-op-list {
     display: grid;
-    gap: 1rem;
+    gap: 0;
     margin-top: 0.85rem;
+}
+
+.ops-card > .admin-op-list--single {
+    margin-top: 0.25rem;
+}
+
+.ops-card > .admin-op-list--single > .admin-op-card {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.ops-card > .admin-op-list--single > .admin-op-card + .admin-op-card {
+    border-top: 1px solid rgba(132, 162, 220, 0.12);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
 }
 
 .admin-op-card {
     border: 1px solid rgba(132, 162, 220, 0.14);
-    border-radius: 16px;
-    background: linear-gradient(165deg, rgba(14, 21, 40, 0.92) 0%, rgba(8, 13, 26, 0.96) 100%);
+    border-radius: 14px;
+    background: rgba(10, 16, 32, 0.55);
     overflow: hidden;
-    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.22);
+}
+
+.admin-op-card--compact .admin-op-card-header {
+    padding-bottom: 0.75rem;
 }
 
 .admin-op-card-header {
     display: flex;
     align-items: flex-start;
     gap: 0.85rem;
-    padding: 1rem 1rem 0.85rem;
-    border-bottom: 1px solid rgba(132, 162, 220, 0.1);
+    padding: 1rem 1.1rem 0.85rem;
 }
 
 .admin-op-card-mark {
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    width: 2.75rem;
-    height: 2.75rem;
-    border-radius: 12px;
-    background: linear-gradient(145deg, rgba(242, 187, 90, 0.28), rgba(242, 187, 90, 0.1));
-    border: 1px solid rgba(242, 187, 90, 0.28);
-    font-size: 1.1rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 10px;
+    background: linear-gradient(145deg, rgba(242, 187, 90, 0.22), rgba(242, 187, 90, 0.08));
+    border: 1px solid rgba(242, 187, 90, 0.22);
+    font-size: 1rem;
     font-weight: 700;
     color: #ffe8b8;
 }
@@ -245,13 +262,13 @@ body {
     flex-wrap: wrap;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 0.65rem 1rem;
-    margin-bottom: 0.35rem;
+    gap: 0.55rem 1rem;
+    margin-bottom: 0.45rem;
 }
 
 .admin-op-card-title {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: 1.12rem;
     font-weight: 650;
     letter-spacing: -0.02em;
     line-height: 1.2;
@@ -260,131 +277,110 @@ body {
 .admin-op-card-stats {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.4rem;
+    gap: 0.35rem;
 }
 
 .admin-op-stat {
     display: inline-flex;
     align-items: baseline;
-    gap: 0.3rem;
-    padding: 0.2rem 0.55rem;
+    gap: 0.28rem;
+    padding: 0.15rem 0.5rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(132, 162, 220, 0.14);
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(132, 162, 220, 0.12);
 }
 
 .admin-op-stat-warn {
     border-color: rgba(255, 95, 128, 0.32);
-    background: rgba(255, 95, 128, 0.1);
+    background: rgba(255, 95, 128, 0.08);
 }
 
 .admin-op-stat-value {
-    font-size: 0.88rem;
+    font-size: 0.84rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
 }
 
 .admin-op-stat-label {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     font-weight: 600;
     letter-spacing: 0.03em;
     text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.85);
+    color: rgba(156, 176, 216, 0.82);
 }
 
-.admin-op-card-id {
-    margin: 0;
+.admin-op-card-meta {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
-    font-size: 0.78rem;
+    gap: 0.35rem 0.5rem;
+}
+
+.admin-op-meta-chip {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 0.18rem 0.5rem;
+    border-radius: 999px;
+    font-size: 0.74rem;
+    line-height: 1.3;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(132, 162, 220, 0.1);
+    color: var(--text);
+}
+
+.admin-op-meta-chip--grow {
+    flex: 1 1 12rem;
+    min-width: 0;
+    border-radius: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.admin-op-meta-chip--muted {
     color: rgba(156, 176, 216, 0.88);
+    background: transparent;
+    border-color: transparent;
+    padding-inline: 0;
 }
 
 .admin-op-copy-id {
-    min-height: 1.85rem;
-    padding-inline: 0.55rem;
+    min-height: 1.75rem;
+    padding-inline: 0.5rem;
 }
 
-.admin-op-card-overview {
-    display: grid;
-    gap: 0.75rem;
-    padding: 0.85rem 1rem;
-    border-bottom: 1px solid rgba(132, 162, 220, 0.1);
-    background: rgba(0, 0, 0, 0.12);
+.admin-op-card-body {
+    border-top: 1px solid rgba(132, 162, 220, 0.08);
 }
 
-.admin-op-overview-block {
-    display: grid;
-    gap: 0.25rem;
+.admin-op-section {
+    padding: 0.85rem 1.1rem;
 }
 
-.admin-op-overview-label {
-    font-size: 0.72rem;
-    font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.78);
+.admin-op-section + .admin-op-section {
+    border-top: 1px solid rgba(132, 162, 220, 0.08);
 }
 
-.admin-op-overview-text {
-    margin: 0;
-    line-height: 1.5;
-    color: var(--text);
-    font-size: 0.92rem;
-}
-
-.admin-op-timeline {
+.admin-op-section-head {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem 0.75rem;
+    margin-bottom: 0.65rem;
 }
 
-.admin-op-timeline-item {
-    flex: 1 1 10rem;
-    padding: 0.55rem 0.65rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.03);
-    border: 1px solid rgba(132, 162, 220, 0.1);
+.admin-op-section-title {
+    margin: 0;
+    font-size: 0.88rem;
+    font-weight: 650;
+    letter-spacing: 0.01em;
 }
 
-.admin-op-timeline-label {
-    display: block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.72);
-    margin-bottom: 0.15rem;
-}
-
-.admin-op-timeline-value {
-    font-size: 0.82rem;
-    color: var(--text);
-    font-variant-numeric: tabular-nums;
-}
-
-.admin-op-card-panels {
-    display: grid;
-    gap: 0.85rem;
-    padding: 0.85rem 1rem 1rem;
-}
-
-.admin-op-panel {
-    border: 1px solid rgba(132, 162, 220, 0.12);
-    border-radius: 12px;
-    background: rgba(0, 0, 0, 0.14);
-    padding: 0.75rem;
-}
-
-.admin-op-panel-head h4 {
-    margin: 0 0 0.2rem;
-    font-size: 0.95rem;
-}
-
-.admin-op-panel-head p {
-    margin: 0 0 0.65rem;
+.admin-op-section-desc {
+    margin: 0.15rem 0 0;
+    max-width: 42ch;
 }
 
 .admin-op-empty {
@@ -396,72 +392,107 @@ body {
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.45rem;
+    gap: 0.25rem;
 }
 
 .admin-op-person {
     display: flex;
     align-items: center;
     gap: 0.65rem;
-    padding: 0.55rem 0.6rem;
-    border-radius: 10px;
+    padding: 0.45rem 0.35rem;
+    border-radius: 8px;
+    transition: background 0.12s ease;
+}
+
+.admin-op-person:hover {
     background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(132, 162, 220, 0.1);
 }
 
 .admin-op-person-avatar {
     flex-shrink: 0;
     display: grid;
     place-items: center;
-    width: 2rem;
-    height: 2rem;
+    width: 1.85rem;
+    height: 1.85rem;
     border-radius: 999px;
-    background: linear-gradient(145deg, rgba(74, 134, 255, 0.28), rgba(74, 134, 255, 0.12));
-    border: 1px solid rgba(74, 134, 255, 0.22);
-    font-size: 0.82rem;
+    background: linear-gradient(145deg, rgba(74, 134, 255, 0.24), rgba(74, 134, 255, 0.1));
+    border: 1px solid rgba(74, 134, 255, 0.2);
+    font-size: 0.78rem;
     font-weight: 700;
     color: #c8dcff;
 }
 
 .admin-op-person-meta {
     display: grid;
-    gap: 0.1rem;
+    gap: 0.05rem;
     min-width: 0;
     flex: 1;
 }
 
 .admin-op-person-name {
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.88rem;
     line-height: 1.2;
 }
 
 .admin-op-person-id {
-    font-size: 0.74rem;
-    color: rgba(156, 176, 216, 0.82);
-}
-
-.admin-op-person-sub {
     font-size: 0.72rem;
-    color: rgba(156, 176, 216, 0.72);
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+    color: rgba(156, 176, 216, 0.78);
 }
 
 .admin-op-person-action {
     flex-shrink: 0;
 }
 
-.admin-op-team-list {
+.admin-op-teams-rail {
     display: grid;
-    gap: 0.65rem;
+    gap: 0;
 }
 
 .admin-op-team {
-    border: 1px solid rgba(132, 162, 220, 0.12);
-    border-radius: 10px;
-    padding: 0.65rem 0.7rem;
-    background: rgba(255, 255, 255, 0.02);
+    display: grid;
+    grid-template-columns: 1.25rem minmax(0, 1fr);
+    gap: 0 0.65rem;
+    padding: 0.65rem 0 0.85rem;
+}
+
+.admin-op-team:not(.admin-op-team--last) {
+    border-bottom: 1px solid rgba(132, 162, 220, 0.07);
+}
+
+.admin-op-team-rail {
+    position: relative;
+    display: flex;
+    justify-content: center;
+    padding-top: 0.35rem;
+}
+
+.admin-op-team-rail::before {
+    content: "";
+    position: absolute;
+    top: 0.65rem;
+    bottom: -0.85rem;
+    width: 2px;
+    border-radius: 999px;
+    background: linear-gradient(180deg, rgba(74, 134, 255, 0.45), rgba(74, 134, 255, 0.08));
+}
+
+.admin-op-team--last .admin-op-team-rail::before {
+    bottom: 50%;
+}
+
+.admin-op-team-rail-dot {
+    position: relative;
+    z-index: 1;
+    width: 0.55rem;
+    height: 0.55rem;
+    border-radius: 999px;
+    background: #6a9cff;
+    box-shadow: 0 0 0 3px rgba(74, 134, 255, 0.18);
+}
+
+.admin-op-team-body {
+    min-width: 0;
 }
 
 .admin-op-team-header {
@@ -469,55 +500,64 @@ body {
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-bottom: 0.55rem;
+    margin-bottom: 0.45rem;
+}
+
+.admin-op-team-heading {
+    min-width: 0;
 }
 
 .admin-op-team-name {
-    margin: 0 0 0.15rem;
-    font-size: 0.92rem;
+    margin: 0 0 0.1rem;
+    font-size: 0.95rem;
+    font-weight: 650;
 }
 
 .admin-op-team-id {
-    font-size: 0.72rem;
-    color: rgba(156, 176, 216, 0.78);
+    font-size: 0.7rem;
+    color: rgba(156, 176, 216, 0.72);
 }
 
 .admin-op-team-count {
     flex-shrink: 0;
-    font-size: 0.72rem;
+    font-size: 0.68rem;
     font-weight: 600;
-    padding: 0.15rem 0.45rem;
+    padding: 0.12rem 0.4rem;
     border-radius: 999px;
     color: #b8cff8;
-    background: rgba(74, 134, 255, 0.12);
-    border: 1px solid rgba(74, 134, 255, 0.2);
-}
-
-.admin-op-team-leader {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: baseline;
-    gap: 0.35rem 0.5rem;
-    margin-bottom: 0.55rem;
-    padding-bottom: 0.55rem;
-    border-bottom: 1px solid rgba(132, 162, 220, 0.08);
-}
-
-.admin-op-team-leader-label {
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.72);
+    background: rgba(74, 134, 255, 0.1);
+    border: 1px solid rgba(74, 134, 255, 0.16);
 }
 
 .admin-op-team-leader-value {
-    font-size: 0.86rem;
+    font-size: 0.84rem;
     font-weight: 600;
 }
 
-.admin-op-team-leader-empty {
-    margin: 0;
+.admin-op-team-sections {
+    display: grid;
+    gap: 0.65rem;
+}
+
+.admin-op-subsection {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.admin-op-subsection-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem 0.65rem;
+}
+
+.admin-op-subsection-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(156, 176, 216, 0.78);
 }
 
 .admin-op-operator-list {
@@ -525,34 +565,37 @@ body {
     margin: 0;
     padding: 0;
     display: grid;
-    gap: 0.55rem;
+    gap: 0.35rem;
 }
 
 .admin-op-operator {
     display: grid;
-    gap: 0.45rem;
-    padding: 0.45rem 0.5rem;
-    border-radius: 8px;
-    background: rgba(0, 0, 0, 0.14);
+    gap: 0.35rem;
+    padding: 0.35rem 0;
+}
+
+.admin-op-operator + .admin-op-operator {
+    border-top: 1px solid rgba(132, 162, 220, 0.06);
+    padding-top: 0.55rem;
 }
 
 .admin-op-profit-list {
     list-style: none;
     margin: 0;
-    padding: 0 0 0 2.65rem;
+    padding: 0 0 0 2.5rem;
     display: grid;
-    gap: 0.35rem;
+    gap: 0.3rem;
 }
 
 .admin-op-profit-item {
     display: grid;
-    gap: 0.2rem;
+    gap: 0.18rem;
 }
 
 .admin-op-profit-track {
-    height: 0.35rem;
+    height: 0.3rem;
     border-radius: 999px;
-    background: rgba(132, 162, 220, 0.12);
+    background: rgba(132, 162, 220, 0.1);
     overflow: hidden;
 }
 
@@ -568,11 +611,11 @@ body {
     align-items: baseline;
     justify-content: space-between;
     gap: 0.5rem;
-    font-size: 0.78rem;
+    font-size: 0.76rem;
 }
 
 .admin-op-profit-user {
-    color: rgba(156, 176, 216, 0.92);
+    color: rgba(156, 176, 216, 0.9);
     min-width: 0;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -586,48 +629,22 @@ body {
     color: #b8cff8;
 }
 
-.admin-op-profit-empty {
-    margin: 0;
-    padding-left: 2.65rem;
-}
-
-.admin-op-card-actions {
+.admin-op-card-footer {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    padding: 0.85rem 1rem 1rem;
-    border-top: 1px solid rgba(132, 162, 220, 0.1);
-    background: rgba(0, 0, 0, 0.14);
+    padding: 0.75rem 1.1rem;
+    border-top: 1px solid rgba(132, 162, 220, 0.08);
 }
 
-@media (min-width: 900px) {
-    .admin-op-card-panels {
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
-        align-items: start;
-    }
-
-    .admin-op-card-panels--stacked {
-        grid-template-columns: 1fr;
-    }
-
-    .admin-op-card-overview {
-        grid-template-columns: 1.4fr 1fr;
-        align-items: start;
+@media (min-width: 720px) {
+    .admin-op-card-meta {
+        padding-right: 1rem;
     }
 }
 
 .admin-op-list--single {
     grid-template-columns: 1fr !important;
-}
-
-.admin-op-panel--teams {
-    min-width: 0;
-}
-
-.admin-op-panel-actions {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(132, 162, 220, 0.1);
 }
 
 .admin-op-create-team {
@@ -647,49 +664,27 @@ body {
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-end;
-    gap: 0.4rem;
-}
-
-.admin-op-team-block {
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid rgba(132, 162, 220, 0.08);
-}
-
-.admin-op-team-block-head {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.45rem 0.75rem;
-    margin-bottom: 0.55rem;
-}
-
-.admin-op-team-block-head h6 {
-    margin: 0;
-    font-size: 0.82rem;
-    font-weight: 650;
-    letter-spacing: 0.02em;
+    gap: 0.35rem;
 }
 
 .admin-op-inline-actions {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.4rem;
 }
 
 .admin-op-operator-head {
     display: flex;
     align-items: center;
-    gap: 0.65rem;
+    gap: 0.55rem;
 }
 
 .admin-op-operator-actions {
     margin-left: auto;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.35rem;
+    gap: 0.3rem;
 }
 
 .admin-op-gateway-strategy {
@@ -834,19 +829,15 @@ body {
     font-size: 0.88rem;
 }
 
-.admin-op-gateway-section {
-    background: rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
-    padding: 0.75rem;
-    border: 1px solid rgba(132, 162, 220, 0.1);
+.admin-op-subsection--gateway .admin-op-gateway-status {
+    margin-bottom: 0.55rem;
 }
 
 .admin-op-gateway-status {
-    margin-bottom: 0.75rem;
-    padding: 0.55rem 0.7rem;
-    border-radius: 10px;
-    font-size: 0.84rem;
-    line-height: 1.45;
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.82rem;
+    line-height: 1.4;
 }
 
 .admin-op-gateway-status--ok {
@@ -864,17 +855,17 @@ body {
 .admin-op-strategy-cards {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.45rem;
-    margin-bottom: 0.55rem;
+    gap: 0.35rem;
+    margin-bottom: 0.45rem;
 }
 
 .admin-op-strategy-card {
     display: grid;
-    gap: 0.2rem;
-    padding: 0.55rem 0.6rem;
-    border-radius: 10px;
-    border: 1px solid rgba(132, 162, 220, 0.14);
-    background: rgba(255, 255, 255, 0.025);
+    gap: 0.15rem;
+    padding: 0.45rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid rgba(132, 162, 220, 0.12);
+    background: transparent;
     color: var(--text);
     text-align: left;
     cursor: pointer;
@@ -908,24 +899,20 @@ body {
 }
 
 .admin-op-gateway-panel {
-    padding-top: 0.65rem;
-    border-top: 1px solid rgba(132, 162, 220, 0.08);
+    padding-top: 0.5rem;
 }
 
 .admin-op-resource-desc {
-    margin: 0.15rem 0 0;
+    margin: 0.12rem 0 0;
     max-width: 36ch;
 }
 
 .admin-op-gateway-empty {
-    padding: 0.65rem 0.75rem;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.14);
-    border: 1px dashed rgba(132, 162, 220, 0.16);
+    padding: 0.5rem 0;
 }
 
 .admin-op-gateway-empty .admin-op-empty {
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.2rem;
 }
 
 .admin-op-person-avatar--straw {
@@ -951,11 +938,12 @@ body {
     flex-wrap: wrap;
     align-items: center;
     justify-content: space-between;
-    gap: 0.45rem 0.65rem;
-    padding: 0.55rem 0.65rem;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.025);
-    border: 1px solid rgba(132, 162, 220, 0.12);
+    gap: 0.4rem 0.55rem;
+    padding: 0.4rem 0;
+}
+
+.admin-op-gateway-item + .admin-op-gateway-item {
+    border-top: 1px solid rgba(132, 162, 220, 0.06);
 }
 
 .admin-op-gateway-item-main {

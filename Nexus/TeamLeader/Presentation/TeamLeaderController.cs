@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Authorization.Application.Models;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 using Nexus.TeamLeader.Application.Contracts;
 using Nexus.TeamLeader.Application.Requests;
@@ -11,81 +11,66 @@ namespace Nexus.TeamLeader.Presentation;
 [Authorize]
 public class TeamLeaderController : NexusController
 {
-    private ITeamLeaderAccess _teamLeaderAccess { get; }
+    private ITeamLeader _teamLeader { get; }
+    private IRequesterIdentityResolver _identityResolver { get; }
 
-    public TeamLeaderController(ITeamLeaderAccess teamLeaderAccess)
+    public TeamLeaderController(
+        ITeamLeader teamLeader,
+        IRequesterIdentityResolver identityResolver)
     {
-        _teamLeaderAccess = teamLeaderAccess;
+        _teamLeader = teamLeader;
+        _identityResolver = identityResolver;
     }
 
     [HttpPost("operations/search")]
-    public async Task<ActionResult> SearchLedTeamsAsync([FromBody] SearchLedTeamsRequest request)
+    public async Task<ActionResult> SearchLedTeamsAsync(
+        [FromBody] SearchLedTeamsRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, teamLeader) = await ResolveForSearchAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await teamLeader.SearchLedTeamsAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _teamLeader.SearchLedTeamsAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("teams/operators")]
-    public async Task<ActionResult> AssignOperatorToTeamAsync([FromBody] AssignOperatorToTeamRequest request)
+    public async Task<ActionResult> AssignOperatorToTeamAsync(
+        [FromBody] AssignOperatorToTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, teamLeader) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await teamLeader.AssignOperatorToTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _teamLeader.AssignOperatorToTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("teams/operators")]
-    public async Task<ActionResult> UnassignOperatorFromTeamAsync([FromBody] UnassignOperatorFromTeamRequest request)
+    public async Task<ActionResult> UnassignOperatorFromTeamAsync(
+        [FromBody] UnassignOperatorFromTeamRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, teamLeader) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await teamLeader.UnassignOperatorFromTeamAsync(request!);
-        return ToResponse(result);
+        return ToOperationResult(await _teamLeader.UnassignOperatorFromTeamAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPut("teams/operators/profit-share-rules")]
     public async Task<ActionResult> SetOperatorProfitShareRuleAsync(
-        [FromBody] SetOperatorProfitShareRuleRequest request)
+        [FromBody] SetOperatorProfitShareRuleRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, teamLeader) = await ResolveForTeamAsync(request?.TeamId);
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await teamLeader.SetOperatorProfitShareRuleAsync(request!);
-        return ToResponse(result);
-    }
-
-    private async Task<(ActionResult? Error, ITeamLeader TeamLeader)> ResolveForSearchAsync()
-    {
-        var access = await _teamLeaderAccess.ResolveAsync();
-        return ToAccessResult(access);
-    }
-
-    private async Task<(ActionResult? Error, ITeamLeader TeamLeader)> ResolveForTeamAsync(string? teamId)
-    {
-        var access = await _teamLeaderAccess.ResolveForTeamAsync(teamId ?? string.Empty);
-        return ToAccessResult(access);
-    }
-
-    private (ActionResult? Error, ITeamLeader TeamLeader) ToAccessResult(IAccessEvaluationResult<ITeamLeader> access)
-    {
-        if (access.IsFailure)
-            return (ProblemResponse(422, access.Errors), default!);
-
-        if (!access.IsAuthorized)
-            return (ProblemResponse(403, access.AuthorizationErrors), default!);
-
-        if (access.Role is null)
-            throw new InvalidOperationException("Team leader role is missing after successful access evaluation.");
-
-        return (null, access.Role);
+        return ToOperationResult(await _teamLeader.SetOperatorProfitShareRuleAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 }

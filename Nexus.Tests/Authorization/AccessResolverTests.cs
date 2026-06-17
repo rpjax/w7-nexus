@@ -1,10 +1,8 @@
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Http;
 using Nexus.Accounts.Aggregates;
 using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
 using Nexus.OperationAdministrator.Application.Services;
+using Nexus.Administrator.Application.Services;
 using Nexus.TeamLeader.Application.Services;
 using Nexus.Operator.Application.Services;
 using Nexus.StrawMan.Application.Services;
@@ -18,170 +16,195 @@ public sealed class AccessResolverTests
 {
     private readonly ActorTestContext _ctx = new();
     private readonly InMemoryAccountRepository _accounts = new();
-    private readonly FakeHttpContextAccessor _httpContextAccessor = new();
 
     [Fact]
-    public async Task OperationAdministratorAccess_GlobalAdministrator_AuthorizedWithoutOperationAssignment()
+    public async Task OperationAdministratorPolicy_GlobalAdministrator_AuthorizedWithoutOperationAssignment()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
         var operation = await _ctx.SeedOperationAsync();
-        var sut = CreateOperationAdministratorAccess();
+        var sut = CreateOperationAdministratorPolicy();
+        var identity = CreateIdentity(adminId, Roles.Administrator);
 
-        var result = await InvokeAsUser(
-            adminId,
-            () => sut.ResolveForOperationAsync(operation.Id));
+        var result = await sut.AuthorizeManageOperationAsync(identity, operationId: operation.Id);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.IsAuthorized);
-        Assert.NotNull(result.Role);
     }
 
     [Fact]
-    public async Task OperationAdministratorAccess_NonAdministratorWithoutAssignment_Unauthorized()
+    public async Task OperationAdministratorPolicy_NonAdministratorWithoutAssignment_Unauthorized()
     {
         const string userId = "regular-user";
         await SeedAccountAsync(userId);
         var operation = await _ctx.SeedOperationAsync();
-        var sut = CreateOperationAdministratorAccess();
+        var sut = CreateOperationAdministratorPolicy();
+        var identity = CreateIdentity(userId);
 
-        var result = await InvokeAsUser(
-            userId,
-            () => sut.ResolveForOperationAsync(operation.Id));
+        var result = await sut.AuthorizeManageOperationAsync(identity, operationId: operation.Id);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.IsAuthorized);
     }
 
     [Fact]
-    public async Task TeamLeaderAccess_GlobalAdministrator_AuthorizedWithoutTeamLeaderAssignment()
+    public async Task AdministratorPolicy_AccountWithAdministratorRole_Authorized()
+    {
+        const string adminId = "admin-1";
+        await SeedAccountAsync(adminId, Roles.Administrator);
+        var sut = CreateAdministratorPolicy();
+        var identity = CreateIdentity(adminId, Roles.Administrator);
+
+        var result = await sut.AuthorizeAdministratorAsync(identity);
+
+        Assert.True(result.IsSuccess);
+        Assert.True(result.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task AdministratorPolicy_GlobalAdministratorWithoutAdministratorRole_Unauthorized()
+    {
+        const string adminId = "global-admin";
+        await SeedAccountAsync(adminId, Roles.Administrator);
+        var sut = CreateAdministratorPolicy();
+        var identity = CreateIdentity(adminId);
+
+        var result = await sut.AuthorizeAdministratorAsync(identity);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task AdministratorPolicy_NonAdministrator_Unauthorized()
+    {
+        const string userId = "regular-user";
+        await SeedAccountAsync(userId);
+        var sut = CreateAdministratorPolicy();
+        var identity = CreateIdentity(userId);
+
+        var result = await sut.AuthorizeAdministratorAsync(identity);
+
+        Assert.True(result.IsSuccess);
+        Assert.False(result.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task TeamLeaderPolicy_GlobalAdministrator_AuthorizedWithoutTeamLeaderAssignment()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
         var operation = await _ctx.SeedOperationAsync();
         var team = await _ctx.SeedTeamAsync(operation.Id);
-        var sut = CreateTeamLeaderAccess();
+        var sut = CreateTeamLeaderPolicy();
+        var identity = CreateIdentity(adminId, Roles.Administrator);
 
-        var result = await InvokeAsUser(
-            adminId,
-            () => sut.ResolveForTeamAsync(team.Id));
+        var result = await sut.AuthorizeManageTeamAsync(identity, team.Id);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.IsAuthorized);
-        Assert.NotNull(result.Role);
     }
 
     [Fact]
-    public async Task TeamLeaderAccess_NonAdministratorWithoutAssignment_Unauthorized()
+    public async Task TeamLeaderPolicy_NonAdministratorWithoutAssignment_Unauthorized()
     {
         const string userId = "regular-user";
         await SeedAccountAsync(userId);
         var operation = await _ctx.SeedOperationAsync();
         var team = await _ctx.SeedTeamAsync(operation.Id);
-        var sut = CreateTeamLeaderAccess();
+        var sut = CreateTeamLeaderPolicy();
+        var identity = CreateIdentity(userId);
 
-        var result = await InvokeAsUser(
-            userId,
-            () => sut.ResolveForTeamAsync(team.Id));
+        var result = await sut.AuthorizeManageTeamAsync(identity, team.Id);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.IsAuthorized);
     }
 
     [Fact]
-    public async Task OperatorAccess_GlobalAdministrator_AuthorizedWithoutOperatorRole()
+    public async Task OperatorPolicy_GlobalAdministrator_AuthorizedWithoutOperatorRole()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
-        var sut = CreateOperatorAccess();
+        var sut = CreateOperatorPolicy();
+        var identity = CreateIdentity(adminId, Roles.Administrator);
 
-        var result = await InvokeAsUser(adminId, () => sut.ResolveAsync());
+        var result = await sut.AuthorizeSearchOperationsAsync(identity, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.IsAuthorized);
-        Assert.NotNull(result.Role);
     }
 
     [Fact]
-    public async Task OperatorAccess_NonAdministratorWithoutOperatorRole_Unauthorized()
+    public async Task OperatorPolicy_NonAdministratorWithoutOperatorRole_Unauthorized()
     {
         const string userId = "regular-user";
         await SeedAccountAsync(userId);
-        var sut = CreateOperatorAccess();
+        var sut = CreateOperatorPolicy();
+        var identity = CreateIdentity(userId);
 
-        var result = await InvokeAsUser(userId, () => sut.ResolveAsync());
+        var result = await sut.AuthorizeSearchOperationsAsync(identity, CancellationToken.None);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.IsAuthorized);
     }
 
     [Fact]
-    public async Task StrawManAccess_GlobalAdministrator_AuthorizedWithoutStrawManRole()
+    public async Task StrawManPolicy_GlobalAdministrator_AuthorizedWithoutStrawManRole()
     {
         const string adminId = "global-admin";
         await SeedAccountAsync(adminId, Roles.Administrator);
-        var sut = CreateStrawManAccess();
+        var sut = CreateStrawManPolicy();
+        var identity = CreateIdentity(adminId, Roles.Administrator);
 
-        var result = await InvokeAsUser(adminId, () => sut.ResolveAsync());
+        var result = await sut.AuthorizeStrawManAsync(identity);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.IsAuthorized);
-        Assert.NotNull(result.Role);
     }
 
     [Fact]
-    public async Task StrawManAccess_AccountWithStrawManRole_Authorized()
+    public async Task StrawManPolicy_AccountWithStrawManRole_Authorized()
     {
         const string strawManId = "strawman-1";
         await SeedAccountAsync(strawManId, Roles.StrawMan);
-        var sut = CreateStrawManAccess();
+        var sut = CreateStrawManPolicy();
+        var identity = CreateIdentity(strawManId, Roles.StrawMan);
 
-        var result = await InvokeAsUser(strawManId, () => sut.ResolveAsync());
+        var result = await sut.AuthorizeStrawManAsync(identity);
 
         Assert.True(result.IsSuccess);
         Assert.True(result.IsAuthorized);
-        Assert.NotNull(result.Role);
     }
 
     [Fact]
-    public async Task StrawManAccess_NonAdministratorWithoutStrawManRole_Unauthorized()
+    public async Task StrawManPolicy_NonAdministratorWithoutStrawManRole_Unauthorized()
     {
         const string userId = "regular-user";
         await SeedAccountAsync(userId);
-        var sut = CreateStrawManAccess();
+        var sut = CreateStrawManPolicy();
+        var identity = CreateIdentity(userId);
 
-        var result = await InvokeAsUser(userId, () => sut.ResolveAsync());
+        var result = await sut.AuthorizeStrawManAsync(identity);
 
         Assert.True(result.IsSuccess);
         Assert.False(result.IsAuthorized);
     }
 
-    private OperationAdministratorAccess CreateOperationAdministratorAccess()
-        => new(
-            _httpContextAccessor,
-            _accounts,
-            _ctx.Operations,
-            _ctx.Teams,
-            _ctx.CreateOperationAdministrator());
+    private OperationAdministratorAccessPolicy CreateOperationAdministratorPolicy()
+        => new(_ctx.Operations, _ctx.Teams);
 
-    private TeamLeaderAccess CreateTeamLeaderAccess()
-        => new(
-            _httpContextAccessor,
-            _accounts,
-            _ctx.Teams,
-            _ctx.CreateTeamLeader());
+    private static AdministratorAccessPolicy CreateAdministratorPolicy()
+        => new();
 
-    private OperatorAccess CreateOperatorAccess()
-        => new(
-            _httpContextAccessor,
-            _accounts,
-            _ctx.CreateOperator("operator-1"));
+    private TeamLeaderAccessPolicy CreateTeamLeaderPolicy()
+        => new(_ctx.Teams);
 
-    private StrawManAccess CreateStrawManAccess()
-        => new(
-            _httpContextAccessor,
-            _accounts,
-            new Nexus.StrawMan.Application.Services.StrawMan());
+    private static OperatorAccessPolicy CreateOperatorPolicy()
+        => new();
+
+    private static StrawManAccessPolicy CreateStrawManPolicy()
+        => new();
 
     private async Task SeedAccountAsync(string accountId, params string[] roles)
     {
@@ -193,26 +216,6 @@ public sealed class AccessResolverTests
             Array.Empty<string>()));
     }
 
-    private async Task<T> InvokeAsUser<T>(string accountId, Func<Task<T>> action)
-    {
-        _httpContextAccessor.HttpContext = CreateAuthenticatedContext(accountId);
-        return await action();
-    }
-
-    private static DefaultHttpContext CreateAuthenticatedContext(string accountId)
-    {
-        var identity = new ClaimsIdentity(
-            new[] { new Claim(JwtRegisteredClaimNames.Sub, accountId) },
-            authenticationType: "Test");
-
-        return new DefaultHttpContext
-        {
-            User = new ClaimsPrincipal(identity)
-        };
-    }
-
-    private sealed class FakeHttpContextAccessor : IHttpContextAccessor
-    {
-        public HttpContext? HttpContext { get; set; }
-    }
+    private static RequesterIdentity CreateIdentity(string accountId, params string[] roles)
+        => new(accountId, roles, Array.Empty<string>());
 }

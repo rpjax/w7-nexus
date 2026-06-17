@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Administrator.Application.Contracts;
 using Nexus.Administrator.Application.Requests;
+using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 
 namespace Nexus.Administrator.Presentation;
@@ -10,93 +11,92 @@ namespace Nexus.Administrator.Presentation;
 [Authorize]
 public class AdministratorController : NexusController
 {
-    private IAdministratorAccess _administratorAccess { get; }
+    private IAdministrator _administrator { get; }
+    private IRequesterIdentityResolver _identityResolver { get; }
 
-    public AdministratorController(IAdministratorAccess administratorAccess)
+    public AdministratorController(
+        IAdministrator administrator,
+        IRequesterIdentityResolver identityResolver)
     {
-        _administratorAccess = administratorAccess;
+        _administrator = administrator;
+        _identityResolver = identityResolver;
     }
 
     [HttpPost("operations")]
-    public async Task<ActionResult> CreateOperationAsync([FromBody] CreateOperationRequest request)
+    public async Task<ActionResult> CreateOperationAsync(
+        [FromBody] CreateOperationRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.CreateOperationAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _administrator.CreateOperationAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("operations/search")]
-    public async Task<ActionResult> SearchOperationsAsync([FromBody] SearchOperationsRequest request)
+    public async Task<ActionResult> SearchOperationsAsync(
+        [FromBody] SearchOperationsRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.SearchOperationsAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _administrator.SearchOperationsAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("accounts/search")]
-    public async Task<ActionResult> SearchAccountsAsync([FromBody] SearchAccountsRequest request)
+    public async Task<ActionResult> SearchAccountsAsync(
+        [FromBody] SearchAccountsRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.SearchAccountsAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _administrator.SearchAccountsAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("operations")]
-    public async Task<ActionResult> DeleteOperationAsync([FromBody] DeleteOperationRequest request)
+    public async Task<ActionResult> DeleteOperationAsync(
+        [FromBody] DeleteOperationRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.DeleteOperationAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _administrator.DeleteOperationAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpPost("operations/administrators")]
     public async Task<ActionResult> AssignOperationAdministratorAsync(
-        [FromBody] AssignOperationAdministratorRequest request)
+        [FromBody] AssignOperationAdministratorRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.AssignOperationAdministratorAsync(request);
-        return ToResponse(result);
+        return ToOperationResult(await _administrator.AssignOperationAdministratorAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 
     [HttpDelete("operations/administrators")]
     public async Task<ActionResult> UnassignOperationAdministratorAsync(
-        [FromBody] UnassignOperationAdministratorRequest request)
+        [FromBody] UnassignOperationAdministratorRequest request,
+        CancellationToken cancellationToken)
     {
-        var (accessError, administrator) = await ResolveAdministratorAccessAsync();
-        if (accessError is not null)
-            return accessError;
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        var result = await administrator.UnassignOperationAdministratorAsync(request);
-        return ToResponse(result);
-    }
-
-    private async Task<(ActionResult? Error, IAdministrator Administrator)> ResolveAdministratorAccessAsync()
-    {
-        var access = await _administratorAccess.ResolveAsync();
-        if (access.IsFailure)
-            return (ProblemResponse(422, access.Errors), default!);
-
-        if (!access.IsAuthorized)
-            return (ProblemResponse(403, access.AuthorizationErrors), default!);
-
-        if (access.Role is null)
-            throw new InvalidOperationException("Administrator role is missing after successful access evaluation.");
-
-        return (null, access.Role);
+        return ToOperationResult(await _administrator.UnassignOperationAdministratorAsync(
+            identity,
+            request,
+            cancellationToken));
     }
 }
