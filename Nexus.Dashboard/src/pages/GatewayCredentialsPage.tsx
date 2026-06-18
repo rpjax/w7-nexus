@@ -13,6 +13,7 @@ import type { GatewayPrefix, KeyPairCredential, TokenCredential } from '../api/t
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
 import { EmptyState } from '../components/EmptyState';
+import { PageHeading } from '../layouts/PageHeading';
 import { useNotifications } from '../notifications/NotificationContext';
 import { maskKey, maskToken, shortId } from '../utils/format';
 
@@ -266,10 +267,12 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
 
   return (
     <>
-      <section className="page-header">
-        <h1>{config.title}</h1>
-        <p className="muted page-lead">{config.lead}</p>
-      </section>
+      <PageHeading
+        kicker="Integração"
+        title={config.title}
+        subtitle={config.lead}
+        backLink={{ to: '/dashboard/gateways', label: 'Hub de gateways' }}
+      />
 
       <section className="card ops-card">
         <div className="card-title-row">

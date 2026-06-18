@@ -5,7 +5,7 @@ using Nexus.Operations.Errors;
 
 namespace Nexus.Operations.Aggregates;
 
-public sealed class Team
+public sealed class Team : IGatewayCredentialScope
 {
     public const int MaxNameLength = 200;
 

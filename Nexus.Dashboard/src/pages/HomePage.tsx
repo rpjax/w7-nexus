@@ -6,6 +6,7 @@ import { searchOperatorOperations } from '../api/operator/operations';
 import { useAuth } from '../auth/AuthContext';
 import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
 import { StatCard } from '../components/StatCard';
+import { PageHeading } from '../layouts/PageHeading';
 
 type CredentialStat = {
   status: string;
@@ -75,29 +76,30 @@ export function HomePage() {
     })();
   }, [operatorPanel, adminView]);
 
+  const homeKicker = adminView && operatorPanel
+    ? 'Administração e operação'
+    : adminView
+      ? 'Administração'
+      : operatorPanel
+        ? 'Painel do operador'
+        : 'Dashboard';
+
+  const homeSubtitle = adminView && operatorPanel
+    ? 'Visão operacional das suas alocações e gestão global do sistema.'
+    : adminView
+      ? 'Gerencie o catálogo global de operações e contas do sistema.'
+      : operatorPanel
+        ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
+        : 'Nenhum papel operacional ou administrativo associado à sua sessão.';
+
   return (
     <>
-      <section className="page-header">
-        <p className="page-kicker">
-          {adminView && operatorPanel
-            ? 'Administração e operação'
-            : adminView
-              ? 'Administração'
-              : operatorPanel
-                ? 'Painel do operador'
-                : 'Dashboard'}
-        </p>
-        <h1>Visão geral</h1>
-        <p>
-          {adminView && operatorPanel
-            ? 'Visão operacional das suas alocações e gestão global do sistema.'
-            : adminView
-              ? 'Gerencie o catálogo global de operações e contas do sistema.'
-              : operatorPanel
-                ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
-                : 'Nenhum papel operacional ou administrativo associado à sua sessão.'}
-        </p>
-      </section>
+      <PageHeading
+        kicker={homeKicker}
+        kickerVariant={adminView ? 'admin' : 'default'}
+        title="Visão geral"
+        subtitle={homeSubtitle}
+      />
 
       <section className="stats-grid">
         {operatorPanel ? (

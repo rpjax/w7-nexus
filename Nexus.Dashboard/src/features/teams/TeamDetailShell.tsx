@@ -1,8 +1,10 @@
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { detailPath } from '../operations/operationPaths';
 import type { TeamScope } from './teamPaths';
 import { EmptyState } from '../../components/EmptyState';
+import { PageHeading } from '../../layouts/PageHeading';
+
+const TEAM_DETAIL_TITLE = 'Gerenciamento de equipe';
 
 type TeamDetailShellProps = {
   scope: TeamScope;
@@ -25,14 +27,11 @@ export function TeamDetailShell({
 
   return (
     <div className="ops-page ops-detail-page">
-      <section className="page-header ops-page-header--compact">
-        <p className="muted small page-nav-back">
-          <Link to={operationPath}>← Voltar à operação</Link>
-        </p>
-        {operationName ? (
-          <p className="muted small ops-team-detail__operation">{operationName}</p>
-        ) : null}
-      </section>
+      <PageHeading
+        title={loading ? 'Carregando…' : TEAM_DETAIL_TITLE}
+        subtitle={!loading && !notFound && operationName ? `Operação · ${operationName}` : undefined}
+        backLink={{ to: operationPath, label: 'Voltar à operação' }}
+      />
 
       <div className="ops-detail">
         {loading ? (

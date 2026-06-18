@@ -71,13 +71,15 @@ function OpSection({
   action?: ReactNode;
   children: ReactNode;
 }) {
+  const sectionTitle = title ?? kicker;
+
   return (
     <section className="admin-op-section">
-      {(kicker || title || desc || action) ? (
+      {(sectionTitle || desc || action) ? (
         <div className="admin-op-section__head">
-          <div>
-            {kicker ? <span className="admin-op-section__kicker">{kicker}</span> : null}
-            {title ? <h4 className="admin-op-section-title">{title}</h4> : null}
+          <div className="admin-op-section__head-text">
+            {sectionTitle ? <h2 className="admin-op-section-title">{sectionTitle}</h2> : null}
+            {title && kicker ? <span className="admin-op-section__kicker">{kicker}</span> : null}
             {desc ? <p className="admin-op-section-desc muted small">{desc}</p> : null}
           </div>
           {action ?? null}
@@ -140,7 +142,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
 
   return (
     <article className={`admin-op-card admin-op-card--${scope} admin-op-card--detail`}>
-      <OpSection kicker="Operação">
+      <OpSection title="Visão geral">
         <div className="admin-op-identity">
           <div className="admin-op-identity__primary">
             <div className="admin-op-identity__title-block">

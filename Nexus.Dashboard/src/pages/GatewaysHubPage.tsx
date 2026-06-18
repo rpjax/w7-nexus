@@ -1,12 +1,14 @@
 import { Link } from 'react-router-dom';
+import { PageHeading } from '../layouts/PageHeading';
 
 export function GatewaysHubPage() {
   return (
     <>
-      <section className="page-header">
-        <h1>Gateways</h1>
-        <p>Escolha um gateway para acessar credenciais e regras de integração específicas.</p>
-      </section>
+      <PageHeading
+        kicker="Integração"
+        title="Gateways"
+        subtitle="Escolha um gateway para acessar credenciais e regras de integração específicas."
+      />
 
       <section className="card">
         <h2>Seleção de gateway</h2>

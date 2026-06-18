@@ -65,6 +65,10 @@ public sealed class GatewayOrchestratorTests
             "N",
             "D",
             Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
             DateTime.UtcNow,
             DateTime.UtcNow);
 
@@ -127,6 +131,10 @@ public sealed class GatewayOrchestratorTests
             "N",
             "D",
             Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
             DateTime.UtcNow,
             DateTime.UtcNow);
 
@@ -184,6 +192,57 @@ public sealed class GatewayOrchestratorTests
 
         Assert.True(result.IsSuccess);
         Assert.Equal("pix-group", result.Value!.Code);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WhenOperatorHasNoTeam_UsesOperationDefaultCredentials()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.Manual,
+            new[] { "cred-op-1" },
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var cred = new FrendzApiCredentials { Id = "cred-op-1", Name = "c", Token = "tok" };
+        var paymentRepo = new StubPaymentRepository();
+        var gatewayPixService = new StubGatewayPixService
+        {
+            OnCreate = r => Task.FromResult(new GatewayPix
+            {
+                Id = r.PaymentId,
+                Code = "pix-operation-default"
+            })
+        };
+
+        var sut = new GatewayOrchestrator(
+            new SingleOperationRepository(operation),
+            new EmptyTeamRepository(),
+            new StubPaymentService(),
+            paymentRepo,
+            new SingleFrendzCredentialsRepository(cred),
+            new StubGatewayPixServiceFactory(gatewayPixService),
+            new EmptySigiloPayCredentialsRepository(),
+            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
+            new EmptyWintechCredentialsRepository(),
+            new StubWintechGatewayPixServiceFactory(gatewayPixService),
+            new EmptyGatewayCredentialsGroupRepository());
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            OperatorAccountId = "operator-without-team",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("pix-operation-default", result.Value!.Code);
+        Assert.True(paymentRepo.WasUpdated);
     }
 
     private sealed class StubPaymentService : IPaymentService

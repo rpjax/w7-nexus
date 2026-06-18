@@ -16,4 +16,25 @@ public interface IAdministratorOperationCommandService
 
     Task<IResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
         UnassignOperationAdministratorRequest request);
+
+    Task<IResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
+        SetOperationGatewaySelectionStrategyRequest request);
+
+    Task<IResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
+        AssignStrawManToOperationRequest request);
+
+    Task<IResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
+        UnassignStrawManFromOperationRequest request);
+
+    Task<IResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
+        AssignGatewayAccountGroupToOperationRequest request);
+
+    Task<IResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
+        UnassignGatewayAccountGroupFromOperationRequest request);
+
+    Task<IResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
+        AssignGatewayAccountToOperationRequest request);
+
+    Task<IResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
+        UnassignGatewayAccountFromOperationRequest request);
 }

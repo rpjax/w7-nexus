@@ -1,4 +1,5 @@
 using Aidan.Core.Errors;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Aggregates;
@@ -11,13 +12,19 @@ public sealed class OperationService : IOperationService
 {
     private readonly IOperationRepository _operations;
     private readonly IAccountIdValidator _accountIdValidator;
+    private readonly IGatewayCredentialsGroupRepository _gatewayCredentialsGroups;
+    private readonly IGatewayCredentialsIdValidator _gatewayCredentialsIdValidator;
 
     public OperationService(
         IOperationRepository operations,
-        IAccountIdValidator accountIdValidator)
+        IAccountIdValidator accountIdValidator,
+        IGatewayCredentialsGroupRepository gatewayCredentialsGroups,
+        IGatewayCredentialsIdValidator gatewayCredentialsIdValidator)
     {
         _operations = operations;
         _accountIdValidator = accountIdValidator;
+        _gatewayCredentialsGroups = gatewayCredentialsGroups;
+        _gatewayCredentialsIdValidator = gatewayCredentialsIdValidator;
     }
 
     public async Task<IResult<Operation>> CreateOperationAsync(string? name, string? description)
@@ -66,6 +73,10 @@ public sealed class OperationService : IOperationService
             Name: name!,
             Description: string.IsNullOrWhiteSpace(description) ? null : description,
             AdministratorIds: Array.Empty<string>(),
+            StrawManIds: Array.Empty<string>(),
+            GatewaySelectionStrategy: GatewaySelectionStrategy.PerStrawman,
+            GatewayCredentialsIds: Array.Empty<string>(),
+            GatewayCredentialsGroupIds: Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
 
@@ -139,6 +150,194 @@ public sealed class OperationService : IOperationService
             return NotFoundResult(normalizedOperationId);
 
         await _operations.DeleteAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> AssignStrawManAsync(string operationId, string strawManId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        var accountValidation = await ValidateAccountExistsAsync(
+            strawManId,
+            OperationErrorCodes.StrawManInvalid,
+            OperationErrorCodes.StrawManAccountNotFound,
+            "laranja");
+        if (accountValidation is not null)
+            return accountValidation;
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.AssignStrawMan(strawManId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> UnassignStrawManAsync(string operationId, string strawManId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.UnassignStrawMan(strawManId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> SetGatewaySelectionStrategyAsync(string operationId, GatewaySelectionStrategy strategy)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        if (!Enum.IsDefined(strategy))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewaySelectionStrategyInvalid)
+                .WithMessage("A estratégia de seleção de gateway é inválida.")
+                .Build());
+        }
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.SetGatewaySelectionStrategy(strategy);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> AssignGatewayCredentialsGroupAsync(string operationId, string groupId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewayCredentialsGroupInvalid)
+                .WithMessage("O ID do grupo de credenciais é obrigatório.")
+                .Build());
+        }
+
+        var normalizedGroupId = groupId.Trim();
+        var groupExists = _gatewayCredentialsGroups.AsQueryable()
+            .Any(g => g.Id == normalizedGroupId);
+        if (!groupExists)
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewayCredentialsGroupNotFound)
+                .WithMessage($"O grupo de credenciais '{normalizedGroupId}' não foi encontrado.")
+                .Build());
+        }
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.AssignGatewayCredentialsGroup(normalizedGroupId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> UnassignGatewayCredentialsGroupAsync(string operationId, string groupId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        if (string.IsNullOrWhiteSpace(groupId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewayCredentialsGroupInvalid)
+                .WithMessage("O ID do grupo de credenciais é obrigatório.")
+                .Build());
+        }
+
+        var normalizedGroupId = groupId.Trim();
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.UnassignGatewayCredentialsGroup(normalizedGroupId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> AssignGatewayCredentialsAsync(string operationId, string credentialsId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        if (string.IsNullOrWhiteSpace(credentialsId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewayCredentialInvalid)
+                .WithMessage("O ID da credencial de gateway é obrigatório.")
+                .Build());
+        }
+
+        var normalizedCredentialsId = credentialsId.Trim();
+        if (!await _gatewayCredentialsIdValidator.ExistsAsync(normalizedCredentialsId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(OperationErrorCodes.GatewayCredentialInvalid)
+                .WithMessage($"A credencial de gateway '{normalizedCredentialsId}' não foi encontrada.")
+                .Build());
+        }
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.AssignGatewayCredentials(normalizedCredentialsId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
+        return Result.Success();
+    }
+
+    public async Task<IResult> UnassignGatewayCredentialsAsync(string operationId, string credentialsId)
+    {
+        var validation = ValidateOperationId(operationId, out var normalizedOperationId);
+        if (validation is not null)
+            return validation;
+
+        var operation = FindOperation(normalizedOperationId);
+        if (operation is null)
+            return NotFoundResult(normalizedOperationId);
+
+        var result = operation.UnassignGatewayCredentials(credentialsId);
+        if (result.IsFailure)
+            return result;
+
+        await _operations.UpdateAsync(operation);
         return Result.Success();
     }
 

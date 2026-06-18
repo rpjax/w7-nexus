@@ -1,6 +1,8 @@
-import { Link } from 'react-router-dom';
 import type { ReactNode } from 'react';
 import { EmptyState } from '../../components/EmptyState';
+import { PageHeading } from '../../layouts/PageHeading';
+
+const OPERATION_DETAIL_TITLE = 'Gerenciamento de operação';
 
 type OperationDetailShellProps = {
   listPath: string;
@@ -19,11 +21,10 @@ export function OperationDetailShell({
 }: OperationDetailShellProps) {
   return (
     <div className="ops-page ops-detail-page">
-      <section className="page-header ops-page-header--compact">
-        <p className="muted small page-nav-back">
-          <Link to={listPath}>← {listLabel}</Link>
-        </p>
-      </section>
+      <PageHeading
+        title={loading ? 'Carregando…' : OPERATION_DETAIL_TITLE}
+        backLink={{ to: listPath, label: listLabel }}
+      />
 
       <div className="ops-detail">
         {loading ? (

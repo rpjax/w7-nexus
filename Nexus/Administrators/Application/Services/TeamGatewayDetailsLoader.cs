@@ -31,18 +31,23 @@ public sealed class TeamGatewayDetailsLoader : ITeamGatewayDetailsLoader
 
     public async Task<TeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
+        IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
     {
-        if (teams.Count == 0)
+        operations ??= Array.Empty<Operation>();
+
+        if (teams.Count == 0 && operations.Count == 0)
             return new TeamGatewayLookup();
 
         var credentialIds = teams
             .SelectMany(t => t.GatewayCredentialsIds)
+            .Concat(operations.SelectMany(o => o.GatewayCredentialsIds))
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 
         var groupIds = teams
             .SelectMany(t => t.GatewayCredentialsGroupIds)
+            .Concat(operations.SelectMany(o => o.GatewayCredentialsGroupIds))
             .Distinct(StringComparer.Ordinal)
             .ToArray();
 

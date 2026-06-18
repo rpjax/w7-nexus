@@ -1,11 +1,14 @@
 using System.Linq.Expressions;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
+using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Tests.Payments;
+using Nexus.Tests.Support;
 using Xunit;
 using Nexus.Operations.Errors;
 
@@ -13,6 +16,11 @@ namespace Nexus.Tests.Operations;
 
 public sealed class OperationServiceTests
 {
+    private const string OperationId = "op-1";
+    private const string GroupId = "group-1";
+    private const string CredentialId = "cred-1";
+    private const string StrawManId = "straw-1";
+
     private sealed class InMemoryOperationRepository : IOperationRepository
     {
         private readonly List<Operation> _store = new();
@@ -28,6 +36,10 @@ public sealed class OperationServiceTests
                     entity.Name,
                     entity.Description,
                     entity.AdministratorIds,
+                    entity.StrawManIds,
+                    entity.GatewaySelectionStrategy,
+                    entity.GatewayCredentialsIds,
+                    entity.GatewayCredentialsGroupIds,
                     entity.CreatedAt,
                     entity.UpdatedAt)
                 : entity;
@@ -71,11 +83,44 @@ public sealed class OperationServiceTests
         public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
     }
 
+    private sealed class TestContext
+    {
+        public InMemoryOperationRepository Operations { get; } = new();
+        public InMemoryGatewayCredentialsGroupRepository GatewayGroups { get; } = new();
+        public FakeAccountIdValidator AccountValidator { get; } = new();
+        public FakeGatewayCredentialsIdValidator GatewayCredentialsValidator { get; } = new();
+
+        public OperationService CreateSut()
+            => new(
+                Operations,
+                AccountValidator,
+                GatewayGroups,
+                GatewayCredentialsValidator);
+    }
+
+    private static TestContext CreateContextWithOperation(string operationId = OperationId)
+    {
+        var ctx = new TestContext();
+        var operation = new Operation(
+            operationId,
+            "Test Operation",
+            "Description",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+        ctx.Operations.CreateAsync(operation).GetAwaiter().GetResult();
+        return ctx;
+    }
+
     [Fact]
     public async Task CreateOperationAsync_DescriptionMissing_AllowsNullDescription()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var result = await sut.CreateOperationAsync(
             name: "Operation A",
@@ -84,13 +129,14 @@ public sealed class OperationServiceTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Null(result.Value!.Description);
+        Assert.Equal(GatewaySelectionStrategy.PerStrawman, result.Value.GatewaySelectionStrategy);
     }
 
     [Fact]
     public async Task CreateOperationAsync_NameTooLong_ReturnsError()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var tooLongName = new string('A', Operation.MaxNameLength + 1);
 
         var result = await sut.CreateOperationAsync(
@@ -104,8 +150,8 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task CreateOperationAsync_NameAlreadyExists_IgnoresCaseAndSpaces()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var first = await sut.CreateOperationAsync(
             name: "My Operation",
@@ -123,8 +169,8 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task CreateOperationAsync_EmptyName_ReturnsNameInvalid()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var result = await sut.CreateOperationAsync(
             name: "   ",
@@ -137,8 +183,8 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task CreateOperationAsync_DescriptionTooLong_ReturnsError()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var tooLongDescription = new string('D', Operation.MaxDescriptionLength + 1);
 
         var result = await sut.CreateOperationAsync(
@@ -152,24 +198,24 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task AssignAdministratorAsync_ValidIds_ReturnsSuccess()
     {
-        var repo = new InMemoryOperationRepository();
-        var validator = new FakeAccountIdValidator(["admin-1"]);
-        var sut = new OperationService(repo, validator);
+        var ctx = new TestContext();
+        ctx.AccountValidator.AddExisting("admin-1");
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
         var result = await sut.AssignAdministratorAsync(created.Value!.Id, "admin-1");
 
         Assert.True(result.IsSuccess);
-        var operation = repo.AsQueryable().First();
+        var operation = ctx.Operations.AsQueryable().First();
         Assert.Contains("admin-1", operation.AdministratorIds);
     }
 
     [Fact]
     public async Task AssignAdministratorAsync_AdminNotFound_ReturnsAdministratorAccountNotFound()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
@@ -182,8 +228,9 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task AssignAdministratorAsync_OperationNotFound_ReturnsOperationNotFound()
     {
-        var validator = new FakeAccountIdValidator(["admin-1"]);
-        var sut = new OperationService(new InMemoryOperationRepository(), validator);
+        var ctx = new TestContext();
+        ctx.AccountValidator.AddExisting("admin-1");
+        var sut = ctx.CreateSut();
 
         var result = await sut.AssignAdministratorAsync("missing-op", "admin-1");
 
@@ -194,9 +241,9 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task AssignAdministratorAsync_Duplicate_ReturnsAdministratorAlreadyAssigned()
     {
-        var repo = new InMemoryOperationRepository();
-        var validator = new FakeAccountIdValidator(["admin-1"]);
-        var sut = new OperationService(repo, validator);
+        var ctx = new TestContext();
+        ctx.AccountValidator.AddExisting("admin-1");
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
@@ -212,9 +259,9 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task UnassignAdministratorAsync_AssignedAdministrator_ReturnsSuccess()
     {
-        var repo = new InMemoryOperationRepository();
-        var validator = new FakeAccountIdValidator(["admin-1"]);
-        var sut = new OperationService(repo, validator);
+        var ctx = new TestContext();
+        ctx.AccountValidator.AddExisting("admin-1");
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
         await sut.AssignAdministratorAsync(created.Value!.Id, "admin-1");
@@ -222,14 +269,15 @@ public sealed class OperationServiceTests
         var result = await sut.UnassignAdministratorAsync(created.Value.Id, "admin-1");
 
         Assert.True(result.IsSuccess);
-        var operation = repo.AsQueryable().First();
+        var operation = ctx.Operations.AsQueryable().First();
         Assert.DoesNotContain("admin-1", operation.AdministratorIds);
     }
 
     [Fact]
     public async Task UnassignAdministratorAsync_OperationNotFound_ReturnsOperationNotFound()
     {
-        var sut = new OperationService(new InMemoryOperationRepository(), new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var result = await sut.UnassignAdministratorAsync("missing-op", "admin-1");
 
@@ -240,8 +288,8 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task UnassignAdministratorAsync_AdministratorNotAssigned_ReturnsAdministratorNotAssigned()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
@@ -254,8 +302,8 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task UnassignAdministratorAsync_InvalidAdministratorId_ReturnsAdministratorInvalid()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
@@ -268,21 +316,22 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task DeleteOperationAsync_ExistingOperation_ReturnsSuccess()
     {
-        var repo = new InMemoryOperationRepository();
-        var sut = new OperationService(repo, new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
         var created = await sut.CreateOperationAsync("Operation A", "desc");
         Assert.True(created.IsSuccess);
 
         var result = await sut.DeleteOperationAsync(created.Value!.Id);
 
         Assert.True(result.IsSuccess);
-        Assert.Empty(repo.AsQueryable().ToList());
+        Assert.Empty(ctx.Operations.AsQueryable().ToList());
     }
 
     [Fact]
     public async Task DeleteOperationAsync_OperationNotFound_ReturnsOperationNotFound()
     {
-        var sut = new OperationService(new InMemoryOperationRepository(), new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var result = await sut.DeleteOperationAsync("missing-op");
 
@@ -293,11 +342,90 @@ public sealed class OperationServiceTests
     [Fact]
     public async Task DeleteOperationAsync_InvalidOperationId_ReturnsOperationIdInvalid()
     {
-        var sut = new OperationService(new InMemoryOperationRepository(), new FakeAccountIdValidator());
+        var ctx = new TestContext();
+        var sut = ctx.CreateSut();
 
         var result = await sut.DeleteOperationAsync("  ");
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.OperationIdInvalid);
+    }
+
+    [Fact]
+    public async Task SetGatewaySelectionStrategyAsync_ValidStrategy_UpdatesStrategy()
+    {
+        var ctx = CreateContextWithOperation();
+        var sut = ctx.CreateSut();
+
+        var result = await sut.SetGatewaySelectionStrategyAsync(OperationId, GatewaySelectionStrategy.Manual);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(
+            GatewaySelectionStrategy.Manual,
+            ctx.Operations.AsQueryable().First().GatewaySelectionStrategy);
+    }
+
+    [Fact]
+    public async Task AssignGatewayCredentialsGroupAsync_WhenPerGroupStrategy_AssignsGroup()
+    {
+        var ctx = CreateContextWithOperation();
+        await ctx.GatewayGroups.CreateAsync(new GatewayCredentialsGroup(
+            GroupId,
+            "Group A",
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow));
+        var sut = ctx.CreateSut();
+        await sut.SetGatewaySelectionStrategyAsync(OperationId, GatewaySelectionStrategy.PerGroup);
+
+        var result = await sut.AssignGatewayCredentialsGroupAsync(OperationId, GroupId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(GroupId, ctx.Operations.AsQueryable().First().GatewayCredentialsGroupIds);
+    }
+
+    [Fact]
+    public async Task AssignGatewayCredentialsGroupAsync_WhenWrongStrategy_ReturnsStrategyMismatch()
+    {
+        var ctx = CreateContextWithOperation();
+        await ctx.GatewayGroups.CreateAsync(new GatewayCredentialsGroup(
+            GroupId,
+            "Group A",
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow));
+        var sut = ctx.CreateSut();
+
+        var result = await sut.AssignGatewayCredentialsGroupAsync(OperationId, GroupId);
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.GatewayCredentialsGroupStrategyMismatch);
+    }
+
+    [Fact]
+    public async Task AssignGatewayCredentialsAsync_WhenManualStrategy_AssignsCredential()
+    {
+        var ctx = CreateContextWithOperation();
+        ctx.GatewayCredentialsValidator.AddExisting(CredentialId);
+        var sut = ctx.CreateSut();
+        await sut.SetGatewaySelectionStrategyAsync(OperationId, GatewaySelectionStrategy.Manual);
+
+        var result = await sut.AssignGatewayCredentialsAsync(OperationId, CredentialId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(CredentialId, ctx.Operations.AsQueryable().First().GatewayCredentialsIds);
+    }
+
+    [Fact]
+    public async Task AssignStrawManAsync_ValidAccount_AssignsStrawMan()
+    {
+        var ctx = CreateContextWithOperation();
+        ctx.AccountValidator.AddExisting(StrawManId);
+        var sut = ctx.CreateSut();
+
+        var result = await sut.AssignStrawManAsync(OperationId, StrawManId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Contains(StrawManId, ctx.Operations.AsQueryable().First().StrawManIds);
     }
 }

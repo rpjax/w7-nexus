@@ -21,6 +21,10 @@ public sealed class MongoOperationRepository : IOperationRepository
             r.Name,
             r.Description,
             r.AdministratorIds,
+            r.StrawManIds,
+            r.GatewaySelectionStrategy,
+            r.GatewayCredentialsIds,
+            r.GatewayCredentialsGroupIds,
             r.CreatedAt,
             r.UpdatedAt);
 
@@ -77,6 +81,10 @@ public sealed class MongoOperationRepository : IOperationRepository
             .Set(r => r.Name, entity.Name)
             .Set(r => r.Description, entity.Description)
             .Set(r => r.AdministratorIds, entity.AdministratorIds.ToList())
+            .Set(r => r.StrawManIds, entity.StrawManIds.ToList())
+            .Set(r => r.GatewaySelectionStrategy, entity.GatewaySelectionStrategy)
+            .Set(r => r.GatewayCredentialsIds, entity.GatewayCredentialsIds.ToList())
+            .Set(r => r.GatewayCredentialsGroupIds, entity.GatewayCredentialsGroupIds.ToList())
             .Set(r => r.CreatedAt, entity.CreatedAt)
             .Set(r => r.UpdatedAt, entity.UpdatedAt);
 

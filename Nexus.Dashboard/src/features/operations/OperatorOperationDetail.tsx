@@ -17,16 +17,16 @@ export function OperatorOperationDetail({ operation }: OperatorOperationDetailPr
     <article className="admin-op-card admin-op-card--operator admin-op-card--detail">
       <section className="admin-op-section">
         <div className="admin-op-section__head">
-          <div>
-            <span className="admin-op-section__kicker">Operação</span>
-            <h3 className="admin-op-card-title">{operation.name}</h3>
-            <p className="admin-op-section-desc muted small">
-              {description || 'Sem descrição cadastrada.'}
-            </p>
+          <div className="admin-op-section__head-text">
+            <h2 className="admin-op-section-title">Visão geral</h2>
           </div>
         </div>
         <div className="admin-op-section__body">
-          <dl className="admin-op-identity__facts">
+          <h3 className="admin-op-card-title">{operation.name}</h3>
+          <p className="admin-op-section-desc muted small">
+            {description || 'Sem descrição cadastrada.'}
+          </p>
+          <dl className="admin-op-identity__facts admin-op-identity__facts--compact">
             <div className="admin-op-fact">
               <dt>ID</dt>
               <dd className="mono admin-op-fact-id-text" title={operation.id}>{shortId(operation.id, 24)}</dd>
@@ -45,8 +45,8 @@ export function OperatorOperationDetail({ operation }: OperatorOperationDetailPr
 
       <section className="admin-op-section">
         <div className="admin-op-section__head">
-          <div>
-            <h4 className="admin-op-section-title">Suas equipes</h4>
+          <div className="admin-op-section__head-text">
+            <h2 className="admin-op-section-title">Suas equipes</h2>
             <p className="admin-op-section-desc muted small">
               Equipes em que você está alocado nesta operação.
             </p>

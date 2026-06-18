@@ -63,6 +63,12 @@ export type TeamAccountDetails = {
 
 export type GatewaySelectionStrategy = 'PerStrawman' | 'PerGroup' | 'Manual';
 
+export const GATEWAY_SELECTION_STRATEGY_VALUE: Record<GatewaySelectionStrategy, number> = {
+  PerStrawman: 0,
+  PerGroup: 1,
+  Manual: 2,
+};
+
 export type ProfitShareCutInput = {
   accountId: string;
   percentage: number;

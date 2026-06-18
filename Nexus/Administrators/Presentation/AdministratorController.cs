@@ -126,6 +126,97 @@ public class AdministratorController : NexusController
             cancellationToken));
     }
 
+    [HttpPut("operations/gateway-selection-strategy")]
+    public async Task<ActionResult> SetOperationGatewaySelectionStrategyAsync(
+        [FromBody] SetOperationGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.SetOperationGatewaySelectionStrategyAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/straw-men")]
+    public async Task<ActionResult> AssignStrawManToOperationAsync(
+        [FromBody] AssignStrawManToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.AssignStrawManToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/straw-men")]
+    public async Task<ActionResult> UnassignStrawManFromOperationAsync(
+        [FromBody] UnassignStrawManFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.UnassignStrawManFromOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/gateway-account-groups")]
+    public async Task<ActionResult> AssignGatewayAccountGroupToOperationAsync(
+        [FromBody] AssignGatewayAccountGroupToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.AssignGatewayAccountGroupToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/gateway-account-groups")]
+    public async Task<ActionResult> UnassignGatewayAccountGroupFromOperationAsync(
+        [FromBody] UnassignGatewayAccountGroupFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.UnassignGatewayAccountGroupFromOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/gateway-accounts")]
+    public async Task<ActionResult> AssignGatewayAccountToOperationAsync(
+        [FromBody] AssignGatewayAccountToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.AssignGatewayAccountToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/gateway-accounts")]
+    public async Task<ActionResult> UnassignGatewayAccountFromOperationAsync(
+        [FromBody] UnassignGatewayAccountFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.UnassignGatewayAccountFromOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
     [HttpPost("teams")]
     public async Task<ActionResult> CreateOperationTeamAsync(
         [FromBody] CreateOperationTeamRequest request,
@@ -178,7 +269,7 @@ public class AdministratorController : NexusController
             cancellationToken));
     }
 
-    [HttpPatch("teams/gateway-selection-strategy")]
+    [HttpPut("teams/gateway-selection-strategy")]
     public async Task<ActionResult> SetTeamGatewaySelectionStrategyAsync(
         [FromBody] SetTeamGatewaySelectionStrategyRequest request,
         CancellationToken cancellationToken)

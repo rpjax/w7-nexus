@@ -113,7 +113,7 @@ public class OperationAdministratorController : NexusController
             cancellationToken));
     }
 
-    [HttpPatch("teams/gateway-selection-strategy")]
+    [HttpPut("teams/gateway-selection-strategy")]
     public async Task<ActionResult> SetTeamGatewaySelectionStrategyAsync(
         [FromBody] SetTeamGatewaySelectionStrategyRequest request,
         CancellationToken cancellationToken)
@@ -199,6 +199,97 @@ public class OperationAdministratorController : NexusController
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
         return ToOperationResult(await _operationAdministrator.UnassignGatewayAccountFromTeamAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPut("operations/gateway-selection-strategy")]
+    public async Task<ActionResult> SetOperationGatewaySelectionStrategyAsync(
+        [FromBody] SetOperationGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.SetOperationGatewaySelectionStrategyAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/straw-men")]
+    public async Task<ActionResult> AssignStrawManToOperationAsync(
+        [FromBody] AssignStrawManToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.AssignStrawManToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/straw-men")]
+    public async Task<ActionResult> UnassignStrawManFromOperationAsync(
+        [FromBody] UnassignStrawManFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.UnassignStrawManFromOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/gateway-account-groups")]
+    public async Task<ActionResult> AssignGatewayAccountGroupToOperationAsync(
+        [FromBody] AssignGatewayAccountGroupToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.AssignGatewayAccountGroupToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/gateway-account-groups")]
+    public async Task<ActionResult> UnassignGatewayAccountGroupFromOperationAsync(
+        [FromBody] UnassignGatewayAccountGroupFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.UnassignGatewayAccountGroupFromOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/gateway-accounts")]
+    public async Task<ActionResult> AssignGatewayAccountToOperationAsync(
+        [FromBody] AssignGatewayAccountToOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.AssignGatewayAccountToOperationAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("operations/gateway-accounts")]
+    public async Task<ActionResult> UnassignGatewayAccountFromOperationAsync(
+        [FromBody] UnassignGatewayAccountFromOperationRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _operationAdministrator.UnassignGatewayAccountFromOperationAsync(
             identity,
             request,
             cancellationToken));

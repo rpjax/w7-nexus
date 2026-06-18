@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import type { GatewaySelectionStrategy, TeamAccountDetails, TeamDetails } from '../../api/types';
-import { IconButton } from '../IconButton';
+import { Icon, IconButton } from '../IconButton';
 import { shortId } from '../../utils/format';
 import type { AdminTeamPanelActions } from './adminTeamTypes';
 
@@ -52,6 +52,35 @@ function personLabel(accountId: string, username: string): string {
   return username && username !== accountId ? username : shortId(accountId, 18);
 }
 
+function GatewayPanelHead({
+  title,
+  desc,
+  action,
+}: {
+  title: string;
+  desc?: string;
+  action?: ReactNode;
+}) {
+  return (
+    <div className="gw-panel__head">
+      <div className="gw-panel__head-text">
+        <h3 className="gw-panel__title">{title}</h3>
+        {desc ? <p className="gw-panel__desc muted small">{desc}</p> : null}
+      </div>
+      {action ?? null}
+    </div>
+  );
+}
+
+function GatewayEmpty({ title, message }: { title: string; message: string }) {
+  return (
+    <div className="gw-panel__empty">
+      <p className="gw-panel__empty-title">{title}</p>
+      <p className="muted small">{message}</p>
+    </div>
+  );
+}
+
 function StrawManRow({
   straw,
   busy,
@@ -62,15 +91,15 @@ function StrawManRow({
   onRemove: () => void;
 }) {
   return (
-    <li className="admin-op-person admin-op-person--compact">
+    <li className="gw-list-row">
       <span className="admin-op-person-avatar admin-op-person-avatar--straw" aria-hidden="true">
         {personInitial(straw.username)}
       </span>
-      <span className="admin-op-person-meta">
+      <span className="gw-list-row__meta">
         <span className="admin-op-person-name">{personLabel(straw.accountId, straw.username)}</span>
         <span className="admin-op-person-id mono" title={straw.accountId}>{shortId(straw.accountId, 22)}</span>
       </span>
-      <span className="admin-op-person-action">
+      <span className="gw-list-row__action">
         <IconButton
           icon="trash"
           label={`Remover laranja ${personLabel(straw.accountId, straw.username)}`}
@@ -119,64 +148,73 @@ export function AdminTeamGatewaySection({ team, actions, showHeader = true }: Ad
   }
 
   return (
-    <div className="admin-op-gateway-block">
+    <div className="admin-op-gateway-block gw-block">
       {showHeader ? (
-        <>
-          <h6 className="admin-op-col-title">Gateway</h6>
-          <p className="admin-op-col-desc muted small">Estratégia de roteamento e credenciais.</p>
-        </>
+        <div className="gw-block__standalone-head">
+          <h2 className="admin-op-section-title">Gateway</h2>
+          <p className="admin-op-section-desc muted small">Estratégia de roteamento e credenciais.</p>
+        </div>
       ) : null}
 
-      <div className={`admin-op-gateway-status admin-op-gateway-status--${status.tone}`}>
-        {status.message}
+      <div className={`gw-status gw-status--${status.tone}`} role="status">
+        <span className="gw-status__dot" aria-hidden="true" />
+        <span>{status.message}</span>
       </div>
 
-      <div className="admin-op-strategy-cards" role="radiogroup" aria-label="Estratégia de gateway">
-        {GATEWAY_STRATEGY_OPTIONS.map((opt) => (
-          <button
-            key={opt.value}
-            type="button"
-            role="radio"
-            aria-checked={strategy === opt.value}
-            className={`admin-op-strategy-card ${strategy === opt.value ? 'is-active' : ''}`}
-            disabled={actions.busy}
-            onClick={() => {
-              if (strategy !== opt.value) actions.onGatewayStrategyChange(team.id, opt.value);
-            }}
-          >
-            <span className="admin-op-strategy-card-label">{opt.label}</span>
-            <span className="admin-op-strategy-card-hint">{opt.hint}</span>
-          </button>
-        ))}
+      <div className="gw-strategy">
+        <p className="gw-strategy__label">Estratégia de roteamento</p>
+        <div className="gw-strategy__options" role="radiogroup" aria-label="Estratégia de gateway">
+          {GATEWAY_STRATEGY_OPTIONS.map((opt) => {
+            const active = strategy === opt.value;
+            return (
+              <button
+                key={opt.value}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                className={`gw-strategy__opt${active ? ' is-active' : ''}`}
+                disabled={actions.busy}
+                onClick={() => {
+                  if (!active) actions.onGatewayStrategyChange(team.id, opt.value);
+                }}
+              >
+                {active ? (
+                  <span className="gw-strategy__opt-check" aria-hidden="true">
+                    <Icon name="check" />
+                  </span>
+                ) : null}
+                <span className="gw-strategy__opt-label">{opt.label}</span>
+                <span className="gw-strategy__opt-hint">{opt.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="gw-strategy__detail muted small">{strategyMeta.detail}</p>
       </div>
-
-      <p className="muted small admin-op-strategy-detail">{strategyMeta.detail}</p>
 
       {strategy === 'PerStrawman' ? (
-        <div className="admin-op-gateway-panel">
-          <div className="admin-op-resource-head">
-            <div>
-              <span className="admin-op-resource-label">Laranjas da equipe</span>
-              <p className="muted small admin-op-resource-desc">
-                Contas usadas para filtrar credenciais nos gateways (Frendz, SigiloPay, Wintech).
-              </p>
-            </div>
-            <IconButton
-              icon="plus"
-              label="Vincular laranja"
-              variant="primary"
-              disabled={actions.busy}
-              onClick={() => actions.onAssignStrawMan(team.id)}
-            />
-          </div>
+        <div className="gw-panel">
+          <GatewayPanelHead
+            title="Laranjas da equipe"
+            desc="Contas usadas para filtrar credenciais nos gateways (Frendz, SigiloPay, Wintech)."
+            action={(
+              <IconButton
+                icon="plus"
+                label="Vincular laranja"
+                variant="primary"
+                disabled={actions.busy}
+                onClick={() => actions.onAssignStrawMan(team.id)}
+              />
+            )}
+          />
 
           {(team.strawMen ?? []).length === 0 ? (
-            <div className="admin-op-gateway-empty">
-              <p className="admin-op-empty">Nenhum laranja vinculado.</p>
-              <p className="muted small">Vincule contas laranja para restringir quais credenciais entram no fluxo de cobrança.</p>
-            </div>
+            <GatewayEmpty
+              title="Nenhum laranja vinculado"
+              message="Vincule contas laranja para restringir quais credenciais entram no fluxo de cobrança."
+            />
           ) : (
-            <ul className="admin-op-person-list">
+            <ul className="gw-list">
               {(team.strawMen ?? []).map((straw) => (
                 <StrawManRow
                   key={straw.accountId}
@@ -191,22 +229,19 @@ export function AdminTeamGatewaySection({ team, actions, showHeader = true }: Ad
       ) : null}
 
       {strategy === 'PerGroup' ? (
-        <div className="admin-op-gateway-panel">
-          <div className="admin-op-resource-head">
-            <div>
-              <span className="admin-op-resource-label">Grupos de credenciais</span>
-              <p className="muted small admin-op-resource-desc">
-                Grupos cadastrados no repositório de gateway. Todas as credenciais do grupo ficam elegíveis.
-              </p>
-            </div>
-          </div>
+        <div className="gw-panel">
+          <GatewayPanelHead
+            title="Grupos de credenciais"
+            desc="Grupos cadastrados no repositório de gateway. Todas as credenciais do grupo ficam elegíveis."
+          />
 
-          <div className="admin-op-group-add">
+          <div className="gw-panel__toolbar">
             <input
               className="nexus-input"
               value={groupIdInput}
               onChange={(e) => setGroupIdInput(e.target.value)}
               placeholder="ID do grupo de credenciais…"
+              aria-label="ID do grupo de credenciais"
               onKeyDown={(e) => { if (e.key === 'Enter') submitGroup(); }}
             />
             <IconButton
@@ -219,28 +254,30 @@ export function AdminTeamGatewaySection({ team, actions, showHeader = true }: Ad
           </div>
 
           {(team.gatewayCredentialsGroups ?? []).length === 0 ? (
-            <div className="admin-op-gateway-empty">
-              <p className="admin-op-empty">Nenhum grupo vinculado.</p>
-              <p className="muted small">Informe o ID do grupo criado no módulo de gateways.</p>
-            </div>
+            <GatewayEmpty
+              title="Nenhum grupo vinculado"
+              message="Informe o ID do grupo criado no módulo de gateways."
+            />
           ) : (
-            <ul className="admin-op-gateway-item-list">
+            <ul className="gw-list">
               {(team.gatewayCredentialsGroups ?? []).map((group) => (
-                <li key={group.id} className="admin-op-gateway-item">
-                  <div className="admin-op-gateway-item-main">
-                    <strong>{group.name}</strong>
-                    <span className="mono muted small" title={group.id}>{shortId(group.id, 22)}</span>
-                    <span className="admin-op-gateway-item-meta">
+                <li key={group.id} className="gw-list-row gw-list-row--stacked">
+                  <div className="gw-list-row__meta">
+                    <span className="admin-op-person-name">{group.name}</span>
+                    <span className="admin-op-person-id mono" title={group.id}>{shortId(group.id, 22)}</span>
+                    <span className="gw-list-row__tag muted small">
                       {group.credentialCount} credencial{group.credentialCount === 1 ? '' : 'is'}
                     </span>
                   </div>
-                  <IconButton
-                    icon="trash"
-                    label={`Remover grupo ${group.name}`}
-                    variant="danger"
-                    disabled={actions.busy}
-                    onClick={() => actions.onUnassignGatewayGroup(team.id, group.id)}
-                  />
+                  <span className="gw-list-row__action">
+                    <IconButton
+                      icon="trash"
+                      label={`Remover grupo ${group.name}`}
+                      variant="danger"
+                      disabled={actions.busy}
+                      onClick={() => actions.onUnassignGatewayGroup(team.id, group.id)}
+                    />
+                  </span>
                 </li>
               ))}
             </ul>
@@ -249,46 +286,48 @@ export function AdminTeamGatewaySection({ team, actions, showHeader = true }: Ad
       ) : null}
 
       {strategy === 'Manual' ? (
-        <div className="admin-op-gateway-panel">
-          <div className="admin-op-resource-head">
-            <div>
-              <span className="admin-op-resource-label">Credenciais manuais</span>
-              <p className="muted small admin-op-resource-desc">
-                Somente estas credenciais participam do roteamento de cobrança desta equipe.
-              </p>
-            </div>
-            <IconButton
-              icon="plus"
-              label="Vincular credencial"
-              variant="primary"
-              disabled={actions.busy}
-              onClick={() => actions.onAssignGatewayCredential(team.id)}
-            />
-          </div>
+        <div className="gw-panel">
+          <GatewayPanelHead
+            title="Credenciais manuais"
+            desc="Somente estas credenciais participam do roteamento de cobrança desta equipe."
+            action={(
+              <IconButton
+                icon="plus"
+                label="Vincular credencial"
+                variant="primary"
+                disabled={actions.busy}
+                onClick={() => actions.onAssignGatewayCredential(team.id)}
+              />
+            )}
+          />
 
           {(team.gatewayCredentials ?? []).length === 0 ? (
-            <div className="admin-op-gateway-empty">
-              <p className="admin-op-empty">Nenhuma credencial vinculada.</p>
-              <p className="muted small">Selecione credenciais ativas de Frendz, SigiloPay ou Wintech.</p>
-            </div>
+            <GatewayEmpty
+              title="Nenhuma credencial vinculada"
+              message="Selecione credenciais ativas de Frendz, SigiloPay ou Wintech."
+            />
           ) : (
-            <ul className="admin-op-gateway-item-list">
+            <ul className="gw-list">
               {(team.gatewayCredentials ?? []).map((credential) => (
-                <li key={credential.id} className="admin-op-gateway-item">
-                  <div className="admin-op-gateway-item-main">
-                    <strong>{credential.name}</strong>
-                    <span className="admin-op-gateway-badge">
-                      {GATEWAY_LABELS[credential.gateway] ?? credential.gateway}
+                <li key={credential.id} className="gw-list-row gw-list-row--stacked">
+                  <div className="gw-list-row__meta">
+                    <span className="gw-list-row__title-row">
+                      <span className="admin-op-person-name">{credential.name}</span>
+                      <span className="admin-op-gateway-badge">
+                        {GATEWAY_LABELS[credential.gateway] ?? credential.gateway}
+                      </span>
                     </span>
-                    <span className="mono muted small" title={credential.id}>{shortId(credential.id, 22)}</span>
+                    <span className="admin-op-person-id mono" title={credential.id}>{shortId(credential.id, 22)}</span>
                   </div>
-                  <IconButton
-                    icon="trash"
-                    label={`Remover credencial ${credential.name}`}
-                    variant="danger"
-                    disabled={actions.busy}
-                    onClick={() => actions.onUnassignGatewayCredential(team.id, credential.id)}
-                  />
+                  <span className="gw-list-row__action">
+                    <IconButton
+                      icon="trash"
+                      label={`Remover credencial ${credential.name}`}
+                      variant="danger"
+                      disabled={actions.busy}
+                      onClick={() => actions.onUnassignGatewayCredential(team.id, credential.id)}
+                    />
+                  </span>
                 </li>
               ))}
             </ul>

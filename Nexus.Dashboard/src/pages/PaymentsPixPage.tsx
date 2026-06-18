@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import { generatePix } from '../api/payments';
 import type { GatewayPixResult } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { IconButton } from '../components/IconButton';
 import { OperationPickerModal } from '../components/OperationPickerModal';
+import { PageHeading } from '../layouts/PageHeading';
 
 export function PaymentsPixPage() {
   const [operationId, setOperationId] = useState('');
@@ -59,13 +59,12 @@ export function PaymentsPixPage() {
 
   return (
     <>
-      <section className="page-header ops-page-header">
-        <div>
-          <h1>Pagamentos PIX</h1>
-          <p className="muted page-lead">Gere cobrança PIX vinculada a uma operação; operador e laranja são opcionais (contas).</p>
-          <p className="muted small page-nav-back"><Link to="/dashboard/payments">← Registros de pagamentos</Link></p>
-        </div>
-      </section>
+      <PageHeading
+        kicker="Financeiro"
+        title="Pagamentos PIX"
+        subtitle="Gere cobrança PIX vinculada a uma operação; operador e laranja são opcionais (contas)."
+        backLink={{ to: '/dashboard/payments', label: 'Registros de pagamentos' }}
+      />
 
       <section className="card ops-card">
         <div className="card-title-row">

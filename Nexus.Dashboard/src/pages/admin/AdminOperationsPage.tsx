@@ -86,6 +86,9 @@ export function AdminOperationsPage() {
     <>
       <OpsWorkspace
         className="admin-surface"
+        kicker="Administração"
+        kickerVariant="admin"
+        title="Todas as operações"
         lead="Gestão completa do repositório: administradores, equipes, operadores, repasses e configuração de gateway."
         searchId="adminOpSearch"
         searchLabel="Buscar no sistema"

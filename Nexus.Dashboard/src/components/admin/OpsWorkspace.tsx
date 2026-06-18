@@ -1,8 +1,12 @@
 import type { ReactNode } from 'react';
 import { Icon } from '../IconButton';
 import { ToolbarSearchActions } from '../ListControls';
+import { PageHeading } from '../../layouts/PageHeading';
 
 type OpsWorkspaceProps = {
+  title: string;
+  kicker?: string;
+  kickerVariant?: 'default' | 'admin';
   lead?: string;
   searchId: string;
   searchLabel: string;
@@ -21,6 +25,9 @@ type OpsWorkspaceProps = {
 };
 
 export function OpsWorkspace({
+  title,
+  kicker,
+  kickerVariant = 'default',
   lead,
   searchId,
   searchLabel,
@@ -41,11 +48,12 @@ export function OpsWorkspace({
 
   return (
     <div className={`ops-page ${className}`.trim()}>
-      {lead ? (
-        <section className="page-header ops-page-header--compact">
-          <p className="muted page-lead">{lead}</p>
-        </section>
-      ) : null}
+      <PageHeading
+        title={title}
+        kicker={kicker}
+        kickerVariant={kickerVariant}
+        subtitle={lead}
+      />
 
       <section className="ops-workspace">
         <header className="ops-workspace__header">

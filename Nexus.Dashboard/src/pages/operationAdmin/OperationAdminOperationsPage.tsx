@@ -47,6 +47,8 @@ export function OperationAdminOperationsPage() {
 
   return (
     <OpsWorkspace
+      kicker="Operação"
+      title="Administração de operações"
       lead="Operações em que você é administrador: crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder."
       searchId="opAdminSearch"
       searchLabel="Buscar nas suas operações"

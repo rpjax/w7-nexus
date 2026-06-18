@@ -4,6 +4,7 @@ import { searchAdministratorAccounts } from '../api/administrator/accounts';
 import type { AccountRow } from '../api/types';
 import { AccountCard } from '../components/admin/AccountCard';
 import { EmptyState } from '../components/EmptyState';
+import { PageHeading } from '../layouts/PageHeading';
 import { useNotifications } from '../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
@@ -74,15 +75,12 @@ export function AccountsPage() {
 
   return (
     <>
-      <section className="page-header ops-page-header">
-        <div>
-          <p className="page-kicker page-kicker-admin">Administração</p>
-          <h1>Contas</h1>
-          <p className="muted page-lead">
-            Usuários registrados no sistema — papéis, permissões e histórico de atualização.
-          </p>
-        </div>
-      </section>
+      <PageHeading
+        kicker="Administração"
+        kickerVariant="admin"
+        title="Contas"
+        subtitle="Usuários registrados no sistema — papéis, permissões e histórico de atualização."
+      />
 
       <section className="card ops-card ops-create admin-surface">
         <div className="card-title-row">

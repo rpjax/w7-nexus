@@ -34,6 +34,24 @@ public static class OperationDetailsMapper
                     Username = ResolveUsername(usernamesByAccountId, id),
                 })
                 .ToArray(),
+            GatewaySelectionStrategy = operation.GatewaySelectionStrategy.ToString(),
+            StrawMen = operation.StrawManIds
+                .Select(id => new TeamAccountDetails
+                {
+                    AccountId = id,
+                    Username = ResolveUsername(usernamesByAccountId, id),
+                })
+                .ToArray(),
+            GatewayCredentials = operation.GatewayCredentialsIds
+                .Select(id => gatewayLookup?.CredentialsById.TryGetValue(id, out var credential) == true
+                    ? credential
+                    : new TeamGatewayCredentialDetails { Id = id, Name = id, Gateway = "desconhecido" })
+                .ToArray(),
+            GatewayCredentialsGroups = operation.GatewayCredentialsGroupIds
+                .Select(id => gatewayLookup?.GroupsById.TryGetValue(id, out var group) == true
+                    ? group
+                    : new TeamGatewayGroupDetails { Id = id, Name = id, CredentialCount = 0 })
+                .ToArray(),
             Teams = operationTeams,
             CreatedAt = operation.CreatedAt,
             UpdatedAt = operation.UpdatedAt,
@@ -58,7 +76,7 @@ public static class OperationDetailsMapper
         var usernames = await LoadUsernamesAsync(accounts, CollectAccountIds(operations, operationTeams));
         var gatewayLookup = gatewayLoader is null
             ? new TeamGatewayLookup()
-            : await gatewayLoader.LoadAsync(operationTeams);
+            : await gatewayLoader.LoadAsync(operationTeams, operations);
 
         return operations
             .Select(o => Map(o, operationTeams, usernames, gatewayLookup))
@@ -75,6 +93,9 @@ public static class OperationDetailsMapper
         {
             foreach (var administratorId in operation.AdministratorIds)
                 ids.Add(administratorId);
+
+            foreach (var strawManId in operation.StrawManIds)
+                ids.Add(strawManId);
         }
 
         foreach (var team in teams)

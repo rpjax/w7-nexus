@@ -98,6 +98,90 @@ public class Administrator : IAdministrator
             cancellationToken);
     }
 
+    public Task<IOperationResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
+        RequesterIdentity identity,
+        SetOperationGatewaySelectionStrategyRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.SetOperationGatewaySelectionStrategyAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
+        RequesterIdentity identity,
+        AssignStrawManToOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.AssignStrawManToOperationAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
+        RequesterIdentity identity,
+        UnassignStrawManFromOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.UnassignStrawManFromOperationAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountGroupToOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.AssignGatewayAccountGroupToOperationAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountGroupFromOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.UnassignGatewayAccountGroupFromOperationAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
+        RequesterIdentity identity,
+        AssignGatewayAccountToOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.AssignGatewayAccountToOperationAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
+        RequesterIdentity identity,
+        UnassignGatewayAccountFromOperationRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationCommands.UnassignGatewayAccountFromOperationAsync(request),
+            cancellationToken);
+    }
+
     public Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
         RequesterIdentity identity,
         SearchAccountsRequest request,

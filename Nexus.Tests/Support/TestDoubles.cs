@@ -50,6 +50,10 @@ internal sealed class InMemoryOperationRepository : IOperationRepository
                 entity.Name,
                 entity.Description,
                 entity.AdministratorIds,
+                entity.StrawManIds,
+                entity.GatewaySelectionStrategy,
+                entity.GatewayCredentialsIds,
+                entity.GatewayCredentialsGroupIds,
                 entity.CreatedAt,
                 entity.UpdatedAt)
             : entity;
@@ -307,7 +311,11 @@ internal sealed class ActorTestContext
     public FakeGatewayCredentialsIdValidator GatewayCredentialsIdValidator { get; } = new();
 
     public OperationService CreateOperationService()
-        => new(Operations, AccountIdValidator);
+        => new(
+            Operations,
+            AccountIdValidator,
+            GatewayGroups,
+            GatewayCredentialsIdValidator);
 
     public TeamService CreateTeamService()
         => new(
@@ -339,6 +347,7 @@ internal sealed class ActorTestContext
             new OperationAdministratorAccessPolicy(Operations, Teams),
             new OperationAdministratorOperationSearchService(Operations, Teams, Accounts, teamGatewayLoader),
             new OperationAdministratorTeamCommandService(CreateTeamService()),
+            new OperationAdministratorOperationCommandService(CreateOperationService()),
             new OperationAdministratorTeamLeaderCandidateSearchService(accountSearch),
             new OperationAdministratorStrawManAssignmentSearchService(Accounts));
     }
@@ -391,6 +400,10 @@ internal sealed class ActorTestContext
             Name: name,
             Description: description,
             AdministratorIds: administratorIds ?? Array.Empty<string>(),
+            StrawManIds: Array.Empty<string>(),
+            GatewaySelectionStrategy: GatewaySelectionStrategy.PerStrawman,
+            GatewayCredentialsIds: Array.Empty<string>(),
+            GatewayCredentialsGroupIds: Array.Empty<string>(),
             CreatedAt: now,
             UpdatedAt: now);
         return await Operations.CreateAsync(operation);
@@ -486,6 +499,7 @@ internal sealed class EmptyTeamGatewayDetailsLoader : AdministratorTeamGatewayDe
 {
     public Task<AdministratorTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
+        IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new AdministratorTeamGatewayLookup());
 }
@@ -495,6 +509,7 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
 {
     public Task<OperationAdministratorTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
+        IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
 }

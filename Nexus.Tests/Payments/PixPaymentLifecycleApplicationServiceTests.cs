@@ -197,7 +197,17 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
 
-        var operation = new Operation("operation-1", "Main operation", "pix flow", Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var operation = new Operation(
+            "operation-1",
+            "Main operation",
+            "pix flow",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-1", "operator", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
@@ -240,7 +250,17 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
 
-        var operation = new Operation("operation-2", "Second operation", "pix flow", Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var operation = new Operation(
+            "operation-2",
+            "Second operation",
+            "pix flow",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-2", "operator2", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);

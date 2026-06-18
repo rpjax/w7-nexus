@@ -11,6 +11,7 @@ public static class OperationAdministratorServiceCollectionExtensions
         services.AddScoped<IOperationAdministratorOperationSearchService, OperationAdministratorOperationSearchService>();
         services.AddScoped<IOperationAdministratorAccountSearchService, OperationAdministratorAccountSearchService>();
         services.AddScoped<IOperationAdministratorTeamCommandService, OperationAdministratorTeamCommandService>();
+        services.AddScoped<IOperationAdministratorOperationCommandService, OperationAdministratorOperationCommandService>();
         services.AddScoped<IOperationAdministratorTeamLeaderCandidateSearchService, OperationAdministratorTeamLeaderCandidateSearchService>();
         services.AddScoped<IOperationAdministratorStrawManAssignmentSearchService, OperationAdministratorStrawManAssignmentSearchService>();
         services.AddScoped<IOperationAdministrator, OperationAdministrator>();

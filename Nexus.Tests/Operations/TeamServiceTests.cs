@@ -217,6 +217,10 @@ public sealed class TeamServiceTests
             "Test Operation",
             "Description",
             Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
             SeedTime,
             SeedTime);
         repo.CreateAsync(operation).GetAwaiter().GetResult();

@@ -32,7 +32,9 @@ public static class OperationErrorCodes
     public const string GatewayCredentialsGroupInvalid = "Operation.GATEWAY_CREDENTIALS_GROUP_INVALID";
     public const string GatewayCredentialsGroupAlreadyAssigned = "Operation.GATEWAY_CREDENTIALS_GROUP_ALREADY_ASSIGNED";
     public const string GatewayCredentialsGroupNotAssigned = "Operation.GATEWAY_CREDENTIALS_GROUP_NOT_ASSIGNED";
+    public const string GatewayCredentialsGroupNotFound = "Operation.GATEWAY_CREDENTIALS_GROUP_NOT_FOUND";
     public const string GatewayCredentialsGroupStrategyMismatch = "Operation.GATEWAY_CREDENTIALS_GROUP_STRATEGY_MISMATCH";
+    public const string GatewaySelectionStrategyInvalid = "Operation.GATEWAY_SELECTION_STRATEGY_INVALID";
 
     public const string ManualGatewayCredentialsDisabled = "Operation.MANUAL_GATEWAY_CREDENTIALS_DISABLED";
     public const string GatewayCredentialInvalid = "Operation.GATEWAY_CREDENTIAL_INVALID";

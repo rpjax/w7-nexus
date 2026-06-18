@@ -108,22 +108,18 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                 t.OperationId == operationId &&
                 t.OperatorIds.Contains(operatorAccountId));
 
-        if (team is null)
-            return Result.Create<GatewayPix>()
-                .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.TeamNotFound)
-                    .WithMessage($"Nenhuma equipe foi encontrada para o operador '{operatorAccountId}' na operação '{operationId}'.")
-                    .Build())
-                .Build();
+        IGatewayCredentialScope scope = (IGatewayCredentialScope?)team ?? operation;
 
-        var providers = await GetGatewayProvidersAsync(team);
+        var providers = await GetGatewayProvidersAsync(scope);
 
         if (providers.Length == 0)
         {
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.NoGatewayServicesAvailable)
-                    .WithMessage("Não há credenciais de gateway disponíveis para esta equipe.")
+                    .WithMessage(team is null
+                        ? "Não há credenciais de gateway disponíveis para esta operação."
+                        : "Não há credenciais de gateway disponíveis para esta equipe.")
                     .Build())
                 .Build();
         }
@@ -211,30 +207,30 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
             .Build();
     }
 
-    private async Task<GatewayServiceProvider[]> GetGatewayProvidersAsync(Team team)
+    private async Task<GatewayServiceProvider[]> GetGatewayProvidersAsync(IGatewayCredentialScope scope)
     {
-        var allowedCredentialIds = await ResolveAllowedCredentialIdsAsync(team);
-        var frendzProviders = await GetFrendzGatewayProvidersAsync(team, allowedCredentialIds);
-        var sigiloPayProviders = await GetSigiloPayGatewayProvidersAsync(team, allowedCredentialIds);
-        var wintechProviders = await GetWintechGatewayProvidersAsync(team, allowedCredentialIds);
+        var allowedCredentialIds = await ResolveAllowedCredentialIdsAsync(scope);
+        var frendzProviders = await GetFrendzGatewayProvidersAsync(scope, allowedCredentialIds);
+        var sigiloPayProviders = await GetSigiloPayGatewayProvidersAsync(scope, allowedCredentialIds);
+        var wintechProviders = await GetWintechGatewayProvidersAsync(scope, allowedCredentialIds);
         var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
         Random.Shared.Shuffle(merged);
         return merged;
     }
 
-    private async Task<string[]> ResolveAllowedCredentialIdsAsync(Team team)
+    private async Task<string[]> ResolveAllowedCredentialIdsAsync(IGatewayCredentialScope scope)
     {
-        return team.GatewaySelectionStrategy switch
+        return scope.GatewaySelectionStrategy switch
         {
-            GatewaySelectionStrategy.Manual => team.GatewayCredentialsIds.ToArray(),
-            GatewaySelectionStrategy.PerGroup => await ResolveGroupCredentialIdsAsync(team),
+            GatewaySelectionStrategy.Manual => scope.GatewayCredentialsIds.ToArray(),
+            GatewaySelectionStrategy.PerGroup => await ResolveGroupCredentialIdsAsync(scope),
             _ => Array.Empty<string>()
         };
     }
 
-    private async Task<string[]> ResolveGroupCredentialIdsAsync(Team team)
+    private async Task<string[]> ResolveGroupCredentialIdsAsync(IGatewayCredentialScope scope)
     {
-        var groupIds = team.GatewayCredentialsGroupIds.ToArray();
+        var groupIds = scope.GatewayCredentialsGroupIds.ToArray();
         if (groupIds.Length == 0)
             return Array.Empty<string>();
 
@@ -261,13 +257,13 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     }
 
     private async Task<GatewayServiceProvider[]> GetFrendzGatewayProvidersAsync(
-        Team team,
+        IGatewayCredentialScope scope,
         string[] allowedCredentialIds)
     {
-        var strawmanIds = team.StrawManIds.ToArray();
+        var strawmanIds = scope.StrawManIds.ToArray();
 
         var query = _frendzApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
             ? query.Where(x => allowedCredentialIds.Contains(x.Id))
             : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 
@@ -289,13 +285,13 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     }
 
     private async Task<GatewayServiceProvider[]> GetSigiloPayGatewayProvidersAsync(
-        Team team,
+        IGatewayCredentialScope scope,
         string[] allowedCredentialIds)
     {
-        var strawmanIds = team.StrawManIds.ToArray();
+        var strawmanIds = scope.StrawManIds.ToArray();
 
         var query = _sigiloPayApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
             ? query.Where(x => allowedCredentialIds.Contains(x.Id))
             : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 
@@ -317,13 +313,13 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     }
 
     private async Task<GatewayServiceProvider[]> GetWintechGatewayProvidersAsync(
-        Team team,
+        IGatewayCredentialScope scope,
         string[] allowedCredentialIds)
     {
-        var strawmanIds = team.StrawManIds.ToArray();
+        var strawmanIds = scope.StrawManIds.ToArray();
 
         var query = _wintechApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = team.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
+        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
             ? query.Where(x => allowedCredentialIds.Contains(x.Id))
             : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
 

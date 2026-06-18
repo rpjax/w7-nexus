@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { searchPayments } from '../api/payments';
 import type { PaymentRow } from '../api/types';
 import { EmptyState } from '../components/EmptyState';
+import { PageHeading } from '../layouts/PageHeading';
 import { useNotifications } from '../notifications/NotificationContext';
 import { formatUtc, shortId, shortTx } from '../utils/format';
 
@@ -42,12 +43,16 @@ export function PaymentsListPage() {
 
   return (
     <>
-      <section className="page-header ops-page-header">
-        <div>
-          <h1>Pagamentos</h1>
-          <p className="muted page-lead">Registros do agregado <strong>Payment</strong> no repositório — busca por ID, operação, transação no gateway, operador ou laranja.</p>
-        </div>
-      </section>
+      <PageHeading
+        kicker="Financeiro"
+        title="Pagamentos"
+        subtitle={(
+          <>
+            Registros do agregado <strong>Payment</strong> no repositório — busca por ID, operação,
+            transação no gateway, operador ou laranja.
+          </>
+        )}
+      />
 
       <section className="card ops-card">
         <div className="toolbar toolbar-tight toolbar-stack-mobile">

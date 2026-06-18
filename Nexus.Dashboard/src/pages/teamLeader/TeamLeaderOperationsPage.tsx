@@ -47,6 +47,8 @@ export function TeamLeaderOperationsPage() {
 
   return (
     <OpsWorkspace
+      kicker="Liderança"
+      title="Liderança de equipes"
       lead="Operações agrupadas com as equipes que você lidera. Gerencie operadores e regras de repasse."
       searchId="teamLeaderSearch"
       searchLabel="Buscar operações"

@@ -12,6 +12,10 @@ internal static class OperationRecordMapping
             record.Name,
             record.Description,
             record.AdministratorIds,
+            record.StrawManIds,
+            record.GatewaySelectionStrategy,
+            record.GatewayCredentialsIds,
+            record.GatewayCredentialsGroupIds,
             record.CreatedAt,
             record.UpdatedAt);
 
@@ -23,6 +27,10 @@ internal static class OperationRecordMapping
             Name = operation.Name,
             Description = operation.Description,
             AdministratorIds = operation.AdministratorIds.ToList(),
+            StrawManIds = operation.StrawManIds.ToList(),
+            GatewaySelectionStrategy = operation.GatewaySelectionStrategy,
+            GatewayCredentialsIds = operation.GatewayCredentialsIds.ToList(),
+            GatewayCredentialsGroupIds = operation.GatewayCredentialsGroupIds.ToList(),
             CreatedAt = operation.CreatedAt,
             UpdatedAt = operation.UpdatedAt
         };

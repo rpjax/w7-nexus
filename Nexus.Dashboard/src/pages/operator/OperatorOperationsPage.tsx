@@ -45,6 +45,8 @@ export function OperatorOperationsPage() {
 
   return (
     <OpsWorkspace
+      kicker="Operação"
+      title="Minhas operações"
       lead="Operações vinculadas à sua conta via equipes. Abra uma operação para ver suas equipes e repasses."
       searchId="opSearch"
       searchLabel="Buscar nas minhas operações"

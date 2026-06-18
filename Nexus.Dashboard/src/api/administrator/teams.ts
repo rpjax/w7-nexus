@@ -1,5 +1,5 @@
 import { apiClient } from '../client';
-import type { GatewaySelectionStrategy, ProfitShareCutInput } from '../types';
+import { GATEWAY_SELECTION_STRATEGY_VALUE, type GatewaySelectionStrategy, type ProfitShareCutInput } from '../types';
 
 export async function createOperationTeam(operationId: string, name: string) {
   return apiClient.post<void>('/api/administrator/teams', {
@@ -28,9 +28,9 @@ export async function unassignOperationTeamLeader(teamId: string) {
 }
 
 export async function setTeamGatewaySelectionStrategy(teamId: string, strategy: GatewaySelectionStrategy) {
-  return apiClient.patch<void>('/api/administrator/teams/gateway-selection-strategy', {
+  return apiClient.put<void>('/api/administrator/teams/gateway-selection-strategy', {
     TeamId: teamId,
-    Strategy: strategy,
+    Strategy: GATEWAY_SELECTION_STRATEGY_VALUE[strategy],
   }, { fallbackError: 'Não foi possível alterar a estratégia de gateway.' });
 }
 
