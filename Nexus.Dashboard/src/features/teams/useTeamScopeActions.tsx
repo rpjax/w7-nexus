@@ -69,6 +69,10 @@ export function useTeamScopeActions({
   const [profitShareOpen, setProfitShareOpen] = useState(false);
   const [profitShareOperator, setProfitShareOperator] = useState<OperatorDetails | null>(null);
   const [profitShareCuts, setProfitShareCuts] = useState<ProfitShareCutDraft[]>([]);
+  const [unassignOperatorTarget, setUnassignOperatorTarget] = useState<{
+    teamId: string;
+    operatorId: string;
+  } | null>(null);
 
   const teamId = team?.id ?? '';
 
@@ -109,6 +113,24 @@ export function useTeamScopeActions({
       setActionBusy(false);
     }
   }
+
+  function openUnassignOperatorDialog(teamId: string, operatorId: string) {
+    setUnassignOperatorTarget({ teamId, operatorId });
+  }
+
+  async function confirmUnassignOperator() {
+    if (!unassignOperatorTarget) return;
+    const { teamId, operatorId } = unassignOperatorTarget;
+    setUnassignOperatorTarget(null);
+    await runAction(
+      () => unassignOperatorFromTeam(teamId, operatorId),
+      'Operador removido da equipe.',
+    );
+  }
+
+  const unassignOperatorName = unassignOperatorTarget
+    ? team?.operators.find((op) => op.accountId === unassignOperatorTarget.operatorId)?.username
+    : undefined;
 
   function openProfitShare(operator: OperatorDetails) {
     setProfitShareOperator(operator);
@@ -213,12 +235,7 @@ export function useTeamScopeActions({
       );
     },
     onAssignOperator: (id) => setAccountPickerMode({ kind: 'operator', teamId: id }),
-    onUnassignOperator: (id, operatorId) => {
-      void runAction(
-        () => unassignOperatorFromTeam(id, operatorId),
-        'Operador removido da equipe.',
-      );
-    },
+    onUnassignOperator: openUnassignOperatorDialog,
     onEditProfitShare: (_id, operator) => openProfitShare(operator),
     onGatewayStrategyChange: (id, strategy) => {
       void runAction(
@@ -339,6 +356,14 @@ export function useTeamScopeActions({
         message="Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?"
         onCancel={() => setDeleteDialogOpen(false)}
         onConfirm={() => void confirmDeleteTeam()}
+      />
+
+      <ConfirmDialog
+        open={unassignOperatorTarget !== null}
+        title="Remover operador"
+        message={`Deseja remover${unassignOperatorName ? ` ${unassignOperatorName}` : ' este operador'} da equipe? A regra de repasse também será excluída.`}
+        onCancel={() => setUnassignOperatorTarget(null)}
+        onConfirm={() => void confirmUnassignOperator()}
       />
     </>
   );

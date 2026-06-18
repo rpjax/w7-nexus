@@ -23,4 +23,10 @@ public static class PixPaymentErrorCodes
     public const string GatewayPixFailed = "PixPayment.GATEWAY_PIX_FAILED";
     public const string NoGatewayServicesAvailable = "PixPayment.NO_GATEWAY_SERVICES_AVAILABLE";
     public const string TeamNotFound = "PixPayment.TEAM_NOT_FOUND";
+    public const string TeamIdRequired = "PixPayment.TEAM_ID_REQUIRED";
+    public const string OperatorNotOnTeam = "PixPayment.OPERATOR_NOT_ON_TEAM";
+    public const string ProfitShareRuleNotFound = "PixPayment.PROFIT_SHARE_RULE_NOT_FOUND";
+    public const string SplitsRequired = "PixPayment.SPLITS_REQUIRED";
+    public const string InvalidSettlementTransition = "PixPayment.INVALID_SETTLEMENT_TRANSITION";
+    public const string AlreadyWithdrawn = "PixPayment.ALREADY_WITHDRAWN";
 }

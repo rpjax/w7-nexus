@@ -22,11 +22,64 @@ public enum PaymentGateway
     Wintech,
 }
 
+public enum PaymentSettlementStatus
+{
+    Unsettled = 0,
+    Withdrawn,
+}
+
+public sealed class PaymentSplit
+{
+    public string AccountId { get; }
+    public decimal Percentage { get; }
+    public decimal Amount { get; }
+
+    internal PaymentSplit(string accountId, decimal percentage, decimal amount)
+    {
+        AccountId = accountId.Trim();
+        Percentage = percentage;
+        Amount = amount;
+    }
+
+    public static IReadOnlyList<PaymentSplit> CreateSnapshot(
+        decimal paymentAmount,
+        IReadOnlyList<(string AccountId, decimal Percentage)> cuts)
+    {
+        if (cuts.Count == 0)
+            return Array.Empty<PaymentSplit>();
+
+        var splits = new List<PaymentSplit>(cuts.Count);
+        var allocated = 0m;
+
+        for (var i = 0; i < cuts.Count; i++)
+        {
+            var (accountId, percentage) = cuts[i];
+            decimal amount;
+
+            if (i == cuts.Count - 1)
+                amount = Round(paymentAmount - allocated);
+            else
+            {
+                amount = Round(paymentAmount * percentage / 100m);
+                allocated += amount;
+            }
+
+            splits.Add(new PaymentSplit(accountId, percentage, amount));
+        }
+
+        return splits;
+    }
+
+    private static decimal Round(decimal value)
+        => Math.Round(value, 2, MidpointRounding.AwayFromZero);
+}
+
 public sealed class Payment
 {
     // Internal IDs (not related to the gateway)
     public string Id { get; }
     public string OperationId { get; }
+    public string TeamId { get; }
     public string? OperatorAccountId { get; private set; }
     public string? StrawManAccountId { get; private set; }
 
@@ -37,36 +90,48 @@ public sealed class Payment
     // Payment Details
     public decimal Amount { get; }
 
+    // Split Details
+    public IReadOnlyList<PaymentSplit> Splits { get; }
+
     // Payment Status
     public PaymentStatus Status { get; private set; }
+    public PaymentSettlementStatus SettlementStatus { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime? PaidAt { get; private set; }
     public DateTime? RefundedAt { get; private set; }
     public DateTime? DiedAt { get; private set; }
     public string? DeathReason { get; private set; }
+    public DateTime? WithdrawnAt { get; private set; }
 
     internal Payment(
         string Id,
         string OperationId,
+        string TeamId,
         PaymentGateway Gateway,
         string GatewayTransactionId,
         decimal Amount,
+        IReadOnlyList<PaymentSplit> Splits,
         PaymentStatus Status,
+        PaymentSettlementStatus SettlementStatus,
         string? OperatorAccountId,
         string? StrawManAccountId,
         DateTime CreatedAt,
         DateTime? PaidAt,
         DateTime? RefundedAt,
         DateTime? DiedAt,
-        string? DeathReason)
+        string? DeathReason,
+        DateTime? WithdrawnAt)
     {
         this.Id = Id;
         this.OperationId = OperationId;
+        this.TeamId = TeamId;
         this.Gateway = Gateway;
         this.GatewayTransactionId = GatewayTransactionId;
         this.Amount = Amount;
+        this.Splits = Splits;
 
         this.Status = Status;
+        this.SettlementStatus = SettlementStatus;
         this.OperatorAccountId = OperatorAccountId;
         this.StrawManAccountId = StrawManAccountId;
 
@@ -75,6 +140,7 @@ public sealed class Payment
         this.RefundedAt = RefundedAt;
         this.DiedAt = DiedAt;
         this.DeathReason = DeathReason;
+        this.WithdrawnAt = WithdrawnAt;
     }
 
     public IResult BindToStrawMan(string strawManAccountId)
@@ -146,8 +212,39 @@ public sealed class Payment
                 .WithMessage("É necessário vincular um operador antes de marcar o pagamento como pago.")
                 .Build());
 
+        if (Splits.Count == 0)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.SplitsRequired)
+                .WithMessage("É necessário definir o split de repasse antes de marcar o pagamento como pago.")
+                .Build());
+
         Status = PaymentStatus.Paid;
         PaidAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
+    public IResult MarkAsWithdrawn()
+    {
+        if (SettlementStatus == PaymentSettlementStatus.Withdrawn)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.AlreadyWithdrawn)
+                .WithMessage("Este pagamento já foi sacado do gateway.")
+                .Build());
+
+        if (Status != PaymentStatus.Paid)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidSettlementTransition)
+                .WithMessage($"Não é possível sacar um pagamento com status {DescribeStatus(Status)}.")
+                .Build());
+
+        if (SettlementStatus != PaymentSettlementStatus.Unsettled)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidSettlementTransition)
+                .WithMessage($"Não é possível sacar um pagamento com liquidação {DescribeSettlementStatus(SettlementStatus)}.")
+                .Build());
+
+        SettlementStatus = PaymentSettlementStatus.Withdrawn;
+        WithdrawnAt = DateTime.UtcNow;
         return Result.Success();
     }
 
@@ -157,6 +254,12 @@ public sealed class Payment
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.InvalidTransition)
                 .WithMessage($"Não é possível reembolsar um pagamento com status {DescribeStatus(Status)}.")
+                .Build());
+
+        if (SettlementStatus == PaymentSettlementStatus.Withdrawn)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidTransition)
+                .WithMessage("Não é possível reembolsar um pagamento que já foi sacado do gateway.")
                 .Build());
 
         Status = PaymentStatus.Refunded;
@@ -190,6 +293,13 @@ public sealed class Payment
         PaymentStatus.Paid => "pago",
         PaymentStatus.Refunded => "reembolsado",
         PaymentStatus.Dead => "cancelado",
+        _ => status.ToString(),
+    };
+
+    private static string DescribeSettlementStatus(PaymentSettlementStatus status) => status switch
+    {
+        PaymentSettlementStatus.Unsettled => "pendente de saque",
+        PaymentSettlementStatus.Withdrawn => "sacado",
         _ => status.ToString(),
     };
 

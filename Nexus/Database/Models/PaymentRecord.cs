@@ -10,6 +10,7 @@ public sealed class PaymentRecord
     public ObjectId Id { get; set; }
 
     public string OperationId { get; set; } = string.Empty;
+    public string TeamId { get; set; } = string.Empty;
 
     // Gateway references
     public PaymentGateway Gateway { get; set; }
@@ -18,6 +19,8 @@ public sealed class PaymentRecord
     // Payment details
     public decimal Amount { get; set; }
     public PaymentStatus Status { get; set; }
+    public List<PaymentSplitRecord> Splits { get; set; } = new();
+    public PaymentSettlementStatus SettlementStatus { get; set; }
 
     // Binding details
     public string? OperatorAccountId { get; set; }
@@ -29,4 +32,5 @@ public sealed class PaymentRecord
     public DateTime? RefundedAt { get; set; }
     public DateTime? DiedAt { get; set; }
     public string? DeathReason { get; set; }
+    public DateTime? WithdrawnAt { get; set; }
 }

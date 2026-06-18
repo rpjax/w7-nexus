@@ -11,17 +11,20 @@ namespace Nexus.Operations.Application.Services;
 public sealed class OperationService : IOperationService
 {
     private readonly IOperationRepository _operations;
+    private readonly ITeamRepository _teams;
     private readonly IAccountIdValidator _accountIdValidator;
     private readonly IGatewayCredentialsGroupRepository _gatewayCredentialsGroups;
     private readonly IGatewayCredentialsIdValidator _gatewayCredentialsIdValidator;
 
     public OperationService(
         IOperationRepository operations,
+        ITeamRepository teams,
         IAccountIdValidator accountIdValidator,
         IGatewayCredentialsGroupRepository gatewayCredentialsGroups,
         IGatewayCredentialsIdValidator gatewayCredentialsIdValidator)
     {
         _operations = operations;
+        _teams = teams;
         _accountIdValidator = accountIdValidator;
         _gatewayCredentialsGroups = gatewayCredentialsGroups;
         _gatewayCredentialsIdValidator = gatewayCredentialsIdValidator;
@@ -149,6 +152,7 @@ public sealed class OperationService : IOperationService
         if (operation is null)
             return NotFoundResult(normalizedOperationId);
 
+        await _teams.DeleteAsync(t => t.OperationId == normalizedOperationId);
         await _operations.DeleteAsync(operation);
         return Result.Success();
     }

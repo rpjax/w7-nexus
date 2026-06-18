@@ -1625,6 +1625,11 @@ body {
     margin-bottom: 0.15rem;
 }
 
+.gw-block__context {
+    margin: 0 0 0.65rem;
+    line-height: 1.45;
+}
+
 .gw-status {
     display: flex;
     align-items: flex-start;
@@ -1996,73 +2001,442 @@ body {
     background: rgba(255, 95, 128, 0.08);
 }
 
-.profit-share-modal .modal-stack {
-    padding-top: 0;
+.profit-share-modal {
+    width: min(96vw, 520px);
 }
 
-.profit-share-lead {
-    margin: 0;
+.profit-share-modal__head {
+    border-bottom: none;
 }
 
-.profit-share-editor-list {
-    list-style: none;
+.profit-share-modal__body {
+    display: grid;
+    gap: 1rem;
+    padding: 1.15rem 1.15rem 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    min-width: 0;
+    /* hide scrollbar track, keep scroll functional */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+}
+
+.profit-share-modal__body::-webkit-scrollbar {
+    display: none;
+}
+
+.profit-share-modal__error {
     margin: 0;
-    padding: 0;
+    padding: 0.55rem 0.65rem;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 143, 166, 0.25);
+    background: rgba(255, 95, 128, 0.08);
+    color: #ff8fa6;
+    font-size: 0.84rem;
+    line-height: 1.4;
+}
+
+.profit-share-modal__foot {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.55rem;
+    padding: 0.85rem 1.15rem calc(0.85rem + env(safe-area-inset-bottom));
+    border-top: 1px solid rgba(132, 162, 220, 0.1);
+}
+
+.profit-share-modal__foot .btn {
+    min-height: 2.85rem;
+    justify-content: center;
+}
+
+/* Total — flat strip, no box */
+.ps-total {
+    min-width: 0;
     display: grid;
     gap: 0.55rem;
+    padding-bottom: 0.15rem;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.08);
 }
 
-.profit-share-editor-row {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    gap: 0.45rem 0.65rem;
-    align-items: end;
-    padding: 0.65rem;
-    border-radius: 10px;
-    background: rgba(0, 0, 0, 0.16);
-    border: 1px solid rgba(132, 162, 220, 0.12);
-}
-
-.profit-share-editor-label {
-    display: block;
-    font-size: 0.68rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    color: rgba(156, 176, 216, 0.72);
-    margin-bottom: 0.2rem;
-}
-
-.profit-share-editor-pct .nexus-input {
-    width: 5.5rem;
-}
-
-.profit-share-pick-btn {
-    width: 100%;
-    justify-content: flex-start;
-    text-align: left;
-}
-
-.profit-share-editor-footer {
+.ps-total__row {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
+    gap: 0.35rem 0.55rem;
 }
 
-.profit-share-total {
+.ps-total__label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(156, 176, 216, 0.65);
+}
+
+.ps-total__value {
+    font-size: 1.05rem;
     font-weight: 700;
     font-variant-numeric: tabular-nums;
+    color: #edf3ff;
 }
 
-.profit-share-total.is-valid { color: var(--success); }
-.profit-share-total.is-invalid { color: #ff8fa6; }
+.ps-total--ok .ps-total__value { color: var(--success); }
+.ps-total--warn .ps-total__value { color: #ff8fa6; }
 
-.profit-share-error {
-    margin: 0;
+.ps-total__remaining {
+    margin-left: auto;
+}
+
+.ps-total__remaining--over {
     color: #ff8fa6;
-    font-size: 0.88rem;
+    font-weight: 600;
+}
+
+.ps-total__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--success);
+}
+
+.ps-total__badge .ui-icon {
+    width: 0.75rem;
+    height: 0.75rem;
+}
+
+.ps-total__bar {
+    position: relative;
+    height: 0.3rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.05);
+    overflow: hidden;
+}
+
+.ps-total__fill {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: rgba(74, 134, 255, 0.75);
+    transition: width 0.18s ease;
+}
+
+.ps-total--ok .ps-total__fill {
+    background: rgba(72, 199, 142, 0.85);
+}
+
+.ps-total--warn .ps-total__fill {
+    background: rgba(255, 120, 150, 0.85);
+}
+
+.ps-total__target {
+    display: none;
+}
+
+.ps-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    min-width: 0;
+}
+
+.ps-toolbar .btn {
+    min-height: 2.1rem;
+    padding-inline: 0.65rem;
+}
+
+/* ── Cut list ──────────────────────────────────────── */
+.ps-cut-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    min-width: 0;
+}
+
+.ps-cut {
+    display: grid;
+    gap: 0.4rem;
+    padding: 0.65rem 0;
+    border-bottom: 1px solid rgba(132, 162, 220, 0.07);
+    min-width: 0;
+}
+
+.ps-cut:first-child { padding-top: 0.15rem; }
+.ps-cut:last-child  { border-bottom: none; padding-bottom: 0; }
+
+/* ── Row 1: account | pct | sep | trash ── */
+.ps-cut__top {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 2.5rem;
+    min-width: 0;  /* grid item must not grow beyond parent */
+    width: 100%;
+}
+
+/* Account button — looks like a tap target / select field */
+.ps-cut__account {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex: 1;
+    min-width: 0;
+    min-height: 2.35rem;
+    padding: 0.25rem 0.45rem;
+    border: 1px solid rgba(132, 162, 220, 0.18);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.04);
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ps-cut__account:hover:not(:disabled) {
+    border-color: rgba(132, 162, 220, 0.32);
+    background: rgba(255, 255, 255, 0.065);
+}
+
+.ps-cut__account:active:not(:disabled) {
+    background: rgba(74, 134, 255, 0.08);
+    border-color: rgba(74, 134, 255, 0.3);
+}
+
+/* body takes remaining width so chevron reaches the right edge */
+.ps-cut__account-body {
+    display: flex;
+    align-items: center;
+    gap: 0.3rem;
+    flex: 1;
+    min-width: 0;
+}
+
+.ps-cut__account-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;  /* critical: allows truncation inside flex */
+    font-size: 0.84rem;
+    font-weight: 600;
+    color: #edf3ff;
+    line-height: 1.3;
+}
+
+.ps-cut__account-sub {
+    font-size: 0.72rem;
+    color: rgba(156, 176, 216, 0.5);
+    line-height: 1.2;
+    white-space: nowrap;
+}
+
+.ps-cut__account.is-empty .ps-cut__account-name {
+    color: rgba(156, 176, 216, 0.55);
+    font-weight: 500;
+}
+
+/* chevron right-aligned inside the body */
+.ps-cut__account-chevron {
+    flex-shrink: 0;
+    width: 0.82rem;
+    height: 0.82rem;
+    margin-left: auto;
+    color: rgba(156, 176, 216, 0.35);
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.ps-cut__account:hover .ps-cut__account-chevron {
+    color: rgba(156, 176, 216, 0.65);
+    transform: translateX(2px);
+}
+
+/* Editable pct pill — clear field affordance, pushed right */
+.ps-cut__pct-pill {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    flex-shrink: 0;
+    min-height: 2.35rem;
+    padding: 0 0.5rem 0 0.55rem;
+    border: 1px solid rgba(132, 162, 220, 0.2);
+    border-radius: 9px;
+    background: rgba(255, 255, 255, 0.04);
+    cursor: text;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.ps-cut__pct-pill:focus-within {
+    border-color: rgba(74, 134, 255, 0.5);
+    background: rgba(74, 134, 255, 0.07);
+}
+
+.ps-cut__pct-input {
+    /* reset global input rule */
+    width: 2.85rem;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    outline: none;
+    font-size: 0.95rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+    color: #edf3ff;
+}
+
+.ps-cut__pct-input:focus,
+.ps-cut__pct-input:focus-visible {
+    outline: none;
+    border: none;
+}
+
+.ps-cut__pct-sym {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: rgba(156, 176, 216, 0.5);
+    pointer-events: none;
+    padding-bottom: 1px;
+}
+
+/* Vertical divider before trash */
+.ps-cut__sep {
+    display: block;
+    width: 1px;
+    height: 1.4rem;
+    align-self: center;
+    background: rgba(132, 162, 220, 0.14);
+    margin: 0 0.3rem;
+    flex-shrink: 0;
+}
+
+/* Trash button */
+.ps-cut__remove.icon-btn {
+    flex-shrink: 0;
+    width: 2.35rem;
+    height: 2.35rem;
+    opacity: 0.32;
+    transition: opacity 0.15s ease;
+}
+
+.ps-cut:hover .ps-cut__remove.icon-btn { opacity: 0.6; }
+.ps-cut__remove.icon-btn:hover:not(:disabled) { opacity: 1 !important; }
+
+.ps-cut__remove.icon-btn .ui-icon {
+    width: 0.88rem;
+    height: 0.88rem;
+}
+
+/* Row 2 — full-width slider */
+.ps-cut__slider-row {
+    position: relative;
+    height: 1.85rem;
+    display: flex;
+    align-items: center;
+    min-width: 0;
+    width: 100%;
+}
+
+/* Background rail */
+.ps-cut__track {
+    position: absolute;
+    inset-inline: 0;
+    top: 50%;
+    height: 5px;
+    transform: translateY(-50%);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.055);
+    pointer-events: none;
+    overflow: hidden;
+}
+
+/* Filled portion */
+.ps-cut__fill {
+    display: block;
+    height: 100%;
+    width: var(--ps-fill, 0%);
+    max-width: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg,
+        rgba(74, 134, 255, 0.5) 0%,
+        rgba(100, 158, 255, 1) 100%
+    );
+    transition: width 0.08s ease;
+}
+
+/* Native range input — reset global styles, transparent overlay */
+.ps-cut__slider {
+    /* reset global input rule */
+    border: none;
+    border-radius: 0;
+    background: transparent;
+    padding: 0;
+    /* range-specific */
+    -webkit-appearance: none;
+    appearance: none;
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    height: 1.85rem;
+    margin: 0;
+    cursor: pointer;
+    touch-action: none;
+}
+
+.ps-cut__slider:focus,
+.ps-cut__slider:focus-visible { outline: none; }
+
+.ps-cut__slider::-webkit-slider-runnable-track {
+    height: 5px;
+    background: transparent;
+}
+
+.ps-cut__slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -6.5px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: #4a86ff;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+    transition: transform 0.1s ease;
+}
+
+.ps-cut__slider:hover::-webkit-slider-thumb   { transform: scale(1.1); }
+.ps-cut__slider:active::-webkit-slider-thumb  { transform: scale(1.18); }
+
+.ps-cut__slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 3px rgba(74, 134, 255, 0.35), 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+.ps-cut__slider::-moz-range-track {
+    height: 5px;
+    background: transparent;
+    border: none;
+}
+
+.ps-cut__slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    background: #4a86ff;
+    box-shadow: 0 1px 8px rgba(0, 0, 0, 0.45);
+}
+
+@media (min-width: 560px) {
+    .profit-share-modal__foot {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+    }
+
+    .profit-share-modal__foot .btn {
+        min-height: auto;
+        width: auto;
+    }
 }
 
 .admin-op-subsection--gateway .admin-op-gateway-status,
@@ -2215,12 +2589,6 @@ body {
 
 @media (max-width: 720px) {
     .admin-op-strategy-cards {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 640px) {
-    .profit-share-editor-row {
         grid-template-columns: 1fr;
     }
 }

@@ -4,6 +4,7 @@ import type { OperationDetails, OperationWithLedTeamsDetails } from '../../api/t
 import { TeamListItem } from '../../features/teams/TeamListItem';
 import { Icon, IconButton } from '../IconButton';
 import { formatDateTime, shortId } from '../../utils/format';
+import { AdminGatewaySection } from './AdminGatewaySection';
 import { AdminTeamPanel, type AdminTeamPanelActions, type AdminTeamPanelScope } from './AdminTeamPanel';
 import { CreateTeamModal } from './CreateTeamModal';
 
@@ -31,11 +32,23 @@ function personLabel(accountId: string, username: string): string {
   return username && username !== accountId ? username : shortId(accountId, 18);
 }
 
-function countOperators(teams: TeamDetailsLike[]): number {
-  return teams.reduce((sum, team) => sum + team.operators.length, 0);
+function gatewayStrategyLabel(strategy: NonNullable<OperationDetails['gatewaySelectionStrategy']>): string {
+  if (strategy === 'PerStrawman') return 'Laranja';
+  if (strategy === 'PerGroup') return 'Grupo';
+  return 'Manual';
+}
+
+function isManagedOperation(
+  operation: OperationDetails | OperationWithLedTeamsDetails,
+): operation is OperationDetails {
+  return 'gatewaySelectionStrategy' in operation;
 }
 
 type TeamDetailsLike = OperationDetails['teams'][number];
+
+function countOperators(teams: TeamDetailsLike[]): number {
+  return teams.reduce((sum, team) => sum + team.operators.length, 0);
+}
 
 function PersonRow({
   accountId,
@@ -107,6 +120,7 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
   const panelScope = teamPanelScope(scope);
   const showAdminSection = scope === 'global-admin';
   const showActionsSection = scope === 'global-admin';
+  const showOperationGateway = (scope === 'global-admin' || scope === 'operation-admin') && isManagedOperation(operation);
   const canCreateTeam = scope !== 'team-leader';
   const useTeamList = scope === 'global-admin' || scope === 'operation-admin';
 
@@ -196,6 +210,12 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
                 <dd className="admin-op-metric__value">{operatorCount}</dd>
               </div>
             ) : null}
+            {showOperationGateway && operation.gatewaySelectionStrategy ? (
+              <div className="admin-op-metric">
+                <dt className="admin-op-metric__label">Gateway fallback</dt>
+                <dd className="admin-op-metric__value">{gatewayStrategyLabel(operation.gatewaySelectionStrategy)}</dd>
+              </div>
+            ) : null}
           </dl>
         </div>
       </OpSection>
@@ -252,6 +272,20 @@ export function AdminOperationCard({ operation, scope, actions }: AdminOperation
               ))}
             </ul>
           )}
+        </OpSection>
+      ) : null}
+
+      {showOperationGateway ? (
+        <OpSection
+          title="Gateway da operação"
+          desc="Fallback de credenciais quando nenhum operador é informado na cobrança."
+        >
+          <AdminGatewaySection
+            scope={operation}
+            actions={teamActions}
+            variant="operation"
+            showHeader={false}
+          />
         </OpSection>
       ) : null}
 

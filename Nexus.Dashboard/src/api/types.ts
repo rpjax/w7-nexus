@@ -103,6 +103,10 @@ export type OperationDetails = {
   name: string;
   description?: string | null;
   administrators: OperationAdministratorDetails[];
+  gatewaySelectionStrategy?: GatewaySelectionStrategy;
+  strawMen?: TeamAccountDetails[];
+  gatewayCredentials?: TeamGatewayCredentialDetails[];
+  gatewayCredentialsGroups?: TeamGatewayGroupDetails[];
   teams: TeamDetails[];
   createdAt: string;
   updatedAt: string;

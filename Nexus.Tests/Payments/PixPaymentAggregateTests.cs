@@ -6,37 +6,60 @@ namespace Nexus.Tests.Payments;
 
 public sealed class PixPaymentAggregateTests
 {
+    private static readonly IReadOnlyList<PaymentSplit> DefaultSplits =
+        PaymentSplit.CreateSnapshot(10m, new[] { ("op-1", 100m) });
+
     private static Payment CreateSut(
         string operationId = "operation-1",
+        string teamId = "team-1",
         PaymentGateway gateway = PaymentGateway.FusionPay,
         string gatewayPaymentId = "gw-1",
-        decimal amount = 10m) =>
-        new Payment(
-            Guid.NewGuid().ToString("N"),
-            operationId,
-            gateway,
-            gatewayPaymentId,
-            amount,
-            PaymentStatus.Pending,
-            OperatorAccountId: null,
-            StrawManAccountId: null,
-            DateTime.UtcNow,
-            PaidAt: null,
-            RefundedAt: null,
-            DiedAt: null,
-            DeathReason: null);
+        decimal amount = 10m,
+        IReadOnlyList<PaymentSplit>? splits = null,
+        PaymentStatus status = PaymentStatus.Pending,
+        PaymentSettlementStatus settlementStatus = PaymentSettlementStatus.Unsettled) =>
+        PaymentTestFactory.Create(
+            operationId: operationId,
+            teamId: teamId,
+            gateway: gateway,
+            gatewayPaymentId: gatewayPaymentId,
+            amount: amount,
+            splits: splits ?? DefaultSplits,
+            status: status,
+            settlementStatus: settlementStatus);
 
     [Fact]
     public void Constructor_SetsPendingStateAndGatewayFields()
     {
-        var p = CreateSut(gateway: PaymentGateway.Frendz, gatewayPaymentId: "ext-1", amount: 55.5m);
+        var p = CreateSut(
+            gateway: PaymentGateway.Frendz,
+            gatewayPaymentId: "ext-1",
+            amount: 55.5m,
+            splits: PaymentSplit.CreateSnapshot(55.5m, new[] { ("op-1", 100m) }));
 
         Assert.Equal(PaymentStatus.Pending, p.Status);
         Assert.Equal(PaymentGateway.Frendz, p.Gateway);
         Assert.Equal("ext-1", p.GatewayTransactionId);
         Assert.Equal(55.5m, p.Amount);
         Assert.Equal("operation-1", p.OperationId);
+        Assert.Equal("team-1", p.TeamId);
+        Assert.Single(p.Splits);
+        Assert.Equal(55.5m, p.Splits.Sum(split => split.Amount));
+        Assert.Equal(PaymentSettlementStatus.Unsettled, p.SettlementStatus);
         Assert.Null(p.PaidAt);
+    }
+
+    [Fact]
+    public void CreateSnapshot_LastCutReceivesRemainder()
+    {
+        var splits = PaymentSplit.CreateSnapshot(100m, new[]
+        {
+            ("a", 33.33m),
+            ("b", 33.33m),
+            ("c", 33.34m),
+        });
+
+        Assert.Equal(100m, splits.Sum(split => split.Amount));
     }
 
     [Theory]
@@ -105,6 +128,18 @@ public sealed class PixPaymentAggregateTests
     }
 
     [Fact]
+    public void MarkAsPaid_WithoutSplits_Fails()
+    {
+        var p = CreateSut(splits: Array.Empty<PaymentSplit>());
+        Assert.True(p.BindToOperator("op").IsSuccess);
+
+        var result = p.MarkAsPaid();
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.SplitsRequired);
+    }
+
+    [Fact]
     public void MarkAsPaid_WhenPendingAndOperatorBound_Succeeds()
     {
         var p = CreateSut();
@@ -115,6 +150,7 @@ public sealed class PixPaymentAggregateTests
         Assert.True(result.IsSuccess);
         Assert.Equal(PaymentStatus.Paid, p.Status);
         Assert.NotNull(p.PaidAt);
+        Assert.Equal(PaymentSettlementStatus.Unsettled, p.SettlementStatus);
     }
 
     [Fact]
@@ -128,6 +164,46 @@ public sealed class PixPaymentAggregateTests
 
         Assert.True(again.IsFailure);
         Assert.Contains(again.Errors, e => e.Code == PixPaymentErrorCodes.InvalidTransition);
+    }
+
+    [Fact]
+    public void MarkAsWithdrawn_WhenPending_Fails()
+    {
+        var p = CreateSut();
+        Assert.True(p.BindToOperator("op").IsSuccess);
+
+        var result = p.MarkAsWithdrawn();
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.InvalidSettlementTransition);
+    }
+
+    [Fact]
+    public void MarkAsWithdrawn_WhenPaid_Succeeds()
+    {
+        var p = CreateSut();
+        Assert.True(p.BindToOperator("op").IsSuccess);
+        Assert.True(p.MarkAsPaid().IsSuccess);
+
+        var result = p.MarkAsWithdrawn();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentSettlementStatus.Withdrawn, p.SettlementStatus);
+        Assert.NotNull(p.WithdrawnAt);
+    }
+
+    [Fact]
+    public void MarkAsWithdrawn_WhenAlreadyWithdrawn_Fails()
+    {
+        var p = CreateSut();
+        Assert.True(p.BindToOperator("op").IsSuccess);
+        Assert.True(p.MarkAsPaid().IsSuccess);
+        Assert.True(p.MarkAsWithdrawn().IsSuccess);
+
+        var second = p.MarkAsWithdrawn();
+
+        Assert.True(second.IsFailure);
+        Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.AlreadyWithdrawn);
     }
 
     [Fact]
@@ -154,6 +230,20 @@ public sealed class PixPaymentAggregateTests
         Assert.True(result.IsSuccess);
         Assert.Equal(PaymentStatus.Refunded, p.Status);
         Assert.NotNull(p.RefundedAt);
+    }
+
+    [Fact]
+    public void Refund_WhenWithdrawn_Fails()
+    {
+        var p = CreateSut();
+        Assert.True(p.BindToOperator("op").IsSuccess);
+        Assert.True(p.MarkAsPaid().IsSuccess);
+        Assert.True(p.MarkAsWithdrawn().IsSuccess);
+
+        var result = p.Refund();
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.InvalidTransition);
     }
 
     [Fact]
@@ -258,4 +348,3 @@ public sealed class PixPaymentAggregateTests
         Assert.Equal(PaymentGateway.Wintech, Enum.Parse<PaymentGateway>("Wintech"));
     }
 }
-

@@ -28,20 +28,23 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         public Task<Payment> CreateAsync(Payment entity)
         {
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
-                ? new Payment(
-                    Guid.NewGuid().ToString("N"),
-                    entity.OperationId,
-                    entity.Gateway,
-                    entity.GatewayTransactionId,
-                    entity.Amount,
-                    entity.Status,
-                    entity.OperatorAccountId,
-                    entity.StrawManAccountId,
-                    entity.CreatedAt,
-                    entity.PaidAt,
-                    entity.RefundedAt,
-                    entity.DiedAt,
-                    entity.DeathReason)
+                ? PaymentTestFactory.Create(
+                    operationId: entity.OperationId,
+                    teamId: entity.TeamId,
+                    gateway: entity.Gateway,
+                    gatewayPaymentId: entity.GatewayTransactionId,
+                    amount: entity.Amount,
+                    splits: entity.Splits,
+                    status: entity.Status,
+                    settlementStatus: entity.SettlementStatus,
+                    operatorAccountId: entity.OperatorAccountId,
+                    strawManAccountId: entity.StrawManAccountId,
+                    createdAt: entity.CreatedAt,
+                    paidAt: entity.PaidAt,
+                    refundedAt: entity.RefundedAt,
+                    diedAt: entity.DiedAt,
+                    deathReason: entity.DeathReason,
+                    withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
             _store.Add(persisted);
@@ -190,12 +193,61 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
     }
 
+    private sealed class InMemoryTeamRepository : ITeamRepository
+    {
+        private readonly List<Team> _store = new();
+
+        public IAsyncQueryable<Team> AsQueryable()
+            => new MongoAsyncQueryable<Team>(_store.AsQueryable());
+
+        public Task<Team> CreateAsync(Team entity)
+        {
+            _store.Add(entity);
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<Team>.CreateAsync(Team entity)
+        {
+            await CreateAsync(entity);
+        }
+
+        public Task CreateAsync(IEnumerable<Team> entities)
+        {
+            _store.AddRange(entities);
+            return Task.CompletedTask;
+        }
+
+        public Task DeleteAsync(Team entity)
+        {
+            _store.RemoveAll(t => t.Id == entity.Id);
+            return Task.CompletedTask;
+        }
+
+        public Task<long> DeleteAsync(Expression<Func<Team, bool>> predicate)
+        {
+            var compiled = predicate.Compile();
+            var removed = _store.RemoveAll(t => compiled(t));
+            return Task.FromResult((long)removed);
+        }
+
+        public Task UpdateAsync(Team entity)
+        {
+            var index = _store.FindIndex(t => t.Id == entity.Id);
+            if (index >= 0)
+                _store[index] = entity;
+            return Task.CompletedTask;
+        }
+
+        public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+    }
+
     [Fact]
     public async Task ApplicationService_CreatePayRefundAndKill_CoversCompleteLifecycle()
     {
         var payments = new InMemoryPixPaymentRepository();
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
+        var teams = new InMemoryTeamRepository();
 
         var operation = new Operation(
             "operation-1",
@@ -214,11 +266,15 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var strawAccount = new Account("straw-1", "straw", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(new[] { operatorAccount, strawAccount });
 
-        var sut = new PaymentService(accounts, payments, operations);
+        var team = TeamTestFactory.WithOperatorProfitShare("team-1", operation.Id, operatorAccount.Id, (operatorAccount.Id, 100m));
+        await teams.CreateAsync(team);
+
+        var sut = new PaymentService(accounts, payments, operations, teams);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
+            TeamId = team.Id,
             OperatorAccountId = operatorAccount.Id,
             StrawManAccountId = strawAccount.Id,
             Gateway = PaymentGateway.Frendz,
@@ -229,6 +285,7 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         Assert.True(created.IsSuccess);
         var paymentId = created.Value!.Id;
         Assert.Equal(PaymentStatus.Pending, created.Value.Status);
+        Assert.Single(created.Value.Splits);
 
         var paidResult = await sut.PayAsync(paymentId);
         Assert.True(paidResult.IsSuccess);
@@ -244,11 +301,66 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
     }
 
     [Fact]
+    public async Task ApplicationService_PayWithdrawAndRefund_BlocksRefundAfterWithdrawn()
+    {
+        var payments = new InMemoryPixPaymentRepository();
+        var operations = new InMemoryOperationRepository();
+        var accounts = new InMemoryAccountRepository();
+        var teams = new InMemoryTeamRepository();
+
+        var operation = new Operation(
+            "operation-3",
+            "Withdraw flow",
+            "pix flow",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+        await operations.CreateAsync(operation);
+
+        var operatorAccount = new Account("operator-3", "operator3", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        await accounts.CreateAsync(operatorAccount);
+
+        var team = TeamTestFactory.WithOperatorProfitShare("team-3", operation.Id, operatorAccount.Id, (operatorAccount.Id, 100m));
+        await teams.CreateAsync(team);
+
+        var sut = new PaymentService(accounts, payments, operations, teams);
+
+        var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
+        {
+            OperationId = operation.Id,
+            TeamId = team.Id,
+            OperatorAccountId = operatorAccount.Id,
+            Gateway = PaymentGateway.Frendz,
+            Amount = 80m,
+            GatewayPaymentId = "gw-880"
+        });
+
+        Assert.True(created.IsSuccess);
+        var paymentId = created.Value!.Id;
+
+        Assert.True((await sut.PayAsync(paymentId)).IsSuccess);
+        Assert.True((await sut.MarkAsWithdrawnAsync(paymentId)).IsSuccess);
+
+        var stored = payments.AsQueryable().First(p => p.Id == paymentId);
+        Assert.Equal(PaymentSettlementStatus.Withdrawn, stored.SettlementStatus);
+        Assert.NotNull(stored.WithdrawnAt);
+
+        var refundResult = await sut.RefundAsync(paymentId);
+        Assert.True(refundResult.IsFailure);
+        Assert.Contains(refundResult.Errors, e => e.Code == PixPaymentErrorCodes.InvalidTransition);
+    }
+
+    [Fact]
     public async Task ApplicationService_KillFromPending_SucceedsAndBlocksFurtherPayment()
     {
         var payments = new InMemoryPixPaymentRepository();
         var operations = new InMemoryOperationRepository();
         var accounts = new InMemoryAccountRepository();
+        var teams = new InMemoryTeamRepository();
 
         var operation = new Operation(
             "operation-2",
@@ -263,15 +375,11 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
-        var operatorAccount = new Account("operator-2", "operator2", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
-        await accounts.CreateAsync(operatorAccount);
-
-        var sut = new PaymentService(accounts, payments, operations);
+        var sut = new PaymentService(accounts, payments, operations, teams);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
-            OperatorAccountId = operatorAccount.Id,
             Gateway = PaymentGateway.FusionPay,
             Amount = 40m,
             GatewayPaymentId = "gw-778"

@@ -4,6 +4,7 @@ using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
+using Nexus.Database.Models;
 using Nexus.Gateways.Aggregates;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
@@ -86,6 +87,7 @@ public sealed class OperationServiceTests
     private sealed class TestContext
     {
         public InMemoryOperationRepository Operations { get; } = new();
+        public InMemoryTeamRepository Teams { get; } = new();
         public InMemoryGatewayCredentialsGroupRepository GatewayGroups { get; } = new();
         public FakeAccountIdValidator AccountValidator { get; } = new();
         public FakeGatewayCredentialsIdValidator GatewayCredentialsValidator { get; } = new();
@@ -93,6 +95,7 @@ public sealed class OperationServiceTests
         public OperationService CreateSut()
             => new(
                 Operations,
+                Teams,
                 AccountValidator,
                 GatewayGroups,
                 GatewayCredentialsValidator);
@@ -325,6 +328,46 @@ public sealed class OperationServiceTests
 
         Assert.True(result.IsSuccess);
         Assert.Empty(ctx.Operations.AsQueryable().ToList());
+    }
+
+    [Fact]
+    public async Task DeleteOperationAsync_DeletesTeamsForOperation()
+    {
+        var ctx = CreateContextWithOperation();
+        await ctx.Teams.CreateAsync(new Team(
+            "team-1",
+            OperationId,
+            "Team A",
+            null,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<OperatorProfitShareRuleRecord>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow));
+        await ctx.Teams.CreateAsync(new Team(
+            "team-2",
+            "other-op",
+            "Team B",
+            null,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            Array.Empty<OperatorProfitShareRuleRecord>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow));
+        var sut = ctx.CreateSut();
+
+        var result = await sut.DeleteOperationAsync(OperationId);
+
+        Assert.True(result.IsSuccess);
+        Assert.Empty(ctx.Operations.AsQueryable().ToList());
+        Assert.DoesNotContain(ctx.Teams.AsQueryable().ToList(), t => t.OperationId == OperationId);
+        Assert.Contains(ctx.Teams.AsQueryable().ToList(), t => t.OperationId == "other-op");
     }
 
     [Fact]

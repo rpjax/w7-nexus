@@ -19,17 +19,21 @@ public sealed class MongoPaymentRepository : IPaymentRepository
         new Payment(
             r.Id.ToString(),
             r.OperationId,
+            r.TeamId,
             r.Gateway,
             r.GatewayPaymentId,
             r.Amount,
+            r.Splits.Select(s => new PaymentSplit(s.AccountId, s.Percentage, s.Amount)).ToList(),
             r.Status,
+            r.SettlementStatus,
             r.OperatorAccountId,
             r.StrawManAccountId,
             r.CreatedAt,
             r.PaidAt,
             r.RefundedAt,
             r.DiedAt,
-            r.DeathReason);
+            r.DeathReason,
+            r.WithdrawnAt);
 
     public MongoPaymentRepository(IMongoCollection<PaymentRecord> collection)
     {

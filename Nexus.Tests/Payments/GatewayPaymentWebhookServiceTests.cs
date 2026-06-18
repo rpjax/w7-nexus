@@ -24,20 +24,23 @@ public sealed class GatewayPaymentWebhookServiceTests
         public Task<Payment> CreateAsync(Payment entity)
         {
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
-                ? new Payment(
-                    Guid.NewGuid().ToString("N"),
-                    entity.OperationId,
-                    entity.Gateway,
-                    entity.GatewayTransactionId,
-                    entity.Amount,
-                    entity.Status,
-                    entity.OperatorAccountId,
-                    entity.StrawManAccountId,
-                    entity.CreatedAt,
-                    entity.PaidAt,
-                    entity.RefundedAt,
-                    entity.DiedAt,
-                    entity.DeathReason)
+                ? PaymentTestFactory.Create(
+                    operationId: entity.OperationId,
+                    teamId: entity.TeamId,
+                    gateway: entity.Gateway,
+                    gatewayPaymentId: entity.GatewayTransactionId,
+                    amount: entity.Amount,
+                    splits: entity.Splits,
+                    status: entity.Status,
+                    settlementStatus: entity.SettlementStatus,
+                    operatorAccountId: entity.OperatorAccountId,
+                    strawManAccountId: entity.StrawManAccountId,
+                    createdAt: entity.CreatedAt,
+                    paidAt: entity.PaidAt,
+                    refundedAt: entity.RefundedAt,
+                    diedAt: entity.DiedAt,
+                    deathReason: entity.DeathReason,
+                    withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
             return Task.FromResult(persisted);
@@ -84,26 +87,19 @@ public sealed class GatewayPaymentWebhookServiceTests
             KillCalls.Add((paymentId, reason));
             return Task.FromResult<IResult>(Result.Success());
         }
+
+        public Task<IResult> MarkAsWithdrawnAsync(string paymentId) =>
+            Task.FromResult<IResult>(Result.Success());
     }
 
     private static Payment CreatePayment(
         string id,
         PaymentGateway gateway,
         string gatewayTransactionId) =>
-        new(
-            id,
-            "op-1",
-            gateway,
-            gatewayTransactionId,
-            10m,
-            PaymentStatus.Pending,
-            OperatorAccountId: null,
-            StrawManAccountId: null,
-            DateTime.UtcNow,
-            PaidAt: null,
-            RefundedAt: null,
-            DiedAt: null,
-            DeathReason: null);
+        PaymentTestFactory.Create(
+            id: id,
+            gateway: gateway,
+            gatewayPaymentId: gatewayTransactionId);
 
     private static GatewayPaymentWebhookService CreateSut(
         StubPaymentRepository? payments = null,

@@ -27,8 +27,8 @@ using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
-using Nexus.Tests.Accounts;
 using Nexus.Tests.Payments;
+using Nexus.Tests.Accounts;
 using Nexus.Authentication.Application.Services;
 using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
@@ -171,20 +171,23 @@ internal sealed class InMemoryPaymentRepository : IPaymentRepository
     public Task<Payment> CreateAsync(Payment entity)
     {
         var persisted = string.IsNullOrWhiteSpace(entity.Id)
-            ? new Payment(
-                Guid.NewGuid().ToString("N"),
-                entity.OperationId,
-                entity.Gateway,
-                entity.GatewayTransactionId,
-                entity.Amount,
-                entity.Status,
-                entity.OperatorAccountId,
-                entity.StrawManAccountId,
-                entity.CreatedAt,
-                entity.PaidAt,
-                entity.RefundedAt,
-                entity.DiedAt,
-                entity.DeathReason)
+            ? PaymentTestFactory.Create(
+                operationId: entity.OperationId,
+                teamId: entity.TeamId,
+                gateway: entity.Gateway,
+                gatewayPaymentId: entity.GatewayTransactionId,
+                amount: entity.Amount,
+                splits: entity.Splits,
+                status: entity.Status,
+                settlementStatus: entity.SettlementStatus,
+                operatorAccountId: entity.OperatorAccountId,
+                strawManAccountId: entity.StrawManAccountId,
+                createdAt: entity.CreatedAt,
+                paidAt: entity.PaidAt,
+                refundedAt: entity.RefundedAt,
+                diedAt: entity.DiedAt,
+                deathReason: entity.DeathReason,
+                withdrawnAt: entity.WithdrawnAt)
             : entity;
 
         _store.Add(persisted);
@@ -313,6 +316,7 @@ internal sealed class ActorTestContext
     public OperationService CreateOperationService()
         => new(
             Operations,
+            Teams,
             AccountIdValidator,
             GatewayGroups,
             GatewayCredentialsIdValidator);
@@ -439,21 +443,13 @@ internal sealed class ActorTestContext
         string? operatorAccountId = null,
         string? id = null)
     {
-        var now = DateTime.UtcNow;
-        var payment = new Payment(
-            Id: id ?? Guid.NewGuid().ToString("N"),
-            OperationId: operationId,
-            Gateway: PaymentGateway.None,
-            GatewayTransactionId: string.Empty,
-            Amount: 100m,
-            Status: PaymentStatus.Pending,
-            OperatorAccountId: operatorAccountId,
-            StrawManAccountId: null,
-            CreatedAt: now,
-            PaidAt: null,
-            RefundedAt: null,
-            DiedAt: null,
-            DeathReason: null);
+        var payment = PaymentTestFactory.Create(
+            id: id,
+            operationId: operationId,
+            operatorAccountId: operatorAccountId,
+            splits: operatorAccountId is null
+                ? Array.Empty<PaymentSplit>()
+                : PaymentSplit.CreateSnapshot(100m, new[] { (operatorAccountId, 100m) }));
         return await Payments.CreateAsync(payment);
     }
 

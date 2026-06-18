@@ -1062,6 +1062,32 @@ public sealed class TeamServiceTests
         Assert.Equal(40m, rule.Cuts.First(c => c.AccountId == AccountB).Percentage);
     }
 
+    [Fact]
+    public async Task SetOperatorProfitShareRuleAsync_CutsWithinTolerance_NormalizesTo100()
+    {
+        var ctx = CreateContextWithOperation();
+        ctx.AccountValidator.AddExisting(AccountA);
+        ctx.AccountValidator.AddExisting(AccountB);
+        ctx.AccountValidator.AddExisting("account-c");
+        SeedTeam(ctx.Teams, operatorIds: new[] { OperatorId });
+        var sut = ctx.CreateSut();
+
+        var cuts = new[]
+        {
+            new ProfitSplit(AccountA, 33.33m),
+            new ProfitSplit(AccountB, 33.33m),
+            new ProfitSplit("account-c", 33.33m),
+        };
+        var result = await sut.SetOperatorProfitShareRuleAsync(TeamId, OperatorId, cuts);
+
+        Assert.True(result.IsSuccess);
+        var team = ctx.Teams.FindById(TeamId)!;
+        var rule = team.OperatorProfitShareRules.First(r => r.OperatorId == OperatorId);
+        Assert.Equal(33.33m, rule.Cuts.First(c => c.AccountId == AccountA).Percentage);
+        Assert.Equal(33.33m, rule.Cuts.First(c => c.AccountId == AccountB).Percentage);
+        Assert.Equal(33.34m, rule.Cuts.First(c => c.AccountId == "account-c").Percentage);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]

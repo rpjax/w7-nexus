@@ -132,6 +132,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         {
             ExplicitPaymentId = paymentId,
             OperationId = operationId,
+            TeamId = team?.Id,
             OperatorAccountId = operatorAccountId,
             StrawManAccountId = null,
             Gateway = PaymentGateway.Frendz,

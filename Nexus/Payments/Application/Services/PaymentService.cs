@@ -2,12 +2,12 @@ using Aidan.Core.Errors;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
-using Nexus.Operations.Application.Services;
+using Nexus.Operations.Aggregates;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Payments.Errors;
+using Nexus.Database.Models;
 
 namespace Nexus.Payments.Application.Services;
 
@@ -16,15 +16,18 @@ public sealed class PaymentService : IPaymentService
     private IAccountRepository _accountRepository { get; }
     private IPaymentRepository _paymentRepository { get; }
     private IOperationRepository _operationRepository { get; }
+    private ITeamRepository _teamRepository { get; }
 
     public PaymentService(
         IAccountRepository accountRepository,
         IPaymentRepository pixPaymentRepository,
-        IOperationRepository operationRepository)
+        IOperationRepository operationRepository,
+        ITeamRepository teamRepository)
     {
         _accountRepository = accountRepository;
         _paymentRepository = pixPaymentRepository;
         _operationRepository = operationRepository;
+        _teamRepository = teamRepository;
     }
 
     public async Task<IResult<Payment>> CreatePaymentAsync(CreatePaymentRequest request)
@@ -34,6 +37,7 @@ public sealed class PaymentService : IPaymentService
         // Normalize inputs to avoid accepting "   " values and to prevent nullability warnings later.
         var amount = request.Amount;
         var operationId = request.OperationId?.Trim();
+        var teamId = request.TeamId?.Trim();
         var gateway = request.Gateway;
         var gatewayPaymentId = request.GatewayPaymentId?.Trim();
         var operatorAccountId = request.OperatorAccountId?.Trim();
@@ -75,6 +79,12 @@ public sealed class PaymentService : IPaymentService
             builder.WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManInvalid)
                 .WithMessage("O ID da conta laranja não pode estar vazio quando informado.")
+                .Build());
+
+        if (operatorAccountId is not null && string.IsNullOrWhiteSpace(teamId))
+            builder.WithError(Error.Create()
+                .WithCode(PixPaymentErrorCodes.TeamIdRequired)
+                .WithMessage("O ID da equipe é obrigatório quando o operador é informado.")
                 .Build());
 
         if (builder.ContainsError)
@@ -125,6 +135,60 @@ public sealed class PaymentService : IPaymentService
                     .Build());
         }
 
+        IReadOnlyList<PaymentSplit> splits = Array.Empty<PaymentSplit>();
+        var resolvedTeamId = teamId ?? string.Empty;
+
+        if (operatorAccountId is not null)
+        {
+            var team = _teamRepository.AsQueryable()
+                .FirstOrDefault(t => t.Id == teamId);
+
+            if (team is null)
+            {
+                builder.WithError(Error.Create()
+                    .WithCode(PixPaymentErrorCodes.TeamNotFound)
+                    .WithMessage($"A equipe '{teamId}' não foi encontrada.")
+                    .Build());
+            }
+            else if (!string.Equals(team.OperationId, operationId, StringComparison.Ordinal))
+            {
+                builder.WithError(Error.Create()
+                    .WithCode(PixPaymentErrorCodes.TeamNotFound)
+                    .WithMessage($"A equipe '{teamId}' não pertence à operação '{operationId}'.")
+                    .Build());
+            }
+            else if (!team.OperatorIds.Contains(operatorAccountId))
+            {
+                builder.WithError(Error.Create()
+                    .WithCode(PixPaymentErrorCodes.OperatorNotOnTeam)
+                    .WithMessage($"O operador '{operatorAccountId}' não pertence à equipe '{teamId}'.")
+                    .Build());
+            }
+            else
+            {
+                var rule = team.OperatorProfitShareRules
+                    .FirstOrDefault(r => string.Equals(r.OperatorId, operatorAccountId, StringComparison.Ordinal));
+
+                if (rule is null || rule.Cuts.Count == 0)
+                {
+                    builder.WithError(Error.Create()
+                        .WithCode(PixPaymentErrorCodes.ProfitShareRuleNotFound)
+                        .WithMessage($"Não há regra de repasse configurada para o operador '{operatorAccountId}'.")
+                        .Build());
+                }
+                else
+                {
+                    var normalizedCuts = ProfitSharePercentageRules.NormalizeCuts(rule.Cuts);
+                    splits = PaymentSplit.CreateSnapshot(
+                        amount,
+                        normalizedCuts
+                            .Select(cut => (cut.AccountId, cut.Percentage))
+                            .ToList());
+                    resolvedTeamId = team.Id;
+                }
+            }
+        }
+
         if (builder.ContainsError)
             return builder.Build();
 
@@ -136,17 +200,21 @@ public sealed class PaymentService : IPaymentService
         var payment = new Payment(
             id,
             operationId!,
+            resolvedTeamId,
             gateway,
             validatedGatewayPaymentId,
             amount,
+            splits,
             PaymentStatus.Pending,
+            PaymentSettlementStatus.Unsettled,
             OperatorAccountId: null,
             StrawManAccountId: null,
             createdAt,
             PaidAt: null,
             RefundedAt: null,
             DiedAt: null,
-            DeathReason: null);
+            DeathReason: null,
+            WithdrawnAt: null);
 
         if (strawManAccountId is not null)
         {
@@ -195,6 +263,31 @@ public sealed class PaymentService : IPaymentService
         }
 
         var result = payment.MarkAsPaid();
+        if (result.IsFailure)
+            return result;
+
+        await _paymentRepository.UpdateAsync(payment);
+        return Result.Success();
+    }
+
+    public async Task<IResult> MarkAsWithdrawnAsync(string paymentId)
+    {
+        if (string.IsNullOrWhiteSpace(paymentId))
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
+                .WithMessage("O ID do pagamento é obrigatório.")
+                .Build());
+
+        var payment = _paymentRepository.AsQueryable()
+            .FirstOrDefault(p => p.Id == paymentId);
+
+        if (payment is null)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.PaymentNotFound)
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
+                .Build());
+
+        var result = payment.MarkAsWithdrawn();
         if (result.IsFailure)
             return result;
 

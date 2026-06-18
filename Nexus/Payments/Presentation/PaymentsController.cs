@@ -4,7 +4,6 @@ using Aidan.Core.Linq.Extensions;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;
 
 namespace Nexus.Payments.Presentation;
@@ -13,27 +12,40 @@ namespace Nexus.Payments.Presentation;
 public sealed class PaymentsController : WebController
 {
     private readonly IPaymentRepository _paymentRepository;
+    private readonly IPaymentService _paymentService;
 
-    public PaymentsController(IPaymentRepository paymentRepository)
+    public PaymentsController(
+        IPaymentRepository paymentRepository,
+        IPaymentService paymentService)
     {
         _paymentRepository = paymentRepository;
+        _paymentService = paymentService;
     }
 
     private static object ToPaymentResponse(Payment p) => new
     {
         p.Id,
         p.OperationId,
+        p.TeamId,
         p.OperatorAccountId,
         p.StrawManAccountId,
         Gateway = p.Gateway.ToString(),
         GatewayTransactionId = p.GatewayTransactionId,
         p.Amount,
+        Splits = p.Splits.Select(split => new
+        {
+            split.AccountId,
+            split.Percentage,
+            split.Amount,
+        }).ToArray(),
         Status = p.Status.ToString(),
+        SettlementStatus = p.SettlementStatus.ToString(),
         p.CreatedAt,
         p.PaidAt,
         p.RefundedAt,
         p.DiedAt,
         p.DeathReason,
+        p.WithdrawnAt,
     };
 
     [HttpPost("search")]
@@ -95,5 +107,15 @@ public sealed class PaymentsController : WebController
             Total = total,
             Items = items.Select(ToPaymentResponse).ToArray(),
         });
+    }
+
+    [HttpPost("{paymentId}/withdraw")]
+    public async Task<ActionResult> WithdrawAsync(string paymentId)
+    {
+        var result = await _paymentService.MarkAsWithdrawnAsync(paymentId);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok();
     }
 }

@@ -394,7 +394,8 @@ public sealed class Team : IGatewayCredentialScope
                     .Build());
             }
 
-            if (cut.Percentage <= 0m || cut.Percentage > 100m)
+            if (cut.Percentage < ProfitSharePercentageRules.MinCutPercentage
+                || cut.Percentage > ProfitSharePercentageRules.MaxCutPercentage)
             {
                 return Result.Failure(Error.Create()
                     .WithCode(TeamErrorCodes.ProfitShareCutPercentageInvalid)
@@ -402,17 +403,23 @@ public sealed class Team : IGatewayCredentialScope
                     .Build());
             }
 
-            normalizedCuts.Add(new ProfitSplitRecord { AccountId = accountId, Percentage = cut.Percentage });
-            totalPercentage += cut.Percentage;
+            normalizedCuts.Add(new ProfitSplitRecord
+            {
+                AccountId = accountId,
+                Percentage = ProfitSharePercentageRules.Round(cut.Percentage),
+            });
+            totalPercentage += normalizedCuts[^1].Percentage;
         }
 
-        if (totalPercentage != 100m)
+        if (!ProfitSharePercentageRules.IsTotalValid(totalPercentage))
         {
             return Result.Failure(Error.Create()
                 .WithCode(TeamErrorCodes.ProfitShareCutsMustTotal100Percent)
-                .WithMessage("As fatias da divisão de lucro devem totalizar exatamente 100%.")
+                .WithMessage("As fatias da divisão de lucro devem totalizar 100% (tolerância de 0,05%).")
                 .Build());
         }
+
+        normalizedCuts = ProfitSharePercentageRules.NormalizeCuts(normalizedCuts);
 
         return null;
     }
@@ -504,13 +511,14 @@ public sealed class Team : IGatewayCredentialScope
             if (string.IsNullOrWhiteSpace(cut.AccountId))
                 return false;
 
-            if (cut.Percentage <= 0m || cut.Percentage > 100m)
+            if (cut.Percentage < ProfitSharePercentageRules.MinCutPercentage
+                || cut.Percentage > ProfitSharePercentageRules.MaxCutPercentage)
                 return false;
 
             totalPercentage += cut.Percentage;
         }
 
-        return totalPercentage == 100m;
+        return ProfitSharePercentageRules.IsTotalValid(totalPercentage);
     }
 
     private void Touch() => UpdatedAt = DateTime.UtcNow;

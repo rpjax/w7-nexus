@@ -325,6 +325,7 @@ public sealed class AdministratorTests
     {
         var sut = _ctx.CreateAdministrator();
         var operation = await _ctx.SeedOperationAsync("To Delete");
+        await _ctx.SeedTeamAsync(operation.Id, "Team To Delete");
 
         var result = await sut.DeleteOperationAsync(Identity(), new DeleteOperationRequest
         {
@@ -335,6 +336,7 @@ public sealed class AdministratorTests
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
         Assert.Empty(_ctx.Operations.AsQueryable().ToArray());
+        Assert.Empty(_ctx.Teams.AsQueryable().Where(t => t.OperationId == operation.Id).ToArray());
     }
 
     [Fact]
