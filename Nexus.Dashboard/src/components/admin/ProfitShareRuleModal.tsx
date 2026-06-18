@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { ProfitShareCutInput } from '../../api/types';
+import { Icon, IconButton } from '../IconButton';
 import { shortId } from '../../utils/format';
 
 export type ProfitShareCutDraft = ProfitShareCutInput & {
@@ -121,20 +122,22 @@ export function ProfitShareRuleModal({
                     onChange={(e) => updatePercentage(index, e.target.value)}
                   />
                 </div>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-small"
+                <IconButton
+                  icon="trash"
+                  label="Remover fatia"
+                  variant="danger"
                   onClick={() => removeCut(index)}
                   disabled={cuts.length <= 1}
-                >
-                  Remover
-                </button>
+                />
               </li>
             ))}
           </ul>
 
           <div className="profit-share-editor-footer">
-            <button type="button" className="btn btn-ghost btn-small" onClick={addCut}>Adicionar fatia</button>
+            <button type="button" className="btn btn-ghost btn-small btn-with-icon" onClick={addCut}>
+              <Icon name="plus" />
+              Adicionar fatia
+            </button>
             <span className={`profit-share-total ${totalRounded === 100 ? 'is-valid' : 'is-invalid'}`}>
               Total: {totalRounded}%
             </span>

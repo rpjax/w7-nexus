@@ -3,11 +3,17 @@ import { RedirectIfAuthenticated, RequireAuth } from './auth/RequireAuth';
 import { RequireAnyRole, RequireRole } from './auth/RequireRole';
 import { ROLES } from './auth/roles';
 import { DashboardLayout } from './layouts/DashboardLayout';
+import { AdminOperationDetailPage } from './pages/admin/AdminOperationDetailPage';
+import { AdminTeamDetailPage } from './pages/admin/AdminTeamDetailPage';
 import { AdminOperationsPage } from './pages/admin/AdminOperationsPage';
 import { AuthPage } from './pages/AuthPage';
 import { HomePage } from './pages/HomePage';
+import { OperationAdminOperationDetailPage } from './pages/operationAdmin/OperationAdminOperationDetailPage';
+import { OperationAdminTeamDetailPage } from './pages/operationAdmin/OperationAdminTeamDetailPage';
 import { OperationAdminOperationsPage } from './pages/operationAdmin/OperationAdminOperationsPage';
+import { OperatorOperationDetailPage } from './pages/operator/OperatorOperationDetailPage';
 import { OperatorOperationsPage } from './pages/operator/OperatorOperationsPage';
+import { TeamLeaderOperationDetailPage } from './pages/teamLeader/TeamLeaderOperationDetailPage';
 import { TeamLeaderOperationsPage } from './pages/teamLeader/TeamLeaderOperationsPage';
 import { AccountsPage } from './pages/AccountsPage';
 import { PaymentsListPage } from './pages/PaymentsListPage';
@@ -30,8 +36,12 @@ export default function App() {
 
           <Route element={<RequireAnyRole roles={[ROLES.Operator, ROLES.Administrator]} />}>
             <Route path="/dashboard/operations" element={<OperatorOperationsPage />} />
+            <Route path="/dashboard/operations/:operationId" element={<OperatorOperationDetailPage />} />
             <Route path="/dashboard/operation-admin/operations" element={<OperationAdminOperationsPage />} />
+            <Route path="/dashboard/operation-admin/operations/:operationId" element={<OperationAdminOperationDetailPage />} />
+            <Route path="/dashboard/operation-admin/operations/:operationId/teams/:teamId" element={<OperationAdminTeamDetailPage />} />
             <Route path="/dashboard/team-leader/operations" element={<TeamLeaderOperationsPage />} />
+            <Route path="/dashboard/team-leader/operations/:operationId" element={<TeamLeaderOperationDetailPage />} />
             <Route path="/dashboard/payments" element={<PaymentsListPage />} />
             <Route path="/dashboard/payments/pix" element={<PaymentsPixPage />} />
             <Route path="/dashboard/gateways" element={<GatewaysHubPage />} />
@@ -44,6 +54,8 @@ export default function App() {
 
           <Route element={<RequireRole role={ROLES.Administrator} />}>
             <Route path="/dashboard/admin/operations" element={<AdminOperationsPage />} />
+            <Route path="/dashboard/admin/operations/:operationId" element={<AdminOperationDetailPage />} />
+            <Route path="/dashboard/admin/operations/:operationId/teams/:teamId" element={<AdminTeamDetailPage />} />
             <Route path="/dashboard/accounts" element={<AccountsPage />} />
           </Route>
         </Route>

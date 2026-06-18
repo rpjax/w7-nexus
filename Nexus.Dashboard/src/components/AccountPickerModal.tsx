@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 import type { AccountPickerSearchFn } from '../api/accountPicker';
 import type { AccountPickerRow } from '../api/types';
+import { IconButton } from './IconButton';
+import { PaginationBar } from './ListControls';
 import { shortId } from '../utils/format';
 
 type AccountPickerModalProps = {
@@ -116,9 +118,7 @@ export function AccountPickerModal({
             <h3 id="account-picker-title" className="account-picker-title">{title}</h3>
             {subtitle ? <p className="account-picker-sub">{subtitle}</p> : null}
           </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
+          <IconButton icon="x" label="Fechar" onClick={onClose} />
         </header>
 
         <div className="account-picker-search-row">
@@ -131,14 +131,13 @@ export function AccountPickerModal({
             placeholder="Buscar por nome ou ID…"
             aria-label="Buscar contas"
           />
-          <button
-            type="button"
-            className="btn btn-primary account-picker-search-btn"
+          <IconButton
+            icon="search"
+            label="Buscar contas"
+            variant="primary"
             onClick={() => void search()}
             disabled={loading}
-          >
-            {loading ? '…' : 'Buscar'}
-          </button>
+          />
         </div>
 
         <div className="account-picker-list" tabIndex={-1}>
@@ -196,25 +195,14 @@ export function AccountPickerModal({
           <span className="account-picker-count">
             {totalItems === 0 ? 'Sem resultados' : `${totalItems} conta${totalItems === 1 ? '' : 's'}`}
           </span>
-          <div className="account-picker-pagination">
-            <button
-              type="button"
-              className="btn btn-ghost btn-small"
-              onClick={() => void prevPage()}
-              disabled={currentPage <= 1 || loading}
-            >
-              Anterior
-            </button>
-            <span className="account-picker-page">{currentPage} / {totalPages}</span>
-            <button
-              type="button"
-              className="btn btn-ghost btn-small"
-              onClick={() => void nextPage()}
-              disabled={currentPage >= totalPages || loading}
-            >
-              Próxima
-            </button>
-          </div>
+          <PaginationBar
+            className="account-picker-pagination"
+            currentPage={currentPage}
+            totalPages={totalPages}
+            disabled={loading}
+            onPrev={() => void prevPage()}
+            onNext={() => void nextPage()}
+          />
         </footer>
       </div>
     </div>

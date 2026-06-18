@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { searchAccountsPicker } from '../api/accountPickerSources';
+import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import { generatePix } from '../api/payments';
 import type { GatewayPixResult } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
+import { IconButton } from '../components/IconButton';
 import { OperationPickerModal } from '../components/OperationPickerModal';
 
 export function PaymentsPixPage() {
@@ -80,7 +81,7 @@ export function PaymentsPixPage() {
               </button>
               <button type="button" className="btn-icon btn-icon-green" onClick={() => setOperationPickerOpen(true)} title="Selecionar operação">＋</button>
               {operationId ? (
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => { setOperationId(''); setOperationLabel(null); }}>Limpar</button>
+                <IconButton icon="x" label="Limpar operação selecionada" onClick={() => { setOperationId(''); setOperationLabel(null); }} />
               ) : null}
             </div>
           </div>
@@ -96,7 +97,7 @@ export function PaymentsPixPage() {
               </button>
               <button type="button" className="btn-icon btn-icon-green" onClick={() => setOperatorPickerOpen(true)}>＋</button>
               {operatorAccountId ? (
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => { setOperatorAccountId(null); setOperatorLabel(null); }}>Limpar</button>
+                <IconButton icon="x" label="Limpar operador selecionado" onClick={() => { setOperatorAccountId(null); setOperatorLabel(null); }} />
               ) : null}
             </div>
           </div>
@@ -108,7 +109,7 @@ export function PaymentsPixPage() {
               </button>
               <button type="button" className="btn-icon btn-icon-warm" onClick={() => setStrawPickerOpen(true)}>＋</button>
               {strawManAccountId ? (
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => { setStrawManAccountId(null); setStrawLabel(null); }}>Limpar</button>
+                <IconButton icon="x" label="Limpar laranja selecionado" onClick={() => { setStrawManAccountId(null); setStrawLabel(null); }} />
               ) : null}
             </div>
           </div>
@@ -134,7 +135,7 @@ export function PaymentsPixPage() {
       <AccountPickerModal
         open={operatorPickerOpen}
         onClose={() => setOperatorPickerOpen(false)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={searchAdministratorAccountsPicker}
         title="Conta do operador"
         subtitle="Opcional — filtra a cobrança ao operador."
         onSelected={(row) => {
@@ -146,7 +147,7 @@ export function PaymentsPixPage() {
       <AccountPickerModal
         open={strawPickerOpen}
         onClose={() => setStrawPickerOpen(false)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={searchAdministratorAccountsPicker}
         title="Conta laranja"
         subtitle="Opcional — alinha credenciais de gateway com laranja."
         onSelected={(row) => {
@@ -169,7 +170,7 @@ export function PaymentsPixPage() {
           <p><strong>Código PIX:</strong></p>
           <div className="copy-wrap">
             <textarea readOnly rows={6} className="nexus-input" value={lastResult.code} />
-            <button type="button" className="btn btn-ghost" onClick={() => void copyPixCode()}>Copiar</button>
+            <IconButton icon="copy" label="Copiar código PIX" onClick={() => void copyPixCode()} />
           </div>
           {pixCopied ? <p className="feedback success">Código PIX copiado.</p> : null}
         </section>

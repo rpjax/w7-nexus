@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { GatewaySelectionStrategy, TeamAccountDetails, TeamDetails } from '../../api/types';
+import { IconButton } from '../IconButton';
 import { shortId } from '../../utils/format';
 import type { AdminTeamPanelActions } from './adminTeamTypes';
 
@@ -39,6 +40,7 @@ const GATEWAY_LABELS: Record<string, string> = {
 type AdminTeamGatewaySectionProps = {
   team: TeamDetails;
   actions: AdminTeamPanelActions;
+  showHeader?: boolean;
 };
 
 function personInitial(username: string): string {
@@ -68,9 +70,15 @@ function StrawManRow({
         <span className="admin-op-person-name">{personLabel(straw.accountId, straw.username)}</span>
         <span className="admin-op-person-id mono" title={straw.accountId}>{shortId(straw.accountId, 22)}</span>
       </span>
-      <button type="button" className="btn btn-ghost btn-small" disabled={busy} onClick={onRemove}>
-        Remover
-      </button>
+      <span className="admin-op-person-action">
+        <IconButton
+          icon="trash"
+          label={`Remover laranja ${personLabel(straw.accountId, straw.username)}`}
+          variant="danger"
+          disabled={busy}
+          onClick={onRemove}
+        />
+      </span>
     </li>
   );
 }
@@ -97,7 +105,7 @@ function gatewayStatus(strategy: GatewaySelectionStrategy, team: TeamDetails): {
     : { tone: 'ok', message: `${count} credencial${count === 1 ? '' : 'is'} manual${count === 1 ? '' : 'is'} ativa${count === 1 ? '' : 's'}.` };
 }
 
-export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySectionProps) {
+export function AdminTeamGatewaySection({ team, actions, showHeader = true }: AdminTeamGatewaySectionProps) {
   const [groupIdInput, setGroupIdInput] = useState('');
   const strategy = team.gatewaySelectionStrategy ?? 'PerStrawman';
   const strategyMeta = GATEWAY_STRATEGY_OPTIONS.find((opt) => opt.value === strategy) ?? GATEWAY_STRATEGY_OPTIONS[0];
@@ -112,8 +120,12 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
 
   return (
     <div className="admin-op-gateway-block">
-      <h6 className="admin-op-col-title">Gateway</h6>
-      <p className="admin-op-col-desc muted small">Estratégia de roteamento e credenciais.</p>
+      {showHeader ? (
+        <>
+          <h6 className="admin-op-col-title">Gateway</h6>
+          <p className="admin-op-col-desc muted small">Estratégia de roteamento e credenciais.</p>
+        </>
+      ) : null}
 
       <div className={`admin-op-gateway-status admin-op-gateway-status--${status.tone}`}>
         {status.message}
@@ -149,14 +161,13 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
                 Contas usadas para filtrar credenciais nos gateways (Frendz, SigiloPay, Wintech).
               </p>
             </div>
-            <button
-              type="button"
-              className="btn btn-primary btn-small"
+            <IconButton
+              icon="plus"
+              label="Vincular laranja"
+              variant="primary"
               disabled={actions.busy}
               onClick={() => actions.onAssignStrawMan(team.id)}
-            >
-              Vincular laranja
-            </button>
+            />
           </div>
 
           {(team.strawMen ?? []).length === 0 ? (
@@ -198,14 +209,13 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
               placeholder="ID do grupo de credenciais…"
               onKeyDown={(e) => { if (e.key === 'Enter') submitGroup(); }}
             />
-            <button
-              type="button"
-              className="btn btn-primary btn-small"
+            <IconButton
+              icon="link"
+              label="Vincular grupo"
+              variant="primary"
               disabled={actions.busy || !groupIdInput.trim()}
               onClick={submitGroup}
-            >
-              Vincular grupo
-            </button>
+            />
           </div>
 
           {(team.gatewayCredentialsGroups ?? []).length === 0 ? (
@@ -224,14 +234,13 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
                       {group.credentialCount} credencial{group.credentialCount === 1 ? '' : 'is'}
                     </span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-small"
+                  <IconButton
+                    icon="trash"
+                    label={`Remover grupo ${group.name}`}
+                    variant="danger"
                     disabled={actions.busy}
                     onClick={() => actions.onUnassignGatewayGroup(team.id, group.id)}
-                  >
-                    Remover
-                  </button>
+                  />
                 </li>
               ))}
             </ul>
@@ -248,14 +257,13 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
                 Somente estas credenciais participam do roteamento de cobrança desta equipe.
               </p>
             </div>
-            <button
-              type="button"
-              className="btn btn-primary btn-small"
+            <IconButton
+              icon="plus"
+              label="Vincular credencial"
+              variant="primary"
               disabled={actions.busy}
               onClick={() => actions.onAssignGatewayCredential(team.id)}
-            >
-              Vincular credencial
-            </button>
+            />
           </div>
 
           {(team.gatewayCredentials ?? []).length === 0 ? (
@@ -274,14 +282,13 @@ export function AdminTeamGatewaySection({ team, actions }: AdminTeamGatewaySecti
                     </span>
                     <span className="mono muted small" title={credential.id}>{shortId(credential.id, 22)}</span>
                   </div>
-                  <button
-                    type="button"
-                    className="btn btn-ghost btn-small"
+                  <IconButton
+                    icon="trash"
+                    label={`Remover credencial ${credential.name}`}
+                    variant="danger"
                     disabled={actions.busy}
                     onClick={() => actions.onUnassignGatewayCredential(team.id, credential.id)}
-                  >
-                    Remover
-                  </button>
+                  />
                 </li>
               ))}
             </ul>

@@ -8,7 +8,7 @@ import {
   updateKeyPairCredential,
   updateTokenCredential,
 } from '../api/gateways';
-import { searchAccountsPicker } from '../api/accountPickerSources';
+import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import type { GatewayPrefix, KeyPairCredential, TokenCredential } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { ConfirmDialog } from '../components/ConfirmDialog';
@@ -492,7 +492,7 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
       <AccountPickerModal
         open={addStrawPickerOpen}
         onClose={() => setAddStrawPickerOpen(false)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={searchAdministratorAccountsPicker}
         title="Laranja para credencial"
         subtitle="Opcional. Credenciais sem laranja participam como genéricas no filtro de cobrança."
         onSelected={(row) => {
@@ -505,7 +505,7 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
       <AccountPickerModal
         open={editStrawPickerOpen}
         onClose={() => setEditStrawPickerOpen(false)}
-        searchAccounts={searchAccountsPicker}
+        searchAccounts={searchAdministratorAccountsPicker}
         title="Laranja para credencial"
         subtitle="Vincule uma conta ou deixe genérico."
         onSelected={(row) => {

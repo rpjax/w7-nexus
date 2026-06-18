@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 import { searchOperatorOperations } from '../api/operator/operations';
 import type { OperationPickerRow } from '../api/types';
+import { IconButton } from './IconButton';
+import { PaginationBar } from './ListControls';
 
 type OperationPickerModalProps = {
   open: boolean;
@@ -101,7 +103,7 @@ export function OperationPickerModal({
             <h3 className="account-picker-title">{title}</h3>
             {subtitle ? <p className="account-picker-sub muted">{subtitle}</p> : null}
           </div>
-          <button type="button" className="btn btn-ghost btn-small" onClick={onClose}>Fechar</button>
+          <IconButton icon="x" label="Fechar" onClick={onClose} />
         </div>
 
         <div className="toolbar account-picker-toolbar">
@@ -116,7 +118,7 @@ export function OperationPickerModal({
               placeholder="Nome, ID ou descrição…"
             />
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => void search()}>Buscar</button>
+          <IconButton icon="search" label="Buscar operações" variant="primary" onClick={() => void search()} />
         </div>
 
         <div className="account-picker-list" tabIndex={-1}>
@@ -146,11 +148,14 @@ export function OperationPickerModal({
           )}
         </div>
 
-        <div className="pagination account-picker-pagination">
-          <button type="button" className="btn btn-ghost" onClick={() => void prevPage()} disabled={currentPage <= 1 || loading}>Anterior</button>
-          <span className="muted">Página {currentPage} de {totalPages}</span>
-          <button type="button" className="btn btn-ghost" onClick={() => void nextPage()} disabled={currentPage >= totalPages || loading}>Próxima</button>
-        </div>
+        <PaginationBar
+          className="account-picker-pagination"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          disabled={loading}
+          onPrev={() => void prevPage()}
+          onNext={() => void nextPage()}
+        />
       </div>
     </div>
   );

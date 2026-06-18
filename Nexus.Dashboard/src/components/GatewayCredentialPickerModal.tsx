@@ -1,6 +1,8 @@
 import { useEffect, useId, useState } from 'react';
 import { searchCredentialsForPicker } from '../api/gateways';
 import type { GatewayCredentialPickerRow, GatewayPrefix } from '../api/types';
+import { IconButton } from './IconButton';
+import { PaginationBar } from './ListControls';
 
 type GatewayKind = GatewayPrefix;
 
@@ -120,7 +122,7 @@ export function GatewayCredentialPickerModal({
             <h3 className="account-picker-title">{title}</h3>
             {subtitle ? <p className="account-picker-sub muted">{subtitle}</p> : null}
           </div>
-          <button type="button" className="btn btn-ghost btn-small" onClick={onClose}>Fechar</button>
+          <IconButton icon="x" label="Fechar" onClick={onClose} />
         </div>
 
         <div className="credential-picker-gateway-tabs" role="tablist" aria-label="Gateway">
@@ -150,7 +152,7 @@ export function GatewayCredentialPickerModal({
               placeholder="Nome ou ID da credencial…"
             />
           </div>
-          <button type="button" className="btn btn-primary" onClick={() => void search()}>Buscar</button>
+          <IconButton icon="search" label="Buscar credenciais" variant="primary" onClick={() => void search()} />
         </div>
 
         <div className="account-picker-list" tabIndex={-1}>
@@ -180,11 +182,14 @@ export function GatewayCredentialPickerModal({
           )}
         </div>
 
-        <div className="pagination account-picker-pagination">
-          <button type="button" className="btn btn-ghost" onClick={() => void prevPage()} disabled={currentPage <= 1 || loading}>Anterior</button>
-          <span className="muted">Página {currentPage} de {totalPages}</span>
-          <button type="button" className="btn btn-ghost" onClick={() => void nextPage()} disabled={currentPage >= totalPages || loading}>Próxima</button>
-        </div>
+        <PaginationBar
+          className="account-picker-pagination"
+          currentPage={currentPage}
+          totalPages={totalPages}
+          disabled={loading}
+          onPrev={() => void prevPage()}
+          onNext={() => void nextPage()}
+        />
       </div>
     </div>
   );

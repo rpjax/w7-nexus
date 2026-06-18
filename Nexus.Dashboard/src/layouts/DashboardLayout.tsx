@@ -1,10 +1,19 @@
 import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
+import { isOperationDetailPath } from '../features/operations/operationPaths';
+import { isTeamDetailPath } from '../features/teams/teamPaths';
+import { PageTitleProvider, usePageTitle } from './PageTitleContext';
 import { NavMenu } from './NavMenu';
 
 function resolvePageTitle(pathname: string): string {
   const relative = pathname.replace(/\/$/, '').toLowerCase();
+  if (isTeamDetailPath(relative)) {
+    return 'Detalhe da equipe';
+  }
+  if (isOperationDetailPath(relative)) {
+    return 'Detalhe da operação';
+  }
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
     '/dashboard/operations': 'Minhas operações',
@@ -24,15 +33,25 @@ function resolvePageTitle(pathname: string): string {
   return map[relative] ?? 'Websete Nexus';
 }
 
-export function DashboardLayout() {
+function DashboardLayoutInner() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { title: pageTitle, setTitle } = usePageTitle();
   const [drawerOpen, setDrawerOpen] = useState(false);
 
   useEffect(() => {
     setDrawerOpen(false);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const onNamedDetail = isOperationDetailPath(location.pathname) || isTeamDetailPath(location.pathname);
+    if (!onNamedDetail) {
+      setTitle(null);
+    }
+  }, [location.pathname, setTitle]);
+
+  const topbarTitle = pageTitle ?? resolvePageTitle(location.pathname);
 
   return (
     <div className="app-root">
@@ -57,7 +76,7 @@ export function DashboardLayout() {
               <path d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </button>
-          <h1 className="app-topbar-title">{resolvePageTitle(location.pathname)}</h1>
+          <h1 className="app-topbar-title">{topbarTitle}</h1>
           <div className="app-topbar-actions">
             <button type="button" className="icon-btn icon-btn-ghost" aria-label="Notificações">
               <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -78,10 +97,18 @@ export function DashboardLayout() {
             </button>
           </div>
         </header>
-        <main className="app-main" id="main-content">
+        <main className="app-main app-main--scroll-host" id="main-content">
           <Outlet />
         </main>
       </div>
     </div>
+  );
+}
+
+export function DashboardLayout() {
+  return (
+    <PageTitleProvider>
+      <DashboardLayoutInner />
+    </PageTitleProvider>
   );
 }

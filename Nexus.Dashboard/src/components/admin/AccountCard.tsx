@@ -1,4 +1,5 @@
 import type { AccountRow } from '../../api/types';
+import { IconButton } from '../IconButton';
 import { formatDateTime, shortId } from '../../utils/format';
 
 type AccountCardProps = {
@@ -37,9 +38,7 @@ export function AccountCard({ account }: AccountCardProps) {
           </div>
           <p className="account-card-id">
             <span className="mono" title={account.id}>{shortId(account.id, 24)}</span>
-            <button type="button" className="btn btn-ghost btn-small account-card-copy-id" onClick={() => void copyId()}>
-              Copiar ID
-            </button>
+            <IconButton icon="copy" label="Copiar ID da conta" onClick={() => void copyId()} />
           </p>
         </div>
       </header>
