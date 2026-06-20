@@ -1,5 +1,5 @@
 import type { BankAccountRow } from '../api/types';
-import { bankAccountTypeLabel } from './financeLabels';
+import { bankAccountTypeLabel, pixKeyTypeLabel } from './financeLabels';
 import { formatUtc, shortId } from './format';
 
 export function bankAccountSummary(row: BankAccountRow): string {
@@ -12,6 +12,11 @@ export function bankAccountPickerLabel(row: BankAccountRow): string {
   return bankAccountSummary(row);
 }
 
+export function bankAccountPixSummary(row: BankAccountRow): string | null {
+  if (!row.pixKey?.trim()) return null;
+  return `${pixKeyTypeLabel(row.pixKeyType)}: ${row.pixKey}`;
+}
+
 export function bankAccountSearchText(row: BankAccountRow): string {
   return [
     row.label,
@@ -20,6 +25,7 @@ export function bankAccountSearchText(row: BankAccountRow): string {
     row.agency,
     row.accountNumber,
     row.accountDigit,
+    row.pixKeyType,
     row.pixKey,
     bankAccountTypeLabel(row.accountType),
   ]

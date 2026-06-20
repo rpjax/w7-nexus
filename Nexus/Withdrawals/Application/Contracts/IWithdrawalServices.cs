@@ -31,7 +31,8 @@ public sealed class CreateBankAccountRequest
     public string AccountNumber { get; init; } = string.Empty;
     public string? AccountDigit { get; init; }
     public BankAccountType AccountType { get; init; }
-    public string? PixKey { get; init; }
+    public PixKeyType PixKeyType { get; init; }
+    public string PixKey { get; init; } = string.Empty;
     public string? Label { get; init; }
 }
 

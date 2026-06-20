@@ -12,7 +12,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { IconButton } from '../../components/IconButton';
 import { PaginationBar } from '../../components/ListControls';
 import { PageHeading } from '../../layouts/PageHeading';
-import { bankAccountPickerLabel, bankAccountSearchText } from '../../utils/bankAccountDisplay';
+import { bankAccountSearchText } from '../../utils/bankAccountDisplay';
 import { useNotifications } from '../../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
@@ -115,8 +115,7 @@ export function BankAccountsPage() {
         navigate(returnTo, {
           replace: true,
           state: {
-            bankAccountId: result.data.id,
-            bankAccountLabel: bankAccountPickerLabel(result.data),
+            bankAccount: result.data,
           },
         });
       }
@@ -219,7 +218,7 @@ export function BankAccountsPage() {
                       className="nexus-input bank-list-toolbar__search"
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      placeholder="Buscar por banco, titular ou apelido…"
+                      placeholder="Buscar por banco, chave PIX ou apelido…"
                       aria-label="Filtrar contas"
                     />
                     <IconButton

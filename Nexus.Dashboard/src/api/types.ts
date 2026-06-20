@@ -152,6 +152,8 @@ export type WithdrawalType = 'Pix' | 'Crypto';
 
 export type BankAccountType = 'Checking' | 'Savings';
 
+export type PixKeyType = 'Cpf' | 'Cnpj' | 'Email' | 'Phone' | 'Random';
+
 export type BankAccountRow = {
   id: string;
   strawManAccountId: string;
@@ -163,7 +165,8 @@ export type BankAccountRow = {
   accountNumber: string;
   accountDigit?: string | null;
   accountType: BankAccountType;
-  pixKey?: string | null;
+  pixKeyType: PixKeyType;
+  pixKey: string;
   label?: string | null;
   createdAt: string;
   updatedAt: string;

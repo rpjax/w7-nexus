@@ -13,7 +13,7 @@ import { IconButton } from '../../components/IconButton';
 import { OperationPickerModal } from '../../components/OperationPickerModal';
 import { PageHeading } from '../../layouts/PageHeading';
 import { WITHDRAWAL_TYPE_OPTIONS, formatMoney } from '../../utils/financeLabels';
-import { bankAccountPickerLabel } from '../../utils/bankAccountDisplay';
+import { bankAccountPickerLabel, bankAccountPixSummary } from '../../utils/bankAccountDisplay';
 import { shortId } from '../../utils/format';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -30,7 +30,7 @@ export function WithdrawalCreatePage() {
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(new Set());
   const [paymentsTotal, setPaymentsTotal] = useState(0);
   const [bankAccountId, setBankAccountId] = useState<string | null>(null);
-  const [bankAccountLabel, setBankAccountLabel] = useState<string | null>(null);
+  const [selectedBankAccount, setSelectedBankAccount] = useState<BankAccountRow | null>(null);
   const [cryptoWalletId, setCryptoWalletId] = useState<string | null>(null);
   const [cryptoWalletLabel, setCryptoWalletLabel] = useState<string | null>(null);
   const [costDescription, setCostDescription] = useState('');
@@ -50,10 +50,10 @@ export function WithdrawalCreatePage() {
   const netAmount = useMemo(() => Math.max(0, paymentsTotal - costAmount), [paymentsTotal, costAmount]);
 
   useEffect(() => {
-    const state = location.state as { bankAccountId?: string; bankAccountLabel?: string } | null;
-    if (!state?.bankAccountId) return;
-    setBankAccountId(state.bankAccountId);
-    setBankAccountLabel(state.bankAccountLabel ?? null);
+    const state = location.state as { bankAccount?: BankAccountRow } | null;
+    if (!state?.bankAccount?.id) return;
+    setBankAccountId(state.bankAccount.id);
+    setSelectedBankAccount(state.bankAccount);
     navigate(location.pathname, { replace: true, state: null });
   }, [location.pathname, location.state, navigate]);
 
@@ -74,7 +74,7 @@ export function WithdrawalCreatePage() {
 
   function resetDestination() {
     setBankAccountId(null);
-    setBankAccountLabel(null);
+    setSelectedBankAccount(null);
     setCryptoWalletId(null);
     setCryptoWalletLabel(null);
   }
@@ -237,11 +237,22 @@ export function WithdrawalCreatePage() {
               <div className="account-select-row">
                 <button
                   type="button"
-                  className="account-select-trigger"
+                  className="account-select-trigger account-select-trigger--stacked"
                   disabled={!strawManAccountId}
                   onClick={() => setBankPickerOpen(true)}
                 >
-                  {bankAccountLabel ?? 'Selecionar conta bancária'}
+                  {selectedBankAccount ? (
+                    <>
+                      <span>{bankAccountPickerLabel(selectedBankAccount)}</span>
+                      {bankAccountPixSummary(selectedBankAccount) ? (
+                        <span className="account-select-trigger__meta muted small">
+                          PIX: <span className="mono">{bankAccountPixSummary(selectedBankAccount)}</span>
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    'Selecionar conta bancária'
+                  )}
                 </button>
                 <button
                   type="button"
@@ -359,7 +370,7 @@ export function WithdrawalCreatePage() {
         onCreateRequested={goToCreateBankAccount}
         onSelected={(row: BankAccountRow) => {
           setBankAccountId(row.id);
-          setBankAccountLabel(bankAccountPickerLabel(row));
+          setSelectedBankAccount(row);
         }}
       />
 

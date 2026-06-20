@@ -24,6 +24,7 @@ public sealed class MongoBankAccountRepository : IBankAccountRepository
             r.AccountNumber,
             r.AccountDigit,
             r.AccountType,
+            r.PixKeyType,
             r.PixKey,
             r.Label,
             r.CreatedAt,

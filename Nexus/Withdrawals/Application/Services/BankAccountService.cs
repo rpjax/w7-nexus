@@ -41,6 +41,7 @@ public sealed class BankAccountService : IBankAccountService
             request.AccountNumber,
             request.AccountDigit,
             request.AccountType,
+            request.PixKeyType,
             request.PixKey,
             request.Label);
 

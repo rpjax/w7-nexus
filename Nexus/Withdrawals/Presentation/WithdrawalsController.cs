@@ -136,6 +136,7 @@ public sealed class WithdrawalsController : NexusController
             account.AccountNumber,
             account.AccountDigit,
             AccountType = account.AccountType.ToString(),
+            PixKeyType = account.PixKeyType.ToString(),
             account.PixKey,
             account.Label,
             account.CreatedAt,

@@ -15,7 +15,6 @@ public sealed class BankAccount
     public const int MaxAgencyLength = 10;
     public const int MaxAccountNumberLength = 20;
     public const int MaxAccountDigitLength = 2;
-    public const int MaxPixKeyLength = 200;
     public const int MaxLabelLength = 100;
 
     public string Id { get; }
@@ -25,7 +24,8 @@ public sealed class BankAccount
     public string AccountNumber { get; private set; }
     public string? AccountDigit { get; private set; }
     public BankAccountType AccountType { get; private set; }
-    public string? PixKey { get; private set; }
+    public PixKeyType PixKeyType { get; }
+    public string PixKey { get; }
     public string? Label { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
@@ -38,7 +38,8 @@ public sealed class BankAccount
         string AccountNumber,
         string? AccountDigit,
         BankAccountType AccountType,
-        string? PixKey,
+        PixKeyType PixKeyType,
+        string PixKey,
         string? Label,
         DateTime CreatedAt,
         DateTime UpdatedAt)
@@ -50,6 +51,7 @@ public sealed class BankAccount
         this.AccountNumber = AccountNumber;
         this.AccountDigit = AccountDigit;
         this.AccountType = AccountType;
+        this.PixKeyType = PixKeyType;
         this.PixKey = PixKey;
         this.Label = Label;
         this.CreatedAt = CreatedAt;
@@ -63,6 +65,7 @@ public sealed class BankAccount
         string accountNumber,
         string? accountDigit,
         BankAccountType accountType,
+        PixKeyType pixKeyType,
         string? pixKey,
         string? label)
     {
@@ -72,7 +75,6 @@ public sealed class BankAccount
         agency = agency?.Trim() ?? string.Empty;
         accountNumber = accountNumber?.Trim() ?? string.Empty;
         accountDigit = string.IsNullOrWhiteSpace(accountDigit) ? null : accountDigit.Trim();
-        pixKey = string.IsNullOrWhiteSpace(pixKey) ? null : pixKey.Trim();
         label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
 
         if (string.IsNullOrWhiteSpace(strawManAccountId))
@@ -115,10 +117,10 @@ public sealed class BankAccount
                 .WithMessage($"O dígito da conta pode ter no máximo {MaxAccountDigitLength} caracteres.")
                 .Build());
 
-        if (pixKey is not null && pixKey.Length > MaxPixKeyLength)
+        if (!Enum.IsDefined(accountType))
             builder.WithError(Error.Create()
-                .WithCode(BankAccountErrorCodes.PixKeyTooLong)
-                .WithMessage($"A chave PIX pode ter no máximo {MaxPixKeyLength} caracteres.")
+                .WithCode(BankAccountErrorCodes.AccountTypeInvalid)
+                .WithMessage("O tipo de conta informado é inválido.")
                 .Build());
 
         if (label is not null && label.Length > MaxLabelLength)
@@ -130,6 +132,13 @@ public sealed class BankAccount
         if (builder.ContainsError)
             return builder.Build();
 
+        var pixValidation = PixKeyRules.ValidateAndNormalize(pixKeyType, pixKey);
+        if (pixValidation.IsFailure)
+            return Result<BankAccount>.Failure(pixValidation.Errors);
+
+        var normalizedPix = pixValidation.Value!.NormalizedKey;
+        var normalizedType = pixValidation.Value.Type;
+
         var now = DateTime.UtcNow;
         return builder.WithValue(new BankAccount(
             Id: string.Empty,
@@ -139,7 +148,8 @@ public sealed class BankAccount
             AccountNumber: accountNumber,
             AccountDigit: accountDigit,
             AccountType: accountType,
-            PixKey: pixKey,
+            PixKeyType: normalizedType,
+            PixKey: normalizedPix,
             Label: label,
             CreatedAt: now,
             UpdatedAt: now)).Build();

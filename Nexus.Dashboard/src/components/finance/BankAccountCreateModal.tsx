@@ -1,8 +1,17 @@
 import { useEffect, useState } from 'react';
-import type { BankAccountType } from '../../api/types';
+import type { BankAccountType, PixKeyType } from '../../api/types';
 import { IconButton } from '../IconButton';
 import { BrazilianBankSelect } from './BrazilianBankSelect';
-import { BANK_ACCOUNT_TYPE_OPTIONS } from '../../utils/financeLabels';
+import { BANK_ACCOUNT_TYPE_OPTIONS, PIX_KEY_TYPE_OPTIONS } from '../../utils/financeLabels';
+import {
+  formatPixKeyInput,
+  normalizePixKey,
+  pixKeyHint,
+  pixKeyInputMode,
+  pixKeyMaxLength,
+  pixKeyPlaceholder,
+  validatePixKey,
+} from '../../utils/pixKey';
 
 export type BankAccountCreatePayload = {
   bank: number;
@@ -10,7 +19,8 @@ export type BankAccountCreatePayload = {
   accountNumber: string;
   accountDigit: string | null;
   accountType: BankAccountType;
-  pixKey: string | null;
+  pixKeyType: PixKeyType;
+  pixKey: string;
   label: string | null;
 };
 
@@ -28,6 +38,7 @@ const EMPTY_FORM = {
   accountNumber: '',
   accountDigit: '',
   accountType: 'Checking' as BankAccountType,
+  pixKeyType: 'Email' as PixKeyType,
   pixKey: '',
   label: '',
 };
@@ -66,6 +77,16 @@ export function BankAccountCreateModal({
       setError('Informe o número da conta.');
       return;
     }
+    const pixError = validatePixKey(form.pixKeyType, form.pixKey);
+    if (pixError) {
+      setError(pixError);
+      return;
+    }
+    const normalizedPixKey = normalizePixKey(form.pixKeyType, form.pixKey);
+    if (!normalizedPixKey) {
+      setError('Informe a chave PIX.');
+      return;
+    }
     setError('');
     onSubmit({
       bank: form.bank,
@@ -73,7 +94,8 @@ export function BankAccountCreateModal({
       accountNumber: form.accountNumber.trim(),
       accountDigit: form.accountDigit.trim() || null,
       accountType: form.accountType,
-      pixKey: form.pixKey.trim() || null,
+      pixKeyType: form.pixKeyType,
+      pixKey: normalizedPixKey,
       label: form.label.trim() || null,
     });
   }
@@ -159,28 +181,61 @@ export function BankAccountCreateModal({
               </select>
             </div>
 
+            <div className="bank-create-form__pix-section">
+              <span className="bank-create-form__kicker">Chave PIX (obrigatória)</span>
+
+              <div className="field">
+                <label htmlFor="createPixKeyType">Tipo da chave PIX</label>
+                <select
+                  id="createPixKeyType"
+                  className="nexus-input"
+                  value={form.pixKeyType}
+                  required
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    pixKeyType: e.target.value as PixKeyType,
+                    pixKey: '',
+                  }))}
+                >
+                  {PIX_KEY_TYPE_OPTIONS.map((opt) => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="field">
+                <label htmlFor="createPixKey">Chave PIX</label>
+                <input
+                  id="createPixKey"
+                  className="nexus-input"
+                  value={form.pixKey}
+                  onChange={(e) => setForm((f) => ({
+                    ...f,
+                    pixKey: formatPixKeyInput(f.pixKeyType, e.target.value),
+                  }))}
+                  placeholder={pixKeyPlaceholder(form.pixKeyType)}
+                  inputMode={pixKeyInputMode(form.pixKeyType)}
+                  type={form.pixKeyType === 'Email' ? 'email' : 'text'}
+                  maxLength={pixKeyMaxLength(form.pixKeyType)}
+                  required
+                  autoComplete="off"
+                />
+                <p className="muted small">{pixKeyHint(form.pixKeyType)}</p>
+              </div>
+            </div>
+
             <button
               type="button"
               className="bank-create-form__optional-toggle"
               aria-expanded={showOptional}
               onClick={() => setShowOptional((v) => !v)}
             >
-              {showOptional ? 'Ocultar opcionais' : 'Chave PIX e apelido (opcional)'}
+              {showOptional ? 'Ocultar apelido' : 'Apelido (opcional)'}
               <span className="bank-create-form__optional-chevron" aria-hidden="true">{showOptional ? '▾' : '▸'}</span>
             </button>
 
             {showOptional ? (
               <div className="bank-create-form__optional">
-                <div className="field">
-                  <label htmlFor="createPixKey">Chave PIX</label>
-                  <input
-                    id="createPixKey"
-                    className="nexus-input"
-                    value={form.pixKey}
-                    onChange={(e) => setForm((f) => ({ ...f, pixKey: e.target.value }))}
-                    autoComplete="off"
-                  />
-                </div>
                 <div className="field">
                   <label htmlFor="createLabel">Apelido</label>
                   <input

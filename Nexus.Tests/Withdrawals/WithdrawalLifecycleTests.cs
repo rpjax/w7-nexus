@@ -96,6 +96,7 @@ public sealed class WithdrawalLifecycleTests
                     accountNumber: entity.AccountNumber,
                     accountDigit: entity.AccountDigit,
                     accountType: entity.AccountType,
+                    pixKeyType: entity.PixKeyType,
                     pixKey: entity.PixKey,
                     label: entity.Label,
                     createdAt: entity.CreatedAt,

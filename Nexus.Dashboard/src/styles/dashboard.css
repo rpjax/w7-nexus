@@ -5223,12 +5223,6 @@ table.responsive-data td.cell-actions {
     line-height: 1.4;
 }
 
-.bank-account-card__holder {
-    margin: 0 0 0.35rem;
-    font-weight: 600;
-    color: #dce8ff;
-}
-
 .bank-account-card__pix {
     margin: 0 0 0.45rem;
     line-height: 1.4;
@@ -5316,6 +5310,34 @@ table.responsive-data td.cell-actions {
     align-items: end;
 }
 
+.bank-create-form__pix-section {
+    display: grid;
+    gap: 0.65rem;
+    margin-top: 0.35rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid rgba(132, 162, 220, 0.14);
+}
+
+.bank-create-form__kicker {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: rgba(255, 176, 120, 0.95);
+}
+
+.account-select-trigger--stacked {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+    min-height: 3.1rem;
+}
+
+.account-select-trigger__meta {
+    line-height: 1.35;
+}
+
 .bank-create-form__optional-toggle {
     display: flex;
     align-items: center;
@@ -5386,8 +5408,7 @@ table.responsive-data td.cell-actions {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .bank-form-grid__bank,
-    .bank-form-grid__holder {
+    .bank-form-grid__bank {
         grid-column: 1 / -1;
     }
 }

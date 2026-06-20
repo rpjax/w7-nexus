@@ -12,7 +12,8 @@ internal static class WithdrawalTestFactory
         string accountNumber = "56789",
         string? accountDigit = "0",
         BankAccountType accountType = BankAccountType.Checking,
-        string? pixKey = null,
+        PixKeyType pixKeyType = PixKeyType.Email,
+        string pixKey = "conta@example.com",
         string? label = null,
         DateTime? createdAt = null,
         DateTime? updatedAt = null) =>
@@ -24,6 +25,7 @@ internal static class WithdrawalTestFactory
             accountNumber,
             accountDigit,
             accountType,
+            pixKeyType,
             pixKey,
             label,
             createdAt ?? DateTime.UtcNow,

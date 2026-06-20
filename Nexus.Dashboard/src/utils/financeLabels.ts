@@ -8,6 +8,25 @@ export const BANK_ACCOUNT_TYPE_OPTIONS = [
   { value: 'Savings' as const, label: 'Conta poupança' },
 ];
 
+export const PIX_KEY_TYPE_OPTIONS = [
+  { value: 'Cpf' as const, label: 'CPF' },
+  { value: 'Cnpj' as const, label: 'CNPJ' },
+  { value: 'Email' as const, label: 'E-mail' },
+  { value: 'Phone' as const, label: 'Telefone' },
+  { value: 'Random' as const, label: 'Chave aleatória (EVP)' },
+];
+
+export function pixKeyTypeLabel(type: string): string {
+  switch (type) {
+    case 'Cpf': return 'CPF';
+    case 'Cnpj': return 'CNPJ';
+    case 'Email': return 'E-mail';
+    case 'Phone': return 'Telefone';
+    case 'Random': return 'EVP';
+    default: return type;
+  }
+}
+
 export const CHAIN_OPTIONS = [
   { value: 1, label: 'Tron' },
   { value: 2, label: 'BNB Smart Chain' },

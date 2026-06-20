@@ -26,7 +26,8 @@ public sealed class BankAccountRecord
     public string AccountNumber { get; set; } = string.Empty;
     public string? AccountDigit { get; set; }
     public BankAccountType AccountType { get; set; }
-    public string? PixKey { get; set; }
+    public PixKeyType PixKeyType { get; set; }
+    public string PixKey { get; set; } = string.Empty;
     public string? Label { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

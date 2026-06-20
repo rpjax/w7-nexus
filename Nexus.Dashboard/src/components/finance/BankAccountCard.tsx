@@ -6,6 +6,7 @@ import {
   bankAccountSummary,
   formatBankAccountMeta,
 } from '../../utils/bankAccountDisplay';
+import { pixKeyTypeLabel } from '../../utils/financeLabels';
 
 type BankAccountCardProps = {
   row: BankAccountRow;
@@ -128,11 +129,13 @@ export function BankAccountCard({
         <span className="mono">{bankAccountCopyText(row)}</span>
       </p>
 
-      {row.pixKey ? (
+      {row.pixKey?.trim() ? (
         <p className="bank-account-card__pix muted small">
-          Chave PIX: <span className="mono">{row.pixKey}</span>
+          Chave PIX ({pixKeyTypeLabel(row.pixKeyType)}): <span className="mono">{row.pixKey}</span>
         </p>
-      ) : null}
+      ) : (
+        <p className="bank-account-card__pix muted small">Chave PIX não cadastrada.</p>
+      )}
 
       <footer className="bank-account-card__footer">
         <span className="bank-account-card__meta muted small" title={row.id}>
@@ -146,11 +149,11 @@ export function BankAccountCard({
           >
             {copiedField === 'account' ? 'Copiado' : 'Copiar conta'}
           </button>
-          {row.pixKey ? (
+          {row.pixKey?.trim() ? (
             <button
               type="button"
               className="btn btn-ghost btn-sm"
-              onClick={() => void copyText(row.pixKey!, 'pix')}
+              onClick={() => void copyText(row.pixKey, 'pix')}
             >
               {copiedField === 'pix' ? 'Copiado' : 'Copiar PIX'}
             </button>

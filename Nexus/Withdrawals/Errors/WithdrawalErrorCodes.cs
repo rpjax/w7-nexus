@@ -40,7 +40,10 @@ public static class BankAccountErrorCodes
     public const string AccountNumberInvalid = "BankAccount.ACCOUNT_NUMBER_INVALID";
     public const string AccountNumberTooLong = "BankAccount.ACCOUNT_NUMBER_TOO_LONG";
     public const string AccountDigitTooLong = "BankAccount.ACCOUNT_DIGIT_TOO_LONG";
-    public const string PixKeyTooLong = "BankAccount.PIX_KEY_TOO_LONG";
+    public const string AccountTypeInvalid = "BankAccount.ACCOUNT_TYPE_INVALID";
+    public const string PixKeyRequired = "BankAccount.PIX_KEY_REQUIRED";
+    public const string PixKeyTypeInvalid = "BankAccount.PIX_KEY_TYPE_INVALID";
+    public const string PixKeyInvalid = "BankAccount.PIX_KEY_INVALID";
     public const string LabelTooLong = "BankAccount.LABEL_TOO_LONG";
     public const string BankAccountIdInvalid = "BankAccount.BANK_ACCOUNT_ID_INVALID";
     public const string BankAccountNotFound = "BankAccount.BANK_ACCOUNT_NOT_FOUND";

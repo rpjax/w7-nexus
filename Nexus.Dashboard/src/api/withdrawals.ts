@@ -3,12 +3,15 @@ import type {
   BankAccountRow,
   BankAccountType,
   CryptoWalletRow,
+  PixKeyType,
   SearchResponse,
   SearchScopedAccountsRequest,
   SearchWithdrawalsRequest,
   WithdrawalRow,
   WithdrawalType,
 } from './types';
+
+import { PIX_KEY_TYPE_VALUE } from '../utils/pixKey';
 
 export async function searchWithdrawals(payload: SearchWithdrawalsRequest) {
   return apiClient.post<SearchResponse<WithdrawalRow>>('/api/withdrawals/search', {
@@ -77,7 +80,8 @@ export async function createBankAccount(payload: {
   accountNumber: string;
   accountDigit?: string | null;
   accountType: BankAccountType;
-  pixKey?: string | null;
+  pixKeyType: PixKeyType;
+  pixKey: string;
   label?: string | null;
 }) {
   return apiClient.post<BankAccountRow>('/api/withdrawals/bank-accounts', {
@@ -87,7 +91,8 @@ export async function createBankAccount(payload: {
     AccountNumber: payload.accountNumber,
     AccountDigit: payload.accountDigit ?? null,
     AccountType: payload.accountType === 'Checking' ? 0 : 1,
-    PixKey: payload.pixKey ?? null,
+    PixKeyType: PIX_KEY_TYPE_VALUE[payload.pixKeyType],
+    PixKey: payload.pixKey,
     Label: payload.label ?? null,
   }, { fallbackError: 'Não foi possível cadastrar a conta bancária.' });
 }
