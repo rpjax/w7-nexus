@@ -61,6 +61,58 @@ public class AdministratorController : NexusController
             cancellationToken));
     }
 
+    [HttpPost("accounts/roles")]
+    public async Task<ActionResult> GrantAccountRoleAsync(
+        [FromBody] GrantAccountRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.GrantAccountRoleAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("accounts/roles")]
+    public async Task<ActionResult> RevokeAccountRoleAsync(
+        [FromBody] RevokeAccountRoleRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.RevokeAccountRoleAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("accounts/permissions")]
+    public async Task<ActionResult> GrantAccountPermissionAsync(
+        [FromBody] GrantAccountPermissionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.GrantAccountPermissionAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpDelete("accounts/permissions")]
+    public async Task<ActionResult> RevokeAccountPermissionAsync(
+        [FromBody] RevokeAccountPermissionRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.RevokeAccountPermissionAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
     [HttpPost("teams/operators/search")]
     public async Task<ActionResult> SearchOperatorsToAssignAsync(
         [FromBody] SearchOperatorsToAssignRequest request,
@@ -82,6 +134,19 @@ public class AdministratorController : NexusController
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
         return ToOperationResult(await _administrator.SearchProfitShareAccountsToAssignAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("operations/to-assign/search")]
+    public async Task<ActionResult> SearchOperationsToAssignAsync(
+        [FromBody] SearchOperationsToAssignRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.SearchOperationsToAssignAsync(
             identity,
             request,
             cancellationToken));
@@ -396,6 +461,58 @@ public class AdministratorController : NexusController
         return ToOperationResult(await _administrator.SetOperatorProfitShareRuleAsync(
             identity,
             request,
+            cancellationToken));
+    }
+
+    [HttpPost("bank-accounts")]
+    public async Task<ActionResult> CreateBankAccountAsync(
+        [FromBody] Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.CreateBankAccountAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("crypto-wallets")]
+    public async Task<ActionResult> CreateCryptoWalletAsync(
+        [FromBody] Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.CreateCryptoWalletAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("withdrawals")]
+    public async Task<ActionResult> CreateWithdrawalAsync(
+        [FromBody] Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.CreateWithdrawalAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
+    [HttpGet("withdrawals/{withdrawalId}")]
+    public async Task<ActionResult> GetWithdrawalAsync(
+        string withdrawalId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.GetWithdrawalAsync(
+            identity,
+            withdrawalId,
             cancellationToken));
     }
 }

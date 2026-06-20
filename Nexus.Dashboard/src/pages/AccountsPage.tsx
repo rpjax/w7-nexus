@@ -79,7 +79,7 @@ export function AccountsPage() {
         kicker="Administração"
         kickerVariant="admin"
         title="Contas"
-        subtitle="Usuários registrados no sistema — papéis, permissões e histórico de atualização."
+        subtitle="Gerencie usuários, funções e permissões. Conceda Operator para alocar contas em equipes."
       />
 
       <section className="card ops-card ops-create admin-surface">
@@ -155,7 +155,15 @@ export function AccountsPage() {
           <>
             <div className="accounts-list">
               {items.map((account) => (
-                <AccountCard key={account.id} account={account} />
+                <AccountCard
+                  key={account.id}
+                  account={account}
+                  onMutated={() => {
+                    notifySuccess('Conta atualizada.');
+                    void load(currentPage, query);
+                  }}
+                  onError={notifyError}
+                />
               ))}
             </div>
 

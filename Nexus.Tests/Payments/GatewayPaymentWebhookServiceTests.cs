@@ -87,9 +87,6 @@ public sealed class GatewayPaymentWebhookServiceTests
             KillCalls.Add((paymentId, reason));
             return Task.FromResult<IResult>(Result.Success());
         }
-
-        public Task<IResult> MarkAsWithdrawnAsync(string paymentId) =>
-            Task.FromResult<IResult>(Result.Success());
     }
 
     private static Payment CreatePayment(

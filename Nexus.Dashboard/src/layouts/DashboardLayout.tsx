@@ -14,6 +14,9 @@ function resolvePageTitle(pathname: string): string {
   if (isOperationDetailPath(relative)) {
     return 'Detalhe da operação';
   }
+  if (/^\/dashboard\/withdrawals\/[^/]+$/.test(relative) && relative !== '/dashboard/withdrawals/new') {
+    return 'Detalhe do saque';
+  }
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
     '/dashboard/operations': 'Minhas operações',
@@ -23,6 +26,10 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard/accounts': 'Contas',
     '/dashboard/payments': 'Pagamentos',
     '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',
+    '/dashboard/withdrawals': 'Saques',
+    '/dashboard/withdrawals/new': 'Saques — Novo saque',
+    '/dashboard/withdrawals/bank-accounts': 'Saques — Contas bancárias',
+    '/dashboard/withdrawals/crypto-wallets': 'Saques — Carteiras crypto',
     '/dashboard/gateways': 'Gateways',
     '/dashboard/gateways/frendz': 'Frendz',
     '/dashboard/gateways/sigilopay': 'SigiloPay',

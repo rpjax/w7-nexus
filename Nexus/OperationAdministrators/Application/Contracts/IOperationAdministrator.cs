@@ -110,4 +110,14 @@ public interface IOperationAdministrator
         RequesterIdentity identity,
         UnassignGatewayAccountFromOperationRequest request,
         CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+        RequesterIdentity identity,
+        string withdrawalId,
+        CancellationToken cancellationToken = default);
 }

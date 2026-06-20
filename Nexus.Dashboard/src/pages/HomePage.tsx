@@ -141,6 +141,8 @@ export function HomePage() {
               <Link className="quick-action" to="/dashboard/operations">Minhas operações</Link>
               <Link className="quick-action" to="/dashboard/payments">Pagamentos</Link>
               <Link className="quick-action" to="/dashboard/payments/pix">Gerar cobrança PIX</Link>
+              <Link className="quick-action" to="/dashboard/withdrawals">Saques</Link>
+              <Link className="quick-action" to="/dashboard/withdrawals/new">Registrar saque</Link>
               <Link className="quick-action" to="/dashboard/gateways/frendz">Credenciais Frendz</Link>
               <Link className="quick-action" to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</Link>
               <Link className="quick-action" to="/dashboard/gateways/wintech">Credenciais Wintech</Link>

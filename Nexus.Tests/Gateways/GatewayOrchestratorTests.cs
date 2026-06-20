@@ -270,9 +270,6 @@ public sealed class GatewayOrchestratorTests
         public Task<IResult> PayAsync(string paymentId) =>
             Task.FromResult<IResult>(Result.Success());
 
-        public Task<IResult> MarkAsWithdrawnAsync(string paymentId) =>
-            Task.FromResult<IResult>(Result.Success());
-
         public Task<IResult> RefundAsync(string paymentId) =>
             Task.FromResult<IResult>(Result.Success());
 

@@ -28,6 +28,9 @@ public static class DatabaseServiceCollectionExtensions
         services.AddMongoCollection<OperationRecord>("operations");
         services.AddMongoCollection<TeamRecord>("teams");
         services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
+        services.AddMongoCollection<BankAccountRecord>("bank_accounts");
+        services.AddMongoCollection<CryptoWalletRecord>("crypto_wallets");
+        services.AddMongoCollection<WithdrawalRecord>("withdrawals");
 
         return services;
     }

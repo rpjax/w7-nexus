@@ -47,6 +47,10 @@ async function request<T>(
 }
 
 export const apiClient = {
+  get<T>(path: string, options?: RequestOptions) {
+    return request<T>(path, { method: 'GET' }, options);
+  },
+
   post<T>(path: string, body: unknown, options?: RequestOptions) {
     return request<T>(path, {
       method: 'POST',

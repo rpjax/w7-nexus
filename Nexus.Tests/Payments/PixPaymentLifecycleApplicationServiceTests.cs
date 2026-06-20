@@ -343,9 +343,11 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var paymentId = created.Value!.Id;
 
         Assert.True((await sut.PayAsync(paymentId)).IsSuccess);
-        Assert.True((await sut.MarkAsWithdrawnAsync(paymentId)).IsSuccess);
 
         var stored = payments.AsQueryable().First(p => p.Id == paymentId);
+        Assert.True(stored.MarkAsWithdrawn().IsSuccess);
+        await payments.UpdateAsync(stored);
+        stored = payments.AsQueryable().First(p => p.Id == paymentId);
         Assert.Equal(PaymentSettlementStatus.Withdrawn, stored.SettlementStatus);
         Assert.NotNull(stored.WithdrawnAt);
 

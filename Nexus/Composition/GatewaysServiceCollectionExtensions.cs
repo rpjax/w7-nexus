@@ -1,4 +1,7 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Nexus.Gateways.Application.Contracts;
+using Nexus.Gateways.Application.Options;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Services;
@@ -18,8 +21,10 @@ namespace Nexus.Composition;
 
 public static class GatewaysServiceCollectionExtensions
 {
-    public static IServiceCollection AddNexusGateways(this IServiceCollection services)
+    public static IServiceCollection AddNexusGateways(this IServiceCollection services, IConfiguration configuration)
     {
+        services.Configure<GatewaysOptions>(configuration.GetSection(GatewaysOptions.SectionName));
+
         services.AddScoped<IFrendzApiCredentialsRepository, MongoFrendzApiCredentialsRepository>();
         services.AddScoped<ISigiloPayApiCredentialsRepository, MongoSigiloPayApiCredentialsRepository>();
         services.AddScoped<IWintechApiCredentialsRepository, MongoWintechApiCredentialsRepository>();
@@ -29,7 +34,13 @@ public static class GatewaysServiceCollectionExtensions
         services.AddScoped<IGatewayCredentialsGroupRepository, MongoGatewayCredentialsGroupRepository>();
         services.AddScoped<IGatewayCredentialsGroupService, GatewayCredentialsGroupService>();
         services.AddScoped<IGatewayCredentialsIdValidator, GatewayCredentialsIdValidator>();
-        services.AddScoped<IGatewayOrchestrator, GatewayOrchestrator>();
+
+        var useMockOrchestrator = configuration.GetValue<bool>($"{GatewaysOptions.SectionName}:UseMockOrchestrator");
+        if (useMockOrchestrator)
+            services.AddScoped<IGatewayOrchestrator, MockGatewayOrchestrator>();
+        else
+            services.AddScoped<IGatewayOrchestrator, GatewayOrchestrator>();
+
         services.AddScoped<IFrendzClient, FrendzClient>();
         services.AddHttpClient<FrendzClient>();
         services.AddScoped<ISigiloPayClient, SigiloPayClient>();

@@ -11,14 +11,15 @@ export function NavMenu() {
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
+  const [withdrawalsOpen, setWithdrawalsOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
 
   const brandSubtitle = showGlobalAdminItems && showOperatorPanel
-    ? 'Operações, pagamentos e administração'
+    ? 'Operações, pagamentos, saques e administração'
     : showGlobalAdminItems
       ? 'Administração e operação'
       : showOperatorPanel
-        ? 'Operações e pagamentos'
+        ? 'Operações, pagamentos e saques'
         : 'Dashboard';
 
   return (
@@ -121,6 +122,41 @@ export function NavMenu() {
                 <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments/pix" onClick={() => setPaymentsOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Gerar PIX
+                </NavLink>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {showOperatorPanel ? (
+          <div className="nav-group nav-group-gateways">
+            <button
+              type="button"
+              className="nav-dropdown nav-dropdown-full"
+              onClick={() => setWithdrawalsOpen((v) => !v)}
+              aria-expanded={withdrawalsOpen}
+              aria-controls="withdrawals-submenu"
+            >
+              <span className="nav-dropdown-label">Saques</span>
+              <span className="nav-caret" aria-hidden="true">{withdrawalsOpen ? '▲' : '▼'}</span>
+            </button>
+            <div id="withdrawals-submenu" className={`submenu-tree ${withdrawalsOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!withdrawalsOpen}>
+              <div className="submenu-tree-inner">
+                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals" onClick={() => setWithdrawalsOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Registros
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/new" onClick={() => setWithdrawalsOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Novo saque
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/bank-accounts" onClick={() => setWithdrawalsOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Contas bancárias
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/crypto-wallets" onClick={() => setWithdrawalsOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Carteiras crypto
                 </NavLink>
               </div>
             </div>

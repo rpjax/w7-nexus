@@ -73,6 +73,26 @@ public interface IAdministrator
         SearchAccountsRequest request,
         CancellationToken cancellationToken = default);
 
+    Task<IOperationResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(
+        RequesterIdentity identity,
+        GrantAccountRoleRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<RevokeAccountRoleResponse>> RevokeAccountRoleAsync(
+        RequesterIdentity identity,
+        RevokeAccountRoleRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<GrantAccountPermissionResponse>> GrantAccountPermissionAsync(
+        RequesterIdentity identity,
+        GrantAccountPermissionRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<RevokeAccountPermissionResponse>> RevokeAccountPermissionAsync(
+        RequesterIdentity identity,
+        RevokeAccountPermissionRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
         RequesterIdentity identity,
         CreateOperationTeamRequest request,
@@ -151,5 +171,30 @@ public interface IAdministrator
     Task<IOperationResult<SearchProfitShareAccountsToAssignResponse>> SearchProfitShareAccountsToAssignAsync(
         RequesterIdentity identity,
         SearchProfitShareAccountsToAssignRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchOperationsToAssignResponse>> SearchOperationsToAssignAsync(
+        RequesterIdentity identity,
+        SearchOperationsToAssignRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+        RequesterIdentity identity,
+        string withdrawalId,
         CancellationToken cancellationToken = default);
 }

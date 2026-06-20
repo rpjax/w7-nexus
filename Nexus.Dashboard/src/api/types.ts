@@ -122,16 +122,104 @@ export type OperationWithLedTeamsDetails = {
   updatedAt: string;
 };
 
+export type PaymentSplitRow = {
+  accountId: string;
+  percentage: number;
+  amount: number;
+};
+
 export type PaymentRow = {
   id: string;
   operationId: string;
+  teamId?: string | null;
   gateway: string;
   gatewayTransactionId: string;
   amount: number;
+  splits?: PaymentSplitRow[];
   status: string;
+  settlementStatus: string;
   operatorAccountId?: string | null;
   strawManAccountId?: string | null;
   createdAt: string;
+  paidAt?: string | null;
+  refundedAt?: string | null;
+  diedAt?: string | null;
+  deathReason?: string | null;
+  withdrawnAt?: string | null;
+};
+
+export type WithdrawalType = 'Pix' | 'Crypto';
+
+export type BankAccountType = 'Checking' | 'Savings';
+
+export type BankAccountRow = {
+  id: string;
+  strawManAccountId: string;
+  bank: string;
+  bankName: string;
+  bankCode: string;
+  bankIspb: string;
+  agency: string;
+  accountNumber: string;
+  accountDigit?: string | null;
+  accountType: BankAccountType;
+  pixKey?: string | null;
+  label?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type CryptoWalletRow = {
+  id: string;
+  strawManAccountId: string;
+  chain: string;
+  chainCaip2: string;
+  asset: string;
+  address: string;
+  memo?: string | null;
+  label?: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type WithdrawalPixProof = {
+  transactionId?: string | null;
+  authenticationCode?: string | null;
+};
+
+export type WithdrawalCryptoProof = {
+  transactionId?: string | null;
+};
+
+export type WithdrawalRow = {
+  id: string;
+  operationId: string;
+  type: WithdrawalType;
+  strawManAccountId: string;
+  bankAccountId?: string | null;
+  cryptoWalletId?: string | null;
+  paymentIds: string[];
+  costDescription?: string | null;
+  costAmount: number;
+  pixProof?: WithdrawalPixProof | null;
+  cryptoProof?: WithdrawalCryptoProof | null;
+  paymentsTotalAmount: number;
+  netAmount: number;
+  createdAt: string;
+};
+
+export type SearchWithdrawalsRequest = {
+  limit: number;
+  offset: number;
+  operationId?: string | null;
+  strawManAccountId?: string | null;
+  type?: WithdrawalType | null;
+};
+
+export type SearchScopedAccountsRequest = {
+  limit: number;
+  offset: number;
+  strawManAccountId?: string | null;
 };
 
 export type GatewayPixResult = {

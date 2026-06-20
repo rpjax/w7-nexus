@@ -12,30 +12,39 @@ public class Administrator : IAdministrator
     private IAdministratorAccessPolicy _policy { get; }
     private IAdministratorOperationSearchService _operationSearch { get; }
     private IAdministratorAccountSearchService _accountSearch { get; }
+    private IAdministratorAccountCommandService _accountCommands { get; }
     private IAdministratorOperationCommandService _operationCommands { get; }
     private IAdministratorTeamCommandService _teamCommands { get; }
     private IAdministratorTeamOperatorCommandService _teamOperatorCommands { get; }
     private IAdministratorOperatorAssignmentSearchService _operatorAssignmentSearch { get; }
     private IAdministratorProfitShareAccountSearchService _profitShareAccountSearch { get; }
+    private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
+    private IAdministratorWithdrawalCommandService _withdrawals { get; }
 
     public Administrator(
         IAdministratorAccessPolicy policy,
         IAdministratorOperationSearchService operationSearch,
         IAdministratorAccountSearchService accountSearch,
+        IAdministratorAccountCommandService accountCommands,
         IAdministratorOperationCommandService operationCommands,
         IAdministratorTeamCommandService teamCommands,
         IAdministratorTeamOperatorCommandService teamOperatorCommands,
         IAdministratorOperatorAssignmentSearchService operatorAssignmentSearch,
-        IAdministratorProfitShareAccountSearchService profitShareAccountSearch)
+        IAdministratorProfitShareAccountSearchService profitShareAccountSearch,
+        IAdministratorOperationPickerSearchService operationPickerSearch,
+        IAdministratorWithdrawalCommandService withdrawals)
     {
         _policy = policy;
         _operationSearch = operationSearch;
         _accountSearch = accountSearch;
+        _accountCommands = accountCommands;
         _operationCommands = operationCommands;
         _teamCommands = teamCommands;
         _teamOperatorCommands = teamOperatorCommands;
         _operatorAssignmentSearch = operatorAssignmentSearch;
         _profitShareAccountSearch = profitShareAccountSearch;
+        _operationPickerSearch = operationPickerSearch;
+        _withdrawals = withdrawals;
     }
 
     public Task<IOperationResult<OperationDetails>> CreateOperationAsync(
@@ -191,6 +200,54 @@ public class Administrator : IAdministrator
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
             () => _accountSearch.SearchAccountsAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(
+        RequesterIdentity identity,
+        GrantAccountRoleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountCommands.GrantAccountRoleAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<RevokeAccountRoleResponse>> RevokeAccountRoleAsync(
+        RequesterIdentity identity,
+        RevokeAccountRoleRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountCommands.RevokeAccountRoleAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<GrantAccountPermissionResponse>> GrantAccountPermissionAsync(
+        RequesterIdentity identity,
+        GrantAccountPermissionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountCommands.GrantAccountPermissionAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<RevokeAccountPermissionResponse>> RevokeAccountPermissionAsync(
+        RequesterIdentity identity,
+        RevokeAccountPermissionRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountCommands.RevokeAccountPermissionAsync(request),
             cancellationToken);
     }
 
@@ -383,6 +440,66 @@ public class Administrator : IAdministrator
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
             () => _profitShareAccountSearch.SearchProfitShareAccountsToAssignAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchOperationsToAssignResponse>> SearchOperationsToAssignAsync(
+        RequesterIdentity identity,
+        SearchOperationsToAssignRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _operationPickerSearch.SearchOperationsToAssignAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _withdrawals.CreateBankAccountAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _withdrawals.CreateCryptoWalletAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+        RequesterIdentity identity,
+        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _withdrawals.CreateWithdrawalAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+        RequesterIdentity identity,
+        string withdrawalId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _withdrawals.GetWithdrawalAsync(withdrawalId),
             cancellationToken);
     }
 

@@ -12,14 +12,10 @@ namespace Nexus.Payments.Presentation;
 public sealed class PaymentsController : WebController
 {
     private readonly IPaymentRepository _paymentRepository;
-    private readonly IPaymentService _paymentService;
 
-    public PaymentsController(
-        IPaymentRepository paymentRepository,
-        IPaymentService paymentService)
+    public PaymentsController(IPaymentRepository paymentRepository)
     {
         _paymentRepository = paymentRepository;
-        _paymentService = paymentService;
     }
 
     private static object ToPaymentResponse(Payment p) => new
@@ -110,12 +106,12 @@ public sealed class PaymentsController : WebController
     }
 
     [HttpPost("{paymentId}/withdraw")]
-    public async Task<ActionResult> WithdrawAsync(string paymentId)
+    [Obsolete("Use POST api/withdrawals to create a withdrawal linked to one or more payments.")]
+    public ActionResult WithdrawAsync(string paymentId)
     {
-        var result = await _paymentService.MarkAsWithdrawnAsync(paymentId);
-        if (result.IsFailure)
-            return ProblemResponse(422, result.Errors);
-
-        return Ok();
+        return ProblemResponse(410, Error.Create()
+            .WithCode("Payment.WITHDRAW_ENDPOINT_DEPRECATED")
+            .WithMessage("Este endpoint foi descontinuado. Crie um saque via POST api/withdrawals vinculando os pagamentos desejados.")
+            .Build());
     }
 }

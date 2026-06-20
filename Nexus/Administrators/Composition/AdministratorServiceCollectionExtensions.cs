@@ -10,11 +10,14 @@ public static class AdministratorServiceCollectionExtensions
         services.AddScoped<IAdministratorAccessPolicy, AdministratorAccessPolicy>();
         services.AddScoped<IAdministratorOperationSearchService, AdministratorOperationSearchService>();
         services.AddScoped<IAdministratorAccountSearchService, AdministratorAccountSearchService>();
+        services.AddScoped<IAdministratorAccountCommandService, AdministratorAccountCommandService>();
         services.AddScoped<IAdministratorOperationCommandService, AdministratorOperationCommandService>();
         services.AddScoped<IAdministratorTeamCommandService, AdministratorTeamCommandService>();
         services.AddScoped<IAdministratorTeamOperatorCommandService, AdministratorTeamOperatorCommandService>();
         services.AddScoped<IAdministratorOperatorAssignmentSearchService, AdministratorOperatorAssignmentSearchService>();
         services.AddScoped<IAdministratorProfitShareAccountSearchService, AdministratorProfitShareAccountSearchService>();
+        services.AddScoped<IAdministratorOperationPickerSearchService, AdministratorOperationPickerSearchService>();
+        services.AddScoped<IAdministratorWithdrawalCommandService, AdministratorWithdrawalCommandService>();
         services.AddScoped<IAdministrator, Administrator>();
         services.AddScoped<ITeamGatewayDetailsLoader, TeamGatewayDetailsLoader>();
 

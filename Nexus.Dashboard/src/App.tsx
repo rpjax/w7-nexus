@@ -18,6 +18,11 @@ import { TeamLeaderOperationsPage } from './pages/teamLeader/TeamLeaderOperation
 import { AccountsPage } from './pages/AccountsPage';
 import { PaymentsListPage } from './pages/PaymentsListPage';
 import { PaymentsPixPage } from './pages/PaymentsPixPage';
+import { BankAccountsPage } from './pages/withdrawals/BankAccountsPage';
+import { CryptoWalletsPage } from './pages/withdrawals/CryptoWalletsPage';
+import { WithdrawalCreatePage } from './pages/withdrawals/WithdrawalCreatePage';
+import { WithdrawalDetailPage } from './pages/withdrawals/WithdrawalDetailPage';
+import { WithdrawalsListPage } from './pages/withdrawals/WithdrawalsListPage';
 import { GatewaysHubPage } from './pages/GatewaysHubPage';
 import { GatewayCredentialsPage } from './pages/GatewayCredentialsPage';
 import { GatewayPlaceholderPage } from './pages/GatewayPlaceholderPage';
@@ -44,6 +49,11 @@ export default function App() {
             <Route path="/dashboard/team-leader/operations/:operationId" element={<TeamLeaderOperationDetailPage />} />
             <Route path="/dashboard/payments" element={<PaymentsListPage />} />
             <Route path="/dashboard/payments/pix" element={<PaymentsPixPage />} />
+            <Route path="/dashboard/withdrawals" element={<WithdrawalsListPage />} />
+            <Route path="/dashboard/withdrawals/new" element={<WithdrawalCreatePage />} />
+            <Route path="/dashboard/withdrawals/bank-accounts" element={<BankAccountsPage />} />
+            <Route path="/dashboard/withdrawals/crypto-wallets" element={<CryptoWalletsPage />} />
+            <Route path="/dashboard/withdrawals/:withdrawalId" element={<WithdrawalDetailPage />} />
             <Route path="/dashboard/gateways" element={<GatewaysHubPage />} />
             <Route path="/dashboard/gateways/frendz" element={<GatewayCredentialsPage variant="frendz" />} />
             <Route path="/dashboard/gateways/sigilopay" element={<GatewayCredentialsPage variant="sigilopay" />} />

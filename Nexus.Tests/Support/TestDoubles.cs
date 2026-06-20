@@ -329,6 +329,13 @@ internal sealed class ActorTestContext
             GatewayGroups,
             GatewayCredentialsIdValidator);
 
+    public AccountUpdater CreateAccountUpdater()
+        => new(
+            Accounts,
+            new UsernameValidator(Accounts),
+            new PasswordValidator(),
+            new PasswordHasher());
+
     public AdministratorRole CreateAdministrator()
     {
         var teamGatewayLoader = new EmptyTeamGatewayDetailsLoader();
@@ -336,11 +343,14 @@ internal sealed class ActorTestContext
             new AdministratorAccessPolicy(),
             new AdministratorOperationSearchService(Operations, Teams, Accounts, teamGatewayLoader),
             new AdministratorAccountSearchService(Accounts),
+            new AdministratorAccountCommandService(CreateAccountUpdater()),
             new AdministratorOperationCommandService(CreateOperationService()),
             new AdministratorTeamCommandService(CreateTeamService()),
             new AdministratorTeamOperatorCommandService(CreateTeamService()),
             new AdministratorOperatorAssignmentSearchService(Accounts),
-            new AdministratorProfitShareAccountSearchService(Accounts));
+            new AdministratorProfitShareAccountSearchService(Accounts),
+            new AdministratorOperationPickerSearchService(Operations),
+            new StubAdministratorWithdrawalCommandService());
     }
 
     public OperationAdministratorRole CreateOperationAdministrator()
@@ -353,7 +363,8 @@ internal sealed class ActorTestContext
             new OperationAdministratorTeamCommandService(CreateTeamService()),
             new OperationAdministratorOperationCommandService(CreateOperationService()),
             new OperationAdministratorTeamLeaderCandidateSearchService(accountSearch),
-            new OperationAdministratorStrawManAssignmentSearchService(Accounts));
+            new OperationAdministratorStrawManAssignmentSearchService(Accounts),
+            new StubOperationAdministratorWithdrawalCommandService());
     }
 
     public RequesterIdentity CreateRequesterIdentity(
@@ -508,5 +519,38 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
         IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
+}
+
+internal sealed class StubAdministratorWithdrawalCommandService : IAdministratorWithdrawalCommandService
+{
+    public Task<IResult<Nexus.Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
+        Nexus.Withdrawals.Application.Contracts.CreateBankAccountRequest request) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+        Nexus.Withdrawals.Application.Contracts.CreateCryptoWalletRequest request) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+        Nexus.Withdrawals.Application.Contracts.CreateWithdrawalRequest request) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(string withdrawalId) =>
+        throw new NotImplementedException();
+}
+
+internal sealed class StubOperationAdministratorWithdrawalCommandService : IOperationAdministratorWithdrawalCommandService
+{
+    public Task<IOperationResult<Nexus.Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+        Nexus.Authorization.Application.Models.RequesterIdentity identity,
+        Nexus.Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        CancellationToken cancellationToken = default) =>
+        throw new NotImplementedException();
+
+    public Task<IOperationResult<Nexus.Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+        Nexus.Authorization.Application.Models.RequesterIdentity identity,
+        string withdrawalId,
+        CancellationToken cancellationToken = default) =>
+        throw new NotImplementedException();
 }
 

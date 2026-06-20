@@ -4,6 +4,7 @@ using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using MongoDB.Bson;
 using MongoDB.Driver;
+using Nexus.Database;
 using Nexus.Database.Models;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
@@ -66,7 +67,7 @@ public sealed class MongoPaymentRepository : IPaymentRepository
 
     public Task DeleteAsync(Payment entity)
     {
-        var objectId = ObjectId.Parse(entity.Id);
+        var objectId = MongoObjectIds.Require(entity.Id);
         return _collection.DeleteOneAsync(r => r.Id == objectId);
     }
 
@@ -76,14 +77,14 @@ public sealed class MongoPaymentRepository : IPaymentRepository
         if (paymentsToDelete.Count == 0)
             return 0;
 
-        var objectIds = paymentsToDelete.Select(p => ObjectId.Parse(p.Id)).ToList();
+        var objectIds = paymentsToDelete.Select(p => MongoObjectIds.Require(p.Id)).ToList();
         var result = await _collection.DeleteManyAsync(r => objectIds.Contains(r.Id));
         return result.DeletedCount;
     }
 
     public async Task UpdateAsync(Payment entity)
     {
-        var objectId = ObjectId.Parse(entity.Id);
+        var objectId = MongoObjectIds.Require(entity.Id);
         var record = PaymentRecordMapping.ToRecord(entity);
         await _collection.ReplaceOneAsync(r => r.Id == objectId, record);
     }

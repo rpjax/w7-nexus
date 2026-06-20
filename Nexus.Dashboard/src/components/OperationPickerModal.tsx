@@ -1,5 +1,5 @@
 import { useEffect, useId, useState } from 'react';
-import { searchOperatorOperations } from '../api/operator/operations';
+import type { OperationPickerSearchFn } from '../api/operationPicker';
 import type { OperationPickerRow } from '../api/types';
 import { IconButton } from './IconButton';
 import { PaginationBar } from './ListControls';
@@ -7,6 +7,7 @@ import { PaginationBar } from './ListControls';
 type OperationPickerModalProps = {
   open: boolean;
   onClose: () => void;
+  searchOperations: OperationPickerSearchFn;
   title?: string;
   subtitle?: string;
   disabledOperationIds?: Set<string>;
@@ -19,8 +20,9 @@ const PAGE_SIZE = 8;
 export function OperationPickerModal({
   open,
   onClose,
+  searchOperations,
   title = 'Selecionar operação',
-  subtitle = 'Operações em que você está alocado como operador.',
+  subtitle,
   disabledOperationIds,
   disabledBadgeText = 'Indisponível',
   onSelected,
@@ -44,7 +46,7 @@ export function OperationPickerModal({
   async function load(page: number, term: string) {
     setLoading(true);
     try {
-      const result = await searchOperatorOperations({
+      const result = await searchOperations({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
         keyword: term.trim() || null,
@@ -54,11 +56,8 @@ export function OperationPickerModal({
         setTotalItems(0);
         return;
       }
-      setTotalItems(result.data?.total ?? 0);
-      setItems((result.data?.items ?? []).map((it) => ({
-        id: it.id,
-        name: it.name?.trim() ? it.name : it.id,
-      })));
+      setTotalItems(result.total);
+      setItems(result.items);
     } finally {
       setLoading(false);
     }

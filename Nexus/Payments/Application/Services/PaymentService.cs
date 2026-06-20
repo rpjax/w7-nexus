@@ -270,31 +270,6 @@ public sealed class PaymentService : IPaymentService
         return Result.Success();
     }
 
-    public async Task<IResult> MarkAsWithdrawnAsync(string paymentId)
-    {
-        if (string.IsNullOrWhiteSpace(paymentId))
-            return Result.Failure(Error.Create()
-                .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
-                .WithMessage("O ID do pagamento é obrigatório.")
-                .Build());
-
-        var payment = _paymentRepository.AsQueryable()
-            .FirstOrDefault(p => p.Id == paymentId);
-
-        if (payment is null)
-            return Result.Failure(Error.Create()
-                .WithCode(PixPaymentErrorCodes.PaymentNotFound)
-                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
-                .Build());
-
-        var result = payment.MarkAsWithdrawn();
-        if (result.IsFailure)
-            return result;
-
-        await _paymentRepository.UpdateAsync(payment);
-        return Result.Success();
-    }
-
     public async Task<IResult> RefundAsync(string paymentId)
     {
         if (string.IsNullOrWhiteSpace(paymentId))

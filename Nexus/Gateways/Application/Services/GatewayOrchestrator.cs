@@ -2,6 +2,7 @@ using Aidan.Core.Errors;
 using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Contracts;
+using MongoDB.Bson;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
@@ -125,7 +126,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         }
 
         var paymentId = string.IsNullOrWhiteSpace(request.PaymentId)
-            ? Guid.NewGuid().ToString("N")
+            ? ObjectId.GenerateNewId().ToString()
             : request.PaymentId.Trim();
 
         var createPaymentRequest = new CreatePaymentRequest

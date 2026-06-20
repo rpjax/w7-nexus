@@ -1,4 +1,5 @@
 using MongoDB.Bson;
+using Nexus.Database;
 using Nexus.Database.Models;
 using Nexus.Payments.Aggregates;
 
@@ -30,7 +31,7 @@ internal static class PaymentRecordMapping
     {
         return new PaymentRecord
         {
-            Id = string.IsNullOrWhiteSpace(entity.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(entity.Id),
+            Id = MongoObjectIds.Resolve(entity.Id),
             OperationId = entity.OperationId,
             TeamId = entity.TeamId,
             Gateway = entity.Gateway,

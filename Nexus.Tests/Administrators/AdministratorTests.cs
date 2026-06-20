@@ -582,4 +582,63 @@ public sealed class AdministratorTests
         Assert.Equal(5, page.Value.Total);
         Assert.Equal(2, page.Value.Items.Count);
     }
+
+    [Fact]
+    public async Task SearchOperationsToAssignAsync_NullRequest_ReturnsRequestBodyRequired()
+    {
+        var sut = _ctx.CreateAdministrator();
+
+        var result = await sut.SearchOperationsToAssignAsync(Identity(), default(SearchOperationsToAssignRequest));
+
+        Assert.True(result.IsAuthorized);
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == OperationErrorCodes.RequestBodyRequired);
+    }
+
+    [Fact]
+    public async Task SearchOperationsToAssignAsync_LimitZero_UsesDefaultLimitOfTwenty()
+    {
+        var sut = _ctx.CreateAdministrator();
+        for (var i = 0; i < 25; i++)
+            await _ctx.SeedOperationAsync($"Picker Op {i:D2}");
+
+        var result = await sut.SearchOperationsToAssignAsync(Identity(), new SearchOperationsToAssignRequest
+        {
+            Limit = 0,
+            Offset = 0
+        });
+
+        Assert.True(result.IsAuthorized);
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Equal(20, result.Value!.Limit);
+        Assert.Equal(20, result.Value.Items.Count);
+        Assert.Equal(25, result.Value.Total);
+        Assert.All(result.Value.Items, item =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(item.Id));
+            Assert.False(string.IsNullOrWhiteSpace(item.Name));
+        });
+    }
+
+    [Fact]
+    public async Task SearchOperationsToAssignAsync_KeywordFiltersByName()
+    {
+        var sut = _ctx.CreateAdministrator();
+        var target = await _ctx.SeedOperationAsync("Alpha Finance");
+        await _ctx.SeedOperationAsync("Beta Retail");
+
+        var result = await sut.SearchOperationsToAssignAsync(Identity(), new SearchOperationsToAssignRequest
+        {
+            Limit = 10,
+            Keyword = "alpha"
+        });
+
+        Assert.True(result.IsAuthorized);
+        Assert.True(result.IsSuccess);
+        Assert.NotNull(result.Value);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal(target.Id, result.Value.Items[0].Id);
+        Assert.Equal("Alpha Finance", result.Value.Items[0].Name);
+    }
 }

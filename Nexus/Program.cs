@@ -19,11 +19,18 @@ builder.Services
     .AddNexusAuthentication(builder.Configuration)
     .AddNexusAccounts()
     .AddNexusPayments()
+    .AddNexusWithdrawals()
     .AddNexusOperations()
     .AddNexusRoles()
-    .AddNexusGateways();
+    .AddNexusGateways(builder.Configuration);
 
 var app = builder.Build();
+
+if (builder.Configuration.GetValue<bool>("Gateways:UseMockOrchestrator"))
+{
+    app.Logger.LogWarning(
+        "Gateways:UseMockOrchestrator is enabled — PIX charges are generated locally without calling external gateway APIs.");
+}
 
 app.UseNexusPipeline();
 

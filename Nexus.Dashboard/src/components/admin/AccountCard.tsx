@@ -1,9 +1,13 @@
 import type { AccountRow } from '../../api/types';
-import { IconButton } from '../IconButton';
+import { roleLabel } from '../../utils/accountAccess';
 import { formatDateTime, shortId } from '../../utils/format';
+import { IconButton } from '../IconButton';
+import { AccountAccessEditor } from './AccountAccessEditor';
 
 type AccountCardProps = {
   account: AccountRow;
+  onMutated: () => void;
+  onError: (message: string) => void;
 };
 
 function accountInitial(username: string): string {
@@ -11,7 +15,7 @@ function accountInitial(username: string): string {
   return trimmed ? trimmed[0]!.toUpperCase() : '?';
 }
 
-export function AccountCard({ account }: AccountCardProps) {
+export function AccountCard({ account, onMutated, onError }: AccountCardProps) {
   async function copyId() {
     try {
       await navigator.clipboard.writeText(account.id);
@@ -33,7 +37,7 @@ export function AccountCard({ account }: AccountCardProps) {
           <div className="account-card-name-row">
             <h3 className="account-card-title">{account.username}</h3>
             {roles.map((role) => (
-              <span key={role} className="account-card-role-pill">{role}</span>
+              <span key={role} className="account-card-role-pill">{roleLabel(role)}</span>
             ))}
           </div>
           <p className="account-card-id">
@@ -44,19 +48,15 @@ export function AccountCard({ account }: AccountCardProps) {
       </header>
 
       <div className="account-card-body">
-        <div className="account-card-meta-grid">
-          <div className="account-card-meta-item account-card-meta-item--wide">
-            <span className="account-card-meta-label">Permissões</span>
-            {permissions.length === 0 ? (
-              <p className="account-card-meta-value account-card-meta-empty">Nenhuma permissão atribuída.</p>
-            ) : (
-              <ul className="account-card-tag-list">
-                {permissions.map((permission) => (
-                  <li key={permission} className="account-card-tag">{permission}</li>
-                ))}
-              </ul>
-            )}
-          </div>
+        <AccountAccessEditor
+          accountId={account.id}
+          roles={roles}
+          permissions={permissions}
+          onMutated={onMutated}
+          onError={onError}
+        />
+
+        <div className="account-card-meta-grid account-card-meta-grid--footer">
           <div className="account-card-meta-item">
             <span className="account-card-meta-label">Criada em</span>
             <p className="account-card-meta-value">{formatDateTime(account.createdAt)}</p>
