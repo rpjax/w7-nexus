@@ -1,24 +1,13 @@
 using Aidan.Core.Errors;
-using Nexus.Gateways.Wintech.Application.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Contracts;
-using Nexus.Gateways.Frendz.Application.Contracts;
 using MongoDB.Bson;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
-using Aidan.Core.Linq;
-using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Payments.Application.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Services;
-using Nexus.Gateways.Wintech.Application.Services;
-using Nexus.Gateways.Application.Services;
-using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Application.Models;
-using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Services;
 using Nexus.Payments.Errors;
 
 namespace Nexus.Gateways.Application.Services;
@@ -29,38 +18,20 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     private ITeamRepository _teamRepository { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
-    private IFrendzApiCredentialsRepository _frendzApiCredentialsRepository { get; }
-    private IFrendzGatewayPixServiceFactory _frendzGatewayPixServiceFactory { get; }
-    private ISigiloPayApiCredentialsRepository _sigiloPayApiCredentialsRepository { get; }
-    private ISigiloPayGatewayPixServiceFactory _sigiloPayGatewayPixServiceFactory { get; }
-    private IWintechApiCredentialsRepository _wintechApiCredentialsRepository { get; }
-    private IWintechGatewayPixServiceFactory _wintechGatewayPixServiceFactory { get; }
-    private IGatewayCredentialsGroupRepository _gatewayCredentialsGroupRepository { get; }
+    private GatewayCredentialProviderResolver _credentialProviderResolver { get; }
 
     public GatewayOrchestrator(
         IOperationRepository operationRepository,
         ITeamRepository teamRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
-        IFrendzApiCredentialsRepository frendzApiCredentialsRepository,
-        IFrendzGatewayPixServiceFactory frendzGatewayPixServiceFactory,
-        ISigiloPayApiCredentialsRepository sigiloPayApiCredentialsRepository,
-        ISigiloPayGatewayPixServiceFactory sigiloPayGatewayPixServiceFactory,
-        IWintechApiCredentialsRepository wintechApiCredentialsRepository,
-        IWintechGatewayPixServiceFactory wintechGatewayPixServiceFactory,
-        IGatewayCredentialsGroupRepository gatewayCredentialsGroupRepository)
+        GatewayCredentialProviderResolver credentialProviderResolver)
     {
         _operationRepository = operationRepository;
         _teamRepository = teamRepository;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
-        _frendzApiCredentialsRepository = frendzApiCredentialsRepository;
-        _frendzGatewayPixServiceFactory = frendzGatewayPixServiceFactory;
-        _sigiloPayApiCredentialsRepository = sigiloPayApiCredentialsRepository;
-        _sigiloPayGatewayPixServiceFactory = sigiloPayGatewayPixServiceFactory;
-        _wintechApiCredentialsRepository = wintechApiCredentialsRepository;
-        _wintechGatewayPixServiceFactory = wintechGatewayPixServiceFactory;
-        _gatewayCredentialsGroupRepository = gatewayCredentialsGroupRepository;
+        _credentialProviderResolver = credentialProviderResolver;
     }
 
     public async Task<IResult<GatewayPix>> CreateGatewayPixAsync(CreateGatewayPixRequest request)
@@ -76,12 +47,12 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                     .Build())
                 .Build();
 
-        var operatorAccountId = request.OperatorAccountId?.Trim();
-        if (string.IsNullOrWhiteSpace(operatorAccountId))
+        var operatorId = request.OperatorId?.Trim();
+        if (operatorId is not null && string.IsNullOrWhiteSpace(operatorId))
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.OperatorRequired)
-                    .WithMessage("O ID da conta do operador é obrigatório.")
+                    .WithCode(PixPaymentErrorCodes.OperatorInvalid)
+                    .WithMessage("O ID do operador não pode estar vazio quando informado.")
                     .Build())
                 .Build();
 
@@ -104,14 +75,41 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                     .Build())
                 .Build();
 
-        var team = _teamRepository.AsQueryable()
-            .FirstOrDefault(t =>
-                t.OperationId == operationId &&
-                t.OperatorIds.Contains(operatorAccountId));
+        Team? team = null;
+        if (!string.IsNullOrWhiteSpace(operatorId))
+        {
+            var teams = _teamRepository.AsQueryable()
+                .Where(t =>
+                    t.OperationId == operationId &&
+                    t.OperatorIds.Contains(operatorId))
+                .ToList();
+
+            if (teams.Count == 0)
+            {
+                return Result.Create<GatewayPix>()
+                    .WithError(Error.Create()
+                        .WithCode(PixPaymentErrorCodes.TeamNotFound)
+                        .WithMessage($"Não há equipe na operação '{operationId}' com o operador informado.")
+                        .Build())
+                    .Build();
+            }
+
+            if (teams.Count > 1)
+            {
+                return Result.Create<GatewayPix>()
+                    .WithError(Error.Create()
+                        .WithCode(PixPaymentErrorCodes.TeamAmbiguous)
+                        .WithMessage("Há mais de uma equipe compatível com o operador informado.")
+                        .Build())
+                    .Build();
+            }
+
+            team = teams[0];
+        }
 
         IGatewayCredentialScope scope = (IGatewayCredentialScope?)team ?? operation;
 
-        var providers = await GetGatewayProvidersAsync(scope);
+        var providers = await _credentialProviderResolver.ResolveProvidersAsync(scope);
 
         if (providers.Length == 0)
         {
@@ -133,9 +131,8 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         {
             ExplicitPaymentId = paymentId,
             OperationId = operationId,
-            TeamId = team?.Id,
-            OperatorAccountId = operatorAccountId,
-            StrawManAccountId = null,
+            OperatorId = operatorId,
+            StrawManId = null,
             Gateway = PaymentGateway.Frendz,
             Amount = request.Amount,
             GatewayPaymentId = paymentId,
@@ -160,8 +157,8 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                 {
                     PaymentId = payment.Id,
                     OperationId = operationId,
-                    OperatorAccountId = operatorAccountId,
-                    StrawManAccountId = provider.StrawManId,
+                    OperatorId = operatorId,
+                    StrawManId = provider.StrawManId!,
                     Amount = request.Amount
                 };
 
@@ -177,16 +174,13 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                         .Build();
                 }
 
-                if (!string.IsNullOrWhiteSpace(provider.StrawManId))
+                var bindStrawMan = payment.BindToStrawMan(provider.StrawManId!);
+                if (bindStrawMan.IsFailure)
                 {
-                    var bindStrawMan = payment.BindToStrawMan(provider.StrawManId);
-                    if (bindStrawMan.IsFailure)
-                    {
-                        await _paymentService.DeletePaymentAsync(payment.Id);
-                        return Result.Create<GatewayPix>()
-                            .WithErrors(bindStrawMan.Errors)
-                            .Build();
-                    }
+                    await _paymentService.DeletePaymentAsync(payment.Id);
+                    return Result.Create<GatewayPix>()
+                        .WithErrors(bindStrawMan.Errors)
+                        .Build();
                 }
 
                 await _paymentRepository.UpdateAsync(payment);
@@ -207,138 +201,5 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                 .WithMessage("Todas as tentativas de processamento pelo gateway falharam. Verifique as credenciais configuradas e tente novamente.")
                 .Build())
             .Build();
-    }
-
-    private async Task<GatewayServiceProvider[]> GetGatewayProvidersAsync(IGatewayCredentialScope scope)
-    {
-        var allowedCredentialIds = await ResolveAllowedCredentialIdsAsync(scope);
-        var frendzProviders = await GetFrendzGatewayProvidersAsync(scope, allowedCredentialIds);
-        var sigiloPayProviders = await GetSigiloPayGatewayProvidersAsync(scope, allowedCredentialIds);
-        var wintechProviders = await GetWintechGatewayProvidersAsync(scope, allowedCredentialIds);
-        var merged = frendzProviders.Concat(sigiloPayProviders).Concat(wintechProviders).ToArray();
-        Random.Shared.Shuffle(merged);
-        return merged;
-    }
-
-    private async Task<string[]> ResolveAllowedCredentialIdsAsync(IGatewayCredentialScope scope)
-    {
-        return scope.GatewaySelectionStrategy switch
-        {
-            GatewaySelectionStrategy.Manual => scope.GatewayCredentialsIds.ToArray(),
-            GatewaySelectionStrategy.PerGroup => await ResolveGroupCredentialIdsAsync(scope),
-            _ => Array.Empty<string>()
-        };
-    }
-
-    private async Task<string[]> ResolveGroupCredentialIdsAsync(IGatewayCredentialScope scope)
-    {
-        var groupIds = scope.GatewayCredentialsGroupIds.ToArray();
-        if (groupIds.Length == 0)
-            return Array.Empty<string>();
-
-        var groups = await MaterializeAsync(
-            _gatewayCredentialsGroupRepository.AsQueryable()
-                .Where(g => groupIds.Contains(g.Id)));
-
-        return groups
-            .SelectMany(g => g.GatewayCredentialsIds)
-            .Distinct(StringComparer.Ordinal)
-            .ToArray();
-    }
-
-    private static async Task<T[]> MaterializeAsync<T>(IAsyncQueryable<T> query)
-    {
-        try
-        {
-            return await query.ToArrayAsync();
-        }
-        catch (ArgumentException)
-        {
-            return query.AsEnumerable().ToArray();
-        }
-    }
-
-    private async Task<GatewayServiceProvider[]> GetFrendzGatewayProvidersAsync(
-        IGatewayCredentialScope scope,
-        string[] allowedCredentialIds)
-    {
-        var strawmanIds = scope.StrawManIds.ToArray();
-
-        var query = _frendzApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
-            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
-            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
-
-        var credentials = await MaterializeAsync(query);
-
-        var providers = new List<GatewayServiceProvider>();
-
-        foreach (var credential in credentials)
-        {
-            var service = _frendzGatewayPixServiceFactory.Create(credential);
-            var provider = new GatewayServiceProvider(
-                gateway: PaymentGateway.Frendz,
-                strawManId: credential.StrawManId,
-                service: service);
-            providers.Add(provider);
-        }
-
-        return providers.ToArray();
-    }
-
-    private async Task<GatewayServiceProvider[]> GetSigiloPayGatewayProvidersAsync(
-        IGatewayCredentialScope scope,
-        string[] allowedCredentialIds)
-    {
-        var strawmanIds = scope.StrawManIds.ToArray();
-
-        var query = _sigiloPayApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
-            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
-            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
-
-        var credentials = await MaterializeAsync(query);
-
-        var providers = new List<GatewayServiceProvider>();
-
-        foreach (var credential in credentials)
-        {
-            var service = _sigiloPayGatewayPixServiceFactory.Create(credential);
-            var provider = new GatewayServiceProvider(
-                gateway: PaymentGateway.SigiloPay,
-                strawManId: credential.StrawManId,
-                service: service);
-            providers.Add(provider);
-        }
-
-        return providers.ToArray();
-    }
-
-    private async Task<GatewayServiceProvider[]> GetWintechGatewayProvidersAsync(
-        IGatewayCredentialScope scope,
-        string[] allowedCredentialIds)
-    {
-        var strawmanIds = scope.StrawManIds.ToArray();
-
-        var query = _wintechApiCredentialsRepository.AsQueryable().Where(x => x.Enabled);
-        query = scope.GatewaySelectionStrategy is GatewaySelectionStrategy.Manual or GatewaySelectionStrategy.PerGroup
-            ? query.Where(x => allowedCredentialIds.Contains(x.Id))
-            : query.Where(x => x.StrawManId == null || strawmanIds.Contains(x.StrawManId));
-
-        var credentials = await MaterializeAsync(query);
-
-        var providers = new List<GatewayServiceProvider>();
-
-        foreach (var credential in credentials)
-        {
-            var service = _wintechGatewayPixServiceFactory.Create(credential);
-            var provider = new GatewayServiceProvider(
-                gateway: PaymentGateway.Wintech,
-                strawManId: credential.StrawManId,
-                service: service);
-            providers.Add(provider);
-        }
-
-        return providers.ToArray();
     }
 }

@@ -1,17 +1,8 @@
 import { useEffect, useState } from 'react';
-import type { BankAccountType, PixKeyType } from '../../api/types';
+import type { BankAccountType } from '../../api/types';
 import { IconButton } from '../IconButton';
 import { BrazilianBankSelect } from './BrazilianBankSelect';
-import { BANK_ACCOUNT_TYPE_OPTIONS, PIX_KEY_TYPE_OPTIONS } from '../../utils/financeLabels';
-import {
-  formatPixKeyInput,
-  normalizePixKey,
-  pixKeyHint,
-  pixKeyInputMode,
-  pixKeyMaxLength,
-  pixKeyPlaceholder,
-  validatePixKey,
-} from '../../utils/pixKey';
+import { BANK_ACCOUNT_TYPE_OPTIONS } from '../../utils/financeLabels';
 
 export type BankAccountCreatePayload = {
   bank: number;
@@ -19,8 +10,6 @@ export type BankAccountCreatePayload = {
   accountNumber: string;
   accountDigit: string | null;
   accountType: BankAccountType;
-  pixKeyType: PixKeyType;
-  pixKey: string;
   label: string | null;
 };
 
@@ -38,8 +27,6 @@ const EMPTY_FORM = {
   accountNumber: '',
   accountDigit: '',
   accountType: 'Checking' as BankAccountType,
-  pixKeyType: 'Email' as PixKeyType,
-  pixKey: '',
   label: '',
 };
 
@@ -77,16 +64,6 @@ export function BankAccountCreateModal({
       setError('Informe o número da conta.');
       return;
     }
-    const pixError = validatePixKey(form.pixKeyType, form.pixKey);
-    if (pixError) {
-      setError(pixError);
-      return;
-    }
-    const normalizedPixKey = normalizePixKey(form.pixKeyType, form.pixKey);
-    if (!normalizedPixKey) {
-      setError('Informe a chave PIX.');
-      return;
-    }
     setError('');
     onSubmit({
       bank: form.bank,
@@ -94,8 +71,6 @@ export function BankAccountCreateModal({
       accountNumber: form.accountNumber.trim(),
       accountDigit: form.accountDigit.trim() || null,
       accountType: form.accountType,
-      pixKeyType: form.pixKeyType,
-      pixKey: normalizedPixKey,
       label: form.label.trim() || null,
     });
   }
@@ -113,7 +88,7 @@ export function BankAccountCreateModal({
           <div className="account-picker-heading">
             <h3 id="bank-create-modal-title" className="account-picker-title">Nova conta bancária</h3>
             <p className="account-picker-sub">
-              {strawLabel ? `Laranja: ${strawLabel}` : 'Conta de destino PIX para saques.'}
+              {strawLabel ? `Laranja: ${strawLabel}` : 'Conta de destino para transferências PIX.'}
             </p>
           </div>
           <IconButton icon="x" label="Fechar" onClick={onClose} />
@@ -179,49 +154,6 @@ export function BankAccountCreateModal({
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-            </div>
-
-            <div className="bank-create-form__pix-section">
-              <span className="bank-create-form__kicker">Chave PIX (obrigatória)</span>
-
-              <div className="field">
-                <label htmlFor="createPixKeyType">Tipo da chave PIX</label>
-                <select
-                  id="createPixKeyType"
-                  className="nexus-input"
-                  value={form.pixKeyType}
-                  required
-                  onChange={(e) => setForm((f) => ({
-                    ...f,
-                    pixKeyType: e.target.value as PixKeyType,
-                    pixKey: '',
-                  }))}
-                >
-                  {PIX_KEY_TYPE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <label htmlFor="createPixKey">Chave PIX</label>
-                <input
-                  id="createPixKey"
-                  className="nexus-input"
-                  value={form.pixKey}
-                  onChange={(e) => setForm((f) => ({
-                    ...f,
-                    pixKey: formatPixKeyInput(f.pixKeyType, e.target.value),
-                  }))}
-                  placeholder={pixKeyPlaceholder(form.pixKeyType)}
-                  inputMode={pixKeyInputMode(form.pixKeyType)}
-                  type={form.pixKeyType === 'Email' ? 'email' : 'text'}
-                  maxLength={pixKeyMaxLength(form.pixKeyType)}
-                  required
-                  autoComplete="off"
-                />
-                <p className="muted small">{pixKeyHint(form.pixKeyType)}</p>
-              </div>
             </div>
 
             <button

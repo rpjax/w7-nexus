@@ -1,6 +1,6 @@
 import { useEffect, useId, useMemo, useState } from 'react';
-import { searchPayments } from '../../api/payments';
 import type { PaymentRow } from '../../api/types';
+import { searchEligibleWithdrawalPayments } from '../../features/payments/searchEligibleWithdrawalPayments';
 import { formatMoney, paymentStatusLabel } from '../../utils/financeLabels';
 import { formatUtc, shortId } from '../../utils/format';
 import { IconButton } from '../IconButton';
@@ -9,8 +9,7 @@ import { PaginationBar } from '../ListControls';
 type UnsettledPaymentsPickerProps = {
   open: boolean;
   onClose: () => void;
-  operationId: string;
-  strawManAccountId: string;
+  strawManId: string;
   selectedIds: Set<string>;
   onChange: (ids: Set<string>) => void;
 };
@@ -21,8 +20,7 @@ const PAGE_SIZE = 8;
 export function UnsettledPaymentsPicker({
   open,
   onClose,
-  operationId,
-  strawManAccountId,
+  strawManId,
   selectedIds,
   onChange,
 }: UnsettledPaymentsPickerProps) {
@@ -37,31 +35,29 @@ export function UnsettledPaymentsPicker({
     if (!open) return;
     setKeyword('');
     setCurrentPage(1);
-  }, [open, operationId, strawManAccountId]);
+  }, [open, strawManId]);
 
   useEffect(() => {
-    if (!open || !operationId.trim() || !strawManAccountId.trim()) return;
+    if (!open || !strawManId.trim()) return;
     void loadEligible();
-  }, [open, operationId, strawManAccountId]);
+  }, [open, strawManId]);
 
   async function loadEligible() {
     setLoading(true);
     setLoadError('');
     try {
-      const result = await searchPayments({ limit: FETCH_LIMIT, offset: 0, keyword: null });
+      const result = await searchEligibleWithdrawalPayments({
+        limit: FETCH_LIMIT,
+        offset: 0,
+        keyword: null,
+        strawManId,
+      });
       if (!result.ok) {
         setAllRows([]);
         setLoadError(result.error);
         return;
       }
-      const eligible = (result.data?.items ?? []).filter(
-        (p) =>
-          p.operationId === operationId
-          && p.strawManAccountId === strawManAccountId
-          && p.status === 'Paid'
-          && p.settlementStatus === 'Unsettled',
-      );
-      setAllRows(eligible);
+      setAllRows(result.data?.items ?? []);
     } finally {
       setLoading(false);
     }
@@ -100,7 +96,7 @@ export function UnsettledPaymentsPicker({
         <header className="account-picker-header">
           <div className="account-picker-heading">
             <h3 className="account-picker-title">Pagamentos elegíveis</h3>
-            <p className="account-picker-sub">Pagos e ainda não sacados para a operação e laranja selecionados.</p>
+            <p className="account-picker-sub">Pagos, não sacados e vinculados ao laranja selecionado.</p>
           </div>
           <IconButton icon="x" label="Fechar" onClick={onClose} />
         </header>

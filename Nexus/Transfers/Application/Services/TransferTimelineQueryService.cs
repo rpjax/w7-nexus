@@ -1,0 +1,558 @@
+using Aidan.Core.Errors;
+using Aidan.Core.Linq.Extensions;
+using Aidan.Core.Patterns;
+using Nexus.AccountNodes.Aggregates;
+using Nexus.AccountNodes.Application.Contracts;
+using Nexus.Accounts.Application.Contracts;
+using Nexus.Payments.Application.Contracts;
+using Nexus.Transfers.Aggregates;
+using Nexus.Transfers.Application.Contracts;
+using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Errors;
+
+namespace Nexus.Transfers.Application.Services;
+
+public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
+{
+    private readonly ITransferRepository _transfers;
+    private readonly IBankAccountRepository _bankAccounts;
+    private readonly ICryptoWalletRepository _cryptoWallets;
+    private readonly IAccountRepository _accounts;
+    private readonly IPaymentRepository _payments;
+
+    public TransferTimelineQueryService(
+        ITransferRepository transfers,
+        IBankAccountRepository bankAccounts,
+        ICryptoWalletRepository cryptoWallets,
+        IAccountRepository accounts,
+        IPaymentRepository payments)
+    {
+        _transfers = transfers;
+        _bankAccounts = bankAccounts;
+        _cryptoWallets = cryptoWallets;
+        _accounts = accounts;
+        _payments = payments;
+    }
+
+    public async Task<IResult<TransferTimelineDetails>> GetTimelineAsync(string transferId)
+    {
+        if (string.IsNullOrWhiteSpace(transferId))
+        {
+            return Result<TransferTimelineDetails>.Failure(Error.Create()
+                .WithCode(TransferErrorCodes.TransferIdInvalid)
+                .WithMessage("O ID da transferência é obrigatório.")
+                .Build());
+        }
+
+        var normalizedId = transferId.Trim();
+        var focus = _transfers.AsQueryable().FirstOrDefault(t => t.Id == normalizedId);
+        if (focus is null)
+        {
+            return Result<TransferTimelineDetails>.Failure(Error.Create()
+                .WithCode(TransferErrorCodes.TransferNotFound)
+                .WithMessage($"A transferência '{transferId}' não foi encontrada.")
+                .Build());
+        }
+
+        var strawManAccounts = await _accounts.AsQueryable()
+            .Where(a => a.Id == focus.StrawManId)
+            .ToArrayAsync();
+        var bankAccounts = await _bankAccounts.AsQueryable()
+            .Where(a => a.StrawManId == focus.StrawManId)
+            .ToArrayAsync();
+        var cryptoWallets = await _cryptoWallets.AsQueryable()
+            .Where(w => w.StrawManId == focus.StrawManId)
+            .ToArrayAsync();
+        var strawManTransfers = await _transfers.AsQueryable()
+            .Where(t => t.StrawManId == focus.StrawManId)
+            .ToArrayAsync();
+
+        var balanceIndex = BuildBalanceIndex(bankAccounts, cryptoWallets);
+        var accountLookup = BuildAccountLookup(strawManAccounts, bankAccounts, cryptoWallets);
+        var root = FindRootTransfer(focus, balanceIndex, strawManTransfers);
+        var chainIds = BuildChainIds(root, strawManTransfers, balanceIndex);
+        var chain = strawManTransfers
+            .Where(t => chainIds.Contains(t.Id))
+            .OrderBy(t => t.CreatedAt)
+            .ToArray();
+
+        var paymentIds = chain
+            .Where(t => t.Type == TransferType.Withdrawal)
+            .SelectMany(t => t.PaymentIds)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var payments = paymentIds.Length == 0
+            ? Array.Empty<Nexus.Payments.Aggregates.Payment>()
+            : await _payments.AsQueryable()
+                .Where(p => paymentIds.Contains(p.Id))
+                .ToArrayAsync();
+        var paymentLookup = payments.ToDictionary(p => p.Id, StringComparer.Ordinal);
+
+        var activeBalanceIds = new HashSet<string>(StringComparer.Ordinal);
+        var activeBalances = BuildActiveBalances(chainIds, bankAccounts, cryptoWallets, accountLookup, activeBalanceIds);
+
+        var strawManSummary = ResolveAccountSummary(focus.StrawManId, accountLookup);
+        var steps = chain.Select(transfer =>
+        {
+            var enriched = EnrichTransfer(transfer, accountLookup, strawManSummary);
+            var balanceEffects = BuildBalanceEffects(transfer, balanceIndex, accountLookup);
+            var paymentSummaries = transfer.Type == TransferType.Withdrawal
+                ? transfer.PaymentIds
+                    .Where(paymentLookup.ContainsKey)
+                    .Select(id => ToPaymentSummary(paymentLookup[id], accountLookup))
+                    .ToArray()
+                : Array.Empty<PaymentSummaryDetails>();
+
+            var hasActiveBalance = balanceEffects.Any(e =>
+                e.Direction == "Credit"
+                && activeBalanceIds.Contains(e.BalanceId));
+
+            return new TransferTimelineStepDetails
+            {
+                TransferId = transfer.Id,
+                Type = transfer.Type,
+                CreatedAt = transfer.CreatedAt,
+                IsFocus = string.Equals(transfer.Id, focus.Id, StringComparison.Ordinal),
+                IsCurrent = hasActiveBalance,
+                Title = BuildStepTitle(transfer),
+                Summary = BuildStepSummary(transfer, enriched),
+                Transfer = enriched,
+                BalanceEffects = balanceEffects,
+                Payments = paymentSummaries,
+            };
+        }).ToArray();
+
+        return Result<TransferTimelineDetails>.Success(new TransferTimelineDetails
+        {
+            RootTransferId = root.Id,
+            FocusTransferId = focus.Id,
+            StrawMan = strawManSummary,
+            Steps = steps,
+            ActiveBalances = activeBalances,
+        });
+    }
+
+    private static Transfer FindRootTransfer(
+        Transfer focus,
+        IReadOnlyDictionary<string, BalanceReference> balanceIndex,
+        IReadOnlyList<Transfer> strawManTransfers)
+    {
+        var current = focus;
+        var visited = new HashSet<string>(StringComparer.Ordinal);
+
+        while (current.Type != TransferType.Withdrawal)
+        {
+            if (string.IsNullOrWhiteSpace(current.SourceBalanceId))
+                break;
+
+            if (!visited.Add(current.Id))
+                break;
+
+            if (!balanceIndex.TryGetValue(current.SourceBalanceId, out var balance))
+                break;
+
+            var parent = strawManTransfers.FirstOrDefault(t => t.Id == balance.TransferId);
+            if (parent is null)
+                break;
+
+            current = parent;
+        }
+
+        return current.Type == TransferType.Withdrawal ? current : focus;
+    }
+
+    private static HashSet<string> BuildChainIds(
+        Transfer root,
+        IReadOnlyList<Transfer> strawManTransfers,
+        IReadOnlyDictionary<string, BalanceReference> balanceIndex)
+    {
+        var chainIds = new HashSet<string>(StringComparer.Ordinal) { root.Id };
+        var changed = true;
+
+        while (changed)
+        {
+            changed = false;
+            foreach (var transfer in strawManTransfers)
+            {
+                if (chainIds.Contains(transfer.Id))
+                    continue;
+
+                if (string.IsNullOrWhiteSpace(transfer.SourceBalanceId))
+                    continue;
+
+                if (!balanceIndex.TryGetValue(transfer.SourceBalanceId, out var balance))
+                    continue;
+
+                if (chainIds.Contains(balance.TransferId))
+                {
+                    chainIds.Add(transfer.Id);
+                    changed = true;
+                }
+            }
+        }
+
+        return chainIds;
+    }
+
+    private static IReadOnlyList<ActiveBalanceDetails> BuildActiveBalances(
+        HashSet<string> chainIds,
+        IReadOnlyList<BankAccount> bankAccounts,
+        IReadOnlyList<CryptoWallet> cryptoWallets,
+        AccountLookup accountLookup,
+        HashSet<string> activeBalanceIds)
+    {
+        var balances = new List<ActiveBalanceDetails>();
+
+        foreach (var account in bankAccounts)
+        {
+            foreach (var balance in account.Balances.Where(b => b.AmountBrl > 0 && chainIds.Contains(b.TransferId)))
+            {
+                activeBalanceIds.Add(balance.Id);
+                balances.Add(new ActiveBalanceDetails
+                {
+                    BalanceId = balance.Id,
+                    TransferId = balance.TransferId,
+                    Amount = balance.AmountBrl,
+                    Chain = null,
+                    Asset = null,
+                    Currency = "BRL",
+                    Account = EnrichBankAccount(account),
+                    CanMove = true,
+                    CanPayout = true,
+                });
+            }
+        }
+
+        foreach (var wallet in cryptoWallets)
+        {
+            foreach (var balance in wallet.Balances.Where(b => b.Amount > 0 && chainIds.Contains(b.TransferId)))
+            {
+                activeBalanceIds.Add(balance.Id);
+                balances.Add(new ActiveBalanceDetails
+                {
+                    BalanceId = balance.Id,
+                    TransferId = balance.TransferId,
+                    Amount = balance.Amount,
+                    Chain = balance.Chain.ToString(),
+                    Asset = balance.Asset.ToString(),
+                    Currency = balance.Asset.ToString(),
+                    Account = EnrichCryptoWallet(wallet),
+                    CanMove = true,
+                    CanPayout = false,
+                });
+            }
+        }
+
+        return balances
+            .OrderByDescending(b => b.Amount)
+            .ThenBy(b => b.Account.DisplayName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
+    }
+
+    private static IReadOnlyList<BalanceEffectDetails> BuildBalanceEffects(
+        Transfer transfer,
+        IReadOnlyDictionary<string, BalanceReference> balanceIndex,
+        AccountLookup accountLookup)
+    {
+        var effects = new List<BalanceEffectDetails>();
+
+        foreach (var balance in balanceIndex.Values.Where(b => b.TransferId == transfer.Id))
+        {
+            effects.Add(new BalanceEffectDetails
+            {
+                Direction = "Credit",
+                BalanceId = balance.BalanceId,
+                Amount = balance.Amount,
+                Chain = balance.Chain,
+                Asset = balance.Asset,
+                Currency = balance.Asset ?? "BRL",
+                Account = balance.Kind == AccountNodeKind.BankAccount
+                    ? EnrichBankAccount(balance.BankAccount!)
+                    : EnrichCryptoWallet(balance.CryptoWallet!),
+            });
+        }
+
+        if (!string.IsNullOrWhiteSpace(transfer.SourceBalanceId)
+            && balanceIndex.TryGetValue(transfer.SourceBalanceId, out var sourceBalance))
+        {
+            effects.Add(new BalanceEffectDetails
+            {
+                Direction = "Debit",
+                BalanceId = sourceBalance.BalanceId,
+                Amount = transfer.SourceAmount,
+                Chain = sourceBalance.Chain,
+                Asset = sourceBalance.Asset,
+                Currency = sourceBalance.Asset ?? "BRL",
+                Account = sourceBalance.Kind == AccountNodeKind.BankAccount
+                    ? EnrichBankAccount(sourceBalance.BankAccount!)
+                    : EnrichCryptoWallet(sourceBalance.CryptoWallet!),
+            });
+        }
+
+        return effects;
+    }
+
+    private TransferEnrichedDetails EnrichTransfer(
+        Transfer transfer,
+        AccountLookup accountLookup,
+        AccountSummaryDetails? strawManSummary)
+    {
+        strawManSummary ??= ResolveAccountSummary(transfer.StrawManId, accountLookup)
+            ?? new AccountSummaryDetails { Id = transfer.StrawManId, Username = transfer.StrawManId };
+
+        return new TransferEnrichedDetails
+        {
+            Id = transfer.Id,
+            Type = transfer.Type,
+            OnrampingMethod = transfer.OnrampingMethod?.ToString(),
+            Proof = transfer.Proof is null
+                ? null
+                : new TransferProofDetails
+                {
+                    PixTransactionId = transfer.Proof.PixTransactionId,
+                    PixAuthenticationCode = transfer.Proof.PixAuthenticationCode,
+                    CryptoTransactionId = transfer.Proof.CryptoTransactionId,
+                },
+            Source = EnrichSnapshot(transfer.Source, accountLookup),
+            Destination = EnrichSnapshot(transfer.Destination, accountLookup),
+            SourceAmount = transfer.SourceAmount,
+            ProducedAmount = transfer.ProducedAmount,
+            ProducedAsset = transfer.ProducedAsset?.ToString(),
+            ProducedChain = transfer.ProducedChain?.ToString(),
+            PaymentIds = transfer.PaymentIds,
+            SourceBalanceId = transfer.SourceBalanceId,
+            StrawMan = strawManSummary,
+            CreatedAt = transfer.CreatedAt,
+        };
+    }
+
+    private static EnrichedAccountNodeDetails? EnrichSnapshot(
+        AccountNodeSnapshot? snapshot,
+        AccountLookup accountLookup)
+    {
+        if (snapshot is null)
+            return null;
+
+        return snapshot.Kind switch
+        {
+            AccountNodeKind.BankAccount when !string.IsNullOrWhiteSpace(snapshot.BankAccountId)
+                && accountLookup.BankAccounts.TryGetValue(snapshot.BankAccountId, out var bank) =>
+                EnrichBankAccount(bank),
+            AccountNodeKind.CryptoWallet when !string.IsNullOrWhiteSpace(snapshot.CryptoWalletId)
+                && accountLookup.CryptoWallets.TryGetValue(snapshot.CryptoWalletId, out var wallet) =>
+                EnrichCryptoWallet(wallet),
+            AccountNodeKind.Participant when !string.IsNullOrWhiteSpace(snapshot.ParticipantAccountId) =>
+                EnrichParticipant(snapshot.ParticipantAccountId, accountLookup),
+            _ => new EnrichedAccountNodeDetails
+            {
+                Kind = snapshot.Kind.ToString(),
+                Id = snapshot.BankAccountId ?? snapshot.CryptoWalletId ?? snapshot.ParticipantAccountId ?? snapshot.StrawManId,
+                DisplayName = snapshot.Kind.ToString(),
+            },
+        };
+    }
+
+    private static EnrichedAccountNodeDetails EnrichBankAccount(BankAccount account)
+    {
+        var label = string.IsNullOrWhiteSpace(account.Label) ? null : account.Label.Trim();
+        var bankSummary = $"{account.Bank} · Ag {account.Agency} · Cc {account.AccountNumber}{account.AccountDigit}";
+        var displayName = string.IsNullOrWhiteSpace(label) ? bankSummary : label;
+
+        return new EnrichedAccountNodeDetails
+        {
+            Kind = AccountNodeKind.BankAccount.ToString(),
+            Id = account.Id,
+            DisplayName = displayName,
+            Label = label,
+            BankSummary = bankSummary,
+        };
+    }
+
+    private static EnrichedAccountNodeDetails EnrichCryptoWallet(CryptoWallet wallet)
+    {
+        var label = string.IsNullOrWhiteSpace(wallet.Label) ? null : wallet.Label.Trim();
+        var addressParts = wallet.Addresses
+            .Select(a => $"{a.Namespace}: {Shorten(a.Address, 6, 4)}")
+            .ToArray();
+        var cryptoSummary = addressParts.Length > 0
+            ? string.Join(" · ", addressParts)
+            : "Sem endereços";
+        var displayName = string.IsNullOrWhiteSpace(label) ? cryptoSummary : label;
+
+        return new EnrichedAccountNodeDetails
+        {
+            Kind = AccountNodeKind.CryptoWallet.ToString(),
+            Id = wallet.Id,
+            DisplayName = displayName,
+            Label = label,
+            CryptoSummary = cryptoSummary,
+        };
+    }
+
+    private static EnrichedAccountNodeDetails EnrichParticipant(string participantAccountId, AccountLookup accountLookup)
+    {
+        var username = accountLookup.Accounts.TryGetValue(participantAccountId, out var account)
+            ? account.Username
+            : participantAccountId;
+
+        return new EnrichedAccountNodeDetails
+        {
+            Kind = AccountNodeKind.Participant.ToString(),
+            Id = participantAccountId,
+            DisplayName = username,
+            Username = username,
+        };
+    }
+
+    private static EnrichedAccountNodeDetails EnrichStrawMan(string strawManId, AccountLookup accountLookup)
+    {
+        var summary = ResolveAccountSummary(strawManId, accountLookup);
+        var username = summary?.Username ?? strawManId;
+
+        return new EnrichedAccountNodeDetails
+        {
+            Kind = "StrawMan",
+            Id = strawManId,
+            DisplayName = username,
+            Username = username,
+        };
+    }
+
+    private static AccountSummaryDetails? ResolveAccountSummary(string accountId, AccountLookup accountLookup)
+    {
+        if (!accountLookup.Accounts.TryGetValue(accountId, out var account))
+            return null;
+
+        return new AccountSummaryDetails
+        {
+            Id = account.Id,
+            Username = account.Username,
+        };
+    }
+
+    private static PaymentSummaryDetails ToPaymentSummary(
+        Nexus.Payments.Aggregates.Payment payment,
+        AccountLookup accountLookup)
+    {
+        string? operatorUsername = null;
+        if (!string.IsNullOrWhiteSpace(payment.OperatorId)
+            && accountLookup.Accounts.TryGetValue(payment.OperatorId, out var operatorAccount))
+        {
+            operatorUsername = operatorAccount.Username;
+        }
+
+        return new PaymentSummaryDetails
+        {
+            Id = payment.Id,
+            Amount = payment.Amount,
+            Status = payment.Status.ToString(),
+            SettlementStatus = payment.SettlementStatus.ToString(),
+            Gateway = payment.Gateway.ToString(),
+            GatewayTransactionId = payment.GatewayTransactionId,
+            OperatorUsername = operatorUsername,
+            CreatedAt = payment.CreatedAt,
+        };
+    }
+
+    private static string BuildStepTitle(Transfer transfer) =>
+        transfer.Type switch
+        {
+            TransferType.Withdrawal => "Saque",
+            TransferType.Movement => "Movimentação",
+            TransferType.Payout => "Repasse",
+            _ => transfer.Type.ToString(),
+        };
+
+    private static string BuildStepSummary(Transfer transfer, TransferEnrichedDetails enriched)
+    {
+        var amount = FormatAmount(transfer.SourceAmount, transfer.ProducedAsset?.ToString());
+        var destination = enriched.Destination?.DisplayName ?? "destino";
+
+        return transfer.Type switch
+        {
+            TransferType.Withdrawal => $"{amount} creditados em {destination}",
+            TransferType.Movement => $"{amount} de {enriched.Source?.DisplayName ?? "origem"} para {destination}",
+            TransferType.Payout => $"{amount} repassados para {destination}",
+            _ => amount,
+        };
+    }
+
+    private static string FormatAmount(decimal amount, string? asset)
+        => asset is null ? $"R$ {amount:N2}" : $"{amount} {asset}";
+
+    private static string Shorten(string value, int prefix, int suffix)
+    {
+        if (value.Length <= prefix + suffix + 3)
+            return value;
+
+        return $"{value[..prefix]}…{value[^suffix..]}";
+    }
+
+    private static AccountLookup BuildAccountLookup(
+        IReadOnlyList<Nexus.Accounts.Aggregates.Account> accounts,
+        IReadOnlyList<BankAccount> bankAccounts,
+        IReadOnlyList<CryptoWallet> cryptoWallets) =>
+        new(
+            accounts.ToDictionary(a => a.Id, StringComparer.Ordinal),
+            bankAccounts.ToDictionary(a => a.Id, StringComparer.Ordinal),
+            cryptoWallets.ToDictionary(w => w.Id, StringComparer.Ordinal));
+
+    private static Dictionary<string, BalanceReference> BuildBalanceIndex(
+        IReadOnlyList<BankAccount> bankAccounts,
+        IReadOnlyList<CryptoWallet> cryptoWallets)
+    {
+        var index = new Dictionary<string, BalanceReference>(StringComparer.Ordinal);
+
+        foreach (var account in bankAccounts)
+        {
+            foreach (var balance in account.Balances)
+            {
+                index[balance.Id] = new BalanceReference(
+                    balance.Id,
+                    balance.TransferId,
+                    AccountNodeKind.BankAccount,
+                    account.Id,
+                    balance.AmountBrl,
+                    null,
+                    null,
+                    account,
+                    null);
+            }
+        }
+
+        foreach (var wallet in cryptoWallets)
+        {
+            foreach (var balance in wallet.Balances)
+            {
+                index[balance.Id] = new BalanceReference(
+                    balance.Id,
+                    balance.TransferId,
+                    AccountNodeKind.CryptoWallet,
+                    wallet.Id,
+                    balance.Amount,
+                    balance.Chain.ToString(),
+                    balance.Asset.ToString(),
+                    null,
+                    wallet);
+            }
+        }
+
+        return index;
+    }
+
+    private sealed record AccountLookup(
+        IReadOnlyDictionary<string, Nexus.Accounts.Aggregates.Account> Accounts,
+        IReadOnlyDictionary<string, BankAccount> BankAccounts,
+        IReadOnlyDictionary<string, CryptoWallet> CryptoWallets);
+
+    private sealed record BalanceReference(
+        string BalanceId,
+        string TransferId,
+        AccountNodeKind Kind,
+        string AccountId,
+        decimal Amount,
+        string? Chain,
+        string? Asset,
+        BankAccount? BankAccount,
+        CryptoWallet? CryptoWallet);
+}

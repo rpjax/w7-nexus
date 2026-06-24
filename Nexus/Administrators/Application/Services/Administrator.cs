@@ -4,6 +4,12 @@ using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.AccountNodes.Aggregates;
+using Nexus.AccountNodes.Application.Contracts;
+using Nexus.Transfers.Application.Contracts;
+using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Administrators.Application.Services;
 
@@ -19,7 +25,11 @@ public class Administrator : IAdministrator
     private IAdministratorOperatorAssignmentSearchService _operatorAssignmentSearch { get; }
     private IAdministratorProfitShareAccountSearchService _profitShareAccountSearch { get; }
     private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
-    private IAdministratorWithdrawalCommandService _withdrawals { get; }
+    private IAdministratorAccountNodeCommandService _accountNodes { get; }
+    private IAdministratorTransferCommandService _transfers { get; }
+    private IAdministratorPaymentSearchService _paymentSearch { get; }
+    private IAdministratorPaymentCommandService _paymentCommands { get; }
+    private IAdministratorStrawManSettingsCommandService _strawManSettings { get; }
 
     public Administrator(
         IAdministratorAccessPolicy policy,
@@ -32,7 +42,11 @@ public class Administrator : IAdministrator
         IAdministratorOperatorAssignmentSearchService operatorAssignmentSearch,
         IAdministratorProfitShareAccountSearchService profitShareAccountSearch,
         IAdministratorOperationPickerSearchService operationPickerSearch,
-        IAdministratorWithdrawalCommandService withdrawals)
+        IAdministratorAccountNodeCommandService accountNodes,
+        IAdministratorTransferCommandService transfers,
+        IAdministratorPaymentSearchService paymentSearch,
+        IAdministratorPaymentCommandService paymentCommands,
+        IAdministratorStrawManSettingsCommandService strawManSettings)
     {
         _policy = policy;
         _operationSearch = operationSearch;
@@ -44,7 +58,11 @@ public class Administrator : IAdministrator
         _operatorAssignmentSearch = operatorAssignmentSearch;
         _profitShareAccountSearch = profitShareAccountSearch;
         _operationPickerSearch = operationPickerSearch;
-        _withdrawals = withdrawals;
+        _accountNodes = accountNodes;
+        _transfers = transfers;
+        _paymentSearch = paymentSearch;
+        _paymentCommands = paymentCommands;
+        _strawManSettings = strawManSettings;
     }
 
     public Task<IOperationResult<OperationDetails>> CreateOperationAsync(
@@ -455,51 +473,294 @@ public class Administrator : IAdministrator
             cancellationToken);
     }
 
-    public Task<IOperationResult<Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
+    public Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        CreateBankAccountRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _withdrawals.CreateBankAccountAsync(request),
+            () => _accountNodes.CreateBankAccountAsync(request),
             cancellationToken);
     }
 
-    public Task<IOperationResult<Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+    public Task<IOperationResult<CryptoWallet>> CreateCryptoWalletAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        CreateCryptoWalletRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _withdrawals.CreateCryptoWalletAsync(request),
+            () => _accountNodes.CreateCryptoWalletAsync(request),
             cancellationToken);
     }
 
-    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+    public Task<IOperationResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        UpsertCryptoWalletAddressRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _withdrawals.CreateWithdrawalAsync(request),
+            () => _accountNodes.UpsertCryptoWalletAddressAsync(request),
             cancellationToken);
     }
 
-    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+    public Task<IOperationResult<BankAccount>> GetBankAccountAsync(
         RequesterIdentity identity,
-        string withdrawalId,
+        string bankAccountId,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
             _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _withdrawals.GetWithdrawalAsync(withdrawalId),
+            () => _accountNodes.GetBankAccountAsync(bankAccountId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<CryptoWallet>> GetCryptoWalletAsync(
+        RequesterIdentity identity,
+        string cryptoWalletId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountNodes.GetCryptoWalletAsync(cryptoWalletId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
+        RequesterIdentity identity,
+        WithdrawalTransferRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.ExecuteWithdrawalAsync(request, cancellationToken),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
+        RequesterIdentity identity,
+        MovementTransferRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.ExecuteMovementAsync(request, cancellationToken),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(
+        RequesterIdentity identity,
+        PayoutTransferRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.ExecutePayoutAsync(request, cancellationToken),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Transfer>> GetTransferAsync(
+        RequesterIdentity identity,
+        string transferId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.GetTransferAsync(transferId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<TransferTimelineDetails>> GetTransferTimelineAsync(
+        RequesterIdentity identity,
+        string transferId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.GetTransferTimelineAsync(transferId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchTransfersResponse>> SearchTransfersAsync(
+        RequesterIdentity identity,
+        SearchTransfersRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _transfers.SearchTransfersAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
+        RequesterIdentity identity,
+        SearchBankAccountsRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountNodes.SearchBankAccountsAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
+        RequesterIdentity identity,
+        string bankAccountId,
+        string? label,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountNodes.UpdateBankAccountLabelAsync(bankAccountId, label),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
+        RequesterIdentity identity,
+        SearchCryptoWalletsRequest? request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _accountNodes.SearchCryptoWalletsAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
+        RequesterIdentity identity,
+        Payments.Application.Models.SearchPaymentsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentSearch.SearchPaymentsAsync(request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentSearch.GetPaymentAsync(paymentId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentCommands.PayAndGetAsync(paymentId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentCommands.RefundAndGetAsync(paymentId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string reason,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentCommands.KillAndGetAsync(paymentId, reason),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<bool>> DeletePaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync<bool>(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            async () =>
+            {
+                var deleteResult = await _paymentCommands.DeletePaymentAsync(paymentId);
+                if (deleteResult.IsFailure)
+                    return Result<bool>.Failure(deleteResult.Errors);
+
+                return Result<bool>.Success(true);
+            },
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string operatorAccountId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentCommands.BindOperatorAsync(paymentId, operatorAccountId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string strawManAccountId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _paymentCommands.BindStrawManAsync(paymentId, strawManAccountId),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
+        RequesterIdentity identity,
+        string strawManId,
+        decimal movementFeePercentage,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            identity,
+            _ => _policy.AuthorizeAdministratorAsync(identity),
+            () => _strawManSettings.UpsertStrawManSettingsAsync(
+                identity,
+                strawManId,
+                movementFeePercentage),
             cancellationToken);
     }
 

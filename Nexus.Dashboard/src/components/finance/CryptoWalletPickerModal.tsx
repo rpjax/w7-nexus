@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { searchCryptoWallets } from '../../api/withdrawals';
+import { searchCryptoWallets } from '../../api/accountNodes';
 import type { CryptoWalletRow } from '../../api/types';
+import { formatCryptoWalletAddresses, formatCryptoWalletBalances } from '../../utils/cryptoWalletDisplay';
 import { shortId } from '../../utils/format';
 import { IconButton } from '../IconButton';
 import { PaginationBar } from '../ListControls';
@@ -8,7 +9,8 @@ import { PaginationBar } from '../ListControls';
 type CryptoWalletPickerModalProps = {
   open: boolean;
   onClose: () => void;
-  strawManAccountId: string;
+  strawManId: string;
+  allowAnyStrawMan?: boolean;
   onSelected: (row: CryptoWalletRow) => void;
 };
 
@@ -17,9 +19,11 @@ const PAGE_SIZE = 8;
 export function CryptoWalletPickerModal({
   open,
   onClose,
-  strawManAccountId,
+  strawManId,
+  allowAnyStrawMan = false,
   onSelected,
 }: CryptoWalletPickerModalProps) {
+  const [scopeSameStrawMan, setScopeSameStrawMan] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [items, setItems] = useState<CryptoWalletRow[]>([]);
   const [totalItems, setTotalItems] = useState(0);
@@ -27,17 +31,18 @@ export function CryptoWalletPickerModal({
   const [loadError, setLoadError] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+  const filterByStrawMan = allowAnyStrawMan ? scopeSameStrawMan : true;
 
   useEffect(() => {
-    if (!open || !strawManAccountId.trim()) return;
+    if (!open || !strawManId.trim()) return;
+    setScopeSameStrawMan(true);
     setCurrentPage(1);
-    void load(1);
-  }, [open, strawManAccountId]);
+  }, [open, strawManId]);
 
   useEffect(() => {
-    if (!open || !strawManAccountId.trim()) return;
+    if (!open || !strawManId.trim()) return;
     void load(currentPage);
-  }, [currentPage]);
+  }, [open, strawManId, currentPage, filterByStrawMan]);
 
   async function load(page: number) {
     setLoading(true);
@@ -46,7 +51,7 @@ export function CryptoWalletPickerModal({
       const result = await searchCryptoWallets({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManAccountId,
+        strawManId: filterByStrawMan ? strawManId : null,
       });
       if (!result.ok) {
         setItems([]);
@@ -69,24 +74,51 @@ export function CryptoWalletPickerModal({
         <header className="account-picker-header">
           <div className="account-picker-heading">
             <h3 className="account-picker-title">Carteira crypto</h3>
-            <p className="account-picker-sub">Carteiras cadastradas para o laranja selecionado.</p>
+            <p className="account-picker-sub">
+              {filterByStrawMan
+                ? 'Carteiras do laranja. O ativo exibido vem do saldo creditado em cada endereço.'
+                : 'Todas as carteiras. O ativo exibido vem do saldo creditado em cada endereço.'}
+            </p>
           </div>
           <IconButton icon="x" label="Fechar" onClick={onClose} />
         </header>
+
+        {allowAnyStrawMan ? (
+          <div className="account-picker-search-row">
+            <button
+              type="button"
+              className={`btn btn-sm ${filterByStrawMan ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => { setScopeSameStrawMan(true); setCurrentPage(1); }}
+            >
+              Laranja do saque
+            </button>
+            <button
+              type="button"
+              className={`btn btn-sm ${!filterByStrawMan ? 'btn-primary' : 'btn-ghost'}`}
+              onClick={() => { setScopeSameStrawMan(false); setCurrentPage(1); }}
+            >
+              Todas as carteiras
+            </button>
+          </div>
+        ) : null}
 
         {loadError ? <p className="feedback error">{loadError}</p> : null}
         {loading ? <p className="muted account-picker-hint">Carregando carteiras…</p> : null}
 
         {!loading && items.length === 0 ? (
-          <p className="muted account-picker-hint">Nenhuma carteira cadastrada para este laranja.</p>
+          <p className="muted account-picker-hint">
+            {filterByStrawMan
+              ? 'Nenhuma carteira cadastrada para este laranja.'
+              : 'Nenhuma carteira cadastrada.'}
+          </p>
         ) : (
           <div className="table-wrap finance-picker-table">
             <table className="responsive-data ops-table">
               <thead>
                 <tr>
-                  <th>Rede</th>
-                  <th>Ativo</th>
-                  <th>Endereço</th>
+                  <th>Endereços</th>
+                  <th>Saldos</th>
+                  <th>Laranja</th>
                   <th>Label</th>
                   <th />
                 </tr>
@@ -94,9 +126,9 @@ export function CryptoWalletPickerModal({
               <tbody>
                 {items.map((row) => (
                   <tr key={row.id}>
-                    <td data-label="Rede">{row.chain}</td>
-                    <td data-label="Ativo">{row.asset}</td>
-                    <td data-label="Endereço"><span className="mono token-mask" title={row.address}>{shortId(row.address, 22)}</span></td>
+                    <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
+                    <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>
+                    <td data-label="Laranja"><span className="mono">{shortId(row.strawManId)}</span></td>
                     <td data-label="Label">{row.label ?? '—'}</td>
                     <td data-label="Ação">
                       <button

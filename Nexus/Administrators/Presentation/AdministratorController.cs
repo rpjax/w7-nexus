@@ -4,6 +4,11 @@ using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.AccountNodes.Application.Contracts;
+using Nexus.AccountNodes.Presentation;
+using Nexus.Transfers.Application.Contracts;
+using Nexus.Transfers.Presentation;
 
 namespace Nexus.Administrators.Presentation;
 
@@ -466,53 +471,380 @@ public class AdministratorController : NexusController
 
     [HttpPost("bank-accounts")]
     public async Task<ActionResult> CreateBankAccountAsync(
-        [FromBody] Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        [FromBody] CreateBankAccountRequest request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.CreateBankAccountAsync(identity, request, cancellationToken);
 
-        return ToOperationResult(await _administrator.CreateBankAccountAsync(
-            identity,
-            request,
-            cancellationToken));
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
+    }
+
+    [HttpGet("bank-accounts/{bankAccountId}")]
+    public async Task<ActionResult> GetBankAccountAsync(
+        string bankAccountId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.GetBankAccountAsync(identity, bankAccountId, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
     }
 
     [HttpPost("crypto-wallets")]
     public async Task<ActionResult> CreateCryptoWalletAsync(
-        [FromBody] Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        [FromBody] CreateCryptoWalletRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.CreateCryptoWalletAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+    }
+
+    [HttpPut("crypto-wallets/{cryptoWalletId}/addresses")]
+    public async Task<ActionResult> UpsertCryptoWalletAddressAsync(
+        string cryptoWalletId,
+        [FromBody] UpsertCryptoWalletAddressBody request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.UpsertCryptoWalletAddressAsync(
+            identity,
+            new UpsertCryptoWalletAddressRequest
+            {
+                CryptoWalletId = cryptoWalletId,
+                Namespace = request.Namespace,
+                Address = request.Address,
+                Memo = request.Memo,
+            },
+            cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+    }
+
+    [HttpGet("crypto-wallets/{cryptoWalletId}")]
+    public async Task<ActionResult> GetCryptoWalletAsync(
+        string cryptoWalletId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.GetCryptoWalletAsync(identity, cryptoWalletId, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+    }
+
+    [HttpPost("bank-accounts/search")]
+    public async Task<ActionResult> SearchBankAccountsAsync(
+        [FromBody] Application.Contracts.SearchBankAccountsRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.SearchBankAccountsAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        var data = result.Value!;
+        return Ok(new
+        {
+            Total = data.Total,
+            Items = data.Items.Select(AccountNodeApiMapping.ToBankAccountResponse).ToArray(),
+        });
+    }
+
+    [HttpPatch("bank-accounts/{bankAccountId}/label")]
+    public async Task<ActionResult> UpdateBankAccountLabelAsync(
+        string bankAccountId,
+        [FromBody] UpdateBankAccountLabelRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.UpdateBankAccountLabelAsync(
+            identity,
+            bankAccountId,
+            request?.Label,
+            cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
+    }
+
+    [HttpPost("crypto-wallets/search")]
+    public async Task<ActionResult> SearchCryptoWalletsAsync(
+        [FromBody] Application.Contracts.SearchCryptoWalletsRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.SearchCryptoWalletsAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        var data = result.Value!;
+        return Ok(new
+        {
+            Total = data.Total,
+            Items = data.Items.Select(AccountNodeApiMapping.ToCryptoWalletResponse).ToArray(),
+        });
+    }
+
+    [HttpPost("transfers/search")]
+    public async Task<ActionResult> SearchTransfersAsync(
+        [FromBody] Application.Contracts.SearchTransfersRequest? request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.SearchTransfersAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        var data = result.Value!;
+        return Ok(new
+        {
+            Total = data.Total,
+            Items = data.Items.Select(TransferApiMapping.ToTransferResponse).ToArray(),
+        });
+    }
+
+    [HttpPost("transfers/withdrawal")]
+    public async Task<ActionResult> ExecuteWithdrawalTransferAsync(
+        [FromBody] WithdrawalTransferRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.ExecuteWithdrawalTransferAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
+    }
+
+    [HttpPost("transfers/movement")]
+    public async Task<ActionResult> ExecuteMovementTransferAsync(
+        [FromBody] MovementTransferRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.ExecuteMovementTransferAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
+    }
+
+    [HttpPost("transfers/payout")]
+    public async Task<ActionResult> ExecutePayoutTransferAsync(
+        [FromBody] PayoutTransferRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.ExecutePayoutTransferAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
+    }
+
+    [HttpGet("transfers/{transferId}")]
+    public async Task<ActionResult> GetTransferAsync(
+        string transferId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.GetTransferAsync(identity, transferId, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
+    }
+
+    [HttpGet("transfers/{transferId}/timeline")]
+    public async Task<ActionResult> GetTransferTimelineAsync(
+        string transferId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.GetTransferTimelineAsync(identity, transferId, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferTimelineApiMapping.ToTimelineResponse(result.Value!));
+    }
+
+    [HttpPost("payments/search")]
+    public async Task<ActionResult> SearchPaymentsAsync(
+        [FromBody] Payments.Application.Models.SearchPaymentsRequest? request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _administrator.CreateCryptoWalletAsync(
+        return ToOperationResult(await _administrator.SearchPaymentsAsync(
             identity,
             request,
             cancellationToken));
     }
 
-    [HttpPost("withdrawals")]
-    public async Task<ActionResult> CreateWithdrawalAsync(
-        [FromBody] Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+    [HttpGet("payments/{paymentId}")]
+    public async Task<ActionResult> GetPaymentAsync(
+        string paymentId,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _administrator.CreateWithdrawalAsync(
+        return ToOperationResult(await _administrator.GetPaymentAsync(
             identity,
-            request,
+            paymentId,
             cancellationToken));
     }
 
-    [HttpGet("withdrawals/{withdrawalId}")]
-    public async Task<ActionResult> GetWithdrawalAsync(
-        string withdrawalId,
+    [HttpPost("payments/{paymentId}/pay")]
+    public async Task<ActionResult> PayPaymentAsync(
+        string paymentId,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _administrator.GetWithdrawalAsync(
+        return ToOperationResult(await _administrator.PayPaymentAsync(
             identity,
-            withdrawalId,
+            paymentId,
+            cancellationToken));
+    }
+
+    [HttpPost("payments/{paymentId}/refund")]
+    public async Task<ActionResult> RefundPaymentAsync(
+        string paymentId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.RefundPaymentAsync(
+            identity,
+            paymentId,
+            cancellationToken));
+    }
+
+    [HttpPost("payments/{paymentId}/kill")]
+    public async Task<ActionResult> KillPaymentAsync(
+        string paymentId,
+        [FromBody] Payments.Application.Models.KillPaymentRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.KillPaymentAsync(
+            identity,
+            paymentId,
+            request?.Reason ?? string.Empty,
+            cancellationToken));
+    }
+
+    [HttpDelete("payments/{paymentId}")]
+    public async Task<ActionResult> DeletePaymentAsync(
+        string paymentId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.DeletePaymentAsync(
+            identity,
+            paymentId,
+            cancellationToken));
+    }
+
+    [HttpPost("payments/{paymentId}/bind-operator")]
+    public async Task<ActionResult> BindPaymentOperatorAsync(
+        string paymentId,
+        [FromBody] Payments.Application.Models.BindPaymentOperatorRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.BindPaymentOperatorAsync(
+            identity,
+            paymentId,
+            request?.OperatorId ?? string.Empty,
+            cancellationToken));
+    }
+
+    [HttpPost("payments/{paymentId}/bind-straw-man")]
+    public async Task<ActionResult> BindPaymentStrawManAsync(
+        string paymentId,
+        [FromBody] Payments.Application.Models.BindPaymentStrawManRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.BindPaymentStrawManAsync(
+            identity,
+            paymentId,
+            request?.StrawManId ?? string.Empty,
+            cancellationToken));
+    }
+
+    [HttpPut("straw-men/{strawManId}/settings")]
+    public async Task<ActionResult> UpsertStrawManSettingsAsync(
+        string strawManId,
+        [FromBody] UpdateStrawManSettingsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.UpsertStrawManSettingsAsync(
+            identity,
+            strawManId,
+            request?.MovementFeePercentage ?? 0m,
             cancellationToken));
     }
 }

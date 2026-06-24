@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.SigiloPay.Errors;
-using Nexus.Legacy.Presentation;
+using Nexus.Payments.Presentation;
 using Nexus.Payments.Aggregates;
 
 namespace Nexus.Gateways.SigiloPay.Presentation;

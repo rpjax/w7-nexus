@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import type { BankAccountRow } from '../../api/types';
-import { updateBankAccountLabel } from '../../api/withdrawals';
+import { updateBankAccountLabel } from '../../api/accountNodes';
 import {
   bankAccountCopyText,
   bankAccountSummary,
+  formatBankAccountBalance,
   formatBankAccountMeta,
+  resolveBankMetadata,
 } from '../../utils/bankAccountDisplay';
-import { pixKeyTypeLabel } from '../../utils/financeLabels';
 
 type BankAccountCardProps = {
   row: BankAccountRow;
@@ -28,7 +29,7 @@ export function BankAccountCard({
   const [editingLabel, setEditingLabel] = useState(false);
   const [labelDraft, setLabelDraft] = useState(row.label ?? '');
   const [labelBusy, setLabelBusy] = useState(false);
-  const [copiedField, setCopiedField] = useState<'account' | 'pix' | null>(null);
+  const [copiedField, setCopiedField] = useState(false);
 
   useEffect(() => {
     if (!editingLabel) setLabelDraft(row.label ?? '');
@@ -36,11 +37,13 @@ export function BankAccountCard({
 
   useEffect(() => {
     if (!copiedField) return;
-    const timer = window.setTimeout(() => setCopiedField(null), 1800);
+    const timer = window.setTimeout(() => setCopiedField(false), 1800);
     return () => window.clearTimeout(timer);
   }, [copiedField]);
 
-  const title = row.label?.trim() || `${row.bankCode} — ${row.bankName}`;
+  const meta = resolveBankMetadata(row.bank);
+  const title = row.label?.trim() || (meta ? `${meta.code} — ${meta.name}` : row.bank);
+  const balance = formatBankAccountBalance(row);
   const cardClass = [
     'bank-account-card',
     variant === 'compact' ? 'bank-account-card--compact' : '',
@@ -49,10 +52,10 @@ export function BankAccountCard({
     .filter(Boolean)
     .join(' ');
 
-  async function copyText(value: string, field: 'account' | 'pix') {
+  async function copyText(value: string) {
     try {
       await navigator.clipboard.writeText(value);
-      setCopiedField(field);
+      setCopiedField(true);
     } catch {
       onError?.('Não foi possível copiar para a área de transferência.');
     }
@@ -129,13 +132,11 @@ export function BankAccountCard({
         <span className="mono">{bankAccountCopyText(row)}</span>
       </p>
 
-      {row.pixKey?.trim() ? (
-        <p className="bank-account-card__pix muted small">
-          Chave PIX ({pixKeyTypeLabel(row.pixKeyType)}): <span className="mono">{row.pixKey}</span>
+      {balance ? (
+        <p className="bank-account-card__balance muted small">
+          Saldo: <strong>{balance}</strong>
         </p>
-      ) : (
-        <p className="bank-account-card__pix muted small">Chave PIX não cadastrada.</p>
-      )}
+      ) : null}
 
       <footer className="bank-account-card__footer">
         <span className="bank-account-card__meta muted small" title={row.id}>
@@ -145,19 +146,10 @@ export function BankAccountCard({
           <button
             type="button"
             className="btn btn-ghost btn-sm"
-            onClick={() => void copyText(bankAccountCopyText(row), 'account')}
+            onClick={() => void copyText(bankAccountCopyText(row))}
           >
-            {copiedField === 'account' ? 'Copiado' : 'Copiar conta'}
+            {copiedField ? 'Copiado' : 'Copiar conta'}
           </button>
-          {row.pixKey?.trim() ? (
-            <button
-              type="button"
-              className="btn btn-ghost btn-sm"
-              onClick={() => void copyText(row.pixKey, 'pix')}
-            >
-              {copiedField === 'pix' ? 'Copiado' : 'Copiar PIX'}
-            </button>
-          ) : null}
           {row.label?.trim() && !editingLabel ? (
             <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingLabel(true)}>
               Editar apelido

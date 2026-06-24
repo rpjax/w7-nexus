@@ -3,6 +3,7 @@ using Nexus.Authorization.Application.Models;
 using Nexus.Operators.Application.Contracts;
 using Nexus.Operators.Application.Requests;
 using Nexus.Operators.Application.Responses;
+using Nexus.Payments.Application.Models;
 
 namespace Nexus.Operators.Application.Services;
 
@@ -10,13 +11,16 @@ public class Operator : IOperator
 {
     private IOperatorAccessPolicy _policy { get; }
     private IOperatorOperationSearchService _operationSearch { get; }
+    private IOperatorPaymentSearchService _paymentSearch { get; }
 
     public Operator(
         IOperatorAccessPolicy policy,
-        IOperatorOperationSearchService operationSearch)
+        IOperatorOperationSearchService operationSearch,
+        IOperatorPaymentSearchService paymentSearch)
     {
         _policy = policy;
         _operationSearch = operationSearch;
+        _paymentSearch = paymentSearch;
     }
 
     public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -27,6 +31,28 @@ public class Operator : IOperator
         return ExecuteAsync(
             ct => _policy.AuthorizeSearchOperationsAsync(identity, ct),
             () => _operationSearch.SearchOperationsAsync(identity, request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<SearchPaymentsResponse>> SearchPaymentsAsync(
+        RequesterIdentity identity,
+        SearchPaymentsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            ct => _policy.AuthorizeSearchOperationsAsync(identity, ct),
+            () => _paymentSearch.SearchPaymentsAsync(identity, request),
+            cancellationToken);
+    }
+
+    public Task<IOperationResult<PaymentDetails>> GetPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(
+            ct => _policy.AuthorizeSearchOperationsAsync(identity, ct),
+            () => _paymentSearch.GetPaymentAsync(identity, paymentId),
             cancellationToken);
     }
 

@@ -4,7 +4,10 @@ import {
   searchAdministratorOperatorsForPicker,
   searchAdministratorProfitShareAccountsForPicker,
 } from './administrator/accountPickers';
-import { searchAdministratorAccountsForPicker } from './administrator/accounts';
+import {
+  searchAdministratorAccountsForPicker,
+  searchAdministratorStrawMenForPicker,
+} from './administrator/accounts';
 import {
   searchOpAdminStrawMenForPicker,
   searchOpAdminTeamLeaderCandidatesForPicker,
@@ -16,6 +19,9 @@ import {
 
 /** Busca contas via `POST /api/administrator/accounts/search`. */
 export const searchAdministratorAccountsPicker = toAccountPickerSearchFn(searchAdministratorAccountsForPicker);
+
+/** Busca laranjas via `POST /api/administrator/accounts/search` (filtro StrawMan). */
+export const searchAdministratorStrawMenPicker = toAccountPickerSearchFn(searchAdministratorStrawMenForPicker);
 
 /** Busca operadores via `POST /api/administrator/teams/operators/search`. */
 export const searchAdministratorOperatorsPicker = toAccountPickerSearchFn(searchAdministratorOperatorsForPicker);

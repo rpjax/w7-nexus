@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using MongoDB.Bson;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Models;
+using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
@@ -21,6 +22,7 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
     private ITeamRepository _teamRepository { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
+    private GatewayCredentialProviderResolver _credentialProviderResolver { get; }
     private ILogger<MockGatewayOrchestrator> _logger { get; }
 
     public MockGatewayOrchestrator(
@@ -28,12 +30,14 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
         ITeamRepository teamRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
+        GatewayCredentialProviderResolver credentialProviderResolver,
         ILogger<MockGatewayOrchestrator> logger)
     {
         _operationRepository = operationRepository;
         _teamRepository = teamRepository;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
+        _credentialProviderResolver = credentialProviderResolver;
         _logger = logger;
     }
 
@@ -58,10 +62,10 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
                     .Build())
                 .Build();
 
-        var operationExists = _operationRepository.AsQueryable()
-            .Any(o => o.Id == operationId);
+        var operation = _operationRepository.AsQueryable()
+            .FirstOrDefault(o => o.Id == operationId);
 
-        if (!operationExists)
+        if (operation is null)
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperationNotFound)
@@ -69,8 +73,8 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
                     .Build())
                 .Build();
 
-        var operatorAccountId = request.OperatorAccountId?.Trim();
-        if (operatorAccountId is not null && string.IsNullOrWhiteSpace(operatorAccountId))
+        var operatorId = request.OperatorId?.Trim();
+        if (operatorId is not null && string.IsNullOrWhiteSpace(operatorId))
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.OperatorInvalid)
@@ -78,21 +82,54 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
                     .Build())
                 .Build();
 
-        var strawManAccountId = request.StrawManAccountId?.Trim();
-        if (strawManAccountId is not null && string.IsNullOrWhiteSpace(strawManAccountId))
+        Team? team = null;
+        if (!string.IsNullOrWhiteSpace(operatorId))
+        {
+            var teams = _teamRepository.AsQueryable()
+                .Where(t =>
+                    t.OperationId == operationId &&
+                    t.OperatorIds.Contains(operatorId))
+                .ToList();
+
+            if (teams.Count == 0)
+            {
+                return Result.Create<GatewayPix>()
+                    .WithError(Error.Create()
+                        .WithCode(PixPaymentErrorCodes.TeamNotFound)
+                        .WithMessage($"Não há equipe na operação '{operationId}' com o operador informado.")
+                        .Build())
+                    .Build();
+            }
+
+            if (teams.Count > 1)
+            {
+                return Result.Create<GatewayPix>()
+                    .WithError(Error.Create()
+                        .WithCode(PixPaymentErrorCodes.TeamAmbiguous)
+                        .WithMessage("Há mais de uma equipe compatível com o operador informado.")
+                        .Build())
+                    .Build();
+            }
+
+            team = teams[0];
+        }
+
+        IGatewayCredentialScope scope = (IGatewayCredentialScope?)team ?? operation;
+
+        var providers = await _credentialProviderResolver.ResolveProvidersAsync(scope);
+        if (providers.Length == 0)
+        {
             return Result.Create<GatewayPix>()
                 .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.StrawManInvalid)
-                    .WithMessage("O ID da conta laranja não pode estar vazio quando informado.")
+                    .WithCode(PixPaymentErrorCodes.NoGatewayServicesAvailable)
+                    .WithMessage(team is null
+                        ? "Não há credenciais de gateway disponíveis para esta operação."
+                        : "Não há credenciais de gateway disponíveis para esta equipe.")
                     .Build())
                 .Build();
+        }
 
-        var team = string.IsNullOrWhiteSpace(operatorAccountId)
-            ? null
-            : _teamRepository.AsQueryable()
-                .FirstOrDefault(t =>
-                    t.OperationId == operationId &&
-                    t.OperatorIds.Contains(operatorAccountId));
+        var provider = providers[0];
 
         var paymentId = string.IsNullOrWhiteSpace(request.PaymentId)
             ? ObjectId.GenerateNewId().ToString()
@@ -104,10 +141,9 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
         {
             ExplicitPaymentId = paymentId,
             OperationId = operationId,
-            TeamId = team?.Id,
-            OperatorAccountId = operatorAccountId,
-            StrawManAccountId = strawManAccountId,
-            Gateway = PaymentGateway.Frendz,
+            OperatorId = operatorId,
+            StrawManId = null,
+            Gateway = provider.Gateway,
             Amount = request.Amount,
             GatewayPaymentId = gatewayTransactionId,
         };
@@ -123,12 +159,21 @@ public sealed class MockGatewayOrchestrator : IGatewayOrchestrator
         var payment = createPaymentResult.Value
             ?? throw new InvalidOperationException("Payment creation succeeded without a value.");
 
-        var bindGateway = payment.BindToGateway(PaymentGateway.Frendz, gatewayTransactionId);
+        var bindGateway = payment.BindToGateway(provider.Gateway, gatewayTransactionId);
         if (bindGateway.IsFailure)
         {
             await _paymentService.DeletePaymentAsync(payment.Id);
             return Result.Create<GatewayPix>()
                 .WithErrors(bindGateway.Errors)
+                .Build();
+        }
+
+        var bindStrawMan = payment.BindToStrawMan(provider.StrawManId!);
+        if (bindStrawMan.IsFailure)
+        {
+            await _paymentService.DeletePaymentAsync(payment.Id);
+            return Result.Create<GatewayPix>()
+                .WithErrors(bindStrawMan.Errors)
                 .Build();
         }
 

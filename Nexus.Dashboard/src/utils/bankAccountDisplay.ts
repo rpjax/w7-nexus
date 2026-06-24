@@ -1,10 +1,17 @@
 import type { BankAccountRow } from '../api/types';
-import { bankAccountTypeLabel, pixKeyTypeLabel } from './financeLabels';
+import { BRAZILIAN_BANKS } from '../data/brazilianBanks';
+import { bankAccountTypeLabel, formatMoney } from './financeLabels';
 import { formatUtc, shortId } from './format';
 
+export function resolveBankMetadata(bankKey: string) {
+  return BRAZILIAN_BANKS.find((bank) => bank.key === bankKey) ?? null;
+}
+
 export function bankAccountSummary(row: BankAccountRow): string {
+  const meta = resolveBankMetadata(row.bank);
   const account = `${row.agency}/${row.accountNumber}${row.accountDigit ? `-${row.accountDigit}` : ''}`;
-  return `${row.bankCode} — ${row.bankName} · ${account}`;
+  if (meta) return `${meta.code} — ${meta.name} · ${account}`;
+  return `${row.bank} · ${account}`;
 }
 
 export function bankAccountPickerLabel(row: BankAccountRow): string {
@@ -12,21 +19,16 @@ export function bankAccountPickerLabel(row: BankAccountRow): string {
   return bankAccountSummary(row);
 }
 
-export function bankAccountPixSummary(row: BankAccountRow): string | null {
-  if (!row.pixKey?.trim()) return null;
-  return `${pixKeyTypeLabel(row.pixKeyType)}: ${row.pixKey}`;
-}
-
 export function bankAccountSearchText(row: BankAccountRow): string {
+  const meta = resolveBankMetadata(row.bank);
   return [
     row.label,
-    row.bankName,
-    row.bankCode,
+    meta?.name,
+    meta?.code,
+    row.bank,
     row.agency,
     row.accountNumber,
     row.accountDigit,
-    row.pixKeyType,
-    row.pixKey,
     bankAccountTypeLabel(row.accountType),
   ]
     .filter(Boolean)
@@ -41,4 +43,9 @@ export function bankAccountCopyText(row: BankAccountRow): string {
 
 export function formatBankAccountMeta(row: BankAccountRow): string {
   return `${shortId(row.id)} · ${formatUtc(row.updatedAt)}`;
+}
+
+export function formatBankAccountBalance(row: BankAccountRow): string | null {
+  if (row.totalBalanceBrl === undefined) return null;
+  return formatMoney(row.totalBalanceBrl);
 }

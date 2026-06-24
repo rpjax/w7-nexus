@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { searchBankAccounts } from '../../api/withdrawals';
+import { searchBankAccounts } from '../../api/accountNodes';
 import type { BankAccountRow } from '../../api/types';
 import { BankAccountCard } from './BankAccountCard';
 import { IconButton } from '../IconButton';
@@ -8,7 +8,7 @@ import { PaginationBar } from '../ListControls';
 type BankAccountPickerModalProps = {
   open: boolean;
   onClose: () => void;
-  strawManAccountId: string;
+  strawManId: string;
   onSelected: (row: BankAccountRow) => void;
   onCreateRequested?: () => void;
 };
@@ -18,7 +18,7 @@ const PAGE_SIZE = 8;
 export function BankAccountPickerModal({
   open,
   onClose,
-  strawManAccountId,
+  strawManId,
   onSelected,
   onCreateRequested,
 }: BankAccountPickerModalProps) {
@@ -31,14 +31,14 @@ export function BankAccountPickerModal({
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
   useEffect(() => {
-    if (!open || !strawManAccountId.trim()) return;
+    if (!open || !strawManId.trim()) return;
     setCurrentPage(1);
-  }, [open, strawManAccountId]);
+  }, [open, strawManId]);
 
   useEffect(() => {
-    if (!open || !strawManAccountId.trim()) return;
+    if (!open || !strawManId.trim()) return;
     void load(currentPage);
-  }, [open, strawManAccountId, currentPage]);
+  }, [open, strawManId, currentPage]);
 
   async function load(page: number) {
     setLoading(true);
@@ -47,7 +47,7 @@ export function BankAccountPickerModal({
       const result = await searchBankAccounts({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManAccountId,
+        strawManId,
       });
       if (!result.ok) {
         setItems([]);

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { searchAdministratorAccountsPicker, searchOpAdminStrawMenPicker } from '../api/accountPickerSources';
+import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import { searchAdministratorOperationsPicker } from '../api/operationPickerSources';
 import { generatePix } from '../api/payments';
 import type { GatewayPixResult } from '../api/types';
@@ -22,17 +22,14 @@ export function PaymentsPixPage() {
   const [operationId, setOperationId] = useState('');
   const [operationName, setOperationName] = useState<string | null>(null);
   const [amountInput, setAmountInput] = useState('');
-  const [operatorAccountId, setOperatorAccountId] = useState<string | null>(null);
+  const [operatorId, setOperatorId] = useState<string | null>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
-  const [strawManAccountId, setStrawManAccountId] = useState<string | null>(null);
-  const [strawName, setStrawName] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [lastResult, setLastResult] = useState<GatewayPixResult | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [generateBusy, setGenerateBusy] = useState(false);
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
-  const [strawPickerOpen, setStrawPickerOpen] = useState(false);
 
   const amount = useMemo(() => parseAmountInput(amountInput), [amountInput]);
   const canGenerate = Boolean(operationId.trim()) && amount > 0 && !generateBusy;
@@ -54,8 +51,7 @@ export function PaymentsPixPage() {
       const result = await generatePix({
         operationId: operationId.trim(),
         amount,
-        operatorAccountId,
-        strawManAccountId,
+        operatorId,
       });
       if (!result.ok) {
         setError(result.error);
@@ -81,13 +77,8 @@ export function PaymentsPixPage() {
   }
 
   function clearOperator() {
-    setOperatorAccountId(null);
+    setOperatorId(null);
     setOperatorName(null);
-  }
-
-  function clearStraw() {
-    setStrawManAccountId(null);
-    setStrawName(null);
   }
 
   return (
@@ -95,7 +86,7 @@ export function PaymentsPixPage() {
       <PageHeading
         kicker="Financeiro"
         title="Pagamentos PIX"
-        subtitle="Gere cobrança PIX vinculada a uma operação. Operador e laranja são opcionais."
+        subtitle="Gere cobrança PIX vinculada a uma operação. O laranja é definido automaticamente pela credencial selecionada."
         backLink={{ to: '/dashboard/payments', label: 'Registros de pagamentos' }}
       />
 
@@ -181,34 +172,24 @@ export function PaymentsPixPage() {
             <div className="admin-op-section__head">
               <div className="admin-op-section__head-text">
                 <span className="admin-op-section__kicker">Passo 3</span>
-                <h2 className="admin-op-section-title">Vinculação</h2>
+                <h2 className="admin-op-section-title">Operador</h2>
                 <p className="admin-op-section-desc muted small">
-                  Opcional — refine repasse e credenciais de gateway.
+                  Opcional. Com operador, o repasse segue a equipe e a estratégia de credenciais dela.
+                  Sem operador, usa a estratégia da operação e divide entre administradores.
                 </p>
               </div>
             </div>
-            <div className="admin-op-section__body pix-link-grid">
+            <div className="admin-op-section__body">
               <PixEntityField
                 label="Operador"
-                hint="Filtra a cobrança ao operador selecionado."
+                hint="Filtra repasse e credenciais pela equipe do operador."
                 optional
                 emptyLabel="Nenhum operador"
                 name={operatorName}
-                id={operatorAccountId}
+                id={operatorId}
                 onPick={() => setOperatorPickerOpen(true)}
                 onClear={clearOperator}
                 accent="green"
-              />
-              <PixEntityField
-                label="Laranja"
-                hint="Alinha credenciais de gateway com a conta laranja."
-                optional
-                emptyLabel="Nenhum laranja"
-                name={strawName}
-                id={strawManAccountId}
-                onPick={() => setStrawPickerOpen(true)}
-                onClear={clearStraw}
-                accent="warm"
               />
             </div>
           </section>
@@ -280,22 +261,10 @@ export function PaymentsPixPage() {
         onClose={() => setOperatorPickerOpen(false)}
         searchAccounts={searchAdministratorAccountsPicker}
         title="Conta do operador"
-        subtitle="Opcional — filtra a cobrança ao operador."
+        subtitle="Opcional — define equipe, repasse e credenciais da cobrança."
         onSelected={(row) => {
-          setOperatorAccountId(row.id);
+          setOperatorId(row.id);
           setOperatorName(row.username);
-        }}
-      />
-
-      <AccountPickerModal
-        open={strawPickerOpen}
-        onClose={() => setStrawPickerOpen(false)}
-        searchAccounts={searchOpAdminStrawMenPicker}
-        title="Conta laranja"
-        subtitle="Opcional — alinha credenciais de gateway com laranja."
-        onSelected={(row) => {
-          setStrawManAccountId(row.id);
-          setStrawName(row.username);
         }}
       />
     </div>

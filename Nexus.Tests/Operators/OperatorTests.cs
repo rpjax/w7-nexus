@@ -223,7 +223,7 @@ public sealed class OperatorTests
     public async Task SearchOperationsAsync_OperatorMentionedInPayment_ReturnsEmptyList()
     {
         var operation = await _ctx.SeedOperationAsync("Payment Operation");
-        await _ctx.SeedPaymentAsync(operation.Id, operatorAccountId: "operator-1");
+        await _ctx.SeedPaymentAsync(operation.Id, operatorId: "operator-1");
         var sut = _ctx.CreateOperator();
 
         var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest

@@ -4,7 +4,7 @@ import { searchAdministratorOperations } from '../api/administrator/operations';
 import { searchGatewayCredentials } from '../api/gateways';
 import { searchOperatorOperations } from '../api/operator/operations';
 import { useAuth } from '../auth/AuthContext';
-import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
+import { canUseOperatorPanel, canUseStrawManPanel, isAdministrator } from '../auth/roles';
 import { StatCard } from '../components/StatCard';
 import { PageHeading } from '../layouts/PageHeading';
 
@@ -34,6 +34,7 @@ export function HomePage() {
   const { user } = useAuth();
   const operatorPanel = canUseOperatorPanel(user);
   const adminView = isAdministrator(user);
+  const strawManPanel = canUseStrawManPanel(user);
 
   const [myOperationsTotal, setMyOperationsTotal] = useState<number | null>(null);
   const [systemOperationsTotal, setSystemOperationsTotal] = useState<number | null>(null);
@@ -139,10 +140,8 @@ export function HomePage() {
           {operatorPanel ? (
             <>
               <Link className="quick-action" to="/dashboard/operations">Minhas operações</Link>
-              <Link className="quick-action" to="/dashboard/payments">Pagamentos</Link>
+              <Link className="quick-action" to="/dashboard/payments">Meus pagamentos</Link>
               <Link className="quick-action" to="/dashboard/payments/pix">Gerar cobrança PIX</Link>
-              <Link className="quick-action" to="/dashboard/withdrawals">Saques</Link>
-              <Link className="quick-action" to="/dashboard/withdrawals/new">Registrar saque</Link>
               <Link className="quick-action" to="/dashboard/gateways/frendz">Credenciais Frendz</Link>
               <Link className="quick-action" to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</Link>
               <Link className="quick-action" to="/dashboard/gateways/wintech">Credenciais Wintech</Link>
@@ -151,8 +150,14 @@ export function HomePage() {
           {adminView ? (
             <>
               <Link className="quick-action quick-action-admin" to="/dashboard/admin/operations">Todas as operações</Link>
+              <Link className="quick-action quick-action-admin" to="/dashboard/admin/payments">Todos os pagamentos</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/accounts">Contas</Link>
+              <Link className="quick-action quick-action-admin" to="/dashboard/transfers">Transferências</Link>
+              <Link className="quick-action quick-action-admin" to="/dashboard/transfers/new">Registrar saque</Link>
             </>
+          ) : null}
+          {strawManPanel ? (
+            <Link className="quick-action" to="/dashboard/straw-man/payments">Pagamentos do laranja</Link>
           ) : null}
         </div>
       </section>

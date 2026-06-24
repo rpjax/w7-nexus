@@ -26,20 +26,19 @@ public sealed class GatewayPaymentWebhookServiceTests
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
                 ? PaymentTestFactory.Create(
                     operationId: entity.OperationId,
-                    teamId: entity.TeamId,
                     gateway: entity.Gateway,
                     gatewayPaymentId: entity.GatewayTransactionId,
                     amount: entity.Amount,
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
-                    operatorAccountId: entity.OperatorAccountId,
-                    strawManAccountId: entity.StrawManAccountId,
+                    operatorId: entity.OperatorId,
+                    strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
                     paidAt: entity.PaidAt,
                     refundedAt: entity.RefundedAt,
-                    diedAt: entity.DiedAt,
-                    deathReason: entity.DeathReason,
+                    killedAt: entity.KilledAt,
+                    killReason: entity.KillReason,
                     withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
@@ -87,6 +86,15 @@ public sealed class GatewayPaymentWebhookServiceTests
             KillCalls.Add((paymentId, reason));
             return Task.FromResult<IResult>(Result.Success());
         }
+
+        public Task<IResult<Payment>> GetByIdAsync(string paymentId) =>
+            throw new NotSupportedException();
+
+        public Task<IResult<Payment>> BindOperatorAsync(string paymentId, string OperatorId) =>
+            throw new NotSupportedException();
+
+        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, string StrawManId) =>
+            throw new NotSupportedException();
     }
 
     private static Payment CreatePayment(

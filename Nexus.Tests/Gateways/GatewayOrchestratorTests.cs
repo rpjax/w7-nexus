@@ -34,23 +34,16 @@ public sealed class GatewayOrchestratorTests
     [Fact]
     public async Task CreateGatewayPixAsync_WhenOperationMissing_ReturnsFailure()
     {
-        var sut = new GatewayOrchestrator(
+        var sut = CreateSut(
             new EmptyOperationRepository(),
             new EmptyTeamRepository(),
             new StubPaymentService(),
-            new StubPaymentRepository(),
-            new EmptyFrendzCredentialsRepository(),
-            new StubGatewayPixServiceFactory(new StubGatewayPixService()),
-            new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayGatewayPixServiceFactory(new StubGatewayPixService()),
-            new EmptyWintechCredentialsRepository(),
-            new StubWintechGatewayPixServiceFactory(new StubGatewayPixService()),
-            new EmptyGatewayCredentialsGroupRepository());
+            new StubPaymentRepository());
 
         var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "missing",
-            OperatorAccountId = "operator-1",
+            OperatorId = "operator-1",
             Amount = 10m
         });
 
@@ -79,7 +72,7 @@ public sealed class GatewayOrchestratorTests
             "Team A",
             null,
             new[] { "operator-1" },
-            Array.Empty<string>(),
+            new[] { "straw-1" },
             GatewaySelectionStrategy.PerStrawman,
             Array.Empty<string>(),
             Array.Empty<string>(),
@@ -87,7 +80,7 @@ public sealed class GatewayOrchestratorTests
             DateTime.UtcNow,
             DateTime.UtcNow);
 
-        var cred = new FrendzApiCredentials { Id = "1", Name = "c", Token = "tok" };
+        var cred = new FrendzApiCredentials { Id = "1", Name = "c", Token = "tok", StrawManId = "straw-1" };
         var paymentRepo = new StubPaymentRepository();
         var gatewayPixService = new StubGatewayPixService
         {
@@ -98,23 +91,18 @@ public sealed class GatewayOrchestratorTests
             })
         };
 
-        var sut = new GatewayOrchestrator(
+        var sut = CreateSut(
             new SingleOperationRepository(operation),
             new SingleTeamRepository(team),
             new StubPaymentService(),
             paymentRepo,
-            new SingleFrendzCredentialsRepository(cred),
-            new StubGatewayPixServiceFactory(gatewayPixService),
-            new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
-            new EmptyWintechCredentialsRepository(),
-            new StubWintechGatewayPixServiceFactory(gatewayPixService),
-            new EmptyGatewayCredentialsGroupRepository());
+            frendz: new SingleFrendzCredentialsRepository(cred),
+            gatewayPixService: gatewayPixService);
 
         var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "operator-1",
+            OperatorId = "operator-1",
             Amount = 10m
         });
 
@@ -160,7 +148,7 @@ public sealed class GatewayOrchestratorTests
             DateTime.UtcNow,
             DateTime.UtcNow);
 
-        var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok" };
+        var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok", StrawManId = "straw-1" };
         var paymentRepo = new StubPaymentRepository();
         var gatewayPixService = new StubGatewayPixService
         {
@@ -171,23 +159,19 @@ public sealed class GatewayOrchestratorTests
             })
         };
 
-        var sut = new GatewayOrchestrator(
+        var sut = CreateSut(
             new SingleOperationRepository(operation),
             new SingleTeamRepository(team),
             new StubPaymentService(),
             paymentRepo,
-            new SingleFrendzCredentialsRepository(cred),
-            new StubGatewayPixServiceFactory(gatewayPixService),
-            new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
-            new EmptyWintechCredentialsRepository(),
-            new StubWintechGatewayPixServiceFactory(gatewayPixService),
-            new SingleGatewayCredentialsGroupRepository(group));
+            frendz: new SingleFrendzCredentialsRepository(cred),
+            groups: new SingleGatewayCredentialsGroupRepository(group),
+            gatewayPixService: gatewayPixService);
 
         var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "operator-1",
+            OperatorId = "operator-1",
             Amount = 10m
         });
 
@@ -196,7 +180,7 @@ public sealed class GatewayOrchestratorTests
     }
 
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenOperatorHasNoTeam_UsesOperationDefaultCredentials()
+    public async Task CreateGatewayPixAsync_WhenOperatorHasNoTeam_ReturnsTeamNotFound()
     {
         var operation = new Operation(
             "op-1",
@@ -210,7 +194,42 @@ public sealed class GatewayOrchestratorTests
             DateTime.UtcNow,
             DateTime.UtcNow);
 
-        var cred = new FrendzApiCredentials { Id = "cred-op-1", Name = "c", Token = "tok" };
+        var cred = new FrendzApiCredentials { Id = "cred-op-1", Name = "c", Token = "tok", StrawManId = "straw-1" };
+
+        var sut = CreateSut(
+            new SingleOperationRepository(operation),
+            new EmptyTeamRepository(),
+            new StubPaymentService(),
+            new StubPaymentRepository(),
+            frendz: new SingleFrendzCredentialsRepository(cred));
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            OperatorId = "operator-without-team",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.TeamNotFound);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WithoutOperator_UsesOperationDefaultCredentials()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.Manual,
+            new[] { "cred-op-1" },
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var cred = new FrendzApiCredentials { Id = "cred-op-1", Name = "c", Token = "tok", StrawManId = "straw-1" };
         var paymentRepo = new StubPaymentRepository();
         var gatewayPixService = new StubGatewayPixService
         {
@@ -221,29 +240,220 @@ public sealed class GatewayOrchestratorTests
             })
         };
 
-        var sut = new GatewayOrchestrator(
+        var sut = CreateSut(
             new SingleOperationRepository(operation),
             new EmptyTeamRepository(),
             new StubPaymentService(),
             paymentRepo,
-            new SingleFrendzCredentialsRepository(cred),
-            new StubGatewayPixServiceFactory(gatewayPixService),
-            new EmptySigiloPayCredentialsRepository(),
-            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
-            new EmptyWintechCredentialsRepository(),
-            new StubWintechGatewayPixServiceFactory(gatewayPixService),
-            new EmptyGatewayCredentialsGroupRepository());
+            frendz: new SingleFrendzCredentialsRepository(cred),
+            gatewayPixService: gatewayPixService);
 
         var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "operator-without-team",
             Amount = 10m
         });
 
         Assert.True(result.IsSuccess);
         Assert.Equal("pix-operation-default", result.Value!.Code);
         Assert.True(paymentRepo.WasUpdated);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WhenPerStrawmanWithEmptyStrawManIds_ReturnsNoGatewayServicesAvailable()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok", StrawManId = "straw-1" };
+
+        var sut = CreateSut(
+            new SingleOperationRepository(operation),
+            new EmptyTeamRepository(),
+            new StubPaymentService(),
+            new StubPaymentRepository(),
+            frendz: new SingleFrendzCredentialsRepository(cred));
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.NoGatewayServicesAvailable);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WhenManualCredentialHasNoStrawManOwner_ReturnsNoGatewayServicesAvailable()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.Manual,
+            new[] { "cred-1" },
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var cred = new FrendzApiCredentials { Id = "cred-1", Name = "c", Token = "tok", StrawManId = null };
+
+        var sut = CreateSut(
+            new SingleOperationRepository(operation),
+            new EmptyTeamRepository(),
+            new StubPaymentService(),
+            new StubPaymentRepository(),
+            frendz: new SingleFrendzCredentialsRepository(cred));
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.NoGatewayServicesAvailable);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WhenPerStrawman_OnlyUsesCredentialsFromLinkedStrawMen()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            new[] { "straw-1" },
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var linkedCred = new FrendzApiCredentials { Id = "cred-linked", Name = "linked", Token = "tok", StrawManId = "straw-1" };
+        var unlinkedCred = new FrendzApiCredentials { Id = "cred-unlinked", Name = "unlinked", Token = "tok2", StrawManId = "straw-2" };
+        var genericCred = new FrendzApiCredentials { Id = "cred-generic", Name = "generic", Token = "tok3", StrawManId = null };
+
+        var gatewayPixService = new StubGatewayPixService
+        {
+            OnCreate = r => Task.FromResult(new GatewayPix
+            {
+                Id = r.PaymentId,
+                Code = "pix-linked"
+            })
+        };
+
+        var sut = CreateSut(
+            new SingleOperationRepository(operation),
+            new EmptyTeamRepository(),
+            new StubPaymentService(),
+            new StubPaymentRepository(),
+            frendz: new MultiFrendzCredentialsRepository(linkedCred, unlinkedCred, genericCred),
+            gatewayPixService: gatewayPixService);
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("pix-linked", result.Value!.Code);
+    }
+
+    [Fact]
+    public async Task CreateGatewayPixAsync_WithOperator_UsesTeamCredentialScopeOverOperation()
+    {
+        var operation = new Operation(
+            "op-1",
+            "N",
+            "D",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.Manual,
+            new[] { "cred-op" },
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var team = new Team(
+            "team-1",
+            "op-1",
+            "Team A",
+            null,
+            new[] { "operator-1" },
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.Manual,
+            new[] { "cred-team" },
+            Array.Empty<string>(),
+            Array.Empty<OperatorProfitShareRuleRecord>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var operationCred = new FrendzApiCredentials { Id = "cred-op", Name = "op", Token = "tok-op", StrawManId = "straw-op" };
+        var teamCred = new FrendzApiCredentials { Id = "cred-team", Name = "team", Token = "tok-team", StrawManId = "straw-team" };
+
+        var gatewayPixService = new TrackingGatewayPixService();
+        var paymentRepo = new StubPaymentRepository();
+
+        var sut = CreateSut(
+            new SingleOperationRepository(operation),
+            new SingleTeamRepository(team),
+            new StubPaymentService(),
+            paymentRepo,
+            frendz: new MultiFrendzCredentialsRepository(operationCred, teamCred),
+            gatewayPixService: gatewayPixService);
+
+        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        {
+            OperationId = "op-1",
+            OperatorId = "operator-1",
+            Amount = 10m
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("straw-team", gatewayPixService.LastStrawManId);
+    }
+
+    private static GatewayOrchestrator CreateSut(
+        IOperationRepository operations,
+        ITeamRepository teams,
+        IPaymentService paymentService,
+        IPaymentRepository paymentRepo,
+        IFrendzApiCredentialsRepository? frendz = null,
+        ISigiloPayApiCredentialsRepository? sigiloPay = null,
+        IWintechApiCredentialsRepository? wintech = null,
+        IGatewayCredentialsGroupRepository? groups = null,
+        IGatewayPixService? gatewayPixService = null)
+    {
+        gatewayPixService ??= new StubGatewayPixService();
+        frendz ??= new EmptyFrendzCredentialsRepository();
+        sigiloPay ??= new EmptySigiloPayCredentialsRepository();
+        wintech ??= new EmptyWintechCredentialsRepository();
+        groups ??= new EmptyGatewayCredentialsGroupRepository();
+
+        var resolver = new GatewayCredentialProviderResolver(
+            frendz,
+            new StubGatewayPixServiceFactory(gatewayPixService),
+            sigiloPay,
+            new StubSigiloPayGatewayPixServiceFactory(gatewayPixService),
+            wintech,
+            new StubWintechGatewayPixServiceFactory(gatewayPixService),
+            groups);
+
+        return new GatewayOrchestrator(operations, teams, paymentService, paymentRepo, resolver);
     }
 
     private sealed class StubPaymentService : IPaymentService
@@ -256,10 +466,10 @@ public sealed class GatewayOrchestratorTests
             var payment = PaymentTestFactory.Create(
                 id,
                 request.OperationId!,
-                request.TeamId ?? string.Empty,
                 request.Gateway,
                 request.GatewayPaymentId!,
-                request.Amount);
+                request.Amount,
+                strawManId: request.StrawManId ?? string.Empty);
             IResult<Payment> ok = Result.Create<Payment>().WithValue(payment).Build();
             return Task.FromResult(ok);
         }
@@ -275,6 +485,30 @@ public sealed class GatewayOrchestratorTests
 
         public Task<IResult> KillAsync(string paymentId, string reason) =>
             Task.FromResult<IResult>(Result.Success());
+
+        public Task<IResult<Payment>> GetByIdAsync(string paymentId)
+        {
+            IResult<Payment> ok = Result.Create<Payment>()
+                .WithValue(PaymentTestFactory.Create(id: paymentId))
+                .Build();
+            return Task.FromResult(ok);
+        }
+
+        public Task<IResult<Payment>> BindOperatorAsync(string paymentId, string OperatorId)
+        {
+            IResult<Payment> ok = Result.Create<Payment>()
+                .WithValue(PaymentTestFactory.Create(id: paymentId, operatorId: OperatorId))
+                .Build();
+            return Task.FromResult(ok);
+        }
+
+        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, string StrawManId)
+        {
+            IResult<Payment> ok = Result.Create<Payment>()
+                .WithValue(PaymentTestFactory.Create(id: paymentId, strawManId: StrawManId))
+                .Build();
+            return Task.FromResult(ok);
+        }
     }
 
     private sealed class StubPaymentRepository : IPaymentRepository
@@ -289,20 +523,19 @@ public sealed class GatewayOrchestratorTests
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
                 ? PaymentTestFactory.Create(
                     operationId: entity.OperationId,
-                    teamId: entity.TeamId,
                     gateway: entity.Gateway,
                     gatewayPaymentId: entity.GatewayTransactionId,
                     amount: entity.Amount,
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
-                    operatorAccountId: entity.OperatorAccountId,
-                    strawManAccountId: entity.StrawManAccountId,
+                    operatorId: entity.OperatorId,
+                    strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
                     paidAt: entity.PaidAt,
                     refundedAt: entity.RefundedAt,
-                    diedAt: entity.DiedAt,
-                    deathReason: entity.DeathReason,
+                    killedAt: entity.KilledAt,
+                    killReason: entity.KillReason,
                     withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
@@ -416,6 +649,40 @@ public sealed class GatewayOrchestratorTests
         public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
         public Task UpdateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
         public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    private sealed class MultiFrendzCredentialsRepository : IFrendzApiCredentialsRepository
+    {
+        private readonly FrendzApiCredentials[] _credentials;
+
+        public MultiFrendzCredentialsRepository(params FrendzApiCredentials[] credentials) =>
+            _credentials = credentials;
+
+        public IAsyncQueryable<FrendzApiCredentials> AsQueryable() =>
+            new MongoAsyncQueryable<FrendzApiCredentials>(_credentials.AsQueryable());
+
+        public Task<FrendzApiCredentials> CreateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        async Task IRepository<FrendzApiCredentials>.CreateAsync(FrendzApiCredentials entity) { await CreateAsync(entity); }
+        public Task CreateAsync(IEnumerable<FrendzApiCredentials> entities) => throw new NotSupportedException();
+        public Task DeleteAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> DeleteAsync(Expression<Func<FrendzApiCredentials, bool>> predicate) => throw new NotSupportedException();
+        public Task UpdateAsync(FrendzApiCredentials entity) => throw new NotSupportedException();
+        public Task<long> UpdateAsync(Expression expression) => throw new NotSupportedException();
+    }
+
+    private sealed class TrackingGatewayPixService : IGatewayPixService
+    {
+        public string? LastStrawManId { get; private set; }
+
+        public Task<GatewayPix> CreateGatewayPixAsync(CreateGatewayPixRequest request)
+        {
+            LastStrawManId = request.StrawManId;
+            return Task.FromResult(new GatewayPix
+            {
+                Id = request.PaymentId,
+                Code = "pix-tracked"
+            });
+        }
     }
 
     private sealed class StubGatewayPixService : IGatewayPixService

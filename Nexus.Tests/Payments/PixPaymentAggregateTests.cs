@@ -11,7 +11,6 @@ public sealed class PixPaymentAggregateTests
 
     private static Payment CreateSut(
         string operationId = "operation-1",
-        string teamId = "team-1",
         PaymentGateway gateway = PaymentGateway.FusionPay,
         string gatewayPaymentId = "gw-1",
         decimal amount = 10m,
@@ -20,13 +19,17 @@ public sealed class PixPaymentAggregateTests
         PaymentSettlementStatus settlementStatus = PaymentSettlementStatus.Unsettled) =>
         PaymentTestFactory.Create(
             operationId: operationId,
-            teamId: teamId,
             gateway: gateway,
             gatewayPaymentId: gatewayPaymentId,
             amount: amount,
             splits: splits ?? DefaultSplits,
             status: status,
             settlementStatus: settlementStatus);
+
+    private static void BindForPaid(Payment p)
+    {
+        Assert.True(p.BindToOperator("op").IsSuccess);
+    }
 
     [Fact]
     public void Constructor_SetsPendingStateAndGatewayFields()
@@ -42,7 +45,6 @@ public sealed class PixPaymentAggregateTests
         Assert.Equal("ext-1", p.GatewayTransactionId);
         Assert.Equal(55.5m, p.Amount);
         Assert.Equal("operation-1", p.OperationId);
-        Assert.Equal("team-1", p.TeamId);
         Assert.Single(p.Splits);
         Assert.Equal(55.5m, p.Splits.Sum(split => split.Amount));
         Assert.Equal(PaymentSettlementStatus.Unsettled, p.SettlementStatus);
@@ -77,16 +79,24 @@ public sealed class PixPaymentAggregateTests
     }
 
     [Fact]
+    public void BindToStrawMan_WhenUnset_BindsSuccessfully()
+    {
+        var p = PaymentTestFactory.Create(strawManId: string.Empty);
+
+        Assert.True(p.BindToStrawMan("sm-1").IsSuccess);
+        Assert.Equal("sm-1", p.StrawManId);
+    }
+
+    [Fact]
     public void BindToStrawMan_Twice_FailsSecondTime()
     {
         var p = CreateSut();
 
-        Assert.True(p.BindToStrawMan("sm-1").IsSuccess);
         var second = p.BindToStrawMan("sm-2");
 
         Assert.True(second.IsFailure);
         Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.StrawManAlreadyBound);
-        Assert.Equal("sm-1", p.StrawManAccountId);
+        Assert.Equal("sm-1", p.StrawManId);
     }
 
     [Theory]
@@ -113,7 +123,7 @@ public sealed class PixPaymentAggregateTests
 
         Assert.True(second.IsFailure);
         Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.OperatorAlreadyBound);
-        Assert.Equal("op-1", p.OperatorAccountId);
+        Assert.Equal("op-1", p.OperatorId);
     }
 
     [Fact]
@@ -131,7 +141,7 @@ public sealed class PixPaymentAggregateTests
     public void MarkAsPaid_WithoutSplits_Fails()
     {
         var p = CreateSut(splits: Array.Empty<PaymentSplit>());
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
 
         var result = p.MarkAsPaid();
 
@@ -143,7 +153,7 @@ public sealed class PixPaymentAggregateTests
     public void MarkAsPaid_WhenPendingAndOperatorBound_Succeeds()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
 
         var result = p.MarkAsPaid();
 
@@ -157,7 +167,7 @@ public sealed class PixPaymentAggregateTests
     public void MarkAsPaid_WhenAlreadyPaid_FailsInvalidTransition()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
 
         var again = p.MarkAsPaid();
@@ -182,7 +192,7 @@ public sealed class PixPaymentAggregateTests
     public void MarkAsWithdrawn_WhenPaid_Succeeds()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
 
         var result = p.MarkAsWithdrawn();
@@ -196,7 +206,7 @@ public sealed class PixPaymentAggregateTests
     public void MarkAsWithdrawn_WhenAlreadyWithdrawn_Fails()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
         Assert.True(p.MarkAsWithdrawn().IsSuccess);
 
@@ -222,7 +232,7 @@ public sealed class PixPaymentAggregateTests
     public void Refund_WhenPaid_Succeeds()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
 
         var result = p.Refund();
@@ -236,7 +246,7 @@ public sealed class PixPaymentAggregateTests
     public void Refund_WhenWithdrawn_Fails()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
         Assert.True(p.MarkAsWithdrawn().IsSuccess);
 
@@ -250,7 +260,7 @@ public sealed class PixPaymentAggregateTests
     public void Refund_WhenAlreadyRefunded_FailsInvalidTransition()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
         Assert.True(p.Refund().IsSuccess);
 
@@ -264,14 +274,14 @@ public sealed class PixPaymentAggregateTests
     public void Die_FromPaid_Succeeds()
     {
         var p = CreateSut();
-        Assert.True(p.BindToOperator("op").IsSuccess);
+        BindForPaid(p);
         Assert.True(p.MarkAsPaid().IsSuccess);
 
-        var result = p.Die("disputed");
+        var result = p.Kill("disputed");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(PaymentStatus.Dead, p.Status);
-        Assert.Equal("disputed", p.DeathReason);
+        Assert.Equal(PaymentStatus.Killed, p.Status);
+        Assert.Equal("disputed", p.KillReason);
     }
 
     [Theory]
@@ -282,10 +292,10 @@ public sealed class PixPaymentAggregateTests
     {
         var p = CreateSut();
 
-        var result = p.Die(reason!);
+        var result = p.Kill(reason!);
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.DeathReasonRequired);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.KillReasonRequired);
     }
 
     [Fact]
@@ -293,24 +303,24 @@ public sealed class PixPaymentAggregateTests
     {
         var p = CreateSut();
 
-        var result = p.Die("expired");
+        var result = p.Kill("expired");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal(PaymentStatus.Dead, p.Status);
-        Assert.Equal("expired", p.DeathReason);
-        Assert.NotNull(p.DiedAt);
+        Assert.Equal(PaymentStatus.Killed, p.Status);
+        Assert.Equal("expired", p.KillReason);
+        Assert.NotNull(p.KilledAt);
     }
 
     [Fact]
-    public void Die_WhenAlreadyDead_Fails()
+    public void Kill_WhenAlreadyKilled_Fails()
     {
         var p = CreateSut();
-        Assert.True(p.Die("first").IsSuccess);
+        Assert.True(p.Kill("first").IsSuccess);
 
-        var second = p.Die("again");
+        var second = p.Kill("again");
 
         Assert.True(second.IsFailure);
-        Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.AlreadyDead);
+        Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.AlreadyKilled);
     }
 
     [Fact]

@@ -3,6 +3,7 @@ import type { AuthUser } from './types';
 export const ROLES = {
   Administrator: 'Administrator',
   Operator: 'Operator',
+  StrawMan: 'StrawMan',
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
@@ -19,6 +20,10 @@ export function isOperator(user: AuthUser | null | undefined): boolean {
   return hasRole(user, ROLES.Operator);
 }
 
+export function isStrawMan(user: AuthUser | null | undefined): boolean {
+  return hasRole(user, ROLES.StrawMan);
+}
+
 export function hasAnyRole(user: AuthUser | null | undefined, roles: AppRole[]): boolean {
   return roles.some((role) => hasRole(user, role));
 }
@@ -26,4 +31,9 @@ export function hasAnyRole(user: AuthUser | null | undefined, roles: AppRole[]):
 /** Operador ou administrador — painel operacional completo. */
 export function canUseOperatorPanel(user: AuthUser | null | undefined): boolean {
   return isOperator(user) || isAdministrator(user);
+}
+
+/** Conta com role laranja — painel de pagamentos do laranja. */
+export function canUseStrawManPanel(user: AuthUser | null | undefined): boolean {
+  return isStrawMan(user);
 }

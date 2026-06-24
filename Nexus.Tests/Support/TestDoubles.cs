@@ -27,6 +27,7 @@ using Nexus.Operations.Application.Services;
 using Nexus.Operations.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
+using Nexus.Payments.Application.Services;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Accounts;
 using Nexus.Authentication.Application.Services;
@@ -173,20 +174,19 @@ internal sealed class InMemoryPaymentRepository : IPaymentRepository
         var persisted = string.IsNullOrWhiteSpace(entity.Id)
             ? PaymentTestFactory.Create(
                 operationId: entity.OperationId,
-                teamId: entity.TeamId,
                 gateway: entity.Gateway,
                 gatewayPaymentId: entity.GatewayTransactionId,
                 amount: entity.Amount,
                 splits: entity.Splits,
                 status: entity.Status,
                 settlementStatus: entity.SettlementStatus,
-                operatorAccountId: entity.OperatorAccountId,
-                strawManAccountId: entity.StrawManAccountId,
+                operatorId: entity.OperatorId,
+                strawManId: entity.StrawManId,
                 createdAt: entity.CreatedAt,
                 paidAt: entity.PaidAt,
                 refundedAt: entity.RefundedAt,
-                diedAt: entity.DiedAt,
-                deathReason: entity.DeathReason,
+                killedAt: entity.KilledAt,
+                killReason: entity.KillReason,
                 withdrawnAt: entity.WithdrawnAt)
             : entity;
 
@@ -350,7 +350,15 @@ internal sealed class ActorTestContext
             new AdministratorOperatorAssignmentSearchService(Accounts),
             new AdministratorProfitShareAccountSearchService(Accounts),
             new AdministratorOperationPickerSearchService(Operations),
-            new StubAdministratorWithdrawalCommandService());
+            new StubAdministratorAccountNodeCommandService(),
+            new StubAdministratorTransferCommandService(),
+            new AdministratorPaymentSearchService(Payments),
+            new AdministratorPaymentCommandService(new PaymentService(
+                Accounts,
+                Payments,
+                Operations,
+                Teams)),
+            new StubAdministratorStrawManSettingsCommandService());
     }
 
     public OperationAdministratorRole CreateOperationAdministrator()
@@ -363,8 +371,7 @@ internal sealed class ActorTestContext
             new OperationAdministratorTeamCommandService(CreateTeamService()),
             new OperationAdministratorOperationCommandService(CreateOperationService()),
             new OperationAdministratorTeamLeaderCandidateSearchService(accountSearch),
-            new OperationAdministratorStrawManAssignmentSearchService(Accounts),
-            new StubOperationAdministratorWithdrawalCommandService());
+            new OperationAdministratorStrawManAssignmentSearchService(Accounts));
     }
 
     public RequesterIdentity CreateRequesterIdentity(
@@ -390,7 +397,8 @@ internal sealed class ActorTestContext
     public OperatorRole CreateOperator()
         => new(
             new OperatorAccessPolicy(),
-            new OperatorOperationSearchService(Operations, Teams, Accounts));
+            new OperatorOperationSearchService(Operations, Teams, Accounts),
+            new OperatorPaymentSearchService(Payments, Teams));
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
@@ -451,16 +459,16 @@ internal sealed class ActorTestContext
 
     public async Task<Payment> SeedPaymentAsync(
         string operationId,
-        string? operatorAccountId = null,
+        string? operatorId = null,
         string? id = null)
     {
         var payment = PaymentTestFactory.Create(
             id: id,
             operationId: operationId,
-            operatorAccountId: operatorAccountId,
-            splits: operatorAccountId is null
+            operatorId: operatorId,
+            splits: operatorId is null
                 ? Array.Empty<PaymentSplit>()
-                : PaymentSplit.CreateSnapshot(100m, new[] { (operatorAccountId, 100m) }));
+                : PaymentSplit.CreateSnapshot(100m, new[] { (operatorId, 100m) }));
         return await Payments.CreateAsync(payment);
     }
 
@@ -521,36 +529,71 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
         => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
 }
 
-internal sealed class StubAdministratorWithdrawalCommandService : IAdministratorWithdrawalCommandService
+internal sealed class StubAdministratorAccountNodeCommandService : IAdministratorAccountNodeCommandService
 {
-    public Task<IResult<Nexus.Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
-        Nexus.Withdrawals.Application.Contracts.CreateBankAccountRequest request) =>
+    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> CreateBankAccountAsync(
+        Nexus.AccountNodes.Application.Contracts.CreateBankAccountRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
-        Nexus.Withdrawals.Application.Contracts.CreateCryptoWalletRequest request) =>
+    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+        Nexus.AccountNodes.Application.Contracts.CreateCryptoWalletRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
-        Nexus.Withdrawals.Application.Contracts.CreateWithdrawalRequest request) =>
+    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> UpsertCryptoWalletAddressAsync(
+        Nexus.AccountNodes.Application.Contracts.UpsertCryptoWalletAddressRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(string withdrawalId) =>
+    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> GetBankAccountAsync(string bankAccountId) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> GetCryptoWalletAsync(string cryptoWalletId) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> UpdateBankAccountLabelAsync(
+        string bankAccountId,
+        string? label) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(SearchBankAccountsRequest? request) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(SearchCryptoWalletsRequest? request) =>
         throw new NotImplementedException();
 }
 
-internal sealed class StubOperationAdministratorWithdrawalCommandService : IOperationAdministratorWithdrawalCommandService
+internal sealed class StubAdministratorTransferCommandService : IAdministratorTransferCommandService
 {
-    public Task<IOperationResult<Nexus.Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
-        Nexus.Authorization.Application.Models.RequesterIdentity identity,
-        Nexus.Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecuteWithdrawalAsync(
+        Nexus.Transfers.Application.Contracts.WithdrawalTransferRequest request,
         CancellationToken cancellationToken = default) =>
         throw new NotImplementedException();
 
-    public Task<IOperationResult<Nexus.Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
-        Nexus.Authorization.Application.Models.RequesterIdentity identity,
-        string withdrawalId,
+    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecuteMovementAsync(
+        Nexus.Transfers.Application.Contracts.MovementTransferRequest request,
         CancellationToken cancellationToken = default) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecutePayoutAsync(
+        Nexus.Transfers.Application.Contracts.PayoutTransferRequest request,
+        CancellationToken cancellationToken = default) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> GetTransferAsync(string transferId) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<SearchTransfersResponse>> SearchTransfersAsync(SearchTransfersRequest? request) =>
+        throw new NotImplementedException();
+
+    public Task<IResult<Nexus.Transfers.Application.Models.TransferTimelineDetails>> GetTransferTimelineAsync(string transferId) =>
+        throw new NotImplementedException();
+}
+
+internal sealed class StubAdministratorStrawManSettingsCommandService : IAdministratorStrawManSettingsCommandService
+{
+    public Task<IResult<Nexus.StrawMen.Application.Contracts.StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
+        Nexus.Authorization.Application.Models.RequesterIdentity identity,
+        string strawManId,
+        decimal movementFeePercentage) =>
         throw new NotImplementedException();
 }
 

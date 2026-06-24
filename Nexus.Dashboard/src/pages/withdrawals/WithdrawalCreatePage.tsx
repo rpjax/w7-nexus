@@ -1,19 +1,18 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { searchOpAdminStrawMenPicker } from '../../api/accountPickerSources';
-import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
-import { searchPayments } from '../../api/payments';
-import { createWithdrawal } from '../../api/withdrawals';
-import type { BankAccountRow, CryptoWalletRow, WithdrawalType } from '../../api/types';
+import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
+import { createWithdrawalTransfer } from '../../api/transfers';
+import type { BankAccountRow, CryptoWalletRow } from '../../api/types';
+import { searchEligibleWithdrawalPayments } from '../../features/payments/searchEligibleWithdrawalPayments';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { BankAccountPickerModal } from '../../components/finance/BankAccountPickerModal';
 import { CryptoWalletPickerModal } from '../../components/finance/CryptoWalletPickerModal';
 import { UnsettledPaymentsPicker } from '../../components/finance/UnsettledPaymentsPicker';
 import { IconButton } from '../../components/IconButton';
-import { OperationPickerModal } from '../../components/OperationPickerModal';
 import { PageHeading } from '../../layouts/PageHeading';
-import { WITHDRAWAL_TYPE_OPTIONS, formatMoney } from '../../utils/financeLabels';
-import { bankAccountPickerLabel, bankAccountPixSummary } from '../../utils/bankAccountDisplay';
+import { DESTINATION_TYPE_OPTIONS, formatMoney, type DestinationType } from '../../utils/financeLabels';
+import { bankAccountPickerLabel } from '../../utils/bankAccountDisplay';
+import { cryptoWalletPickerLabel } from '../../utils/cryptoWalletDisplay';
 import { shortId } from '../../utils/format';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -22,32 +21,27 @@ export function WithdrawalCreatePage() {
   const location = useLocation();
   const { notifySuccess } = useNotifications();
 
-  const [operationId, setOperationId] = useState('');
-  const [operationLabel, setOperationLabel] = useState<string | null>(null);
-  const [strawManAccountId, setStrawManAccountId] = useState('');
+  const [strawManId, setStrawManId] = useState('');
   const [strawLabel, setStrawLabel] = useState<string | null>(null);
-  const [withdrawalType, setWithdrawalType] = useState<WithdrawalType>('Pix');
+  const [destinationType, setDestinationType] = useState<DestinationType>('Pix');
   const [selectedPaymentIds, setSelectedPaymentIds] = useState<Set<string>>(new Set());
   const [paymentsTotal, setPaymentsTotal] = useState(0);
   const [bankAccountId, setBankAccountId] = useState<string | null>(null);
   const [selectedBankAccount, setSelectedBankAccount] = useState<BankAccountRow | null>(null);
   const [cryptoWalletId, setCryptoWalletId] = useState<string | null>(null);
   const [cryptoWalletLabel, setCryptoWalletLabel] = useState<string | null>(null);
-  const [costDescription, setCostDescription] = useState('');
-  const [costAmount, setCostAmount] = useState(0);
   const [pixTransactionId, setPixTransactionId] = useState('');
   const [pixAuthenticationCode, setPixAuthenticationCode] = useState('');
   const [cryptoTransactionId, setCryptoTransactionId] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
 
-  const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [strawPickerOpen, setStrawPickerOpen] = useState(false);
   const [paymentsPickerOpen, setPaymentsPickerOpen] = useState(false);
   const [bankPickerOpen, setBankPickerOpen] = useState(false);
   const [cryptoPickerOpen, setCryptoPickerOpen] = useState(false);
 
-  const netAmount = useMemo(() => Math.max(0, paymentsTotal - costAmount), [paymentsTotal, costAmount]);
+  const netAmount = useMemo(() => paymentsTotal, [paymentsTotal]);
 
   useEffect(() => {
     const state = location.state as { bankAccount?: BankAccountRow } | null;
@@ -62,15 +56,24 @@ export function WithdrawalCreatePage() {
       setPaymentsTotal(0);
       return;
     }
+    if (!strawManId.trim()) {
+      setPaymentsTotal(0);
+      return;
+    }
     void (async () => {
-      const result = await searchPayments({ limit: 500, offset: 0, keyword: null });
+      const result = await searchEligibleWithdrawalPayments({
+        limit: 500,
+        offset: 0,
+        keyword: null,
+        strawManId,
+      });
       if (!result.ok) return;
       const total = (result.data?.items ?? [])
         .filter((p) => selectedPaymentIds.has(p.id))
         .reduce((sum, p) => sum + p.amount, 0);
       setPaymentsTotal(total);
     })();
-  }, [selectedPaymentIds]);
+  }, [selectedPaymentIds, strawManId]);
 
   function resetDestination() {
     setBankAccountId(null);
@@ -80,23 +83,19 @@ export function WithdrawalCreatePage() {
   }
 
   function goToCreateBankAccount() {
-    navigate('/dashboard/withdrawals/bank-accounts', {
+    navigate('/dashboard/transfers/bank-accounts', {
       state: {
-        strawManAccountId,
+        strawManId,
         strawLabel,
         openCreate: true,
-        returnTo: '/dashboard/withdrawals/new',
+        returnTo: '/dashboard/transfers/new',
       },
     });
   }
 
   async function handleSubmit() {
     setError('');
-    if (!operationId.trim()) {
-      setError('Selecione uma operação.');
-      return;
-    }
-    if (!strawManAccountId.trim()) {
+    if (!strawManId.trim()) {
       setError('Selecione o laranja.');
       return;
     }
@@ -104,40 +103,36 @@ export function WithdrawalCreatePage() {
       setError('Selecione ao menos um pagamento elegível.');
       return;
     }
-    if (withdrawalType === 'Pix' && !bankAccountId) {
+    if (destinationType === 'Pix' && !bankAccountId) {
       setError('Selecione a conta bancária de destino.');
       return;
     }
-    if (withdrawalType === 'Crypto' && !cryptoWalletId) {
+    if (destinationType === 'Crypto' && !cryptoWalletId) {
       setError('Selecione a carteira crypto de destino.');
       return;
     }
 
     setBusy(true);
     try {
-      const result = await createWithdrawal({
-        operationId: operationId.trim(),
-        type: withdrawalType,
-        strawManAccountId: strawManAccountId.trim(),
-        bankAccountId: withdrawalType === 'Pix' ? bankAccountId : null,
-        cryptoWalletId: withdrawalType === 'Crypto' ? cryptoWalletId : null,
+      const result = await createWithdrawalTransfer({
+        strawManId: strawManId.trim(),
+        bankAccountId: destinationType === 'Pix' ? bankAccountId : null,
+        cryptoWalletId: destinationType === 'Crypto' ? cryptoWalletId : null,
         paymentIds: [...selectedPaymentIds],
-        costDescription: costDescription.trim() || null,
-        costAmount,
-        pixTransactionId: withdrawalType === 'Pix' ? pixTransactionId.trim() || null : null,
-        pixAuthenticationCode: withdrawalType === 'Pix' ? pixAuthenticationCode.trim() || null : null,
-        cryptoTransactionId: withdrawalType === 'Crypto' ? cryptoTransactionId.trim() || null : null,
+        pixTransactionId: destinationType === 'Pix' ? pixTransactionId.trim() || null : null,
+        pixAuthenticationCode: destinationType === 'Pix' ? pixAuthenticationCode.trim() || null : null,
+        cryptoTransactionId: destinationType === 'Crypto' ? cryptoTransactionId.trim() || null : null,
       });
       if (!result.ok) {
         setError(result.error);
         return;
       }
-      notifySuccess('Saque registrado com sucesso.');
+      notifySuccess('Transferência de saque registrada com sucesso.');
       if (result.data?.id) {
-        navigate(`/dashboard/withdrawals/${result.data.id}`);
+        navigate(`/dashboard/transfers/${result.data.id}`);
         return;
       }
-      navigate('/dashboard/withdrawals');
+      navigate('/dashboard/transfers');
     } finally {
       setBusy(false);
     }
@@ -148,30 +143,17 @@ export function WithdrawalCreatePage() {
       <PageHeading
         kicker="Financeiro"
         title="Novo saque"
-        subtitle="Vincule pagamentos pagos e não sacados a uma conta bancária ou carteira crypto do laranja."
-        backLink={{ to: '/dashboard/withdrawals', label: 'Lista de saques' }}
+        subtitle="Selecione o laranja, vincule pagamentos pagos e não sacados e escolha o destino PIX ou crypto."
+        backLink={{ to: '/dashboard/transfers', label: 'Lista de transferências' }}
       />
 
       <section className="card ops-card">
         <div className="card-title-row">
           <h2>Dados do saque</h2>
-          <span className="post-badge">POST /api/withdrawals</span>
+          <span className="post-badge">POST /api/administrator/transfers/withdrawal</span>
         </div>
 
         <div className="form-grid form-grid-wide">
-          <div className="field span-2">
-            <label>Operação</label>
-            <div className="account-select-row">
-              <button type="button" className="account-select-trigger" onClick={() => setOperationPickerOpen(true)}>
-                {operationLabel ?? 'Selecionar operação'}
-              </button>
-              <button type="button" className="btn-icon btn-icon-green" onClick={() => setOperationPickerOpen(true)} title="Selecionar operação">＋</button>
-              {operationId ? (
-                <IconButton icon="x" label="Limpar operação" onClick={() => { setOperationId(''); setOperationLabel(null); setSelectedPaymentIds(new Set()); }} />
-              ) : null}
-            </div>
-          </div>
-
           <div className="field span-2">
             <label>Laranja</label>
             <div className="account-select-row">
@@ -179,9 +161,9 @@ export function WithdrawalCreatePage() {
                 {strawLabel ?? 'Selecionar laranja'}
               </button>
               <button type="button" className="btn-icon btn-icon-warm" onClick={() => setStrawPickerOpen(true)}>＋</button>
-              {strawManAccountId ? (
+              {strawManId ? (
                 <IconButton icon="x" label="Limpar laranja" onClick={() => {
-                  setStrawManAccountId('');
+                  setStrawManId('');
                   setStrawLabel(null);
                   resetDestination();
                   setSelectedPaymentIds(new Set());
@@ -191,17 +173,17 @@ export function WithdrawalCreatePage() {
           </div>
 
           <div className="field">
-            <label htmlFor="withdrawalType">Tipo de saque</label>
+            <label htmlFor="destinationType">Destino</label>
             <select
-              id="withdrawalType"
+              id="destinationType"
               className="nexus-input"
-              value={withdrawalType}
+              value={destinationType}
               onChange={(e) => {
-                setWithdrawalType(e.target.value as WithdrawalType);
+                setDestinationType(e.target.value as DestinationType);
                 resetDestination();
               }}
             >
-              {WITHDRAWAL_TYPE_OPTIONS.map((opt) => (
+              {DESTINATION_TYPE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>{opt.label}</option>
               ))}
             </select>
@@ -213,7 +195,7 @@ export function WithdrawalCreatePage() {
               <button
                 type="button"
                 className="account-select-trigger"
-                disabled={!operationId || !strawManAccountId}
+                disabled={!strawManId}
                 onClick={() => setPaymentsPickerOpen(true)}
               >
                 {selectedPaymentIds.size > 0
@@ -223,7 +205,7 @@ export function WithdrawalCreatePage() {
               <button
                 type="button"
                 className="btn-icon btn-icon-green"
-                disabled={!operationId || !strawManAccountId}
+                disabled={!strawManId}
                 onClick={() => setPaymentsPickerOpen(true)}
               >
                 ＋
@@ -231,33 +213,26 @@ export function WithdrawalCreatePage() {
             </div>
           </div>
 
-          {withdrawalType === 'Pix' ? (
+          {destinationType === 'Pix' ? (
             <div className="field span-2">
               <label>Conta bancária</label>
               <div className="account-select-row">
                 <button
                   type="button"
                   className="account-select-trigger account-select-trigger--stacked"
-                  disabled={!strawManAccountId}
+                  disabled={!strawManId}
                   onClick={() => setBankPickerOpen(true)}
                 >
                   {selectedBankAccount ? (
-                    <>
-                      <span>{bankAccountPickerLabel(selectedBankAccount)}</span>
-                      {bankAccountPixSummary(selectedBankAccount) ? (
-                        <span className="account-select-trigger__meta muted small">
-                          PIX: <span className="mono">{bankAccountPixSummary(selectedBankAccount)}</span>
-                        </span>
-                      ) : null}
-                    </>
+                    <span>{bankAccountPickerLabel(selectedBankAccount)}</span>
                   ) : (
-                    'Selecionar conta bancária'
+                    'Selecionar conta bancária do laranja'
                   )}
                 </button>
                 <button
                   type="button"
                   className="btn btn-ghost btn-sm"
-                  disabled={!strawManAccountId}
+                  disabled={!strawManId}
                   onClick={goToCreateBankAccount}
                 >
                   Cadastrar
@@ -271,30 +246,22 @@ export function WithdrawalCreatePage() {
                 <button
                   type="button"
                   className="account-select-trigger"
-                  disabled={!strawManAccountId}
+                  disabled={!strawManId}
                   onClick={() => setCryptoPickerOpen(true)}
                 >
-                  {cryptoWalletLabel ?? 'Selecionar carteira'}
+                  {cryptoWalletLabel ?? 'Selecionar carteira (laranja ou outra)'}
                 </button>
-                <Link className="btn btn-ghost btn-sm" to="/dashboard/withdrawals/crypto-wallets">Cadastrar</Link>
+                <Link className="btn btn-ghost btn-sm" to="/dashboard/transfers/crypto-wallets">Cadastrar</Link>
               </div>
             </div>
           )}
 
-          <div className="field span-2">
-            <label htmlFor="costDescription">Descrição do custo <span className="muted small">opcional</span></label>
-            <input id="costDescription" className="nexus-input" value={costDescription} onChange={(e) => setCostDescription(e.target.value)} />
-          </div>
           <div className="field">
-            <label htmlFor="costAmount">Valor do custo</label>
-            <input id="costAmount" type="number" min={0} step="0.01" className="nexus-input" value={costAmount} onChange={(e) => setCostAmount(Number(e.target.value))} />
-          </div>
-          <div className="field">
-            <label>Valor líquido</label>
+            <label>Valor total</label>
             <input className="nexus-input" readOnly value={formatMoney(netAmount)} />
           </div>
 
-          {withdrawalType === 'Pix' ? (
+          {destinationType === 'Pix' ? (
             <>
               <div className="field span-2">
                 <label htmlFor="pixTx">ID transação PIX <span className="muted small">opcional</span></label>
@@ -327,27 +294,14 @@ export function WithdrawalCreatePage() {
         </section>
       ) : null}
 
-      <OperationPickerModal
-        open={operationPickerOpen}
-        onClose={() => setOperationPickerOpen(false)}
-        searchOperations={searchAdministratorOperationsPicker}
-        title="Selecionar operação"
-        subtitle="Todas as operações do sistema."
-        onSelected={(row) => {
-          setOperationId(row.id);
-          setOperationLabel(`${row.name} (${shortId(row.id)})`);
-          setSelectedPaymentIds(new Set());
-        }}
-      />
-
       <AccountPickerModal
         open={strawPickerOpen}
         onClose={() => setStrawPickerOpen(false)}
-        searchAccounts={searchOpAdminStrawMenPicker}
+        searchAccounts={searchAdministratorStrawMenPicker}
         title="Conta laranja"
-        subtitle="Laranja vinculado à operação para liquidação."
+        subtitle="Titular dos pagamentos que serão liquidados neste saque."
         onSelected={(row) => {
-          setStrawManAccountId(row.id);
+          setStrawManId(row.id);
           setStrawLabel(`${row.username} (${shortId(row.id)})`);
           resetDestination();
           setSelectedPaymentIds(new Set());
@@ -357,8 +311,7 @@ export function WithdrawalCreatePage() {
       <UnsettledPaymentsPicker
         open={paymentsPickerOpen}
         onClose={() => setPaymentsPickerOpen(false)}
-        operationId={operationId}
-        strawManAccountId={strawManAccountId}
+        strawManId={strawManId}
         selectedIds={selectedPaymentIds}
         onChange={setSelectedPaymentIds}
       />
@@ -366,7 +319,7 @@ export function WithdrawalCreatePage() {
       <BankAccountPickerModal
         open={bankPickerOpen}
         onClose={() => setBankPickerOpen(false)}
-        strawManAccountId={strawManAccountId}
+        strawManId={strawManId}
         onCreateRequested={goToCreateBankAccount}
         onSelected={(row: BankAccountRow) => {
           setBankAccountId(row.id);
@@ -377,10 +330,11 @@ export function WithdrawalCreatePage() {
       <CryptoWalletPickerModal
         open={cryptoPickerOpen}
         onClose={() => setCryptoPickerOpen(false)}
-        strawManAccountId={strawManAccountId}
+        strawManId={strawManId}
+        allowAnyStrawMan
         onSelected={(row: CryptoWalletRow) => {
           setCryptoWalletId(row.id);
-          setCryptoWalletLabel(`${row.asset} · ${row.chain} · ${shortId(row.address, 16)}`);
+          setCryptoWalletLabel(cryptoWalletPickerLabel(row));
         }}
       />
     </>

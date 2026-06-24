@@ -17,7 +17,10 @@ public sealed class PixPaymentErrorCodesTests
         {
             var value = (string)field.GetValue(null)!;
             Assert.False(string.IsNullOrWhiteSpace(value));
-            Assert.StartsWith("PixPayment.", value, StringComparison.Ordinal);
+            Assert.True(
+                value.StartsWith("PixPayment.", StringComparison.Ordinal) ||
+                value.StartsWith("Payment.", StringComparison.Ordinal),
+                $"Unexpected error code prefix: {value}");
         }
     }
 }

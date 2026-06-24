@@ -9,6 +9,7 @@ public static class OperatorServiceCollectionExtensions
     {
         services.AddScoped<IOperatorAccessPolicy, OperatorAccessPolicy>();
         services.AddScoped<IOperatorOperationSearchService, OperatorOperationSearchService>();
+        services.AddScoped<IOperatorPaymentSearchService, OperatorPaymentSearchService>();
         services.AddScoped<IOperator, Operator>();
 
         return services;

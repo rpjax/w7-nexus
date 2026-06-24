@@ -9,7 +9,7 @@ public enum PaymentStatus
     Pending = 0,
     Paid,
     Refunded,
-    Dead,
+    Killed,
 }
 
 public enum PaymentGateway
@@ -76,55 +76,47 @@ public sealed class PaymentSplit
 
 public sealed class Payment
 {
-    // Internal IDs (not related to the gateway)
     public string Id { get; }
     public string OperationId { get; }
-    public string TeamId { get; }
-    public string? OperatorAccountId { get; private set; }
-    public string? StrawManAccountId { get; private set; }
+    public string? OperatorId { get; private set; }
+    public string StrawManId { get; private set; }
 
-    // Gateway References
     public PaymentGateway Gateway { get; private set; }
     public string GatewayTransactionId { get; private set; }
 
-    // Payment Details
     public decimal Amount { get; }
 
-    // Split Details
     public IReadOnlyList<PaymentSplit> Splits { get; }
 
-    // Payment Status
     public PaymentStatus Status { get; private set; }
     public PaymentSettlementStatus SettlementStatus { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime? PaidAt { get; private set; }
     public DateTime? RefundedAt { get; private set; }
-    public DateTime? DiedAt { get; private set; }
-    public string? DeathReason { get; private set; }
+    public DateTime? KilledAt { get; private set; }
+    public string? KillReason { get; private set; }
     public DateTime? WithdrawnAt { get; private set; }
 
     internal Payment(
         string Id,
         string OperationId,
-        string TeamId,
         PaymentGateway Gateway,
         string GatewayTransactionId,
         decimal Amount,
         IReadOnlyList<PaymentSplit> Splits,
         PaymentStatus Status,
         PaymentSettlementStatus SettlementStatus,
-        string? OperatorAccountId,
-        string? StrawManAccountId,
+        string? OperatorId,
+        string strawManId,
         DateTime CreatedAt,
         DateTime? PaidAt,
         DateTime? RefundedAt,
-        DateTime? DiedAt,
-        string? DeathReason,
+        DateTime? KilledAt,
+        string? KillReason,
         DateTime? WithdrawnAt)
     {
         this.Id = Id;
         this.OperationId = OperationId;
-        this.TeamId = TeamId;
         this.Gateway = Gateway;
         this.GatewayTransactionId = GatewayTransactionId;
         this.Amount = Amount;
@@ -132,32 +124,37 @@ public sealed class Payment
 
         this.Status = Status;
         this.SettlementStatus = SettlementStatus;
-        this.OperatorAccountId = OperatorAccountId;
-        this.StrawManAccountId = StrawManAccountId;
+        this.OperatorId = OperatorId;
+        this.StrawManId = strawManId?.Trim() ?? string.Empty;
 
         this.CreatedAt = CreatedAt;
         this.PaidAt = PaidAt;
         this.RefundedAt = RefundedAt;
-        this.DiedAt = DiedAt;
-        this.DeathReason = DeathReason;
+        this.KilledAt = KilledAt;
+        this.KillReason = KillReason;
         this.WithdrawnAt = WithdrawnAt;
     }
 
-    public IResult BindToStrawMan(string strawManAccountId)
+    public IResult BindToStrawMan(string strawManId)
     {
-        if (string.IsNullOrWhiteSpace(strawManAccountId))
+        if (string.IsNullOrWhiteSpace(strawManId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManInvalid)
                 .WithMessage("O ID da conta laranja não pode estar vazio.")
                 .Build());
 
-        if (StrawManAccountId is not null)
+        strawManId = strawManId.Trim();
+
+        if (string.Equals(StrawManId, strawManId, StringComparison.Ordinal))
+            return Result.Success();
+
+        if (!string.IsNullOrWhiteSpace(StrawManId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.StrawManAlreadyBound)
                 .WithMessage("Este pagamento já está vinculado a uma conta laranja.")
                 .Build());
 
-        StrawManAccountId = strawManAccountId;
+        StrawManId = strawManId;
         return Result.Success();
     }
 
@@ -188,13 +185,13 @@ public sealed class Payment
                 .WithMessage("O ID do operador não pode estar vazio.")
                 .Build());
 
-        if (OperatorAccountId is not null)
+        if (OperatorId is not null)
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorAlreadyBound)
                 .WithMessage("Este pagamento já está vinculado a um operador.")
                 .Build());
 
-        OperatorAccountId = operatorId;
+        OperatorId = operatorId;
         return Result.Success();
     }
 
@@ -206,10 +203,16 @@ public sealed class Payment
                 .WithMessage($"Não é possível marcar como pago a partir do status {DescribeStatus(Status)}.")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(OperatorAccountId))
+        if (string.IsNullOrWhiteSpace(OperatorId))
             return Result.Failure(Error.Create()
                 .WithCode(PixPaymentErrorCodes.OperatorRequired)
                 .WithMessage("É necessário vincular um operador antes de marcar o pagamento como pago.")
+                .Build());
+
+        if (string.IsNullOrWhiteSpace(StrawManId))
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.StrawManRequired)
+                .WithMessage("É necessário vincular um laranja antes de marcar o pagamento como pago.")
                 .Build());
 
         if (Splits.Count == 0)
@@ -267,23 +270,23 @@ public sealed class Payment
         return Result.Success();
     }
 
-    public IResult Die(string reason)
+    public IResult Kill(string reason)
     {
         if (string.IsNullOrWhiteSpace(reason))
             return Result.Failure(Error.Create()
-                .WithCode(PixPaymentErrorCodes.DeathReasonRequired)
+                .WithCode(PixPaymentErrorCodes.KillReasonRequired)
                 .WithMessage("O motivo do cancelamento é obrigatório.")
                 .Build());
 
-        if (Status == PaymentStatus.Dead)
+        if (Status == PaymentStatus.Killed)
             return Result.Failure(Error.Create()
-                .WithCode(PixPaymentErrorCodes.AlreadyDead)
+                .WithCode(PixPaymentErrorCodes.AlreadyKilled)
                 .WithMessage("Este pagamento já foi cancelado.")
                 .Build());
 
-        Status = PaymentStatus.Dead;
-        DiedAt = DateTime.UtcNow;
-        DeathReason = reason;
+        Status = PaymentStatus.Killed;
+        KilledAt = DateTime.UtcNow;
+        KillReason = reason;
         return Result.Success();
     }
 
@@ -292,7 +295,7 @@ public sealed class Payment
         PaymentStatus.Pending => "pendente",
         PaymentStatus.Paid => "pago",
         PaymentStatus.Refunded => "reembolsado",
-        PaymentStatus.Dead => "cancelado",
+        PaymentStatus.Killed => "cancelado",
         _ => status.ToString(),
     };
 
@@ -302,5 +305,4 @@ public sealed class Payment
         PaymentSettlementStatus.Withdrawn => "sacado",
         _ => status.ToString(),
     };
-
 }

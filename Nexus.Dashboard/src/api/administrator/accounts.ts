@@ -53,3 +53,17 @@ export async function searchAdministratorAccountsForPicker(payload: SearchReques
     },
   };
 }
+
+export async function searchAdministratorStrawMenForPicker(payload: SearchRequest) {
+  const result = await searchAdministratorAccountsForPicker(payload);
+  if (!result.ok) return result;
+
+  const items = result.data.items.filter((row) => row.roles.includes('StrawMan'));
+  return {
+    ok: true as const,
+    data: {
+      total: items.length,
+      items,
+    },
+  };
+}

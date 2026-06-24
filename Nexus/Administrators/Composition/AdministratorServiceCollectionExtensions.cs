@@ -17,7 +17,11 @@ public static class AdministratorServiceCollectionExtensions
         services.AddScoped<IAdministratorOperatorAssignmentSearchService, AdministratorOperatorAssignmentSearchService>();
         services.AddScoped<IAdministratorProfitShareAccountSearchService, AdministratorProfitShareAccountSearchService>();
         services.AddScoped<IAdministratorOperationPickerSearchService, AdministratorOperationPickerSearchService>();
-        services.AddScoped<IAdministratorWithdrawalCommandService, AdministratorWithdrawalCommandService>();
+        services.AddScoped<IAdministratorAccountNodeCommandService, AdministratorAccountNodeCommandService>();
+        services.AddScoped<IAdministratorTransferCommandService, AdministratorTransferCommandService>();
+        services.AddScoped<IAdministratorPaymentSearchService, AdministratorPaymentSearchService>();
+        services.AddScoped<IAdministratorPaymentCommandService, AdministratorPaymentCommandService>();
+        services.AddScoped<IAdministratorStrawManSettingsCommandService, AdministratorStrawManSettingsCommandService>();
         services.AddScoped<IAdministrator, Administrator>();
         services.AddScoped<ITeamGatewayDetailsLoader, TeamGatewayDetailsLoader>();
 

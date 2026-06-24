@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { searchOpAdminStrawMenPicker } from '../../api/accountPickerSources';
-import { createBankAccount, searchBankAccounts } from '../../api/withdrawals';
+import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
+import { createBankAccount, searchBankAccounts } from '../../api/accountNodes';
 import type { BankAccountRow } from '../../api/types';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { BankAccountCard } from '../../components/finance/BankAccountCard';
@@ -18,7 +18,7 @@ import { useNotifications } from '../../notifications/NotificationContext';
 const PAGE_SIZE = 20;
 
 type BankAccountsLocationState = {
-  strawManAccountId?: string;
+  strawManId?: string;
   strawLabel?: string;
   openCreate?: boolean;
   returnTo?: string;
@@ -31,21 +31,21 @@ export function BankAccountsPage() {
   const { notifyError, notifySuccess } = useNotifications();
 
   const [returnTo] = useState(() => locationState?.returnTo ?? null);
-  const [strawManAccountId, setStrawManAccountId] = useState(() => locationState?.strawManAccountId ?? '');
+  const [strawManId, setStrawManId] = useState(() => locationState?.strawManId ?? '');
   const [strawLabel, setStrawLabel] = useState<string | null>(() => locationState?.strawLabel ?? null);
   const [rows, setRows] = useState<BankAccountRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [strawPickerOpen, setStrawPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(
-    () => Boolean(locationState?.openCreate && locationState?.strawManAccountId),
+    () => Boolean(locationState?.openCreate && locationState?.strawManId),
   );
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
-  const hasStraw = Boolean(strawManAccountId.trim());
+  const hasStraw = Boolean(strawManId.trim());
 
   const filteredRows = useMemo(() => {
     const term = filter.trim().toLowerCase();
@@ -59,7 +59,7 @@ export function BankAccountsPage() {
       const result = await searchBankAccounts({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManAccountId: strawId.trim() || null,
+        strawManId: strawId.trim() || null,
       });
       if (!result.ok) {
         notifyError(result.error);
@@ -75,11 +75,11 @@ export function BankAccountsPage() {
   }, [notifyError]);
 
   useEffect(() => {
-    void load(currentPage, strawManAccountId);
-  }, [currentPage, strawManAccountId, load]);
+    void load(currentPage, strawManId);
+  }, [currentPage, strawManId, load]);
 
   function clearStraw() {
-    setStrawManAccountId('');
+    setStrawManId('');
     setStrawLabel(null);
     setCreateOpen(false);
     setCurrentPage(1);
@@ -92,14 +92,14 @@ export function BankAccountsPage() {
   }
 
   async function handleCreate(payload: BankAccountCreatePayload) {
-    if (!strawManAccountId.trim()) {
+    if (!strawManId.trim()) {
       notifyError('Selecione o laranja antes de cadastrar.');
       return;
     }
     setBusy(true);
     try {
       const result = await createBankAccount({
-        strawManAccountId: strawManAccountId.trim(),
+        strawManId: strawManId.trim(),
         ...payload,
       });
       if (!result.ok) {
@@ -109,7 +109,7 @@ export function BankAccountsPage() {
       notifySuccess('Conta bancária cadastrada.');
       setCreateOpen(false);
       setCurrentPage(1);
-      await load(1, strawManAccountId);
+      await load(1, strawManId);
 
       if (returnTo && result.data) {
         navigate(returnTo, {
@@ -130,7 +130,7 @@ export function BankAccountsPage() {
 
   const heroHint = hasStraw
     ? `Destinos PIX de ${strawLabel ?? 'laranja selecionado'}.`
-    : 'Contas bancárias são cadastradas por laranja e usadas em saques PIX.';
+    : 'Contas bancárias são cadastradas por laranja e usadas em transferências PIX.';
 
   return (
     <div className="ops-page bank-accounts-page">
@@ -138,7 +138,7 @@ export function BankAccountsPage() {
         kicker="Financeiro"
         title="Contas bancárias"
         subtitle="Contas de destino PIX vinculadas a contas laranja."
-        backLink={{ to: '/dashboard/withdrawals', label: 'Saques' }}
+        backLink={{ to: '/dashboard/transfers', label: 'Transferências' }}
       />
 
       <section className="pix-workspace bank-workspace" aria-labelledby="bank-accounts-title">
@@ -157,13 +157,13 @@ export function BankAccountsPage() {
 
         <div className="pix-workspace__body">
           {!hasStraw ? (
-            <section className="admin-op-section pix-section">
+            <section className="pix-section bank-section">
               <div className="bank-onboarding">
-                <div className="admin-op-section__head-text">
-                  <span className="admin-op-section__kicker">Começar</span>
-                  <h2 id="bank-accounts-title" className="admin-op-section-title">Selecione o laranja</h2>
-                  <p className="admin-op-section-desc muted small">
-                    Cada laranja pode ter várias contas de destino. Escolha qual contexto deseja gerenciar.
+                <div className="bank-section__head-text">
+                  <span className="bank-section__kicker">Começar</span>
+                  <h2 id="bank-accounts-title" className="bank-section-title">Selecione o laranja</h2>
+                  <p className="bank-section-desc muted small">
+                    Cada laranja pode ter várias contas de destino. Escolha qual titular deseja gerenciar.
                   </p>
                 </div>
                 <PixEntityField
@@ -180,7 +180,7 @@ export function BankAccountsPage() {
               </div>
             </section>
           ) : (
-            <section className="admin-op-section pix-section bank-managed-section">
+            <section className="pix-section bank-managed-section bank-section">
               <div className="bank-context-bar">
                 <div className="bank-context-bar__main">
                   <span className="bank-context-bar__avatar" aria-hidden="true">
@@ -188,7 +188,7 @@ export function BankAccountsPage() {
                   </span>
                   <div className="bank-context-bar__text">
                     <span className="bank-context-bar__kicker">Laranja ativo</span>
-                    <strong className="bank-context-bar__name">{strawLabel ?? strawManAccountId}</strong>
+                    <strong className="bank-context-bar__name">{strawLabel ?? strawManId}</strong>
                   </div>
                 </div>
                 <div className="bank-context-bar__actions">
@@ -199,11 +199,11 @@ export function BankAccountsPage() {
                 </div>
               </div>
 
-              <div className="admin-op-section__head bank-accounts-section__head">
-                  <div className="admin-op-section__head-text">
-                    <span className="admin-op-section__kicker">Contas</span>
-                    <h2 className="admin-op-section-title">Cadastradas</h2>
-                    <p className="admin-op-section-desc muted small">
+              <div className="bank-section__head bank-accounts-section__head">
+                  <div className="bank-section__head-text">
+                    <span className="bank-section__kicker">Contas</span>
+                    <h2 className="bank-section-title">Cadastradas</h2>
+                    <p className="bank-section-desc muted small">
                       {loading ? 'Carregando…' : `${totalItems} conta(s) neste laranja.`}
                     </p>
                   </div>
@@ -212,19 +212,19 @@ export function BankAccountsPage() {
                   </button>
                 </div>
 
-                <div className="admin-op-section__body">
+                <div className="bank-section__body">
                   <div className="bank-list-toolbar">
                     <input
                       className="nexus-input bank-list-toolbar__search"
                       value={filter}
                       onChange={(e) => setFilter(e.target.value)}
-                      placeholder="Buscar por banco, chave PIX ou apelido…"
+                      placeholder="Buscar por banco, agência ou apelido…"
                       aria-label="Filtrar contas"
                     />
                     <IconButton
                       icon="refresh"
                       label="Atualizar lista"
-                      onClick={() => void load(currentPage, strawManAccountId)}
+                      onClick={() => void load(currentPage, strawManId)}
                       disabled={loading}
                     />
                   </div>
@@ -276,10 +276,10 @@ export function BankAccountsPage() {
       <AccountPickerModal
         open={strawPickerOpen}
         onClose={() => setStrawPickerOpen(false)}
-        searchAccounts={searchOpAdminStrawMenPicker}
+        searchAccounts={searchAdministratorStrawMenPicker}
         title="Conta laranja"
         onSelected={(row) => {
-          setStrawManAccountId(row.id);
+          setStrawManId(row.id);
           setStrawLabel(row.username);
           setCurrentPage(1);
           setFilter('');

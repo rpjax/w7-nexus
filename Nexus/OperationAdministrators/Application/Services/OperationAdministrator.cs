@@ -14,7 +14,6 @@ public class OperationAdministrator : IOperationAdministrator
     private IOperationAdministratorOperationCommandService _operationCommands { get; }
     private IOperationAdministratorTeamLeaderCandidateSearchService _teamLeaderCandidateSearch { get; }
     private IOperationAdministratorStrawManAssignmentSearchService _strawManAssignmentSearch { get; }
-    private IOperationAdministratorWithdrawalCommandService _withdrawals { get; }
 
     public OperationAdministrator(
         IOperationAdministratorAccessPolicy policy,
@@ -22,8 +21,7 @@ public class OperationAdministrator : IOperationAdministrator
         IOperationAdministratorTeamCommandService teamCommands,
         IOperationAdministratorOperationCommandService operationCommands,
         IOperationAdministratorTeamLeaderCandidateSearchService teamLeaderCandidateSearch,
-        IOperationAdministratorStrawManAssignmentSearchService strawManAssignmentSearch,
-        IOperationAdministratorWithdrawalCommandService withdrawals)
+        IOperationAdministratorStrawManAssignmentSearchService strawManAssignmentSearch)
     {
         _policy = policy;
         _operationSearch = operationSearch;
@@ -31,7 +29,6 @@ public class OperationAdministrator : IOperationAdministrator
         _operationCommands = operationCommands;
         _teamLeaderCandidateSearch = teamLeaderCandidateSearch;
         _strawManAssignmentSearch = strawManAssignmentSearch;
-        _withdrawals = withdrawals;
     }
 
     public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
@@ -285,18 +282,6 @@ public class OperationAdministrator : IOperationAdministrator
             () => _operationCommands.UnassignGatewayAccountFromOperationAsync(request),
             cancellationToken);
     }
-
-    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
-        RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
-        CancellationToken cancellationToken = default) =>
-        _withdrawals.CreateWithdrawalAsync(identity, request, cancellationToken);
-
-    public Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
-        RequesterIdentity identity,
-        string withdrawalId,
-        CancellationToken cancellationToken = default) =>
-        _withdrawals.GetWithdrawalAsync(identity, withdrawalId, cancellationToken);
 
     private async Task<IOperationResult<T>> ExecuteAsync<T>(
         RequesterIdentity identity,

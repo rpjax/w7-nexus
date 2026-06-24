@@ -7,6 +7,7 @@ using Aidan.Mongo.Linq;
 using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Accounts.Aggregates;
+using Nexus.Authorization;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Payments.Aggregates;
@@ -28,20 +29,19 @@ public sealed class PixPaymentServiceTests
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
                 ? PaymentTestFactory.Create(
                     operationId: entity.OperationId,
-                    teamId: entity.TeamId,
                     gateway: entity.Gateway,
                     gatewayPaymentId: entity.GatewayTransactionId,
                     amount: entity.Amount,
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
-                    operatorAccountId: entity.OperatorAccountId,
-                    strawManAccountId: entity.StrawManAccountId,
+                    operatorId: entity.OperatorId,
+                    strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
                     paidAt: entity.PaidAt,
                     refundedAt: entity.RefundedAt,
-                    diedAt: entity.DiedAt,
-                    deathReason: entity.DeathReason,
+                    killedAt: entity.KilledAt,
+                    killReason: entity.KillReason,
                     withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
@@ -69,6 +69,11 @@ public sealed class PixPaymentServiceTests
     private sealed class StubOperationRepository : IOperationRepository
     {
         private readonly Operation[] _operations;
+
+        public StubOperationRepository(params Operation[] operations)
+        {
+            _operations = operations;
+        }
 
         public StubOperationRepository(params string[] operationIds)
         {
@@ -134,7 +139,18 @@ public sealed class PixPaymentServiceTests
         public StubAccountRepository(params string[] accountIds)
         {
             _accounts = accountIds
-                .Select(id => new Account(id, $"user-{id}", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow))
+                .Select(id => new Account(
+                    id,
+                    $"user-{id}",
+                    "hash",
+                    id.StartsWith("admin", StringComparison.Ordinal)
+                        ? new[] { Roles.Administrator }
+                        : id.StartsWith("sm", StringComparison.Ordinal) || id.StartsWith("straw", StringComparison.Ordinal)
+                            ? new[] { Roles.StrawMan }
+                            : Array.Empty<string>(),
+                    Array.Empty<string>(),
+                    DateTime.UtcNow,
+                    DateTime.UtcNow))
                 .ToArray();
         }
 
@@ -170,8 +186,8 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = null,
+            OperatorId = null,
+            StrawManId = string.Empty,
             Gateway = PaymentGateway.None,
             Amount = 10m,
             GatewayPaymentId = "gw-1"
@@ -192,8 +208,8 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = null,
+            OperatorId = null,
+            StrawManId = string.Empty,
             Gateway = PaymentGateway.FusionPay,
             Amount = amount,
             GatewayPaymentId = "gw-1"
@@ -214,8 +230,8 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = null,
+            OperatorId = null,
+            StrawManId = string.Empty,
             Gateway = PaymentGateway.Frendz,
             Amount = 10m,
             GatewayPaymentId = gatewayPaymentId
@@ -233,8 +249,8 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "  ",
-            StrawManAccountId = null,
+            OperatorId = "  ",
+            StrawManId = string.Empty,
             Gateway = PaymentGateway.FusionPay,
             Amount = 10m,
             GatewayPaymentId = "gw-1"
@@ -245,52 +261,133 @@ public sealed class PixPaymentServiceTests
     }
 
     [Fact]
-    public async Task CreatePaymentAsync_OperatorWithoutTeamId_ReturnsTeamIdRequired()
+    public async Task CreatePaymentAsync_OperatorWithoutMatchingTeam_ReturnsTeamNotFound()
     {
-        var sut = CreateSut(new StubAccountRepository("op-42"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+        var sut = CreateSut(
+            new StubAccountRepository("op-42", "straw-1"),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository("op-1"));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "op-42",
+            OperatorId = "op-42",
             Gateway = PaymentGateway.FusionPay,
             Amount = 10m,
             GatewayPaymentId = "gw-1"
         });
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.TeamIdRequired);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.TeamNotFound);
     }
 
     [Fact]
-    public async Task CreatePaymentAsync_StrawManProvidedAsEmpty_ReturnsStrawManInvalid()
+    public async Task CreatePaymentAsync_WithoutOperatorAndNoRecipients_ReturnsProfitShareRecipientsNotFound()
     {
         var sut = CreateSut(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = " \t ",
-            Gateway = PaymentGateway.SuitPay,
+            Gateway = PaymentGateway.FusionPay,
             Amount = 10m,
             GatewayPaymentId = "gw-1"
         });
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.StrawManInvalid);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.ProfitShareRecipientsNotFound);
     }
 
     [Fact]
-    public async Task CreatePaymentAsync_ValidMinimal_ReturnsPendingPaymentWithoutBindings()
+    public async Task CreatePaymentAsync_WithoutOperator_SplitsAmongOperationAdministrators()
     {
-        var sut = CreateSut(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+        var operation = new Operation(
+            "op-1",
+            "Operation",
+            "desc",
+            new[] { "admin-1", "admin-2" },
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var sut = CreateSut(
+            new StubAccountRepository(),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository(operation));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = null,
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 100m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Splits.Count);
+        Assert.Equal(100m, result.Value.Splits.Sum(split => split.Amount));
+    }
+
+    [Fact]
+    public async Task CreatePaymentAsync_WithoutOperator_FallsBackToSystemAdministrators()
+    {
+        var operation = new Operation(
+            "op-1",
+            "Operation",
+            "desc",
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var sut = CreateSut(
+            new StubAccountRepository("admin-1", "admin-2"),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository(operation));
+
+        var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
+        {
+            OperationId = "op-1",
+            Gateway = PaymentGateway.FusionPay,
+            Amount = 100m,
+            GatewayPaymentId = "gw-1"
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(2, result.Value!.Splits.Count);
+        Assert.Equal(100m, result.Value.Splits.Sum(split => split.Amount));
+    }
+
+    [Fact]
+    public async Task CreatePaymentAsync_ValidMinimalWithoutStrawMan_CreatesPendingPayment()
+    {
+        var operation = new Operation(
+            "op-1",
+            "Operation",
+            "desc",
+            new[] { "admin-1" },
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var sut = CreateSut(
+            new StubAccountRepository("admin-1"),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository(operation));
+
+        var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorId = null,
             Gateway = PaymentGateway.FusionPay,
             Amount = 19.90m,
             GatewayPaymentId = "ext-pay-99"
@@ -303,29 +400,29 @@ public sealed class PixPaymentServiceTests
         Assert.Equal("op-1", payment.OperationId);
         Assert.Equal(19.90m, payment.Amount);
         Assert.Equal(PaymentStatus.Pending, payment.Status);
-        Assert.Empty(payment.Splits);
-        Assert.Null(payment.OperatorAccountId);
-        Assert.Null(payment.StrawManAccountId);
+        Assert.Single(payment.Splits);
+        Assert.Null(payment.OperatorId);
+        Assert.Equal(string.Empty, payment.StrawManId);
         Assert.False(string.IsNullOrEmpty(payment.Id));
     }
 
     [Fact]
     public async Task CreatePaymentAsync_OperatorNotFound_ReturnsOperatorAccountNotFound()
     {
-        var sut = CreateSut(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+        var sut = CreateSut(new StubAccountRepository("straw-1"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = "missing-operator",
-            TeamId = "team-1",
+            OperatorId = "missing-operator",
+            StrawManId = "straw-1",
             Gateway = PaymentGateway.Frendz,
             Amount = 5m,
             GatewayPaymentId = "gw-1"
         });
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperatorAccountNotFound);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.OperatorNotFound);
     }
 
     [Fact]
@@ -336,23 +433,23 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = "missing-straw",
+            OperatorId = null,
+            StrawManId = "missing-straw",
             Gateway = PaymentGateway.FusionPay,
             Amount = 5m,
             GatewayPaymentId = "gw-1"
         });
 
         Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.StrawManAccountNotFound);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.StrawManNotFound);
     }
 
     [Fact]
     public async Task CreatePaymentAsync_OperatorExists_SnapshotsProfitShareAndBindsOperator()
     {
-        var team = TeamTestFactory.WithOperatorProfitShare("team-1", "op-1", "op-42", ("op-42", 100m));
+        var team = TeamTestFactory.WithOperatorProfitShare("team-1", "op-1", "op-42", "straw-1", ("op-42", 100m));
         var sut = CreateSut(
-            new StubAccountRepository("op-42"),
+            new StubAccountRepository("op-42", "straw-1"),
             new StubPixPaymentRepository(),
             new StubOperationRepository("op-1"),
             new StubTeamRepository(team));
@@ -360,46 +457,59 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            TeamId = "team-1",
-            OperatorAccountId = "op-42",
-            StrawManAccountId = null,
+            OperatorId = "op-42",
+            StrawManId = "straw-1",
             Gateway = PaymentGateway.SigiloPay,
             Amount = 100m,
             GatewayPaymentId = "gw-abc"
         });
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("op-42", result.Value!.OperatorAccountId);
-        Assert.Equal("team-1", result.Value.TeamId);
+        Assert.Equal("op-42", result.Value!.OperatorId);
+        Assert.Equal("straw-1", result.Value.StrawManId);
         Assert.Single(result.Value.Splits);
         Assert.Equal(100m, result.Value.Splits.Sum(split => split.Amount));
-        Assert.Null(result.Value.StrawManAccountId);
     }
 
     [Fact]
-    public async Task CreatePaymentAsync_StrawManExists_BindsStrawMan()
+    public async Task CreatePaymentAsync_StrawManExists_BindsStrawManWhenProvided()
     {
-        var sut = CreateSut(new StubAccountRepository("sm-7"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+        var operation = new Operation(
+            "op-1",
+            "Operation",
+            "desc",
+            new[] { "admin-1" },
+            Array.Empty<string>(),
+            GatewaySelectionStrategy.PerStrawman,
+            Array.Empty<string>(),
+            Array.Empty<string>(),
+            DateTime.UtcNow,
+            DateTime.UtcNow);
+
+        var sut = CreateSut(
+            new StubAccountRepository("sm-7", "admin-1"),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository(operation));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = null,
-            StrawManAccountId = "sm-7",
+            OperatorId = null,
+            StrawManId = "sm-7",
             Gateway = PaymentGateway.FusionPay,
             Amount = 2m,
             GatewayPaymentId = "gw-x"
         });
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("sm-7", result.Value!.StrawManAccountId);
-        Assert.Null(result.Value.OperatorAccountId);
+        Assert.Equal("sm-7", result.Value!.StrawManId);
+        Assert.Null(result.Value.OperatorId);
     }
 
     [Fact]
     public async Task CreatePaymentAsync_OperatorAndStrawMan_BindsBothAndSnapshotsSplit()
     {
-        var team = TeamTestFactory.WithOperatorProfitShare("team-1", "op-1", "op", ("op", 60m), ("partner", 40m));
+        var team = TeamTestFactory.WithOperatorProfitShare("team-1", "op-1", "op", "sm", ("op", 60m), ("partner", 40m));
         var sut = CreateSut(
             new StubAccountRepository("op", "sm"),
             new StubPixPaymentRepository(),
@@ -409,17 +519,16 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            TeamId = "team-1",
-            OperatorAccountId = "op",
-            StrawManAccountId = "sm",
+            OperatorId = "op",
+            StrawManId = "sm",
             Gateway = PaymentGateway.Frendz,
             Amount = 3m,
             GatewayPaymentId = "gw-dual"
         });
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("op", result.Value!.OperatorAccountId);
-        Assert.Equal("sm", result.Value.StrawManAccountId);
+        Assert.Equal("op", result.Value!.OperatorId);
+        Assert.Equal("sm", result.Value.StrawManId);
         Assert.Equal(2, result.Value.Splits.Count);
         Assert.Equal(3m, result.Value.Splits.Sum(split => split.Amount));
     }
@@ -432,8 +541,8 @@ public sealed class PixPaymentServiceTests
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "op-1",
-            OperatorAccountId = " ",
-            StrawManAccountId = " ",
+            OperatorId = " ",
+            StrawManId = " ",
             Gateway = PaymentGateway.FusionPay,
             Amount = 0m,
             GatewayPaymentId = ""
@@ -466,11 +575,12 @@ public sealed class PixPaymentServiceTests
     [Fact]
     public async Task CreatePaymentAsync_OperationNotFound_ReturnsOperationNotFound()
     {
-        var sut = CreateSut(new StubAccountRepository(), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
+        var sut = CreateSut(new StubAccountRepository("straw-1"), new StubPixPaymentRepository(), new StubOperationRepository("op-1"));
 
         var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = "missing-operation",
+            StrawManId = "straw-1",
             Gateway = PaymentGateway.FusionPay,
             Amount = 10m,
             GatewayPaymentId = "gw-1"

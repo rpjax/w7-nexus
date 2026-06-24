@@ -1,10 +1,11 @@
 using System.Linq.Expressions;
+using Nexus.Accounts.Aggregates;
+using Nexus.Authorization;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
-using Nexus.Accounts.Aggregates;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
 using Nexus.Payments.Application.Models;
@@ -30,20 +31,19 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             var persisted = string.IsNullOrWhiteSpace(entity.Id)
                 ? PaymentTestFactory.Create(
                     operationId: entity.OperationId,
-                    teamId: entity.TeamId,
                     gateway: entity.Gateway,
                     gatewayPaymentId: entity.GatewayTransactionId,
                     amount: entity.Amount,
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
-                    operatorAccountId: entity.OperatorAccountId,
-                    strawManAccountId: entity.StrawManAccountId,
+                    operatorId: entity.OperatorId,
+                    strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
                     paidAt: entity.PaidAt,
                     refundedAt: entity.RefundedAt,
-                    diedAt: entity.DiedAt,
-                    deathReason: entity.DeathReason,
+                    killedAt: entity.KilledAt,
+                    killReason: entity.KillReason,
                     withdrawnAt: entity.WithdrawnAt)
                 : entity;
 
@@ -263,10 +263,10 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-1", "operator", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
-        var strawAccount = new Account("straw-1", "straw", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var strawAccount = new Account("straw-1", "straw", "hash", new[] { Roles.StrawMan }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(new[] { operatorAccount, strawAccount });
 
-        var team = TeamTestFactory.WithOperatorProfitShare("team-1", operation.Id, operatorAccount.Id, (operatorAccount.Id, 100m));
+        var team = TeamTestFactory.WithOperatorProfitShare("team-1", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
         var sut = new PaymentService(accounts, payments, operations, teams);
@@ -274,9 +274,8 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
-            TeamId = team.Id,
-            OperatorAccountId = operatorAccount.Id,
-            StrawManAccountId = strawAccount.Id,
+            OperatorId = operatorAccount.Id,
+            StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.Frendz,
             Amount = 150m,
             GatewayPaymentId = "gw-777"
@@ -297,7 +296,7 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
 
         var killAfterRefund = await sut.KillAsync(paymentId, "manual-close");
         Assert.True(killAfterRefund.IsSuccess);
-        Assert.Equal(PaymentStatus.Dead, payments.AsQueryable().First(p => p.Id == paymentId).Status);
+        Assert.Equal(PaymentStatus.Killed, payments.AsQueryable().First(p => p.Id == paymentId).Status);
     }
 
     [Fact]
@@ -322,9 +321,10 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         await operations.CreateAsync(operation);
 
         var operatorAccount = new Account("operator-3", "operator3", "hash", Array.Empty<string>(), Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
-        await accounts.CreateAsync(operatorAccount);
+        var strawAccount = new Account("straw-3", "straw3", "hash", new[] { Roles.StrawMan }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        await accounts.CreateAsync(new[] { operatorAccount, strawAccount });
 
-        var team = TeamTestFactory.WithOperatorProfitShare("team-3", operation.Id, operatorAccount.Id, (operatorAccount.Id, 100m));
+        var team = TeamTestFactory.WithOperatorProfitShare("team-3", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
         var sut = new PaymentService(accounts, payments, operations, teams);
@@ -332,8 +332,8 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
-            TeamId = team.Id,
-            OperatorAccountId = operatorAccount.Id,
+            OperatorId = operatorAccount.Id,
+            StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.Frendz,
             Amount = 80m,
             GatewayPaymentId = "gw-880"
@@ -377,11 +377,16 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             DateTime.UtcNow);
         await operations.CreateAsync(operation);
 
+        var adminAccount = new Account("admin-2", "admin", "hash", new[] { Roles.Administrator }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        var strawAccount = new Account("straw-2", "straw2", "hash", new[] { Roles.StrawMan }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
+        await accounts.CreateAsync(new[] { adminAccount, strawAccount });
+
         var sut = new PaymentService(accounts, payments, operations, teams);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
             OperationId = operation.Id,
+            StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.FusionPay,
             Amount = 40m,
             GatewayPaymentId = "gw-778"

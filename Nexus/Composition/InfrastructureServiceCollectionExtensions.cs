@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
 using Nexus.AppHost;
 using Nexus.AppHost.Contracts;
@@ -16,7 +17,11 @@ public static class InfrastructureServiceCollectionExtensions
                 Path.Combine(builder.Environment.ContentRootPath, "DataProtection-Keys")));
 
         services.AddOpenApi();
-        services.AddControllers();
+        services.AddControllers()
+            .AddJsonOptions(options =>
+            {
+                options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            });
         services.AddHttpContextAccessor();
         services.AddSignalR();
 

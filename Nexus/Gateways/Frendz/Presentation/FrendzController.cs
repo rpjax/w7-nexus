@@ -8,7 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.Frendz.Errors;
-using Nexus.Legacy.Presentation;
+using Nexus.Payments.Presentation;
 
 namespace Nexus.Gateways.Frendz.Presentation;
 

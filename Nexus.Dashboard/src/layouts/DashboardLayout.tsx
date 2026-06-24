@@ -2,20 +2,24 @@ import { useEffect, useState } from 'react';
 import { Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth/AuthContext';
 import { isOperationDetailPath } from '../features/operations/operationPaths';
+import { isPaymentDetailPath } from '../features/payments/paymentPaths';
 import { isTeamDetailPath } from '../features/teams/teamPaths';
 import { PageTitleProvider, usePageTitle } from './PageTitleContext';
 import { NavMenu } from './NavMenu';
 
 function resolvePageTitle(pathname: string): string {
   const relative = pathname.replace(/\/$/, '').toLowerCase();
+  if (isPaymentDetailPath(relative)) {
+    return 'Detalhe do pagamento';
+  }
   if (isTeamDetailPath(relative)) {
     return 'Detalhe da equipe';
   }
   if (isOperationDetailPath(relative)) {
     return 'Detalhe da operação';
   }
-  if (/^\/dashboard\/withdrawals\/[^/]+$/.test(relative) && relative !== '/dashboard/withdrawals/new') {
-    return 'Detalhe do saque';
+  if (/^\/dashboard\/transfers\/[^/]+$/.test(relative) && relative !== '/dashboard/transfers/new') {
+    return 'Detalhe da transferência';
   }
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
@@ -24,12 +28,16 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard/operation-admin/operations': 'Administração de operações',
     '/dashboard/team-leader/operations': 'Liderança de equipes',
     '/dashboard/accounts': 'Contas',
-    '/dashboard/payments': 'Pagamentos',
+    '/dashboard/payments': 'Meus pagamentos',
+    '/dashboard/admin/payments': 'Todos os pagamentos',
+    '/dashboard/straw-man/payments': 'Pagamentos do laranja',
+    '/dashboard/straw-man/settings': 'Configurações do laranja',
     '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',
-    '/dashboard/withdrawals': 'Saques',
-    '/dashboard/withdrawals/new': 'Saques — Novo saque',
-    '/dashboard/withdrawals/bank-accounts': 'Saques — Contas bancárias',
-    '/dashboard/withdrawals/crypto-wallets': 'Saques — Carteiras crypto',
+    '/dashboard/transfers': 'Transferências',
+    '/dashboard/transfers/new': 'Transferências — Novo saque',
+    '/dashboard/transfers/bank-accounts': 'Transferências — Contas bancárias',
+    '/dashboard/transfers/crypto-wallets': 'Transferências — Carteiras crypto',
+    '/dashboard/admin/straw-man-settings': 'Configurações do laranja',
     '/dashboard/gateways': 'Gateways',
     '/dashboard/gateways/frendz': 'Frendz',
     '/dashboard/gateways/sigilopay': 'SigiloPay',
@@ -52,7 +60,9 @@ function DashboardLayoutInner() {
   }, [location.pathname]);
 
   useEffect(() => {
-    const onNamedDetail = isOperationDetailPath(location.pathname) || isTeamDetailPath(location.pathname);
+    const onNamedDetail = isOperationDetailPath(location.pathname)
+      || isTeamDetailPath(location.pathname)
+      || isPaymentDetailPath(location.pathname);
     if (!onNamedDetail) {
       setTitle(null);
     }

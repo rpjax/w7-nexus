@@ -3,6 +3,12 @@ using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.AccountNodes.Aggregates;
+using Nexus.AccountNodes.Application.Contracts;
+using Nexus.Transfers.Application.Contracts;
+using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Administrators.Application.Contracts;
 
@@ -178,23 +184,123 @@ public interface IAdministrator
         SearchOperationsToAssignRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Withdrawals.Aggregates.BankAccount>> CreateBankAccountAsync(
+    Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateBankAccountRequest request,
+        CreateBankAccountRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Withdrawals.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+    Task<IOperationResult<CryptoWallet>> CreateCryptoWalletAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateCryptoWalletRequest request,
+        CreateCryptoWalletRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> CreateWithdrawalAsync(
+    Task<IOperationResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
         RequesterIdentity identity,
-        Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
+        UpsertCryptoWalletAddressRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Withdrawals.Aggregates.Withdrawal>> GetWithdrawalAsync(
+    Task<IOperationResult<BankAccount>> GetBankAccountAsync(
         RequesterIdentity identity,
-        string withdrawalId,
+        string bankAccountId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<CryptoWallet>> GetCryptoWalletAsync(
+        RequesterIdentity identity,
+        string cryptoWalletId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
+        RequesterIdentity identity,
+        WithdrawalTransferRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
+        RequesterIdentity identity,
+        MovementTransferRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(
+        RequesterIdentity identity,
+        PayoutTransferRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Transfer>> GetTransferAsync(
+        RequesterIdentity identity,
+        string transferId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<TransferTimelineDetails>> GetTransferTimelineAsync(
+        RequesterIdentity identity,
+        string transferId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchTransfersResponse>> SearchTransfersAsync(
+        RequesterIdentity identity,
+        SearchTransfersRequest? request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
+        RequesterIdentity identity,
+        SearchBankAccountsRequest? request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
+        RequesterIdentity identity,
+        string bankAccountId,
+        string? label,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
+        RequesterIdentity identity,
+        SearchCryptoWalletsRequest? request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
+        RequesterIdentity identity,
+        Payments.Application.Models.SearchPaymentsRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string reason,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<bool>> DeletePaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string operatorId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        string strawManId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
+        RequesterIdentity identity,
+        string strawManId,
+        decimal movementFeePercentage,
         CancellationToken cancellationToken = default);
 }

@@ -1,114 +1,30 @@
 using Aidan.Core.Errors;
-using Nexus.Payments.Application.Contracts;
-using Aidan.Core.Linq.Extensions;
 using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Models;
+using Nexus.Payments.Errors;
 
 namespace Nexus.Payments.Presentation;
 
 [Route("api/payments")]
 public sealed class PaymentsController : WebController
 {
-    private readonly IPaymentRepository _paymentRepository;
-
-    public PaymentsController(IPaymentRepository paymentRepository)
-    {
-        _paymentRepository = paymentRepository;
-    }
-
-    private static object ToPaymentResponse(Payment p) => new
-    {
-        p.Id,
-        p.OperationId,
-        p.TeamId,
-        p.OperatorAccountId,
-        p.StrawManAccountId,
-        Gateway = p.Gateway.ToString(),
-        GatewayTransactionId = p.GatewayTransactionId,
-        p.Amount,
-        Splits = p.Splits.Select(split => new
-        {
-            split.AccountId,
-            split.Percentage,
-            split.Amount,
-        }).ToArray(),
-        Status = p.Status.ToString(),
-        SettlementStatus = p.SettlementStatus.ToString(),
-        p.CreatedAt,
-        p.PaidAt,
-        p.RefundedAt,
-        p.DiedAt,
-        p.DeathReason,
-        p.WithdrawnAt,
-    };
-
     [HttpPost("search")]
-    public async Task<ActionResult> SearchAsync([FromBody] SearchPaymentsRequest? request)
+    [Obsolete("Use POST /api/administrator/payments/search, /api/operator/payments/search or /api/straw-man/payments/search.")]
+    public ActionResult SearchAsync([FromBody] SearchPaymentsRequest? request)
     {
-        request ??= new SearchPaymentsRequest();
-
-        var limit = request.Limit <= 0 ? 30 : request.Limit;
-        var offset = request.Offset;
-        var keyword = request.Keyword?.Trim();
-
-        if (limit < 0 || limit >= 1000)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Payment.SEARCH_LIMIT_INVALID")
-                .WithMessage("O limite deve estar entre 1 e 999.")
-                .Build());
-        }
-
-        if (offset < 0)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Payment.SEARCH_OFFSET_INVALID")
-                .WithMessage("O deslocamento não pode ser negativo.")
-                .Build());
-        }
-
-        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > 200)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Payment.SEARCH_KEYWORD_TOO_LONG")
-                .WithMessage("A palavra-chave pode ter no máximo 200 caracteres.")
-                .Build());
-        }
-
-        var query = _paymentRepository.AsQueryable();
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            var term = keyword.ToLowerInvariant();
-            query = query.Where(p =>
-                p.Id.ToLower().Contains(term)
-                || p.OperationId.ToLower().Contains(term)
-                || p.GatewayTransactionId.ToLower().Contains(term)
-                || (p.OperatorAccountId != null && p.OperatorAccountId.ToLower().Contains(term))
-                || (p.StrawManAccountId != null && p.StrawManAccountId.ToLower().Contains(term)));
-        }
-
-        var total = await query.CountAsync();
-
-        var items = await query
-            .OrderByDescending(p => p.CreatedAt)
-            .Skip(offset)
-            .Take(limit)
-            .ToArrayAsync();
-
-        return Ok(new
-        {
-            Total = total,
-            Items = items.Select(ToPaymentResponse).ToArray(),
-        });
+        _ = request;
+        return ProblemResponse(410, Error.Create()
+            .WithCode("Payment.SEARCH_ENDPOINT_DEPRECATED")
+            .WithMessage("Este endpoint foi descontinuado. Use os endpoints de pagamentos por perfil (administrador, operador ou laranja).")
+            .Build());
     }
 
     [HttpPost("{paymentId}/withdraw")]
     [Obsolete("Use POST api/withdrawals to create a withdrawal linked to one or more payments.")]
     public ActionResult WithdrawAsync(string paymentId)
     {
+        _ = paymentId;
         return ProblemResponse(410, Error.Create()
             .WithCode("Payment.WITHDRAW_ENDPOINT_DEPRECATED")
             .WithMessage("Este endpoint foi descontinuado. Crie um saque via POST api/withdrawals vinculando os pagamentos desejados.")

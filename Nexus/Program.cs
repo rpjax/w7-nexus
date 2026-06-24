@@ -1,4 +1,6 @@
 using Nexus.Composition;
+using Nexus.AccountNodes.Composition;
+using Nexus.Transfers.Composition;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -19,7 +21,8 @@ builder.Services
     .AddNexusAuthentication(builder.Configuration)
     .AddNexusAccounts()
     .AddNexusPayments()
-    .AddNexusWithdrawals()
+    .AddNexusAccountNodes()
+    .AddNexusTransfers()
     .AddNexusOperations()
     .AddNexusRoles()
     .AddNexusGateways(builder.Configuration);

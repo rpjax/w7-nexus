@@ -1,25 +1,26 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { canUseOperatorPanel, isAdministrator } from '../auth/roles';
+import { canUseOperatorPanel, canUseStrawManPanel, isAdministrator } from '../auth/roles';
 
 export function NavMenu() {
   const { user } = useAuth();
   const showOperatorPanel = canUseOperatorPanel(user);
   const showGlobalAdminItems = isAdministrator(user);
+  const showStrawManPanel = canUseStrawManPanel(user);
 
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
-  const [withdrawalsOpen, setWithdrawalsOpen] = useState(true);
+  const [transfersOpen, setTransfersOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
 
   const brandSubtitle = showGlobalAdminItems && showOperatorPanel
-    ? 'Operações, pagamentos, saques e administração'
+    ? 'Operações, pagamentos e administração'
     : showGlobalAdminItems
-      ? 'Administração e operação'
+      ? 'Administração do sistema'
       : showOperatorPanel
-        ? 'Operações, pagamentos e saques'
+        ? 'Operações e pagamentos'
         : 'Dashboard';
 
   return (
@@ -101,7 +102,7 @@ export function NavMenu() {
           </div>
         ) : null}
 
-        {showOperatorPanel ? (
+        {showOperatorPanel || showGlobalAdminItems || showStrawManPanel ? (
           <div className="nav-group nav-group-gateways">
             <button
               type="button"
@@ -115,48 +116,82 @@ export function NavMenu() {
             </button>
             <div id="payments-submenu" className={`submenu-tree ${paymentsOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!paymentsOpen}>
               <div className="submenu-tree-inner">
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments" onClick={() => setPaymentsOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Registros
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments/pix" onClick={() => setPaymentsOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Gerar PIX
-                </NavLink>
+                {showOperatorPanel ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments" onClick={() => setPaymentsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Meus pagamentos
+                  </NavLink>
+                ) : null}
+                {showGlobalAdminItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/admin/payments" onClick={() => setPaymentsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Todos os pagamentos
+                  </NavLink>
+                ) : null}
+                {showStrawManPanel ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/payments" onClick={() => setPaymentsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Pagamentos do laranja
+                  </NavLink>
+                ) : null}
+                {showStrawManPanel ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/settings" onClick={() => setPaymentsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Configurações
+                  </NavLink>
+                ) : null}
+                {showOperatorPanel ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments/pix" onClick={() => setPaymentsOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Gerar PIX
+                  </NavLink>
+                ) : null}
               </div>
             </div>
           </div>
         ) : null}
 
-        {showOperatorPanel ? (
+        {showGlobalAdminItems ? (
           <div className="nav-group nav-group-gateways">
             <button
               type="button"
               className="nav-dropdown nav-dropdown-full"
-              onClick={() => setWithdrawalsOpen((v) => !v)}
-              aria-expanded={withdrawalsOpen}
-              aria-controls="withdrawals-submenu"
+              onClick={() => setTransfersOpen((v) => !v)}
+              aria-expanded={transfersOpen}
+              aria-controls="transfers-submenu"
             >
-              <span className="nav-dropdown-label">Saques</span>
-              <span className="nav-caret" aria-hidden="true">{withdrawalsOpen ? '▲' : '▼'}</span>
+              <span className="nav-dropdown-label">Transferências</span>
+              <span className="nav-caret" aria-hidden="true">{transfersOpen ? '▲' : '▼'}</span>
             </button>
-            <div id="withdrawals-submenu" className={`submenu-tree ${withdrawalsOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!withdrawalsOpen}>
+            <div id="transfers-submenu" className={`submenu-tree ${transfersOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!transfersOpen}>
               <div className="submenu-tree-inner">
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals" onClick={() => setWithdrawalsOpen(true)}>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers" onClick={() => setTransfersOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Registros
                 </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/new" onClick={() => setWithdrawalsOpen(true)}>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/new" onClick={() => setTransfersOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Novo saque
                 </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/bank-accounts" onClick={() => setWithdrawalsOpen(true)}>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/movement" onClick={() => setTransfersOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Movimentação
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/payout" onClick={() => setTransfersOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Repasse
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/bank-accounts" onClick={() => setTransfersOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Contas bancárias
                 </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/withdrawals/crypto-wallets" onClick={() => setWithdrawalsOpen(true)}>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/crypto-wallets" onClick={() => setTransfersOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Carteiras crypto
+                </NavLink>
+                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/admin/straw-man-settings" onClick={() => setTransfersOpen(true)}>
+                  <span className="submenu-bullet" aria-hidden="true" />
+                  Config. laranja
                 </NavLink>
               </div>
             </div>

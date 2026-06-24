@@ -5016,6 +5016,19 @@ table.responsive-data td.cell-actions {
     margin: 0 0 1rem;
 }
 
+.bank-section { padding: 0.85rem var(--gutter) 0.95rem; }
+.bank-section:not(:first-child) { border-top: 1px solid rgba(132, 162, 220, 0.14); padding-top: 1rem; }
+.bank-section__head { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 0.55rem 0.75rem; margin-bottom: 0.85rem; }
+.bank-section__body { min-width: 0; }
+.bank-section__body > :first-child { margin-top: 0; }
+.bank-section__head-text { display: grid; gap: 0.2rem; min-width: 0; }
+.bank-section__kicker { display: block; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: rgba(242, 187, 90, 0.85); order: -1; }
+.bank-section-title { margin: 0; font-size: 1.02rem; font-weight: 700; letter-spacing: -0.015em; line-height: 1.25; color: #edf3ff; display: flex; align-items: center; gap: 0.55rem; }
+.bank-section-title::before { content: ''; width: 3px; height: 1.05em; border-radius: 999px; background: linear-gradient(180deg, rgba(142, 180, 255, 0.95), rgba(74, 134, 255, 0.55)); flex-shrink: 0; }
+.bank-section-desc { margin: 0; max-width: none; line-height: 1.45; }
+.bank-section__head-text .bank-section-desc { padding-left: calc(3px + 0.55rem); }
+.bank-section__body > .bank-section-desc { padding-left: 0; margin-bottom: 0.75rem; }
+
 .bank-context-bar {
     position: sticky;
     top: 0;
@@ -5457,3 +5470,672 @@ table.responsive-data td.cell-actions {
     }
 }
 
+/* Payments actor views */
+.payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.payment-list-item {
+    cursor: pointer;
+}
+
+.payment-list-item__grid {
+    align-items: center;
+}
+
+.payment-list-item__amount {
+    margin: 0;
+    font-size: 1.125rem;
+    font-weight: 650;
+    letter-spacing: -0.02em;
+}
+
+.payment-list-item__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+}
+
+.payment-list-item__meta {
+    margin: 0.35rem 0 0;
+}
+
+.payment-search-form {
+    display: grid;
+    grid-template-columns: minmax(12rem, 2fr) minmax(8rem, 1fr) minmax(8rem, 1fr) auto;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.payment-search-form--compact {
+    grid-template-columns: minmax(12rem, 1fr) auto;
+}
+
+.payment-search-form__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ops-page__toolbar-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.payment-detail-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-top: 1rem;
+}
+
+.payment-detail-panel__hero {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+}
+
+.payment-detail-panel__kicker {
+    margin: 0;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+}
+
+.payment-detail-panel__amount {
+    margin: 0.2rem 0 0;
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+}
+
+.payment-detail-panel__id {
+    margin: 0.25rem 0 0;
+    font-size: 0.82rem;
+}
+
+.payment-detail-panel__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
+.payment-detail-panel__section-title {
+    margin: 0 0 0.65rem;
+    font-size: 0.92rem;
+}
+
+.payment-detail-meta {
+    display: grid;
+    gap: 0.55rem;
+}
+
+.payment-detail-meta__row {
+    display: grid;
+    grid-template-columns: minmax(7rem, 10rem) 1fr;
+    gap: 0.75rem;
+    align-items: baseline;
+}
+
+.payment-detail-meta__label {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+}
+
+.payment-detail-meta__value {
+    font-size: 0.92rem;
+    word-break: break-word;
+}
+
+.payment-split-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.payment-split-list__item {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.75rem;
+    align-items: center;
+    padding: 0.55rem 0.75rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-sm);
+    background: var(--surface-elevated);
+}
+
+.payment-split-list__item--highlight {
+    border-color: color-mix(in srgb, var(--accent) 35%, var(--border-subtle));
+    background: color-mix(in srgb, var(--accent) 6%, var(--surface-elevated));
+}
+
+.payment-admin-actions {
+    margin-top: 0.5rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background: var(--surface-elevated);
+}
+
+.payment-admin-actions__hint {
+    margin: 0 0 0.65rem;
+}
+
+.payment-admin-actions__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .payment-search-form {
+        grid-template-columns: 1fr;
+    }
+
+    .payment-detail-meta__row {
+        grid-template-columns: 1fr;
+        gap: 0.15rem;
+    }
+}
+
+.page-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+}
+
+/* ── Transfer detail page ── */
+.transfer-detail-page {
+    display: grid;
+    gap: 1rem;
+    padding-bottom: 1.5rem;
+}
+
+.transfer-detail-page__back {
+    margin: 0;
+    padding: 0 var(--gutter);
+}
+
+.transfer-detail-page__back a {
+    color: var(--muted);
+    text-decoration: none;
+}
+
+.transfer-detail-page__back a:hover {
+    color: #ccdbff;
+}
+
+.transfer-detail-skeleton {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0 var(--gutter);
+}
+
+.transfer-detail-skeleton__hero,
+.transfer-detail-skeleton__block {
+    min-height: 9rem;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: linear-gradient(90deg, rgba(255,255,255,0.03), rgba(255,255,255,0.07), rgba(255,255,255,0.03));
+    background-size: 200% 100%;
+    animation: transfer-skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.transfer-detail-skeleton__block {
+    min-height: 6rem;
+}
+
+@keyframes transfer-skeleton-shimmer {
+    0% { background-position: 100% 0; }
+    100% { background-position: -100% 0; }
+}
+
+.transfer-hero {
+    margin: 0 var(--gutter);
+    padding: 1.1rem 1.15rem;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background:
+        radial-gradient(120% 80% at 100% 0%, rgba(74, 134, 255, 0.14), transparent 55%),
+        var(--card);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.22);
+    display: grid;
+    gap: 1rem;
+}
+
+.transfer-hero__top {
+    display: grid;
+    gap: 1rem;
+}
+
+.transfer-hero__kicker {
+    margin: 0 0 0.2rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-hero__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.transfer-hero__title {
+    margin: 0;
+    font-size: clamp(1.35rem, 4vw, 1.65rem);
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+}
+
+.transfer-hero__amount {
+    margin: 0.45rem 0 0;
+    font-size: clamp(1.85rem, 6vw, 2.35rem);
+    font-weight: 700;
+    letter-spacing: -0.04em;
+    color: #f4f8ff;
+}
+
+.transfer-hero__meta-grid {
+    display: grid;
+    gap: 0.65rem;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.transfer-hero__meta-item {
+    display: grid;
+    gap: 0.12rem;
+    min-width: 0;
+}
+
+.transfer-hero__meta-item--wide {
+    grid-column: 1 / -1;
+}
+
+.transfer-hero__meta-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-hero__meta-value {
+    font-size: 0.92rem;
+    line-height: 1.35;
+    word-break: break-word;
+}
+
+.transfer-hero__id-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem 0.65rem;
+}
+
+.transfer-hero__copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--muted);
+    font-size: 0.75rem;
+    cursor: pointer;
+}
+
+.transfer-hero__copy:hover {
+    color: var(--text);
+    border-color: rgba(132, 162, 220, 0.45);
+}
+
+.transfer-hero__destination {
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.85rem 0.95rem;
+    border-radius: 12px;
+    border: 1px solid rgba(132, 162, 220, 0.2);
+    background: rgba(9, 14, 27, 0.45);
+}
+
+.transfer-hero__dest-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-hero__dest-title {
+    font-size: 1rem;
+    line-height: 1.35;
+}
+
+.transfer-hero__dest-sub {
+    font-size: 0.88rem;
+    line-height: 1.4;
+    word-break: break-word;
+}
+
+.transfer-hero__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.transfer-timeline-layout {
+    display: grid;
+    gap: 1rem;
+    padding: 0 var(--gutter);
+}
+
+@media (min-width: 1100px) {
+    .transfer-timeline-layout {
+        grid-template-columns: minmax(280px, 0.95fr) minmax(0, 1.65fr);
+        align-items: start;
+    }
+
+    .transfer-next-steps {
+        order: 2;
+    }
+
+    .transfer-timeline {
+        order: 1;
+    }
+}
+
+.transfer-next-steps__title,
+.transfer-timeline__title {
+    margin: 0;
+    font-size: 1rem;
+    letter-spacing: -0.02em;
+}
+
+.transfer-next-steps__hint,
+.transfer-timeline__sub {
+    margin: 0.35rem 0 0.85rem;
+}
+
+.transfer-next-steps__list,
+.transfer-timeline__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.85rem;
+}
+
+.transfer-next-steps__item {
+    display: grid;
+    gap: 0.65rem;
+    padding: 0.8rem 0.85rem;
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    background: rgba(9, 14, 27, 0.35);
+}
+
+.transfer-next-steps__summary {
+    display: grid;
+    gap: 0.15rem;
+}
+
+.transfer-next-steps__buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+}
+
+.transfer-timeline__head {
+    margin-bottom: 0.85rem;
+}
+
+.transfer-step {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.transfer-step--chained {
+    grid-template-columns: 1.1rem minmax(0, 1fr);
+    position: relative;
+    padding-bottom: 0.35rem;
+}
+
+.transfer-step--chained:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 0.45rem;
+    top: 1.1rem;
+    bottom: -0.2rem;
+    width: 2px;
+    background: linear-gradient(180deg, rgba(74, 134, 255, 0.5), rgba(132, 162, 220, 0.15));
+}
+
+.transfer-step__marker {
+    display: flex;
+    justify-content: center;
+    padding-top: 0.45rem;
+}
+
+.transfer-step__dot {
+    width: 0.72rem;
+    height: 0.72rem;
+    border-radius: 999px;
+    border: 2px solid var(--bg-1);
+    box-shadow: 0 0 0 2px rgba(74, 134, 255, 0.28);
+    background: var(--primary);
+}
+
+.transfer-step__dot--success {
+    background: var(--success);
+    box-shadow: 0 0 0 2px rgba(101, 193, 141, 0.28);
+}
+
+.transfer-step__dot--warn {
+    background: var(--warning);
+    box-shadow: 0 0 0 2px rgba(242, 187, 90, 0.28);
+}
+
+.transfer-step__card {
+    display: grid;
+    gap: 0.85rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: rgba(9, 14, 27, 0.35);
+}
+
+.transfer-step--focus .transfer-step__card {
+    border-color: rgba(74, 134, 255, 0.42);
+    box-shadow: 0 0 0 1px rgba(74, 134, 255, 0.12) inset;
+}
+
+.transfer-step__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.transfer-step__title {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.transfer-step__amount {
+    margin: 0.25rem 0 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.transfer-step__meta {
+    margin: 0.25rem 0 0;
+}
+
+.transfer-step__route {
+    display: grid;
+    gap: 0.55rem;
+}
+
+@media (min-width: 640px) {
+    .transfer-step__route {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+}
+
+.transfer-step__endpoint {
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.7rem 0.75rem;
+    border-radius: 10px;
+    border: 1px solid rgba(132, 162, 220, 0.18);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.transfer-step__endpoint-label,
+.transfer-step__section-label {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-step__section {
+    display: grid;
+    gap: 0.5rem;
+}
+
+.transfer-step__effects,
+.transfer-step__payments {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.transfer-step__effect {
+    display: grid;
+    gap: 0.1rem 0.55rem;
+    grid-template-columns: auto 1fr;
+    padding: 0.6rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+}
+
+.transfer-step__effect--credit {
+    background: rgba(101, 193, 141, 0.08);
+    border-color: rgba(101, 193, 141, 0.22);
+}
+
+.transfer-step__effect--debit {
+    background: rgba(255, 95, 128, 0.07);
+    border-color: rgba(255, 95, 128, 0.2);
+}
+
+.transfer-step__effect-tag {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-step__effect-amount {
+    font-weight: 700;
+}
+
+.transfer-step__effect-account {
+    grid-column: 1 / -1;
+}
+
+.transfer-step__payment {
+    padding: 0.65rem 0.7rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.transfer-step__payment-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.45rem;
+}
+
+.transfer-step__payment-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.transfer-step__proof {
+    margin: 0;
+    display: grid;
+    gap: 0.45rem;
+}
+
+.transfer-step__proof-row {
+    display: grid;
+    gap: 0.1rem;
+}
+
+.transfer-step__proof-row dt {
+    margin: 0;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.transfer-step__proof-row dd {
+    margin: 0;
+    font-size: 0.86rem;
+    word-break: break-all;
+}
+
+@media (max-width: 480px) {
+    .transfer-hero__meta-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .transfer-hero__actions .btn {
+        flex: 1 1 calc(50% - 0.25rem);
+        justify-content: center;
+    }
+}
+
+.inline-link {
+    color: inherit;
+    text-decoration: underline;
+    text-underline-offset: 0.15em;
+}
+
+.inline-link:hover {
+    color: #9ec0ff;
+}

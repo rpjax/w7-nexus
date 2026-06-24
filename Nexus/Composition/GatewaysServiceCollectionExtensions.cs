@@ -34,6 +34,7 @@ public static class GatewaysServiceCollectionExtensions
         services.AddScoped<IGatewayCredentialsGroupRepository, MongoGatewayCredentialsGroupRepository>();
         services.AddScoped<IGatewayCredentialsGroupService, GatewayCredentialsGroupService>();
         services.AddScoped<IGatewayCredentialsIdValidator, GatewayCredentialsIdValidator>();
+        services.AddScoped<GatewayCredentialProviderResolver>();
 
         var useMockOrchestrator = configuration.GetValue<bool>($"{GatewaysOptions.SectionName}:UseMockOrchestrator");
         if (useMockOrchestrator)

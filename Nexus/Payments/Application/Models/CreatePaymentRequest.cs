@@ -8,9 +8,8 @@ public class CreatePaymentRequest
     public string? ExplicitPaymentId { get; set; }
 
     public string? OperationId { get; set; }
-    public string? OperatorAccountId { get; set; }
-    public string? StrawManAccountId { get; set; }
-    public string? TeamId { get; set; }
+    public string? OperatorId { get; set; }
+    public string? StrawManId { get; set; }
     public PaymentGateway Gateway { get; set; }
     public decimal Amount { get; set; }
     public string? GatewayPaymentId { get; set; }

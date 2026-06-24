@@ -295,30 +295,4 @@ public class OperationAdministratorController : NexusController
             cancellationToken));
     }
 
-    [HttpPost("withdrawals")]
-    public async Task<ActionResult> CreateWithdrawalAsync(
-        [FromBody] Withdrawals.Application.Contracts.CreateWithdrawalRequest request,
-        CancellationToken cancellationToken)
-    {
-        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
-
-        return ToOperationResult(await _operationAdministrator.CreateWithdrawalAsync(
-            identity,
-            request,
-            cancellationToken));
-    }
-
-    [HttpGet("withdrawals/{withdrawalId}")]
-    public async Task<ActionResult> GetWithdrawalAsync(
-        string withdrawalId,
-        CancellationToken cancellationToken)
-    {
-        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
-
-        return ToOperationResult(await _operationAdministrator.GetWithdrawalAsync(
-            identity,
-            withdrawalId,
-            cancellationToken));
-    }
-
 }

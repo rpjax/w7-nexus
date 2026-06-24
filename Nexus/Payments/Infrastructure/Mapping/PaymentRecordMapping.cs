@@ -11,20 +11,19 @@ internal static class PaymentRecordMapping
         new(
             record.Id.ToString(),
             record.OperationId,
-            record.TeamId,
             record.Gateway,
             record.GatewayPaymentId,
             record.Amount,
             MapSplits(record.Splits),
             record.Status,
             record.SettlementStatus,
-            record.OperatorAccountId,
-            record.StrawManAccountId,
+            record.OperatorId,
+            record.StrawManId ?? string.Empty,
             record.CreatedAt,
             record.PaidAt,
             record.RefundedAt,
-            record.DiedAt,
-            record.DeathReason,
+            record.KilledAt,
+            record.KillReason,
             record.WithdrawnAt);
 
     public static PaymentRecord ToRecord(Payment entity)
@@ -33,7 +32,6 @@ internal static class PaymentRecordMapping
         {
             Id = MongoObjectIds.Resolve(entity.Id),
             OperationId = entity.OperationId,
-            TeamId = entity.TeamId,
             Gateway = entity.Gateway,
             GatewayPaymentId = entity.GatewayTransactionId,
             Amount = entity.Amount,
@@ -45,13 +43,13 @@ internal static class PaymentRecordMapping
             }).ToList(),
             Status = entity.Status,
             SettlementStatus = entity.SettlementStatus,
-            OperatorAccountId = entity.OperatorAccountId,
-            StrawManAccountId = entity.StrawManAccountId,
+            OperatorId = entity.OperatorId,
+            StrawManId = entity.StrawManId,
             CreatedAt = entity.CreatedAt,
             PaidAt = entity.PaidAt,
             RefundedAt = entity.RefundedAt,
-            DiedAt = entity.DiedAt,
-            DeathReason = entity.DeathReason,
+            KilledAt = entity.KilledAt,
+            KillReason = entity.KillReason,
             WithdrawnAt = entity.WithdrawnAt,
         };
     }

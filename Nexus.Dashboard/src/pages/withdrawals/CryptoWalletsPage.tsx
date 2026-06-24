@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { searchOpAdminStrawMenPicker } from '../../api/accountPickerSources';
-import { createCryptoWallet, searchCryptoWallets } from '../../api/withdrawals';
+import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
+import { createCryptoWallet, searchCryptoWallets } from '../../api/accountNodes';
 import type { CryptoWalletRow } from '../../api/types';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
+import { PixEntityField } from '../../components/finance/PixEntityField';
 import { EmptyState } from '../../components/EmptyState';
 import { IconButton } from '../../components/IconButton';
 import { PaginationBar } from '../../components/ListControls';
-import { CHAIN_OPTIONS, CRYPTO_ASSET_OPTIONS } from '../../utils/financeLabels';
+import { ADDRESS_NAMESPACE_OPTIONS } from '../../utils/financeLabels';
+import { formatCryptoWalletAddresses, formatCryptoWalletBalances } from '../../utils/cryptoWalletDisplay';
 import { formatUtc, shortId } from '../../utils/format';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -16,7 +18,7 @@ const PAGE_SIZE = 20;
 
 export function CryptoWalletsPage() {
   const { notifyError, notifySuccess } = useNotifications();
-  const [strawManAccountId, setStrawManAccountId] = useState('');
+  const [strawManId, setStrawManId] = useState('');
   const [strawLabel, setStrawLabel] = useState<string | null>(null);
   const [rows, setRows] = useState<CryptoWalletRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -25,19 +27,22 @@ export function CryptoWalletsPage() {
   const [showForm, setShowForm] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  const [chain, setChain] = useState(1);
-  const [asset, setAsset] = useState(1);
+  const [namespace, setNamespace] = useState(1);
   const [address, setAddress] = useState('');
   const [memo, setMemo] = useState('');
   const [label, setLabel] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+  const canSubmit = useMemo(
+    () => Boolean(strawManId.trim() && address.trim()),
+    [strawManId, address],
+  );
 
   const load = useCallback(async (page: number, strawId: string) => {
     const result = await searchCryptoWallets({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
-      strawManAccountId: strawId.trim() || null,
+      strawManId: strawId.trim() || null,
     });
     if (!result.ok) {
       notifyError(result.error);
@@ -50,26 +55,16 @@ export function CryptoWalletsPage() {
   }, [notifyError]);
 
   useEffect(() => {
-    void load(currentPage, strawManAccountId);
-  }, [currentPage, strawManAccountId, load]);
+    void load(currentPage, strawManId);
+  }, [currentPage, strawManId, load]);
 
   async function handleCreate() {
-    if (!strawManAccountId.trim()) {
-      notifyError('Selecione o laranja antes de cadastrar.');
-      return;
-    }
-    if (!address.trim()) {
-      notifyError('Informe o endereço da carteira.');
-      return;
-    }
+    if (!canSubmit) return;
     setBusy(true);
     try {
       const result = await createCryptoWallet({
-        strawManAccountId: strawManAccountId.trim(),
-        chain,
-        asset,
-        address: address.trim(),
-        memo: memo.trim() || null,
+        strawManId: strawManId.trim(),
+        addresses: [{ namespace, address: address.trim(), memo: memo.trim() || null }],
         label: label.trim() || null,
       });
       if (!result.ok) {
@@ -79,7 +74,7 @@ export function CryptoWalletsPage() {
       notifySuccess('Carteira crypto cadastrada.');
       setShowForm(false);
       setCurrentPage(1);
-      await load(1, strawManAccountId);
+      await load(1, strawManId);
     } finally {
       setBusy(false);
     }
@@ -90,17 +85,25 @@ export function CryptoWalletsPage() {
       <OpsWorkspace
         kicker="Financeiro"
         title="Carteiras crypto"
-        lead="Endereços de destino para saques em cripto vinculados a laranjas."
+        lead="Cadastre endereços por namespace (EVM, Tron, Bitcoin…). Cada saldo carrega rede e ativo específicos."
         searchId="cryptoWalletStraw"
         searchLabel="Filtrar por laranja"
         searchPlaceholder="Selecione o laranja abaixo…"
         searchValue={strawLabel ?? ''}
         onSearchChange={() => {}}
         onSearch={() => setStrawPickerOpen(true)}
-        onRefresh={() => void load(currentPage, strawManAccountId)}
+        onRefresh={() => void load(currentPage, strawManId)}
         totalItems={totalItems}
         totalLabel={`${totalItems} carteira(s)`}
-        onCreate={() => setShowForm((v) => !v)}
+        onCreate={() => {
+          setShowForm((open) => {
+            const next = !open;
+            if (next && !strawManId.trim()) {
+              setStrawPickerOpen(true);
+            }
+            return next;
+          });
+        }}
         createLabel={showForm ? 'Fechar formulário' : 'Nova carteira'}
         footer={totalItems > 0 ? (
           <PaginationBar
@@ -116,29 +119,40 @@ export function CryptoWalletsPage() {
             <button type="button" className="account-select-trigger" onClick={() => setStrawPickerOpen(true)}>
               {strawLabel ?? 'Selecionar laranja para filtrar / cadastrar'}
             </button>
-            {strawManAccountId ? (
-              <IconButton icon="x" label="Limpar laranja" onClick={() => { setStrawManAccountId(''); setStrawLabel(null); setCurrentPage(1); }} />
+            {strawManId ? (
+              <IconButton icon="x" label="Limpar laranja" onClick={() => { setStrawManId(''); setStrawLabel(null); setCurrentPage(1); }} />
             ) : null}
           </div>
-          <Link className="btn btn-ghost" to="/dashboard/withdrawals">Voltar aos saques</Link>
+          <Link className="btn btn-ghost" to="/dashboard/transfers">Voltar às transferências</Link>
         </div>
 
         {showForm ? (
           <section className="card ops-card inset-card">
             <h2 className="section-title">Cadastrar carteira</h2>
+            <p className="muted small form-hint">
+              Informe ao menos um endereço por namespace. Saldos aparecem após transferências creditarem valores nesta carteira.
+            </p>
             <div className="form-grid form-grid-wide">
-              <div className="field">
-                <label htmlFor="chain">Rede</label>
-                <select id="chain" className="nexus-input" value={chain} onChange={(e) => setChain(Number(e.target.value))}>
-                  {CHAIN_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+              <div className="field span-2">
+                <PixEntityField
+                  label="Laranja titular"
+                  hint="Conta laranja dona desta carteira."
+                  emptyLabel="Selecionar laranja"
+                  name={strawLabel}
+                  id={strawManId || null}
+                  accent="warm"
+                  onPick={() => setStrawPickerOpen(true)}
+                  onClear={() => {
+                    setStrawManId('');
+                    setStrawLabel(null);
+                    setCurrentPage(1);
+                  }}
+                />
               </div>
-              <div className="field">
-                <label htmlFor="asset">Ativo</label>
-                <select id="asset" className="nexus-input" value={asset} onChange={(e) => setAsset(Number(e.target.value))}>
-                  {CRYPTO_ASSET_OPTIONS.map((opt) => (
+              <div className="field span-2">
+                <label htmlFor="namespace">Namespace</label>
+                <select id="namespace" className="nexus-input" value={namespace} onChange={(e) => setNamespace(Number(e.target.value))}>
+                  {ADDRESS_NAMESPACE_OPTIONS.map((opt) => (
                     <option key={opt.value} value={opt.value}>{opt.label}</option>
                   ))}
                 </select>
@@ -157,7 +171,12 @@ export function CryptoWalletsPage() {
               </div>
             </div>
             <div className="card-actions">
-              <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void handleCreate()}>
+              <button
+                type="button"
+                className="btn btn-primary"
+                disabled={busy || !canSubmit}
+                onClick={() => void handleCreate()}
+              >
                 {busy ? 'Salvando…' : 'Cadastrar carteira'}
               </button>
             </div>
@@ -173,9 +192,8 @@ export function CryptoWalletsPage() {
                 <tr>
                   <th>ID</th>
                   <th>Laranja</th>
-                  <th>Rede</th>
-                  <th>Ativo</th>
-                  <th>Endereço</th>
+                  <th>Endereços</th>
+                  <th>Saldos</th>
                   <th>Label</th>
                   <th>Atualizado</th>
                 </tr>
@@ -184,10 +202,9 @@ export function CryptoWalletsPage() {
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td data-label="ID"><span className="mono">{shortId(row.id)}</span></td>
-                    <td data-label="Laranja"><span className="mono">{shortId(row.strawManAccountId)}</span></td>
-                    <td data-label="Rede">{row.chain}</td>
-                    <td data-label="Ativo">{row.asset}</td>
-                    <td data-label="Endereço"><span className="mono token-mask" title={row.address}>{shortId(row.address, 24)}</span></td>
+                    <td data-label="Laranja"><span className="mono">{shortId(row.strawManId)}</span></td>
+                    <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
+                    <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>
                     <td data-label="Label">{row.label ?? '—'}</td>
                     <td data-label="Atualizado" className="muted small">{formatUtc(row.updatedAt)}</td>
                   </tr>
@@ -201,10 +218,10 @@ export function CryptoWalletsPage() {
       <AccountPickerModal
         open={strawPickerOpen}
         onClose={() => setStrawPickerOpen(false)}
-        searchAccounts={searchOpAdminStrawMenPicker}
+        searchAccounts={searchAdministratorStrawMenPicker}
         title="Conta laranja"
         onSelected={(row) => {
-          setStrawManAccountId(row.id);
+          setStrawManId(row.id);
           setStrawLabel(`${row.username} (${shortId(row.id)})`);
           setCurrentPage(1);
         }}

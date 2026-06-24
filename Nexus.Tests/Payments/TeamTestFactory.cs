@@ -9,6 +9,7 @@ internal static class TeamTestFactory
         string teamId,
         string operationId,
         string operatorId,
+        string strawManId,
         params (string AccountId, decimal Percentage)[] cuts)
     {
         var now = DateTime.UtcNow;
@@ -18,7 +19,7 @@ internal static class TeamTestFactory
             "Team",
             null,
             new[] { operatorId },
-            Array.Empty<string>(),
+            new[] { strawManId },
             GatewaySelectionStrategy.PerStrawman,
             Array.Empty<string>(),
             Array.Empty<string>(),
