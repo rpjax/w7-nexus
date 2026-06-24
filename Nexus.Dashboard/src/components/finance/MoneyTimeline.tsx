@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
 import type { ActiveBalanceRow, TransferTimelineDetails, TransferTimelineStep } from '../../api/types';
 import { StatusPill } from '../finance/StatusPill';
-import { formatMoney, paymentStatusLabel, paymentStatusTone, settlementStatusLabel, transferTypeLabel } from '../../utils/financeLabels';
+import { cryptoAssetLabel, formatCryptoAmount } from '../../utils/cryptoWalletDisplay';
+import { chainLabel, formatMoney, paymentStatusLabel, paymentStatusTone, settlementStatusLabel, transferTypeLabel } from '../../utils/financeLabels';
+import { formatActiveBalanceAmount } from '../../utils/movementDisplay';
 import {
   formatEnrichedAccountSubtitle,
   formatEnrichedAccountTitle,
@@ -13,30 +15,19 @@ type MoneyTimelineProps = {
   timeline: TransferTimelineDetails;
   strawManId: string;
   focusTransferId: string;
+  onMoveBalance?: (balance: ActiveBalanceRow) => void;
 };
 
-function formatBalanceAmount(amount: number, currency: string, asset?: string | null, chain?: string | null): string {
-  if (asset || currency !== 'BRL') {
-    const chainPrefix = chain ? `${chain} ` : '';
-    return `${amount} ${chainPrefix}${asset ?? currency}`.trim();
-  }
-  return formatMoney(amount);
+function formatBalanceAmount(balance: ActiveBalanceRow): string {
+  return formatActiveBalanceAmount(balance);
 }
 
-function buildMovementUrl(balance: ActiveBalanceRow, strawManId: string): string {
-  const params = new URLSearchParams({
-    strawManId,
-    sourceBalanceId: balance.balanceId,
-    sourceAmount: String(balance.amount),
-  });
-
-  if (balance.account.kind === 'BankAccount' && balance.account.id) {
-    params.set('sourceBankAccountId', balance.account.id);
-  } else if (balance.account.kind === 'CryptoWallet' && balance.account.id) {
-    params.set('sourceCryptoWalletId', balance.account.id);
+function formatEffectAmount(amount: number, currency: string, asset?: string | null, chain?: string | null): string {
+  if (asset || currency !== 'BRL') {
+    const chainPrefix = chain ? `${chainLabel(chain)} · ` : '';
+    return `${chainPrefix}${cryptoAssetLabel(asset ?? currency)} ${formatCryptoAmount(amount)}`;
   }
-
-  return `/dashboard/transfers/movement?${params.toString()}`;
+  return formatMoney(amount);
 }
 
 function buildPayoutUrl(balance: ActiveBalanceRow, strawManId: string): string {
@@ -148,7 +139,7 @@ function TimelineStepCard({
                     {effect.direction === 'Credit' ? 'Crédito' : 'Débito'}
                   </span>
                   <span className="transfer-step__effect-amount">
-                    {formatBalanceAmount(effect.amount, effect.currency, effect.asset, effect.chain)}
+                    {formatEffectAmount(effect.amount, effect.currency, effect.asset, effect.chain)}
                   </span>
                   <span className="transfer-step__effect-account muted small">
                     {formatEnrichedAccountTitle(effect.account)}
@@ -216,7 +207,7 @@ function TimelineStepCard({
   );
 }
 
-export function MoneyTimeline({ timeline, strawManId, focusTransferId }: MoneyTimelineProps) {
+export function MoneyTimeline({ timeline, strawManId, focusTransferId, onMoveBalance }: MoneyTimelineProps) {
   const isChain = timeline.steps.length > 1;
   const supplementalSteps = isChain
     ? timeline.steps.filter((step) => step.transferId !== focusTransferId)
@@ -241,15 +232,25 @@ export function MoneyTimeline({ timeline, strawManId, focusTransferId }: MoneyTi
             {timeline.activeBalances.map((balance) => (
               <li key={balance.balanceId} className="transfer-next-steps__item">
                 <div className="transfer-next-steps__summary">
-                  <strong>{formatBalanceAmount(balance.amount, balance.currency, balance.asset, balance.chain)}</strong>
+                  <strong>{formatBalanceAmount(balance)}</strong>
                   <span>{formatEnrichedAccountTitle(balance.account)}</span>
                   <span className="mono muted small">{shortId(balance.balanceId, 10)}</span>
                 </div>
                 <div className="transfer-next-steps__buttons">
                   {balance.canMove ? (
-                    <Link className="btn btn-secondary btn-sm" to={buildMovementUrl(balance, strawManId)}>
-                      Movimentar
-                    </Link>
+                    onMoveBalance ? (
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => onMoveBalance(balance)}
+                      >
+                        Movimentar
+                      </button>
+                    ) : (
+                      <Link className="btn btn-secondary btn-sm" to={`/dashboard/transfers/movement?from=${timeline.focusTransferId}`}>
+                        Movimentar
+                      </Link>
+                    )
                   ) : null}
                   {balance.canPayout ? (
                     <Link className="btn btn-primary btn-sm" to={buildPayoutUrl(balance, strawManId)}>

@@ -12,6 +12,7 @@ type CryptoWalletPickerModalProps = {
   strawManId: string;
   allowAnyStrawMan?: boolean;
   onSelected: (row: CryptoWalletRow) => void;
+  excludeAccountId?: string | null;
 };
 
 const PAGE_SIZE = 8;
@@ -22,6 +23,7 @@ export function CryptoWalletPickerModal({
   strawManId,
   allowAnyStrawMan = false,
   onSelected,
+  excludeAccountId,
 }: CryptoWalletPickerModalProps) {
   const [scopeSameStrawMan, setScopeSameStrawMan] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,6 +70,10 @@ export function CryptoWalletPickerModal({
 
   if (!open) return null;
 
+  const visibleItems = excludeAccountId
+    ? items.filter((row) => row.id !== excludeAccountId)
+    : items;
+
   return (
     <div className="dialog-backdrop dialog-backdrop--picker" onClick={onClose}>
       <div className="dialog-card account-picker finance-picker" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -105,11 +111,13 @@ export function CryptoWalletPickerModal({
         {loadError ? <p className="feedback error">{loadError}</p> : null}
         {loading ? <p className="muted account-picker-hint">Carregando carteiras…</p> : null}
 
-        {!loading && items.length === 0 ? (
+        {!loading && visibleItems.length === 0 ? (
           <p className="muted account-picker-hint">
-            {filterByStrawMan
-              ? 'Nenhuma carteira cadastrada para este laranja.'
-              : 'Nenhuma carteira cadastrada.'}
+            {excludeAccountId && items.length > 0
+              ? 'Não há outra carteira disponível para selecionar.'
+              : filterByStrawMan
+                ? 'Nenhuma carteira cadastrada para este laranja.'
+                : 'Nenhuma carteira cadastrada.'}
           </p>
         ) : (
           <div className="table-wrap finance-picker-table">
@@ -124,7 +132,7 @@ export function CryptoWalletPickerModal({
                 </tr>
               </thead>
               <tbody>
-                {items.map((row) => (
+                {visibleItems.map((row) => (
                   <tr key={row.id}>
                     <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
                     <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>

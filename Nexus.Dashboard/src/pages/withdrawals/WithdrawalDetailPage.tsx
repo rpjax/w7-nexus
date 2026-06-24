@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { getTransferTimeline } from '../../api/transfers';
 import type { TransferTimelineDetails, TransferTimelineStep } from '../../api/types';
 import { MoneyTimeline } from '../../components/finance/MoneyTimeline';
+import { MovementComposerModal } from '../../components/finance/MovementComposerModal';
 import { EmptyState } from '../../components/EmptyState';
 import { Icon } from '../../components/IconButton';
 import { StatusPill } from '../../components/finance/StatusPill';
@@ -18,9 +19,13 @@ import { useNotifications } from '../../notifications/NotificationContext';
 function TransferHero({
   step,
   timeline,
+  onOpenMovement,
+  canPayout,
 }: {
   step: TransferTimelineStep;
   timeline: TransferTimelineDetails;
+  onOpenMovement: () => void;
+  canPayout: boolean;
 }) {
   const [copied, setCopied] = useState(false);
   const amount = formatStepAmount(step);
@@ -82,11 +87,20 @@ function TransferHero({
       ) : null}
 
       <div className="transfer-hero__actions">
-        <Link className="btn btn-secondary btn-sm btn-with-icon" to="/dashboard/transfers/movement">
+        <button
+          type="button"
+          className="btn btn-secondary btn-sm btn-with-icon"
+          onClick={onOpenMovement}
+        >
           <Icon name="chevron-right" />
           Nova movimentação
-        </Link>
-        <Link className="btn btn-primary btn-sm btn-with-icon" to="/dashboard/transfers/payout">
+        </button>
+        <Link
+          className={`btn btn-primary btn-sm btn-with-icon${canPayout ? '' : ' is-disabled'}`}
+          to={canPayout ? '/dashboard/transfers/payout' : '#'}
+          aria-disabled={!canPayout}
+          onClick={(e) => { if (!canPayout) e.preventDefault(); }}
+        >
           <Icon name="link" />
           Novo repasse
         </Link>
@@ -94,7 +108,11 @@ function TransferHero({
           <a className="btn btn-ghost btn-sm" href="#transfer-next-steps">
             Ver saldos disponíveis
           </a>
-        ) : null}
+        ) : (
+          <p className="transfer-hero__actions-hint muted small">
+            Sem saldo disponível nesta cadeia — o valor já foi movimentado ou repassado integralmente.
+          </p>
+        )}
       </div>
     </section>
   );
@@ -102,24 +120,41 @@ function TransferHero({
 
 export function WithdrawalDetailPage() {
   const { transferId = '' } = useParams();
-  const { notifyError } = useNotifications();
+  const navigate = useNavigate();
+  const { notifyError, notifySuccess } = useNotifications();
   const [timeline, setTimeline] = useState<TransferTimelineDetails | null>(null);
   const [loading, setLoading] = useState(true);
+  const [movementOpen, setMovementOpen] = useState(false);
+  const [movementBalanceId, setMovementBalanceId] = useState<string | null>(null);
+
+  async function loadTimeline(id: string) {
+    setLoading(true);
+    const result = await getTransferTimeline(id);
+    if (!result.ok) {
+      notifyError(result.error);
+      setTimeline(null);
+    } else {
+      setTimeline(result.data);
+    }
+    setLoading(false);
+  }
 
   useEffect(() => {
     if (!transferId) return;
-    void (async () => {
-      setLoading(true);
-      const result = await getTransferTimeline(transferId);
-      if (!result.ok) {
-        notifyError(result.error);
-        setTimeline(null);
-      } else {
-        setTimeline(result.data);
-      }
-      setLoading(false);
-    })();
-  }, [transferId, notifyError]);
+    void loadTimeline(transferId);
+  }, [transferId]);
+
+  function openMovement(balanceId?: string | null) {
+    const movable = timeline?.activeBalances.filter((balance) => balance.canMove) ?? [];
+    setMovementBalanceId(balanceId ?? movable[0]?.balanceId ?? null);
+    setMovementOpen(true);
+  }
+
+  function handleMovementSuccess(newTransferId: string) {
+    setMovementOpen(false);
+    notifySuccess('Movimentação registrada.');
+    navigate(`/dashboard/transfers/${newTransferId}`);
+  }
 
   if (loading) {
     return (
@@ -149,6 +184,7 @@ export function WithdrawalDetailPage() {
 
   const focusStep = timeline.steps.find((step) => step.isFocus) ?? timeline.steps[timeline.steps.length - 1];
   const strawManId = timeline.strawMan?.id ?? focusStep?.transfer.strawMan.id ?? '';
+  const payoutBalances = timeline.activeBalances.filter((balance) => balance.canPayout);
 
   return (
     <div className="transfer-detail-page ops-page">
@@ -157,10 +193,33 @@ export function WithdrawalDetailPage() {
       </p>
 
       {focusStep ? (
-        <TransferHero step={focusStep} timeline={timeline} />
+        <TransferHero
+          step={focusStep}
+          timeline={timeline}
+          canPayout={payoutBalances.length > 0}
+          onOpenMovement={() => openMovement()}
+        />
       ) : null}
 
-      <MoneyTimeline timeline={timeline} strawManId={strawManId} focusTransferId={timeline.focusTransferId} />
+      <MoneyTimeline
+        timeline={timeline}
+        strawManId={strawManId}
+        focusTransferId={timeline.focusTransferId}
+        onMoveBalance={(balance) => openMovement(balance.balanceId)}
+      />
+
+      <MovementComposerModal
+        open={movementOpen}
+        onClose={() => {
+          setMovementOpen(false);
+          setMovementBalanceId(null);
+        }}
+        strawManId={strawManId}
+        strawManUsername={timeline.strawMan?.username}
+        activeBalances={timeline.activeBalances}
+        initialBalanceId={movementBalanceId}
+        onSuccess={handleMovementSuccess}
+      />
     </div>
   );
 }

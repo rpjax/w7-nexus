@@ -5843,6 +5843,19 @@ table.responsive-data td.cell-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
+    align-items: center;
+}
+
+.transfer-hero__actions-hint {
+    flex: 1 1 100%;
+    margin: 0;
+    line-height: 1.45;
+}
+
+.btn.is-disabled {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
 }
 
 .transfer-timeline-layout {
@@ -5905,6 +5918,155 @@ table.responsive-data td.cell-actions {
     display: flex;
     flex-wrap: wrap;
     gap: 0.45rem;
+}
+
+.movement-composer {
+    width: min(100%, 32rem);
+    max-height: min(92vh, 52rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    padding: 0;
+    overflow: hidden;
+}
+
+.movement-composer__header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 1rem 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+}
+
+.movement-composer__title {
+    margin: 0;
+    font-size: 1.1rem;
+}
+
+.movement-composer__sub {
+    margin: 0.2rem 0 0;
+}
+
+.movement-composer__body {
+    padding: 0.85rem 1rem;
+    overflow-y: auto;
+    display: grid;
+    gap: 1rem;
+}
+
+.movement-composer__section-title {
+    margin: 0 0 0.55rem;
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--muted);
+}
+
+.movement-composer__balance-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 0.5rem;
+}
+
+.movement-composer__balance-card {
+    width: 100%;
+    text-align: left;
+    display: grid;
+    gap: 0.15rem;
+    padding: 0.7rem 0.8rem;
+    border-radius: 0.65rem;
+    border: 1px solid var(--border);
+    background: rgba(9, 14, 27, 0.35);
+    color: inherit;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.movement-composer__balance-card:hover {
+    border-color: rgba(96, 165, 250, 0.45);
+}
+
+.movement-composer__balance-card.is-selected {
+    border-color: rgba(96, 165, 250, 0.85);
+    background: rgba(37, 99, 235, 0.12);
+}
+
+.movement-composer__amount-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.movement-composer__amount-row .nexus-input {
+    flex: 1;
+}
+
+.movement-composer__hint {
+    margin: 0.35rem 0 0;
+}
+
+.movement-composer__dest-toggle {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.65rem;
+}
+
+.movement-composer__dest-trigger {
+    width: 100%;
+    text-align: left;
+    padding: 0.75rem 0.85rem;
+    border-radius: 0.65rem;
+    border: 1px dashed rgba(96, 165, 250, 0.45);
+    background: rgba(9, 14, 27, 0.25);
+    color: inherit;
+    cursor: pointer;
+}
+
+.movement-composer__dest-trigger:hover {
+    border-color: rgba(96, 165, 250, 0.85);
+    background: rgba(37, 99, 235, 0.08);
+}
+
+.movement-composer__section--conversion {
+    padding: 0.75rem;
+    border-radius: 0.65rem;
+    border: 1px solid rgba(96, 165, 250, 0.2);
+    background: rgba(37, 99, 235, 0.06);
+}
+
+.movement-composer__error {
+    margin: 0;
+}
+
+.movement-composer__empty {
+    padding: 1rem;
+    margin: 0;
+}
+
+.movement-composer__footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.movement-composer__balance-card.is-static {
+    cursor: default;
+}
+
+.movement-composer--embedded {
+    width: 100%;
+    max-height: none;
+    padding: 0;
+}
+
+.movement-composer--embedded .movement-composer__footer {
+    border-top: 1px solid var(--border);
 }
 
 .transfer-timeline__head {

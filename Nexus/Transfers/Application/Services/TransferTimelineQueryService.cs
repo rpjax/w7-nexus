@@ -76,6 +76,14 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             .OrderBy(t => t.CreatedAt)
             .ToArray();
 
+        (bankAccounts, cryptoWallets, accountLookup) = await IncludeChainDestinationAccountsAsync(
+            chain,
+            bankAccounts,
+            cryptoWallets,
+            strawManAccounts,
+            accountLookup);
+        balanceIndex = BuildBalanceIndex(bankAccounts, cryptoWallets);
+
         var paymentIds = chain
             .Where(t => t.Type == TransferType.Withdrawal)
             .SelectMany(t => t.PaymentIds)
@@ -130,6 +138,65 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             Steps = steps,
             ActiveBalances = activeBalances,
         });
+    }
+
+    private async Task<(BankAccount[] BankAccounts, CryptoWallet[] CryptoWallets, AccountLookup AccountLookup)>
+        IncludeChainDestinationAccountsAsync(
+            IReadOnlyList<Transfer> chain,
+            BankAccount[] bankAccounts,
+            CryptoWallet[] cryptoWallets,
+            Nexus.Accounts.Aggregates.Account[] strawManAccounts,
+            AccountLookup accountLookup)
+    {
+        var knownBankIds = bankAccounts.Select(a => a.Id).ToHashSet(StringComparer.Ordinal);
+        var knownWalletIds = cryptoWallets.Select(w => w.Id).ToHashSet(StringComparer.Ordinal);
+        var extraBankIds = new List<string>();
+        var extraWalletIds = new List<string>();
+
+        foreach (var transfer in chain)
+        {
+            var bankId = transfer.Destination?.BankAccountId?.Trim();
+            if (!string.IsNullOrWhiteSpace(bankId) && knownBankIds.Add(bankId))
+                extraBankIds.Add(bankId);
+
+            var walletId = transfer.Destination?.CryptoWalletId?.Trim();
+            if (!string.IsNullOrWhiteSpace(walletId) && knownWalletIds.Add(walletId))
+                extraWalletIds.Add(walletId);
+        }
+
+        if (extraBankIds.Count == 0 && extraWalletIds.Count == 0)
+            return (bankAccounts, cryptoWallets, accountLookup);
+
+        var extraBanks = extraBankIds.Count == 0
+            ? Array.Empty<BankAccount>()
+            : await _bankAccounts.AsQueryable()
+                .Where(a => extraBankIds.Contains(a.Id))
+                .ToArrayAsync();
+        var extraWallets = extraWalletIds.Count == 0
+            ? Array.Empty<CryptoWallet>()
+            : await _cryptoWallets.AsQueryable()
+                .Where(w => extraWalletIds.Contains(w.Id))
+                .ToArrayAsync();
+
+        if (extraBanks.Length == 0 && extraWallets.Length == 0)
+            return (bankAccounts, cryptoWallets, accountLookup);
+
+        var mergedBanks = bankAccounts.Concat(extraBanks).ToArray();
+        var mergedWallets = cryptoWallets.Concat(extraWallets).ToArray();
+        var extraAccountIds = extraBanks.Select(a => a.StrawManId)
+            .Concat(extraWallets.Select(w => w.StrawManId))
+            .Distinct(StringComparer.Ordinal)
+            .Where(id => !accountLookup.Accounts.ContainsKey(id))
+            .ToArray();
+        var extraAccounts = extraAccountIds.Length == 0
+            ? Array.Empty<Nexus.Accounts.Aggregates.Account>()
+            : await _accounts.AsQueryable()
+                .Where(a => extraAccountIds.Contains(a.Id))
+                .ToArrayAsync();
+        var mergedAccounts = strawManAccounts.Concat(extraAccounts).ToArray();
+        var mergedLookup = BuildAccountLookup(mergedAccounts, mergedBanks, mergedWallets);
+
+        return (mergedBanks, mergedWallets, mergedLookup);
     }
 
     private static Transfer FindRootTransfer(

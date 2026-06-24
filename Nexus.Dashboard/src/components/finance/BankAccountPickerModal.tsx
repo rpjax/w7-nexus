@@ -11,6 +11,7 @@ type BankAccountPickerModalProps = {
   strawManId: string;
   onSelected: (row: BankAccountRow) => void;
   onCreateRequested?: () => void;
+  excludeAccountId?: string | null;
 };
 
 const PAGE_SIZE = 8;
@@ -21,6 +22,7 @@ export function BankAccountPickerModal({
   strawManId,
   onSelected,
   onCreateRequested,
+  excludeAccountId,
 }: BankAccountPickerModalProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [items, setItems] = useState<BankAccountRow[]>([]);
@@ -64,6 +66,10 @@ export function BankAccountPickerModal({
 
   if (!open) return null;
 
+  const visibleItems = excludeAccountId
+    ? items.filter((row) => row.id !== excludeAccountId)
+    : items;
+
   return (
     <div className="dialog-backdrop dialog-backdrop--picker" onClick={onClose}>
       <div className="dialog-card account-picker finance-picker bank-picker-modal" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()}>
@@ -78,9 +84,13 @@ export function BankAccountPickerModal({
         {loadError ? <p className="feedback error">{loadError}</p> : null}
         {loading ? <p className="muted account-picker-hint">Carregando contas…</p> : null}
 
-        {!loading && items.length === 0 ? (
+        {!loading && visibleItems.length === 0 ? (
           <div className="bank-picker-empty">
-            <p className="muted account-picker-hint">Nenhuma conta bancária cadastrada para este laranja.</p>
+            <p className="muted account-picker-hint">
+              {excludeAccountId && items.length > 0
+                ? 'Não há outra conta bancária disponível para este laranja.'
+                : 'Nenhuma conta bancária cadastrada para este laranja.'}
+            </p>
             {onCreateRequested ? (
               <button type="button" className="btn btn-primary" onClick={() => { onClose(); onCreateRequested(); }}>
                 Cadastrar conta para este laranja
@@ -89,7 +99,7 @@ export function BankAccountPickerModal({
           </div>
         ) : (
           <ul className="bank-account-list bank-account-list--picker">
-            {items.map((row) => (
+            {visibleItems.map((row) => (
               <BankAccountCard
                 key={row.id}
                 row={row}

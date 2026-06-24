@@ -1,115 +1,96 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { createMovementTransfer } from '../../api/transfers';
+import { getTransferTimeline } from '../../api/transfers';
+import type { ActiveBalanceRow } from '../../api/types';
+import { MovementComposerModal } from '../../components/finance/MovementComposerModal';
 import { PageHeading } from '../../layouts/PageHeading';
 import { useNotifications } from '../../notifications/NotificationContext';
+
+function balanceFromSearchParams(params: URLSearchParams): ActiveBalanceRow | null {
+  const balanceId = params.get('sourceBalanceId');
+  if (!balanceId) return null;
+
+  const amount = Number(params.get('sourceAmount') ?? '0');
+  const bankId = params.get('sourceBankAccountId');
+  const cryptoId = params.get('sourceCryptoWalletId');
+
+  return {
+    balanceId,
+    transferId: params.get('from') ?? '',
+    amount: Number.isFinite(amount) ? amount : 0,
+    currency: bankId ? 'BRL' : 'CRYPTO',
+    account: {
+      kind: bankId ? 'BankAccount' : 'CryptoWallet',
+      id: bankId ?? cryptoId,
+      displayName: bankId ? 'Conta bancária de origem' : 'Carteira crypto de origem',
+    },
+    canMove: true,
+    canPayout: Boolean(bankId),
+  };
+}
 
 export function MovementCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { notifyError, notifySuccess } = useNotifications();
-  const [strawManId, setStrawManId] = useState('');
-  const [sourceBankAccountId, setSourceBankAccountId] = useState('');
-  const [sourceCryptoWalletId, setSourceCryptoWalletId] = useState('');
-  const [destinationBankAccountId, setDestinationBankAccountId] = useState('');
-  const [sourceBalanceId, setSourceBalanceId] = useState('');
-  const [sourceAmount, setSourceAmount] = useState('');
-  const [busy, setBusy] = useState(false);
+  const { notifyError } = useNotifications();
+  const fromTransferId = searchParams.get('from') ?? searchParams.get('fromTransferId');
+  const [strawManId, setStrawManId] = useState(searchParams.get('strawManId') ?? '');
+  const [strawManUsername, setStrawManUsername] = useState<string | null>(null);
+  const [balances, setBalances] = useState<ActiveBalanceRow[]>([]);
+  const [loading, setLoading] = useState(Boolean(fromTransferId));
 
   useEffect(() => {
-    setStrawManId(searchParams.get('strawManId') ?? '');
-    setSourceBankAccountId(searchParams.get('sourceBankAccountId') ?? '');
-    setSourceCryptoWalletId(searchParams.get('sourceCryptoWalletId') ?? '');
-    setDestinationBankAccountId(searchParams.get('destinationBankAccountId') ?? '');
-    setSourceBalanceId(searchParams.get('sourceBalanceId') ?? '');
-    setSourceAmount(searchParams.get('sourceAmount') ?? '');
-  }, [searchParams]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const amount = Number(sourceAmount.replace(',', '.'));
-    const hasBankSource = Boolean(sourceBankAccountId.trim());
-    const hasCryptoSource = Boolean(sourceCryptoWalletId.trim());
-
-    if (!strawManId.trim() || !sourceBalanceId.trim() || !(amount > 0)) {
-      notifyError('Preencha laranja, saldo e valor.');
+    if (fromTransferId) {
+      void (async () => {
+        setLoading(true);
+        const result = await getTransferTimeline(fromTransferId);
+        if (!result.ok) {
+          notifyError(result.error);
+          setBalances([]);
+        } else {
+          setStrawManId(result.data?.strawMan?.id ?? searchParams.get('strawManId') ?? '');
+          setStrawManUsername(result.data?.strawMan?.username ?? null);
+          setBalances((result.data?.activeBalances ?? []).filter((balance) => balance.canMove));
+        }
+        setLoading(false);
+      })();
       return;
     }
 
-    if (hasBankSource === hasCryptoSource) {
-      notifyError('Informe exatamente uma origem: conta bancária ou carteira crypto.');
-      return;
-    }
+    const legacyBalance = balanceFromSearchParams(searchParams);
+    setBalances(legacyBalance ? [legacyBalance] : []);
+  }, [fromTransferId, notifyError, searchParams]);
 
-    if (!destinationBankAccountId.trim() && !searchParams.get('destinationCryptoWalletId')) {
-      notifyError('Informe a conta bancária de destino.');
-      return;
-    }
-
-    setBusy(true);
-    try {
-      const result = await createMovementTransfer({
-        strawManId: strawManId.trim(),
-        sourceBankAccountId: hasBankSource ? sourceBankAccountId.trim() : null,
-        sourceCryptoWalletId: hasCryptoSource ? sourceCryptoWalletId.trim() : null,
-        destinationBankAccountId: destinationBankAccountId.trim() || null,
-        destinationCryptoWalletId: searchParams.get('destinationCryptoWalletId'),
-        sourceBalanceId: sourceBalanceId.trim(),
-        sourceAmount: amount,
-      });
-      if (!result.ok) {
-        notifyError(result.error);
-        return;
-      }
-      notifySuccess('Movimentação registrada.');
-      navigate(`/dashboard/transfers/${result.data!.id}`);
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const prefilled = Boolean(searchParams.get('sourceBalanceId'));
+  const initialBalanceId = searchParams.get('sourceBalanceId');
 
   return (
     <div className="page-stack">
       <PageHeading
         kicker="Financeiro"
         title="Nova movimentação"
-        subtitle={prefilled
-          ? 'Dados pré-preenchidos a partir da linha do tempo. Confira origem, saldo e valor.'
-          : 'Transfira saldo parcial entre contas do mesmo laranja.'}
-        backLink={{ to: '/dashboard/transfers', label: 'Lista de transferências' }}
+        subtitle="Selecione o saldo, o destino e confirme. Sem digitar IDs manualmente."
+        backLink={{ to: fromTransferId ? `/dashboard/transfers/${fromTransferId}` : '/dashboard/transfers', label: 'Voltar' }}
       />
-      <form className="card form-card" onSubmit={(e) => void handleSubmit(e)}>
-        <div className="field">
-          <label htmlFor="strawManId">ID do laranja</label>
-          <input id="strawManId" className="nexus-input" value={strawManId} onChange={(e) => setStrawManId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceBankAccountId">Conta bancária origem</label>
-          <input id="sourceBankAccountId" className="nexus-input" value={sourceBankAccountId} onChange={(e) => setSourceBankAccountId(e.target.value)} disabled={Boolean(sourceCryptoWalletId)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceCryptoWalletId">Carteira crypto origem</label>
-          <input id="sourceCryptoWalletId" className="nexus-input" value={sourceCryptoWalletId} onChange={(e) => setSourceCryptoWalletId(e.target.value)} disabled={Boolean(sourceBankAccountId)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceBalanceId">ID do saldo origem</label>
-          <input id="sourceBalanceId" className="nexus-input mono" value={sourceBalanceId} onChange={(e) => setSourceBalanceId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceAmount">Valor</label>
-          <input id="sourceAmount" className="nexus-input" value={sourceAmount} onChange={(e) => setSourceAmount(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="destinationBankAccountId">Conta bancária destino</label>
-          <input id="destinationBankAccountId" className="nexus-input" value={destinationBankAccountId} onChange={(e) => setDestinationBankAccountId(e.target.value)} />
-        </div>
-        <div className="form-actions">
-          <Link className="btn btn-ghost" to="/dashboard/transfers">Cancelar</Link>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvando…' : 'Registrar movimentação'}</button>
-        </div>
-      </form>
+
+      {loading ? (
+        <p className="muted">Carregando saldos disponíveis…</p>
+      ) : balances.length === 0 ? (
+        <section className="card ops-card">
+          <p className="muted">Nenhum saldo disponível para movimentar.</p>
+          <p><Link className="btn btn-primary" to="/dashboard/transfers">Ir para transferências</Link></p>
+        </section>
+      ) : (
+        <MovementComposerModal
+          open
+          variant="embedded"
+          onClose={() => navigate(fromTransferId ? `/dashboard/transfers/${fromTransferId}` : '/dashboard/transfers')}
+          strawManId={strawManId}
+          strawManUsername={strawManUsername}
+          activeBalances={balances}
+          initialBalanceId={initialBalanceId}
+          onSuccess={(transferId) => navigate(`/dashboard/transfers/${transferId}`)}
+        />
+      )}
     </div>
   );
 }

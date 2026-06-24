@@ -13,11 +13,11 @@ public sealed class CryptoWalletAddress
     public string Address { get; }
     public string? Memo { get; }
 
-    internal CryptoWalletAddress(AddressNamespace addressNamespace, string address, string? memo)
+    internal CryptoWalletAddress(AddressNamespace Namespace, string Address, string? Memo)
     {
-        Namespace = addressNamespace;
-        Address = address;
-        Memo = memo;
+        this.Namespace = Namespace;
+        this.Address = Address;
+        this.Memo = Memo;
     }
 
     public static IResult<CryptoWalletAddress> Create(AddressNamespace addressNamespace, string address, string? memo)

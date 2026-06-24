@@ -119,3 +119,21 @@ export function bankAccountTypeLabel(type: string): string {
 export function formatMoney(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+export const ONRAMPING_METHOD_OPTIONS = [
+  { value: 'Pix' as const, label: 'PIX' },
+  { value: 'GiftCard' as const, label: 'Gift card' },
+  { value: 'CreditDebitCard' as const, label: 'Cartão crédito/débito' },
+];
+
+export const CRYPTO_ASSET_OPTIONS = [
+  { value: 'Usdt', label: 'USDT', enumName: 'Usdt' },
+  { value: 'Usdc', label: 'USDC', enumName: 'Usdc' },
+  { value: 'Btc', label: 'BTC', enumName: 'Btc' },
+  { value: 'Eth', label: 'ETH', enumName: 'Eth' },
+  { value: 'Ltc', label: 'LTC', enumName: 'Ltc' },
+] as const;
+
+export function cryptoAssetEnumName(value: string): string {
+  return CRYPTO_ASSET_OPTIONS.find((opt) => opt.value === value)?.enumName ?? value;
+}
