@@ -58,7 +58,7 @@ public sealed class BankAccount
     }
 
     public static IResult<BankAccount> Create(
-        string strawManId,
+        string ownerId,
         BrazilianBank bank,
         string agency,
         string accountNumber,
@@ -68,16 +68,16 @@ public sealed class BankAccount
     {
         var builder = Result.Create<BankAccount>();
 
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
         agency = agency?.Trim() ?? string.Empty;
         accountNumber = accountNumber?.Trim() ?? string.Empty;
         accountDigit = string.IsNullOrWhiteSpace(accountDigit) ? null : accountDigit.Trim();
         label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             builder.WithError(Error.Create()
-                .WithCode(BankAccountErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(BankAccountErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da conta é obrigatório.")
                 .Build());
 
         if (!Enum.IsDefined(bank))
@@ -132,7 +132,7 @@ public sealed class BankAccount
         var now = DateTime.UtcNow;
         return builder.WithValue(new BankAccount(
             id: string.Empty,
-            strawManId: strawManId,
+            strawManId: ownerId,
             bank: bank,
             agency: agency,
             accountNumber: accountNumber,

@@ -362,7 +362,8 @@ internal sealed class ActorTestContext
                 Payments,
                 Operations,
                 Teams)),
-            new StubAdministratorStrawManSettingsCommandService());
+            new StubAdministratorStrawManSettingsCommandService(),
+            AccountIdValidator);
     }
 
     public OperationAdministratorRole CreateOperationAdministrator()

@@ -2,6 +2,8 @@ namespace Nexus.BankAccounts.Errors;
 
 public static class BankAccountErrorCodes
 {
+    public const string OwnerInvalid = "BankAccount.OWNER_INVALID";
+    public const string OwnerNotFound = "BankAccount.OWNER_NOT_FOUND";
     public const string StrawManInvalid = "BankAccount.STRAW_MAN_INVALID";
     public const string StrawManNotFound = "BankAccount.STRAW_MAN_NOT_FOUND";
     public const string StrawManRoleRequired = "BankAccount.STRAW_MAN_ROLE_REQUIRED";

@@ -27,6 +27,10 @@ public sealed class BankAccountService : IBankAccountService
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        var ownerValidation = await ValidateOwnerExistsAsync(request.OwnerId);
+        if (ownerValidation is not null)
+            return Result<BankAccount>.Failure(ownerValidation.Errors);
+
         var createResult = BankAccount.Create(
             request.OwnerId,
             request.Bank,
@@ -88,6 +92,28 @@ public sealed class BankAccountService : IBankAccountService
     }
 
     private static int NormalizeLimit(int limit) => limit <= 0 ? 30 : Math.Min(limit, 999);
+
+    private async Task<IResult?> ValidateOwnerExistsAsync(string? ownerId)
+    {
+        if (string.IsNullOrWhiteSpace(ownerId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(BankAccountErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da conta é obrigatório.")
+                .Build());
+        }
+
+        var normalizedOwnerId = ownerId.Trim();
+        if (!await _accountIdValidator.ExistsAsync(normalizedOwnerId))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(BankAccountErrorCodes.OwnerNotFound)
+                .WithMessage($"A conta do dono '{normalizedOwnerId}' não foi encontrada.")
+                .Build());
+        }
+
+        return null;
+    }
 
     private BankAccount? FindBankAccount(string bankAccountId)
     {

@@ -1,22 +1,21 @@
-using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
-using Nexus.StrawMen.Application.Contracts;
 using Nexus.BankAccounts.Aggregates;
 using Nexus.BankAccounts.Application.Contracts;
-using Nexus.BankAccounts.Errors;
+using Nexus.BankAccounts.Application.Requests;
+using Nexus.BankAccounts.Application.Responses;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.CryptoWallets.Errors;
+using Nexus.Payments.Application.Models;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Application.Models;
-using Nexus.Transfers.Aggregates;
-using Nexus.BankAccounts.Application.Responses;
-using Nexus.BankAccounts.Application.Requests;
 
 namespace Nexus.Administrators.Application.Services;
 
@@ -33,7 +32,7 @@ public class Administrator : IAdministrator
     private IAdministratorProfitShareAccountSearchService _profitShareAccountSearch { get; }
     private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
     private IBankAccountService _bankAccountService { get; }
-    private ICryptoWalletService _cryptoWallets { get; }
+    private ICryptoWalletService _cryptoWalletService { get; }
     private IAccountRepository _accounts { get; }
     private IAdministratorTransferCommandService _transfers { get; }
     private IAdministratorPaymentSearchService _paymentSearch { get; }
@@ -51,8 +50,8 @@ public class Administrator : IAdministrator
         IAdministratorOperatorAssignmentSearchService operatorAssignmentSearch,
         IAdministratorProfitShareAccountSearchService profitShareAccountSearch,
         IAdministratorOperationPickerSearchService operationPickerSearch,
-        IBankAccountService bankAccounts,
-        ICryptoWalletService cryptoWallets,
+        IBankAccountService bankAccountService,
+        ICryptoWalletService cryptoWalletService,
         IAccountRepository accounts,
         IAdministratorTransferCommandService transfers,
         IAdministratorPaymentSearchService paymentSearch,
@@ -70,8 +69,8 @@ public class Administrator : IAdministrator
         _operatorAssignmentSearch = operatorAssignmentSearch;
         _profitShareAccountSearch = profitShareAccountSearch;
         _operationPickerSearch = operationPickerSearch;
-        _bankAccountService = bankAccounts;
-        _cryptoWallets = cryptoWallets;
+        _bankAccountService = bankAccountService;
+        _cryptoWalletService = cryptoWalletService;
         _accounts = accounts;
         _transfers = transfers;
         _paymentSearch = paymentSearch;
@@ -98,7 +97,7 @@ public class Administrator : IAdministrator
             return OperationResult<OperationDetails>.Failure(result.Errors);
 
         if (result.Value is not OperationDetails value)
-            return OperationResult<OperationDetails>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<OperationDetails>.Success(value);
     }
@@ -122,7 +121,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchOperationsResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchOperationsResponse value)
-            return OperationResult<SearchOperationsResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchOperationsResponse>.Success(value);
     }
@@ -146,7 +145,7 @@ public class Administrator : IAdministrator
             return OperationResult<DeleteOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not DeleteOperationResponse value)
-            return OperationResult<DeleteOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<DeleteOperationResponse>.Success(value);
     }
@@ -170,7 +169,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignOperationAdministratorResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignOperationAdministratorResponse value)
-            return OperationResult<AssignOperationAdministratorResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignOperationAdministratorResponse>.Success(value);
     }
@@ -194,7 +193,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignOperationAdministratorResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignOperationAdministratorResponse value)
-            return OperationResult<UnassignOperationAdministratorResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignOperationAdministratorResponse>.Success(value);
     }
@@ -218,7 +217,7 @@ public class Administrator : IAdministrator
             return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Failure(result.Errors);
 
         if (result.Value is not SetOperationGatewaySelectionStrategyResponse value)
-            return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Success(value);
     }
@@ -242,7 +241,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignStrawManToOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignStrawManToOperationResponse value)
-            return OperationResult<AssignStrawManToOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignStrawManToOperationResponse>.Success(value);
     }
@@ -266,7 +265,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignStrawManFromOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignStrawManFromOperationResponse value)
-            return OperationResult<UnassignStrawManFromOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignStrawManFromOperationResponse>.Success(value);
     }
@@ -290,7 +289,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignGatewayAccountGroupToOperationResponse value)
-            return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Success(value);
     }
@@ -314,7 +313,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignGatewayAccountGroupFromOperationResponse value)
-            return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Success(value);
     }
@@ -338,7 +337,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignGatewayAccountToOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignGatewayAccountToOperationResponse value)
-            return OperationResult<AssignGatewayAccountToOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignGatewayAccountToOperationResponse>.Success(value);
     }
@@ -362,7 +361,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignGatewayAccountFromOperationResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignGatewayAccountFromOperationResponse value)
-            return OperationResult<UnassignGatewayAccountFromOperationResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignGatewayAccountFromOperationResponse>.Success(value);
     }
@@ -386,7 +385,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchAccountsResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchAccountsResponse value)
-            return OperationResult<SearchAccountsResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchAccountsResponse>.Success(value);
     }
@@ -410,7 +409,7 @@ public class Administrator : IAdministrator
             return OperationResult<GrantAccountRoleResponse>.Failure(result.Errors);
 
         if (result.Value is not GrantAccountRoleResponse value)
-            return OperationResult<GrantAccountRoleResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<GrantAccountRoleResponse>.Success(value);
     }
@@ -434,7 +433,7 @@ public class Administrator : IAdministrator
             return OperationResult<RevokeAccountRoleResponse>.Failure(result.Errors);
 
         if (result.Value is not RevokeAccountRoleResponse value)
-            return OperationResult<RevokeAccountRoleResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<RevokeAccountRoleResponse>.Success(value);
     }
@@ -458,7 +457,7 @@ public class Administrator : IAdministrator
             return OperationResult<GrantAccountPermissionResponse>.Failure(result.Errors);
 
         if (result.Value is not GrantAccountPermissionResponse value)
-            return OperationResult<GrantAccountPermissionResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<GrantAccountPermissionResponse>.Success(value);
     }
@@ -482,7 +481,7 @@ public class Administrator : IAdministrator
             return OperationResult<RevokeAccountPermissionResponse>.Failure(result.Errors);
 
         if (result.Value is not RevokeAccountPermissionResponse value)
-            return OperationResult<RevokeAccountPermissionResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<RevokeAccountPermissionResponse>.Success(value);
     }
@@ -506,7 +505,7 @@ public class Administrator : IAdministrator
             return OperationResult<CreateOperationTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not CreateOperationTeamResponse value)
-            return OperationResult<CreateOperationTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<CreateOperationTeamResponse>.Success(value);
     }
@@ -530,7 +529,7 @@ public class Administrator : IAdministrator
             return OperationResult<DeleteOperationTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not DeleteOperationTeamResponse value)
-            return OperationResult<DeleteOperationTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<DeleteOperationTeamResponse>.Success(value);
     }
@@ -554,7 +553,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignOperationTeamLeaderResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignOperationTeamLeaderResponse value)
-            return OperationResult<AssignOperationTeamLeaderResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignOperationTeamLeaderResponse>.Success(value);
     }
@@ -578,7 +577,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignOperationTeamLeaderResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignOperationTeamLeaderResponse value)
-            return OperationResult<UnassignOperationTeamLeaderResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignOperationTeamLeaderResponse>.Success(value);
     }
@@ -602,7 +601,7 @@ public class Administrator : IAdministrator
             return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Failure(result.Errors);
 
         if (result.Value is not SetTeamGatewaySelectionStrategyResponse value)
-            return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Success(value);
     }
@@ -626,7 +625,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignStrawManToTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignStrawManToTeamResponse value)
-            return OperationResult<AssignStrawManToTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignStrawManToTeamResponse>.Success(value);
     }
@@ -650,7 +649,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignStrawManFromTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignStrawManFromTeamResponse value)
-            return OperationResult<UnassignStrawManFromTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignStrawManFromTeamResponse>.Success(value);
     }
@@ -674,7 +673,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignGatewayAccountGroupToTeamResponse value)
-            return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Success(value);
     }
@@ -698,7 +697,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignGatewayAccountGroupFromTeamResponse value)
-            return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Success(value);
     }
@@ -722,7 +721,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignGatewayAccountToTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignGatewayAccountToTeamResponse value)
-            return OperationResult<AssignGatewayAccountToTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignGatewayAccountToTeamResponse>.Success(value);
     }
@@ -746,7 +745,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignGatewayAccountFromTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignGatewayAccountFromTeamResponse value)
-            return OperationResult<UnassignGatewayAccountFromTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignGatewayAccountFromTeamResponse>.Success(value);
     }
@@ -770,7 +769,7 @@ public class Administrator : IAdministrator
             return OperationResult<AssignOperatorToTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not AssignOperatorToTeamResponse value)
-            return OperationResult<AssignOperatorToTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<AssignOperatorToTeamResponse>.Success(value);
     }
@@ -794,7 +793,7 @@ public class Administrator : IAdministrator
             return OperationResult<UnassignOperatorFromTeamResponse>.Failure(result.Errors);
 
         if (result.Value is not UnassignOperatorFromTeamResponse value)
-            return OperationResult<UnassignOperatorFromTeamResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<UnassignOperatorFromTeamResponse>.Success(value);
     }
@@ -818,7 +817,7 @@ public class Administrator : IAdministrator
             return OperationResult<SetOperatorProfitShareRuleResponse>.Failure(result.Errors);
 
         if (result.Value is not SetOperatorProfitShareRuleResponse value)
-            return OperationResult<SetOperatorProfitShareRuleResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SetOperatorProfitShareRuleResponse>.Success(value);
     }
@@ -842,7 +841,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchOperatorsToAssignResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchOperatorsToAssignResponse value)
-            return OperationResult<SearchOperatorsToAssignResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchOperatorsToAssignResponse>.Success(value);
     }
@@ -866,7 +865,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchProfitShareAccountsToAssignResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchProfitShareAccountsToAssignResponse value)
-            return OperationResult<SearchProfitShareAccountsToAssignResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchProfitShareAccountsToAssignResponse>.Success(value);
     }
@@ -890,7 +889,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchOperationsToAssignResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchOperationsToAssignResponse value)
-            return OperationResult<SearchOperationsToAssignResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchOperationsToAssignResponse>.Success(value);
     }
@@ -943,13 +942,13 @@ public class Administrator : IAdministrator
         if (validation is not null)
             return OperationResult<CryptoWallet>.Failure(validation.Errors);
 
-        var result = await _cryptoWallets.CreateAsync(request);
+        var result = await _cryptoWalletService.CreateAsync(request);
 
         if (result.IsFailure)
             return OperationResult<CryptoWallet>.Failure(result.Errors);
 
         if (result.Value is not CryptoWallet value)
-            return OperationResult<CryptoWallet>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<CryptoWallet>.Success(value);
     }
@@ -967,13 +966,13 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _cryptoWallets.UpsertAddressAsync(request);
+        var result = await _cryptoWalletService.UpsertAddressAsync(request);
 
         if (result.IsFailure)
             return OperationResult<CryptoWallet>.Failure(result.Errors);
 
         if (result.Value is not CryptoWallet value)
-            return OperationResult<CryptoWallet>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<CryptoWallet>.Success(value);
     }
@@ -997,7 +996,7 @@ public class Administrator : IAdministrator
             return OperationResult<BankAccount>.Failure(result.Errors);
 
         if (result.Value is not BankAccount value)
-            return OperationResult<BankAccount>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<BankAccount>.Success(value);
     }
@@ -1015,13 +1014,13 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _cryptoWallets.GetByIdAsync(cryptoWalletId);
+        var result = await _cryptoWalletService.GetByIdAsync(cryptoWalletId);
 
         if (result.IsFailure)
             return OperationResult<CryptoWallet>.Failure(result.Errors);
 
         if (result.Value is not CryptoWallet value)
-            return OperationResult<CryptoWallet>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<CryptoWallet>.Success(value);
     }
@@ -1045,7 +1044,7 @@ public class Administrator : IAdministrator
             return OperationResult<Transfer>.Failure(result.Errors);
 
         if (result.Value is not Transfer value)
-            return OperationResult<Transfer>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<Transfer>.Success(value);
     }
@@ -1069,7 +1068,7 @@ public class Administrator : IAdministrator
             return OperationResult<Transfer>.Failure(result.Errors);
 
         if (result.Value is not Transfer value)
-            return OperationResult<Transfer>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<Transfer>.Success(value);
     }
@@ -1093,7 +1092,7 @@ public class Administrator : IAdministrator
             return OperationResult<Transfer>.Failure(result.Errors);
 
         if (result.Value is not Transfer value)
-            return OperationResult<Transfer>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<Transfer>.Success(value);
     }
@@ -1117,7 +1116,7 @@ public class Administrator : IAdministrator
             return OperationResult<Transfer>.Failure(result.Errors);
 
         if (result.Value is not Transfer value)
-            return OperationResult<Transfer>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<Transfer>.Success(value);
     }
@@ -1141,7 +1140,7 @@ public class Administrator : IAdministrator
             return OperationResult<TransferTimelineDetails>.Failure(result.Errors);
 
         if (result.Value is not TransferTimelineDetails value)
-            return OperationResult<TransferTimelineDetails>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<TransferTimelineDetails>.Success(value);
     }
@@ -1165,7 +1164,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchTransfersResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchTransfersResponse value)
-            return OperationResult<SearchTransfersResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchTransfersResponse>.Success(value);
     }
@@ -1189,7 +1188,7 @@ public class Administrator : IAdministrator
             return OperationResult<SearchBankAccountsResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchBankAccountsResponse value)
-            return OperationResult<SearchBankAccountsResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchBankAccountsResponse>.Success(value);
     }
@@ -1214,7 +1213,7 @@ public class Administrator : IAdministrator
             return OperationResult<BankAccount>.Failure(result.Errors);
 
         if (result.Value is not BankAccount value)
-            return OperationResult<BankAccount>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<BankAccount>.Success(value);
     }
@@ -1232,42 +1231,42 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<SearchCryptoWalletsResponse>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _cryptoWallets.SearchAsync(request);
+        var result = await _cryptoWalletService.SearchAsync(request);
 
         if (result.IsFailure)
             return OperationResult<SearchCryptoWalletsResponse>.Failure(result.Errors);
 
         if (result.Value is not SearchCryptoWalletsResponse value)
-            return OperationResult<SearchCryptoWalletsResponse>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<SearchCryptoWalletsResponse>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
+    public async Task<IOperationResult<SearchPaymentsResponse>> SearchPaymentsAsync(
         RequesterIdentity identity,
-        Payments.Application.Models.SearchPaymentsRequest request,
+        SearchPaymentsRequest request,
         CancellationToken cancellationToken = default)
     {
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(authorization.Errors);
+            return OperationResult<SearchPaymentsResponse>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<SearchPaymentsResponse>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentSearch.SearchPaymentsAsync(request);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(result.Errors);
+            return OperationResult<SearchPaymentsResponse>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.SearchPaymentsResponse value)
-            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(result.Errors);
+        if (result.Value is not SearchPaymentsResponse value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Success(value);
+        return OperationResult<SearchPaymentsResponse>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
+    public async Task<IOperationResult<PaymentDetails>> GetPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
@@ -1275,23 +1274,23 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentSearch.GetPaymentAsync(paymentId);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
+    public async Task<IOperationResult<PaymentDetails>> PayPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
@@ -1299,23 +1298,23 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentCommands.PayAndGetAsync(paymentId);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
+    public async Task<IOperationResult<PaymentDetails>> RefundPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
@@ -1323,23 +1322,23 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentCommands.RefundAndGetAsync(paymentId);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
+    public async Task<IOperationResult<PaymentDetails>> KillPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         string reason,
@@ -1348,20 +1347,20 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentCommands.KillAndGetAsync(paymentId, reason);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
     public async Task<IOperationResult<bool>> DeletePaymentAsync(
@@ -1384,7 +1383,7 @@ public class Administrator : IAdministrator
         return OperationResult<bool>.Success(true);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
+    public async Task<IOperationResult<PaymentDetails>> BindPaymentOperatorAsync(
         RequesterIdentity identity,
         string paymentId,
         string operatorAccountId,
@@ -1393,23 +1392,23 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentCommands.BindOperatorAsync(paymentId, operatorAccountId);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
-    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
+    public async Task<IOperationResult<PaymentDetails>> BindPaymentStrawManAsync(
         RequesterIdentity identity,
         string paymentId,
         string strawManAccountId,
@@ -1418,20 +1417,20 @@ public class Administrator : IAdministrator
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
 
         var result = await _paymentCommands.BindStrawManAsync(paymentId, strawManAccountId);
 
         if (result.IsFailure)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
 
-        if (result.Value is not Payments.Application.Models.PaymentDetails value)
-            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
 
-        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
+        return OperationResult<PaymentDetails>.Success(value);
     }
 
     public async Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
@@ -1457,7 +1456,7 @@ public class Administrator : IAdministrator
             return OperationResult<StrawManSettingsDetails>.Failure(result.Errors);
 
         if (result.Value is not StrawManSettingsDetails value)
-            return OperationResult<StrawManSettingsDetails>.Failure(result.Errors);
+            throw new InvalidOperationException();
 
         return OperationResult<StrawManSettingsDetails>.Success(value);
     }
