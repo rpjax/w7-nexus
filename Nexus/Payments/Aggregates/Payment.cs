@@ -41,7 +41,7 @@ public sealed class PaymentSplit
         Amount = amount;
     }
 
-    public static IReadOnlyList<PaymentSplit> CreateSnapshot(
+    public static IReadOnlyList<PaymentSplit> AllocateFromCuts(
         decimal paymentAmount,
         IReadOnlyList<(string AccountId, decimal Percentage)> cuts)
     {

@@ -7,7 +7,7 @@ namespace Nexus.Tests.Payments;
 public sealed class PixPaymentAggregateTests
 {
     private static readonly IReadOnlyList<PaymentSplit> DefaultSplits =
-        PaymentSplit.CreateSnapshot(10m, new[] { ("op-1", 100m) });
+        PaymentSplit.AllocateFromCuts(10m, new[] { ("op-1", 100m) });
 
     private static Payment CreateSut(
         string operationId = "operation-1",
@@ -38,7 +38,7 @@ public sealed class PixPaymentAggregateTests
             gateway: PaymentGateway.Frendz,
             gatewayPaymentId: "ext-1",
             amount: 55.5m,
-            splits: PaymentSplit.CreateSnapshot(55.5m, new[] { ("op-1", 100m) }));
+            splits: PaymentSplit.AllocateFromCuts(55.5m, new[] { ("op-1", 100m) }));
 
         Assert.Equal(PaymentStatus.Pending, p.Status);
         Assert.Equal(PaymentGateway.Frendz, p.Gateway);
@@ -52,9 +52,9 @@ public sealed class PixPaymentAggregateTests
     }
 
     [Fact]
-    public void CreateSnapshot_LastCutReceivesRemainder()
+    public void AllocateFromCuts_LastCutReceivesRemainder()
     {
-        var splits = PaymentSplit.CreateSnapshot(100m, new[]
+        var splits = PaymentSplit.AllocateFromCuts(100m, new[]
         {
             ("a", 33.33m),
             ("b", 33.33m),

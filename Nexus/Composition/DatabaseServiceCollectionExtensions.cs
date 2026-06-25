@@ -28,8 +28,8 @@ public static class DatabaseServiceCollectionExtensions
         services.AddMongoCollection<OperationRecord>("operations");
         services.AddMongoCollection<TeamRecord>("teams");
         services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
-        services.AddMongoCollection<AccountNodeBankAccountRecord>("account_node_bank_accounts");
-        services.AddMongoCollection<AccountNodeCryptoWalletRecord>("account_node_crypto_wallets");
+        services.AddMongoCollection<BankAccountRecord>("bank_accounts");
+        services.AddMongoCollection<CryptoWalletRecord>("crypto_wallets");
         services.AddMongoCollection<TransferRecord>("transfers");
         services.AddMongoCollection<StrawManSettingsRecord>("straw_man_settings");
 

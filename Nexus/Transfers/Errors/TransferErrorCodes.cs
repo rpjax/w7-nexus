@@ -44,4 +44,10 @@ public static class TransferErrorCodes
     public const string ProducedChainNamespaceMismatch = "Transfer.PRODUCED_CHAIN_NAMESPACE_MISMATCH";
     public const string AssetChainMismatch = "Transfer.ASSET_CHAIN_MISMATCH";
     public const string InvalidAggregateState = "Transfer.INVALID_AGGREGATE_STATE";
+    public const string SplitAccountIdInvalid = "Transfer.SPLIT_ACCOUNT_ID_INVALID";
+    public const string SplitPercentageInvalid = "Transfer.SPLIT_PERCENTAGE_INVALID";
+    public const string SplitAmountInvalid = "Transfer.SPLIT_AMOUNT_INVALID";
+    public const string SplitKindInvalid = "Transfer.SPLIT_KIND_INVALID";
+    public const string BalanceSplitsRequired = "Transfer.BALANCE_SPLITS_REQUIRED";
+    public const string OriginStrawManIdInvalid = "Transfer.ORIGIN_STRAW_MAN_ID_INVALID";
 }

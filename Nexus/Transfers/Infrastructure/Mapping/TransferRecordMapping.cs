@@ -1,5 +1,4 @@
 using MongoDB.Bson;
-using Nexus.AccountNodes.Aggregates;
 using Nexus.Database.Models;
 using Nexus.Transfers.Aggregates;
 
@@ -13,8 +12,12 @@ internal static class TransferRecordMapping
             record.Type,
             record.OnrampingMethod,
             MapProof(record.Proof),
-            MapSnapshot(record.Source),
-            MapSnapshot(record.Destination),
+            record.OriginType,
+            MapOriginBankAccount(record.OriginBankAccount),
+            MapOriginCryptoWallet(record.OriginCryptoWallet),
+            record.DestinationType,
+            MapDestinationBankAccount(record.DestinationBankAccount),
+            MapDestinationCryptoWallet(record.DestinationCryptoWallet),
             record.SourceAmount,
             record.ProducedAmount,
             record.ProducedAsset,
@@ -31,8 +34,12 @@ internal static class TransferRecordMapping
             Type = entity.Type,
             OnrampingMethod = entity.OnrampingMethod,
             Proof = MapProof(entity.Proof),
-            Source = MapSnapshot(entity.Source),
-            Destination = MapSnapshot(entity.Destination),
+            OriginType = entity.OriginType,
+            OriginBankAccount = MapOriginBankAccount(entity.OriginBankAccount),
+            OriginCryptoWallet = MapOriginCryptoWallet(entity.OriginCryptoWallet),
+            DestinationType = entity.DestinationType,
+            DestinationBankAccount = MapDestinationBankAccount(entity.DestinationBankAccount),
+            DestinationCryptoWallet = MapDestinationCryptoWallet(entity.DestinationCryptoWallet),
             SourceAmount = entity.SourceAmount,
             ProducedAmount = entity.ProducedAmount,
             ProducedAsset = entity.ProducedAsset,
@@ -74,31 +81,43 @@ internal static class TransferRecordMapping
         };
     }
 
-    private static AccountNodeSnapshot? MapSnapshot(AccountNodeSnapshotRecord? record)
-    {
-        if (record is null)
-            return null;
+    private static TransferOriginBankAccount? MapOriginBankAccount(TransferOriginBankAccountRecord? record) =>
+        record is null ? null : new TransferOriginBankAccount(record.BankAccountId, record.StrawManId);
 
-        return new AccountNodeSnapshot(
-            record.Kind,
-            record.BankAccountId,
-            record.CryptoWalletId,
-            record.ParticipantAccountId,
-            record.StrawManId);
-    }
-
-    private static AccountNodeSnapshotRecord? MapSnapshot(AccountNodeSnapshot? snapshot)
-    {
-        if (snapshot is null)
-            return null;
-
-        return new AccountNodeSnapshotRecord
+    private static TransferOriginBankAccountRecord? MapOriginBankAccount(TransferOriginBankAccount? endpoint) =>
+        endpoint is null ? null : new TransferOriginBankAccountRecord
         {
-            Kind = snapshot.Kind,
-            BankAccountId = snapshot.BankAccountId,
-            CryptoWalletId = snapshot.CryptoWalletId,
-            ParticipantAccountId = snapshot.ParticipantAccountId,
-            StrawManId = snapshot.StrawManId,
+            BankAccountId = endpoint.BankAccountId,
+            StrawManId = endpoint.StrawManId,
         };
-    }
+
+    private static TransferOriginCryptoWallet? MapOriginCryptoWallet(TransferOriginCryptoWalletRecord? record) =>
+        record is null ? null : new TransferOriginCryptoWallet(record.CryptoWalletId, record.StrawManId);
+
+    private static TransferOriginCryptoWalletRecord? MapOriginCryptoWallet(TransferOriginCryptoWallet? endpoint) =>
+        endpoint is null ? null : new TransferOriginCryptoWalletRecord
+        {
+            CryptoWalletId = endpoint.CryptoWalletId,
+            StrawManId = endpoint.StrawManId,
+        };
+
+    private static TransferDestinationBankAccount? MapDestinationBankAccount(TransferDestinationBankAccountRecord? record) =>
+        record is null ? null : new TransferDestinationBankAccount(record.BankAccountId, record.StrawManId);
+
+    private static TransferDestinationBankAccountRecord? MapDestinationBankAccount(TransferDestinationBankAccount? endpoint) =>
+        endpoint is null ? null : new TransferDestinationBankAccountRecord
+        {
+            BankAccountId = endpoint.BankAccountId,
+            StrawManId = endpoint.StrawManId,
+        };
+
+    private static TransferDestinationCryptoWallet? MapDestinationCryptoWallet(TransferDestinationCryptoWalletRecord? record) =>
+        record is null ? null : new TransferDestinationCryptoWallet(record.CryptoWalletId, record.StrawManId);
+
+    private static TransferDestinationCryptoWalletRecord? MapDestinationCryptoWallet(TransferDestinationCryptoWallet? endpoint) =>
+        endpoint is null ? null : new TransferDestinationCryptoWalletRecord
+        {
+            CryptoWalletId = endpoint.CryptoWalletId,
+            StrawManId = endpoint.StrawManId,
+        };
 }

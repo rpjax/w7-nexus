@@ -151,13 +151,13 @@ export type TransferType = 'Withdrawal' | 'Movement' | 'Payout';
 
 export type OnrampingMethod = 'Pix' | 'GiftCard' | 'CreditDebitCard';
 
-export type AccountNodeKind = 'BankAccount' | 'CryptoWallet' | 'Participant';
+export type TransferEndpointBankAccount = {
+  bankAccountId: string;
+  strawManId: string;
+};
 
-export type TransferNodeSnapshot = {
-  kind: AccountNodeKind;
-  bankAccountId?: string | null;
-  cryptoWalletId?: string | null;
-  participantAccountId?: string | null;
+export type TransferEndpointCryptoWallet = {
+  cryptoWalletId: string;
   strawManId: string;
 };
 
@@ -172,8 +172,12 @@ export type TransferRow = {
   type: TransferType;
   onrampingMethod?: OnrampingMethod | null;
   proof?: TransferProof | null;
-  source?: TransferNodeSnapshot | null;
-  destination?: TransferNodeSnapshot | null;
+  originType?: string | null;
+  originBankAccount?: TransferEndpointBankAccount | null;
+  originCryptoWallet?: TransferEndpointCryptoWallet | null;
+  destinationType?: string | null;
+  destinationBankAccount?: TransferEndpointBankAccount | null;
+  destinationCryptoWallet?: TransferEndpointCryptoWallet | null;
   sourceAmount: number;
   producedAmount?: number | null;
   producedAsset?: string | null;
@@ -220,7 +224,18 @@ export type PaymentSummaryRow = {
   createdAt: string;
 };
 
-export type TransferEnrichedRow = Omit<TransferRow, 'source' | 'destination' | 'strawManId'> & {
+export type TransferEnrichedRow = {
+  id: string;
+  type: TransferType;
+  onrampingMethod?: string | null;
+  proof?: TransferProof | null;
+  sourceAmount: number;
+  producedAmount?: number | null;
+  producedAsset?: string | null;
+  producedChain?: string | null;
+  paymentIds: string[];
+  sourceBalanceId?: string | null;
+  createdAt: string;
   source?: EnrichedAccountNode | null;
   destination?: EnrichedAccountNode | null;
   strawMan: AccountSummaryRow;
@@ -268,7 +283,7 @@ export type SearchTransfersRequest = {
 
 export type BankAccountType = 'Checking' | 'Savings';
 
-export type BalanceOriginSnapshot = {
+export type BalanceOrigin = {
   operationId: string;
   operatorId?: string | null;
   strawManId: string;
@@ -279,9 +294,9 @@ export type BankBalanceRow = {
   amountBrl: number;
   transferId: string;
   createdAt: string;
-  splitSnapshot: unknown[];
+  splits: unknown[];
   appliedStrawManFeeIds: string[];
-  originSnapshot: BalanceOriginSnapshot;
+  origin: BalanceOrigin;
 };
 
 export type CryptoBalanceRow = {
@@ -291,9 +306,9 @@ export type CryptoBalanceRow = {
   amount: number;
   transferId: string;
   createdAt: string;
-  splitSnapshot: unknown[];
+  splits: unknown[];
   appliedStrawManFeeIds: string[];
-  originSnapshot: BalanceOriginSnapshot;
+  origin: BalanceOrigin;
 };
 
 export type CryptoBalanceByChainAsset = {

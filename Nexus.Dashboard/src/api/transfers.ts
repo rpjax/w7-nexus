@@ -89,7 +89,8 @@ export async function createPayoutTransfer(payload: {
   sourceBankAccountId: string;
   sourceBalanceId: string;
   sourceAmount: number;
-  participantAccountId: string;
+  destinationBankAccountId?: string | null;
+  destinationCryptoWalletId?: string | null;
   pixTransactionId?: string | null;
   pixAuthenticationCode?: string | null;
   cryptoTransactionId?: string | null;
@@ -99,7 +100,8 @@ export async function createPayoutTransfer(payload: {
     SourceBankAccountId: payload.sourceBankAccountId,
     SourceBalanceId: payload.sourceBalanceId,
     SourceAmount: payload.sourceAmount,
-    ParticipantAccountId: payload.participantAccountId,
+    DestinationBankAccountId: payload.destinationBankAccountId ?? null,
+    DestinationCryptoWalletId: payload.destinationCryptoWalletId ?? null,
     PixTransactionId: payload.pixTransactionId ?? null,
     PixAuthenticationCode: payload.pixAuthenticationCode ?? null,
     CryptoTransactionId: payload.cryptoTransactionId ?? null,

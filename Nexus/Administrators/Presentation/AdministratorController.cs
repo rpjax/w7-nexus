@@ -5,8 +5,10 @@ using Nexus.Administrators.Application.Requests;
 using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 using Nexus.StrawMen.Application.Contracts;
-using Nexus.AccountNodes.Application.Contracts;
-using Nexus.AccountNodes.Presentation;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Presentation;
+using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Presentation;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Presentation;
 
@@ -482,7 +484,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
     }
 
     [HttpGet("bank-accounts/{bankAccountId}")]
@@ -498,7 +500,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
     }
 
     [HttpPost("crypto-wallets")]
@@ -514,7 +516,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
     }
 
     [HttpPut("crypto-wallets/{cryptoWalletId}/addresses")]
@@ -540,7 +542,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
     }
 
     [HttpGet("crypto-wallets/{cryptoWalletId}")]
@@ -556,7 +558,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
     }
 
     [HttpPost("bank-accounts/search")]
@@ -576,7 +578,7 @@ public class AdministratorController : NexusController
         return Ok(new
         {
             Total = data.Total,
-            Items = data.Items.Select(AccountNodeApiMapping.ToBankAccountResponse).ToArray(),
+            Items = data.Items.Select(BankAccountApiMapping.ToBankAccountResponse).ToArray(),
         });
     }
 
@@ -598,7 +600,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(AccountNodeApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
     }
 
     [HttpPost("crypto-wallets/search")]
@@ -618,7 +620,7 @@ public class AdministratorController : NexusController
         return Ok(new
         {
             Total = data.Total,
-            Items = data.Items.Select(AccountNodeApiMapping.ToCryptoWalletResponse).ToArray(),
+            Items = data.Items.Select(CryptoWalletApiMapping.ToCryptoWalletResponse).ToArray(),
         });
     }
 

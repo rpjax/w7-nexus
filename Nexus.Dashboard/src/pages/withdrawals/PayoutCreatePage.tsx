@@ -1,110 +1,101 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { createPayoutTransfer } from '../../api/transfers';
+import { getTransferTimeline } from '../../api/transfers';
+import type { ActiveBalanceRow } from '../../api/types';
+import { PayoutComposerModal } from '../../components/finance/PayoutComposerModal';
 import { PageHeading } from '../../layouts/PageHeading';
 import { useNotifications } from '../../notifications/NotificationContext';
+
+function balanceFromSearchParams(params: URLSearchParams): ActiveBalanceRow | null {
+  const balanceId = params.get('sourceBalanceId');
+  if (!balanceId) return null;
+
+  const amount = Number(params.get('sourceAmount') ?? '0');
+  const bankId = params.get('sourceBankAccountId');
+
+  if (!bankId) return null;
+
+  return {
+    balanceId,
+    transferId: params.get('from') ?? '',
+    amount: Number.isFinite(amount) ? amount : 0,
+    currency: 'BRL',
+    account: {
+      kind: 'BankAccount',
+      id: bankId,
+      displayName: 'Conta bancária de origem',
+    },
+    canMove: false,
+    canPayout: true,
+  };
+}
 
 export function PayoutCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { notifyError, notifySuccess } = useNotifications();
-  const [strawManId, setStrawManId] = useState('');
-  const [sourceBankAccountId, setSourceBankAccountId] = useState('');
-  const [sourceBalanceId, setSourceBalanceId] = useState('');
-  const [sourceAmount, setSourceAmount] = useState('');
-  const [participantAccountId, setParticipantAccountId] = useState('');
-  const [pixTransactionId, setPixTransactionId] = useState('');
-  const [pixAuthenticationCode, setPixAuthenticationCode] = useState('');
-  const [busy, setBusy] = useState(false);
+  const { notifyError } = useNotifications();
+  const fromTransferId = searchParams.get('from') ?? searchParams.get('fromTransferId');
+  const [strawManId, setStrawManId] = useState(searchParams.get('strawManId') ?? '');
+  const [strawManUsername, setStrawManUsername] = useState<string | null>(null);
+  const [balances, setBalances] = useState<ActiveBalanceRow[]>([]);
+  const [loading, setLoading] = useState(Boolean(fromTransferId));
 
   useEffect(() => {
-    setStrawManId(searchParams.get('strawManId') ?? '');
-    setSourceBankAccountId(searchParams.get('sourceBankAccountId') ?? '');
-    setSourceBalanceId(searchParams.get('sourceBalanceId') ?? '');
-    setSourceAmount(searchParams.get('sourceAmount') ?? '');
-    setParticipantAccountId(searchParams.get('participantAccountId') ?? '');
-  }, [searchParams]);
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const amount = Number(sourceAmount.replace(',', '.'));
-    if (!strawManId.trim() || !sourceBankAccountId.trim() || !sourceBalanceId.trim() || !participantAccountId.trim() || !(amount > 0)) {
-      notifyError('Preencha todos os campos obrigatórios.');
+    if (fromTransferId) {
+      void (async () => {
+        setLoading(true);
+        const result = await getTransferTimeline(fromTransferId);
+        if (!result.ok) {
+          notifyError(result.error);
+          setBalances([]);
+        } else {
+          setStrawManId(result.data?.strawMan?.id ?? searchParams.get('strawManId') ?? '');
+          setStrawManUsername(result.data?.strawMan?.username ?? null);
+          setBalances(
+            (result.data?.activeBalances ?? []).filter(
+              (balance) => balance.canPayout && balance.account.kind === 'BankAccount',
+            ),
+          );
+        }
+        setLoading(false);
+      })();
       return;
     }
-    if (!pixTransactionId.trim() && !pixAuthenticationCode.trim()) {
-      notifyError('O comprovante PIX é obrigatório no repasse.');
-      return;
-    }
 
-    setBusy(true);
-    try {
-      const result = await createPayoutTransfer({
-        strawManId: strawManId.trim(),
-        sourceBankAccountId: sourceBankAccountId.trim(),
-        sourceBalanceId: sourceBalanceId.trim(),
-        sourceAmount: amount,
-        participantAccountId: participantAccountId.trim(),
-        pixTransactionId: pixTransactionId.trim() || null,
-        pixAuthenticationCode: pixAuthenticationCode.trim() || null,
-      });
-      if (!result.ok) {
-        notifyError(result.error);
-        return;
-      }
-      notifySuccess('Repasse registrado.');
-      navigate(`/dashboard/transfers/${result.data!.id}`);
-    } finally {
-      setBusy(false);
-    }
-  }
+    const legacyBalance = balanceFromSearchParams(searchParams);
+    setBalances(legacyBalance ? [legacyBalance] : []);
+  }, [fromTransferId, notifyError, searchParams]);
 
-  const prefilled = Boolean(searchParams.get('sourceBalanceId'));
+  const initialBalanceId = searchParams.get('sourceBalanceId');
 
   return (
     <div className="page-stack">
       <PageHeading
         kicker="Financeiro"
         title="Novo repasse"
-        subtitle={prefilled
-          ? 'Dados pré-preenchidos a partir da linha do tempo. Informe o participante e o comprovante PIX.'
-          : 'Debita o saldo de origem com comprovante obrigatório. O valor não é creditado no destino.'}
-        backLink={{ to: '/dashboard/transfers', label: 'Lista de transferências' }}
+        subtitle="Selecione o saldo bancário, o destino registrado e o comprovante PIX."
+        backLink={{ to: fromTransferId ? `/dashboard/transfers/${fromTransferId}` : '/dashboard/transfers', label: 'Voltar' }}
       />
-      <form className="card form-card" onSubmit={(e) => void handleSubmit(e)}>
-        <div className="field">
-          <label htmlFor="strawManId">ID do laranja</label>
-          <input id="strawManId" className="nexus-input" value={strawManId} onChange={(e) => setStrawManId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceBankAccountId">Conta bancária origem</label>
-          <input id="sourceBankAccountId" className="nexus-input" value={sourceBankAccountId} onChange={(e) => setSourceBankAccountId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceBalanceId">ID do saldo origem</label>
-          <input id="sourceBalanceId" className="nexus-input mono" value={sourceBalanceId} onChange={(e) => setSourceBalanceId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="sourceAmount">Valor (BRL)</label>
-          <input id="sourceAmount" className="nexus-input" value={sourceAmount} onChange={(e) => setSourceAmount(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="participantAccountId">Conta do participante (split)</label>
-          <input id="participantAccountId" className="nexus-input" value={participantAccountId} onChange={(e) => setParticipantAccountId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="pixTransactionId">ID transação PIX</label>
-          <input id="pixTransactionId" className="nexus-input" value={pixTransactionId} onChange={(e) => setPixTransactionId(e.target.value)} />
-        </div>
-        <div className="field">
-          <label htmlFor="pixAuthenticationCode">Código autenticação PIX</label>
-          <input id="pixAuthenticationCode" className="nexus-input" value={pixAuthenticationCode} onChange={(e) => setPixAuthenticationCode(e.target.value)} />
-        </div>
-        <div className="form-actions">
-          <Link className="btn btn-ghost" to="/dashboard/transfers">Cancelar</Link>
-          <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvando…' : 'Registrar repasse'}</button>
-        </div>
-      </form>
+
+      {loading ? (
+        <p className="muted">Carregando saldos disponíveis…</p>
+      ) : balances.length === 0 ? (
+        <section className="card ops-card">
+          <p className="muted">Nenhum saldo bancário disponível para repasse.</p>
+          <p><Link className="btn btn-primary" to="/dashboard/transfers">Ir para transferências</Link></p>
+        </section>
+      ) : (
+        <PayoutComposerModal
+          open
+          variant="embedded"
+          onClose={() => navigate(fromTransferId ? `/dashboard/transfers/${fromTransferId}` : '/dashboard/transfers')}
+          strawManId={strawManId}
+          strawManUsername={strawManUsername}
+          activeBalances={balances}
+          initialBalanceId={initialBalanceId}
+          onSuccess={(transferId) => navigate(`/dashboard/transfers/${transferId}`)}
+        />
+      )}
     </div>
   );
 }

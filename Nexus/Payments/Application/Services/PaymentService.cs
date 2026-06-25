@@ -168,7 +168,7 @@ public sealed class PaymentService : IPaymentService
                 else
                 {
                     var normalizedCuts = ProfitSharePercentageRules.NormalizeCuts(rule.Cuts);
-                    splits = PaymentSplit.CreateSnapshot(
+                    splits = PaymentSplit.AllocateFromCuts(
                         amount,
                         normalizedCuts
                             .Select(cut => (cut.AccountId, cut.Percentage))
@@ -407,7 +407,7 @@ public sealed class PaymentService : IPaymentService
             .ToList();
 
         var normalized = ProfitSharePercentageRules.NormalizeCuts(cuts);
-        return PaymentSplit.CreateSnapshot(
+        return PaymentSplit.AllocateFromCuts(
             amount,
             normalized.Select(cut => (cut.AccountId, cut.Percentage)).ToList());
     }

@@ -1,6 +1,7 @@
-import type { EnrichedAccountNode, TransferTimelineStep } from '../api/types';
+import type { EnrichedAccountNode, TransferRow, TransferTimelineStep } from '../api/types';
 import { resolveBankMetadata } from './bankAccountDisplay';
 import { formatMoney } from './financeLabels';
+import { shortId } from './format';
 
 export function formatEnrichedAccountTitle(node: EnrichedAccountNode): string {
   if (node.label?.trim()) return node.label.trim();
@@ -59,4 +60,29 @@ export function formatStepAmount(step: TransferTimelineStep): string | null {
   }
 
   return formatMoney(amount);
+}
+
+function endpointLabel(type: string | null | undefined, accountId: string): string {
+  const prefix = type === 'CryptoWallet' ? 'Carteira' : 'Conta';
+  return `${prefix} · ${shortId(accountId, 10)}`;
+}
+
+export function formatTransferOriginSummary(transfer: TransferRow): string {
+  if (transfer.originBankAccount) {
+    return endpointLabel('BankAccount', transfer.originBankAccount.bankAccountId);
+  }
+  if (transfer.originCryptoWallet) {
+    return endpointLabel('CryptoWallet', transfer.originCryptoWallet.cryptoWalletId);
+  }
+  return '—';
+}
+
+export function formatTransferDestinationSummary(transfer: TransferRow): string {
+  if (transfer.destinationBankAccount) {
+    return endpointLabel('BankAccount', transfer.destinationBankAccount.bankAccountId);
+  }
+  if (transfer.destinationCryptoWallet) {
+    return endpointLabel('CryptoWallet', transfer.destinationCryptoWallet.cryptoWalletId);
+  }
+  return '—';
 }

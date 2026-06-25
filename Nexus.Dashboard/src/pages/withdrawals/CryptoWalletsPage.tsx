@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
-import { createCryptoWallet, searchCryptoWallets } from '../../api/accountNodes';
+import { createCryptoWallet, searchCryptoWallets } from '../../api/cryptoWallets';
 import type { CryptoWalletRow } from '../../api/types';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { AccountPickerModal } from '../../components/AccountPickerModal';

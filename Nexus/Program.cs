@@ -1,5 +1,6 @@
 using Nexus.Composition;
-using Nexus.AccountNodes.Composition;
+using Nexus.BankAccounts.Composition;
+using Nexus.CryptoWallets.Composition;
 using Nexus.Transfers.Composition;
 
 /*
@@ -21,7 +22,8 @@ builder.Services
     .AddNexusAuthentication(builder.Configuration)
     .AddNexusAccounts()
     .AddNexusPayments()
-    .AddNexusAccountNodes()
+    .AddNexusBankAccounts()
+    .AddNexusCryptoWallets()
     .AddNexusTransfers()
     .AddNexusOperations()
     .AddNexusRoles()

@@ -468,7 +468,7 @@ internal sealed class ActorTestContext
             operatorId: operatorId,
             splits: operatorId is null
                 ? Array.Empty<PaymentSplit>()
-                : PaymentSplit.CreateSnapshot(100m, new[] { (operatorId, 100m) }));
+                : PaymentSplit.AllocateFromCuts(100m, new[] { (operatorId, 100m) }));
         return await Payments.CreateAsync(payment);
     }
 
@@ -531,25 +531,25 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
 
 internal sealed class StubAdministratorAccountNodeCommandService : IAdministratorAccountNodeCommandService
 {
-    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> CreateBankAccountAsync(
-        Nexus.AccountNodes.Application.Contracts.CreateBankAccountRequest request) =>
+    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> CreateBankAccountAsync(
+        Nexus.BankAccounts.Application.Contracts.CreateBankAccountRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
-        Nexus.AccountNodes.Application.Contracts.CreateCryptoWalletRequest request) =>
+    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(
+        Nexus.CryptoWallets.Application.Contracts.CreateCryptoWalletRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> UpsertCryptoWalletAddressAsync(
-        Nexus.AccountNodes.Application.Contracts.UpsertCryptoWalletAddressRequest request) =>
+    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> UpsertCryptoWalletAddressAsync(
+        Nexus.CryptoWallets.Application.Contracts.UpsertCryptoWalletAddressRequest request) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> GetBankAccountAsync(string bankAccountId) =>
+    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> GetBankAccountAsync(string bankAccountId) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.AccountNodes.Aggregates.CryptoWallet>> GetCryptoWalletAsync(string cryptoWalletId) =>
+    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> GetCryptoWalletAsync(string cryptoWalletId) =>
         throw new NotImplementedException();
 
-    public Task<IResult<Nexus.AccountNodes.Aggregates.BankAccount>> UpdateBankAccountLabelAsync(
+    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> UpdateBankAccountLabelAsync(
         string bankAccountId,
         string? label) =>
         throw new NotImplementedException();

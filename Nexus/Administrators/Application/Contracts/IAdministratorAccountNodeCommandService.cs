@@ -1,6 +1,8 @@
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Application.Contracts;
-using Nexus.AccountNodes.Aggregates;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
 
 namespace Nexus.Administrators.Application.Contracts;
 

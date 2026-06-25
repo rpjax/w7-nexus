@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import type { BankAccountRow } from '../../api/types';
-import { updateBankAccountLabel } from '../../api/accountNodes';
+import { updateBankAccountLabel } from '../../api/bankAccounts';
 import {
   bankAccountCopyText,
   bankAccountSummary,

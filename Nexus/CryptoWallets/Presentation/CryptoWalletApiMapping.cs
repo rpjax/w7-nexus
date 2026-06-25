@@ -1,0 +1,51 @@
+using Nexus.CryptoWallets.Aggregates;
+
+namespace Nexus.CryptoWallets.Presentation;
+
+public static class CryptoWalletApiMapping
+{
+    public static object ToCryptoWalletResponse(CryptoWallet wallet)
+    {
+        var balancesByChainAsset = wallet.Balances
+            .GroupBy(balance => new { balance.Chain, balance.Asset })
+            .Select(group => new
+            {
+                chain = group.Key.Chain.ToString(),
+                asset = group.Key.Asset.ToString(),
+                totalAmount = group.Sum(balance => balance.Amount),
+            })
+            .ToArray();
+
+        return new
+        {
+            id = wallet.Id,
+            strawManId = wallet.StrawManId,
+            addresses = wallet.Addresses.Select(ToWalletAddress).ToArray(),
+            label = wallet.Label,
+            balancesByChainAsset,
+            balances = wallet.Balances.Select(ToCryptoBalance).ToArray(),
+            createdAt = wallet.CreatedAt,
+            updatedAt = wallet.UpdatedAt,
+        };
+    }
+
+    private static object ToWalletAddress(CryptoWalletAddress address) => new
+    {
+        @namespace = address.Namespace.ToString(),
+        address = address.Address,
+        memo = address.Memo,
+    };
+
+    private static object ToCryptoBalance(CryptoBalance balance) => new
+    {
+        id = balance.Id,
+        chain = balance.Chain.ToString(),
+        asset = balance.Asset.ToString(),
+        amount = balance.Amount,
+        transferId = balance.TransferId,
+        createdAt = balance.CreatedAt,
+        splits = balance.Splits,
+        appliedStrawManFeeIds = balance.AppliedStrawManFeeIds,
+        origin = balance.Origin,
+    };
+}

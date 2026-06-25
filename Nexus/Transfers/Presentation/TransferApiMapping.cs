@@ -1,4 +1,3 @@
-using Nexus.AccountNodes.Aggregates;
 using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Transfers.Presentation;
@@ -18,8 +17,12 @@ public static class TransferApiMapping
                 pixAuthenticationCode = transfer.Proof.PixAuthenticationCode,
                 cryptoTransactionId = transfer.Proof.CryptoTransactionId,
             },
-        source = ToNodeSnapshot(transfer.Source),
-        destination = ToNodeSnapshot(transfer.Destination),
+        originType = transfer.OriginType?.ToString(),
+        originBankAccount = ToOriginBankAccount(transfer.OriginBankAccount),
+        originCryptoWallet = ToOriginCryptoWallet(transfer.OriginCryptoWallet),
+        destinationType = transfer.DestinationType?.ToString(),
+        destinationBankAccount = ToDestinationBankAccount(transfer.DestinationBankAccount),
+        destinationCryptoWallet = ToDestinationCryptoWallet(transfer.DestinationCryptoWallet),
         sourceAmount = transfer.SourceAmount,
         producedAmount = transfer.ProducedAmount,
         producedAsset = transfer.ProducedAsset?.ToString(),
@@ -30,18 +33,15 @@ public static class TransferApiMapping
         createdAt = transfer.CreatedAt,
     };
 
-    private static object? ToNodeSnapshot(AccountNodeSnapshot? snapshot)
-    {
-        if (snapshot is null)
-            return null;
+    private static object? ToOriginBankAccount(TransferOriginBankAccount? endpoint) =>
+        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, strawManId = endpoint.StrawManId };
 
-        return new
-        {
-            kind = snapshot.Kind.ToString(),
-            bankAccountId = snapshot.BankAccountId,
-            cryptoWalletId = snapshot.CryptoWalletId,
-            participantAccountId = snapshot.ParticipantAccountId,
-            strawManId = snapshot.StrawManId,
-        };
-    }
+    private static object? ToOriginCryptoWallet(TransferOriginCryptoWallet? endpoint) =>
+        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, strawManId = endpoint.StrawManId };
+
+    private static object? ToDestinationBankAccount(TransferDestinationBankAccount? endpoint) =>
+        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, strawManId = endpoint.StrawManId };
+
+    private static object? ToDestinationCryptoWallet(TransferDestinationCryptoWallet? endpoint) =>
+        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, strawManId = endpoint.StrawManId };
 }

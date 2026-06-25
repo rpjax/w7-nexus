@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
-import { createBankAccount, searchBankAccounts } from '../../api/accountNodes';
+import { createBankAccount, searchBankAccounts } from '../../api/bankAccounts';
 import type { BankAccountRow } from '../../api/types';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { BankAccountCard } from '../../components/finance/BankAccountCard';

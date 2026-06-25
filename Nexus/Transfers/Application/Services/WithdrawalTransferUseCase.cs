@@ -1,10 +1,11 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Aggregates;
-using Nexus.AccountNodes.Application.Contracts;
-using Nexus.AccountNodes.Errors;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Transfers.Aggregates;
@@ -63,12 +64,16 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
                 .WithMessage("É necessário vincular ao menos um pagamento à transferência de saque.")
                 .Build());
 
-        AccountNodeSnapshot? destination = null;
+        TransferDestinationType? destinationType = null;
+        TransferDestinationBankAccount? destinationBankAccount = null;
+        TransferDestinationCryptoWallet? destinationCryptoWallet = null;
         BankAccount? bankAccount = null;
         CryptoWallet? cryptoWallet = null;
 
         if (!string.IsNullOrWhiteSpace(request.BankAccountId))
         {
+            destinationType = TransferDestinationType.BankAccount;
+
             bankAccount = _bankAccounts.AsQueryable()
                 .FirstOrDefault(a => a.Id == request.BankAccountId.Trim());
 
@@ -88,14 +93,16 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             }
             else
             {
-                var destResult = AccountNodeSnapshot.ForBankAccount(bankAccount.Id, strawManId);
+                var destResult = TransferDestinationBankAccount.Create(bankAccount.Id, bankAccount.StrawManId);
                 if (destResult.IsFailure)
                     return Result<Transfer>.Failure(destResult.Errors);
-                destination = destResult.Value;
+                destinationBankAccount = destResult.Value;
             }
         }
         else if (!string.IsNullOrWhiteSpace(request.CryptoWalletId))
         {
+            destinationType = TransferDestinationType.CryptoWallet;
+
             cryptoWallet = _cryptoWallets.AsQueryable()
                 .FirstOrDefault(w => w.Id == request.CryptoWalletId.Trim());
 
@@ -115,10 +122,10 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             }
             else
             {
-                var destResult = AccountNodeSnapshot.ForCryptoWallet(cryptoWallet.Id, strawManId);
+                var destResult = TransferDestinationCryptoWallet.Create(cryptoWallet.Id, cryptoWallet.StrawManId);
                 if (destResult.IsFailure)
                     return Result<Transfer>.Failure(destResult.Errors);
-                destination = destResult.Value;
+                destinationCryptoWallet = destResult.Value;
             }
         }
         else
@@ -266,8 +273,12 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             TransferType.Withdrawal,
             onrampingMethod: cryptoWallet is not null ? request.OnrampingMethod : null,
             proofResult.Value,
-            source: null,
-            destination,
+            originType: null,
+            originBankAccount: null,
+            originCryptoWallet: null,
+            destinationType,
+            destinationBankAccount,
+            destinationCryptoWallet,
             sourceAmount: totalAmount,
             producedAmount: cryptoWallet is not null ? request.ProducedAmount : null,
             producedAsset: cryptoWallet is not null ? request.ProducedAsset : null,
@@ -287,23 +298,15 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             var groupAmount = groupPayments.Sum(p => p.Amount);
             var referencePayment = groupPayments[0];
 
-            var originalSplits = new List<BalanceSplitSnapshot>();
+            var originalSplits = new List<TransferBalanceSplit>();
             foreach (var s in referencePayment.Splits)
             {
-                var splitResult = BalanceSplitSnapshot.Create(
-                    s.AccountId, s.Percentage, s.Amount, SplitKind.ProfitShare);
+                var splitResult = TransferBalanceSplit.Create(
+                    s.AccountId, s.Percentage, s.Amount, TransferSplitKind.ProfitShare);
                 if (splitResult.IsFailure)
                     return Result<Transfer>.Failure(splitResult.Errors);
                 originalSplits.Add(splitResult.Value!);
             }
-
-            var originResult = BalanceOriginSnapshot.Create(
-                referencePayment.OperationId,
-                referencePayment.OperatorId,
-                referencePayment.StrawManId);
-
-            if (originResult.IsFailure)
-                return Result<Transfer>.Failure(originResult.Errors);
 
             var calculatedSplits = await _splitCalculation.CalculateForCreditAsync(
                 strawManId,
@@ -317,10 +320,18 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
 
             if (bankAccount is not null)
             {
+                var originResult = BankBalanceOrigin.Create(
+                    referencePayment.OperationId,
+                    referencePayment.OperatorId,
+                    referencePayment.StrawManId);
+
+                if (originResult.IsFailure)
+                    return Result<Transfer>.Failure(originResult.Errors);
+
                 var balanceResult = BankBalance.Create(
                     groupAmount,
                     persistedTransfer.Id,
-                    calculatedSplits.Value!.SplitSnapshot,
+                    BalanceSplitMapping.ToBankSplits(calculatedSplits.Value!.Splits),
                     calculatedSplits.Value.AppliedStrawManFeeIds,
                     originResult.Value!);
 
@@ -333,6 +344,14 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             }
             else if (cryptoWallet is not null)
             {
+                var originResult = CryptoBalanceOrigin.Create(
+                    referencePayment.OperationId,
+                    referencePayment.OperatorId,
+                    referencePayment.StrawManId);
+
+                if (originResult.IsFailure)
+                    return Result<Transfer>.Failure(originResult.Errors);
+
                 var cryptoAmount = totalAmount == 0
                     ? request.ProducedAmount!.Value
                     : Math.Round(
@@ -345,7 +364,7 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
                     request.ProducedAsset!.Value,
                     cryptoAmount,
                     persistedTransfer.Id,
-                    calculatedSplits.Value!.SplitSnapshot,
+                    BalanceSplitMapping.ToCryptoSplits(calculatedSplits.Value!.Splits),
                     calculatedSplits.Value.AppliedStrawManFeeIds,
                     originResult.Value!);
 

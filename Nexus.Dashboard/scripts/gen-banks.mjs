@@ -3,7 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const csPath = path.resolve(__dirname, '../../Nexus/AccountNodes/Aggregates/BrazilianBank.cs');
+const csPath = path.resolve(__dirname, '../../Nexus/BankAccounts/Aggregates/BrazilianBank.cs');
 const src = fs.readFileSync(csPath, 'utf8');
 const re = /\[BrazilianBankMetadata\("([^"]+)", "([^"]+)", "([^"]+)"\)\]\s*\n\s*(\w+)\s*=\s*(\d+)/g;
 const banks = [];

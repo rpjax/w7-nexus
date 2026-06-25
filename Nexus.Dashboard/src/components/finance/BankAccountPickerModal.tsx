@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { searchBankAccounts } from '../../api/accountNodes';
+import { searchBankAccounts } from '../../api/bankAccounts';
 import type { BankAccountRow } from '../../api/types';
 import { BankAccountCard } from './BankAccountCard';
 import { IconButton } from '../IconButton';

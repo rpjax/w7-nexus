@@ -7,6 +7,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { StatusPill } from '../../components/finance/StatusPill';
 import { PaginationBar } from '../../components/ListControls';
 import { formatMoney, transferTypeLabel } from '../../utils/financeLabels';
+import { formatTransferDestinationSummary, formatTransferOriginSummary } from '../../utils/transferDisplay';
 import { formatUtc, shortId } from '../../utils/format';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -59,7 +60,7 @@ export function WithdrawalsListPage() {
     <OpsWorkspace
       kicker="Financeiro"
       title="Transferências"
-      lead="Saques, movimentações e repasses entre contas bancárias, carteiras crypto e participantes."
+      lead="Saques, movimentações e repasses entre contas bancárias e carteiras crypto."
       searchId="transferSearch"
       searchLabel="Filtrar por laranja (ID)"
       searchPlaceholder="ID do laranja…"
@@ -114,6 +115,8 @@ export function WithdrawalsListPage() {
                 <th>ID</th>
                 <th>Tipo</th>
                 <th>Laranja</th>
+                <th>Origem</th>
+                <th>Destino</th>
                 <th>Pagamentos</th>
                 <th>Valor</th>
                 <th>Criado em</th>
@@ -131,6 +134,8 @@ export function WithdrawalsListPage() {
                     />
                   </td>
                   <td data-label="Laranja"><span className="mono">{shortId(row.strawManId)}</span></td>
+                  <td data-label="Origem" className="muted small">{formatTransferOriginSummary(row)}</td>
+                  <td data-label="Destino" className="muted small">{formatTransferDestinationSummary(row)}</td>
                   <td data-label="Pagamentos">{row.paymentIds.length}</td>
                   <td data-label="Valor">{formatMoney(row.sourceAmount)}</td>
                   <td data-label="Criado em" className="muted small">{formatUtc(row.createdAt)}</td>

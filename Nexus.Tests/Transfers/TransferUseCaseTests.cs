@@ -2,10 +2,12 @@ using System.Linq.Expressions;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
-using Nexus.AccountNodes.Aggregates;
-using Nexus.AccountNodes.Application.Contracts;
-using Nexus.AccountNodes.Application.Services;
-using Nexus.AccountNodes.Infrastructure.Mapping;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Infrastructure.Mapping;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Infrastructure.Mapping;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
@@ -29,6 +31,7 @@ public sealed class TransferUseCaseTests
     {
         var ctx = await TransferTestContext.CreateAsync();
         var bank = await ctx.SeedBankAccountAsync("straw-1");
+        var destination = await ctx.SeedBankAccountAsync("straw-1", "dest");
         var balance = await ctx.SeedBankBalanceAsync(bank, 500m);
 
         var sut = new PayoutTransferUseCase(ctx.Accounts, ctx.BankAccounts, ctx.CryptoWallets, ctx.Transfers);
@@ -39,7 +42,7 @@ public sealed class TransferUseCaseTests
             SourceBankAccountId = bank.Id,
             SourceBalanceId = balance.Id,
             SourceAmount = 100m,
-            ParticipantAccountId = "participant-1",
+            DestinationBankAccountId = destination.Id,
         });
 
         Assert.True(result.IsFailure);
@@ -51,7 +54,7 @@ public sealed class TransferUseCaseTests
     {
         var ctx = await TransferTestContext.CreateAsync();
         var bank = await ctx.SeedBankAccountAsync("straw-1");
-        var splits = PaymentSplit.CreateSnapshot(100m, new[] { ("op-1", 100m) });
+        var splits = PaymentSplit.AllocateFromCuts(100m, new[] { ("op-1", 100m) });
 
         await ctx.SeedPaymentAsync("pay-1", 60m, splits);
         await ctx.SeedPaymentAsync("pay-2", 40m, splits);
@@ -86,11 +89,11 @@ public sealed class TransferUseCaseTests
         await ctx.SeedPaymentAsync(
             "pay-1",
             60m,
-            PaymentSplit.CreateSnapshot(60m, new[] { ("op-1", 100m) }));
+            PaymentSplit.AllocateFromCuts(60m, new[] { ("op-1", 100m) }));
         await ctx.SeedPaymentAsync(
             "pay-2",
             40m,
-            PaymentSplit.CreateSnapshot(40m, new[] { ("op-2", 100m) }));
+            PaymentSplit.AllocateFromCuts(40m, new[] { ("op-2", 100m) }));
 
         var sut = new WithdrawalTransferUseCase(
             ctx.Accounts,
@@ -154,6 +157,7 @@ public sealed class TransferUseCaseTests
     {
         var ctx = await TransferTestContext.CreateAsync();
         var bank = await ctx.SeedBankAccountAsync("straw-1");
+        var destination = await ctx.SeedBankAccountAsync("straw-1", "dest");
         var balance = await ctx.SeedBankBalanceAsync(bank, 500m);
 
         var sut = new PayoutTransferUseCase(ctx.Accounts, ctx.BankAccounts, ctx.CryptoWallets, ctx.Transfers);
@@ -164,7 +168,7 @@ public sealed class TransferUseCaseTests
             SourceBankAccountId = bank.Id,
             SourceBalanceId = balance.Id,
             SourceAmount = 100m,
-            ParticipantAccountId = "participant-1",
+            DestinationBankAccountId = destination.Id,
             PixTransactionId = "pix-123",
         });
 
@@ -177,7 +181,7 @@ public sealed class TransferUseCaseTests
     {
         var ctx = await TransferTestContext.CreateAsync();
         var wallet = await ctx.SeedCryptoWalletAsync("straw-1", AddressNamespace.Evm, "0xabc");
-        await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.CreateSnapshot(100m, new[] { ("op-1", 100m) }));
+        await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.AllocateFromCuts(100m, new[] { ("op-1", 100m) }));
 
         var sut = new WithdrawalTransferUseCase(
             ctx.Accounts,
@@ -207,7 +211,7 @@ public sealed class TransferUseCaseTests
     {
         var ctx = await TransferTestContext.CreateAsync();
         var wallet = await ctx.SeedCryptoWalletAsync("straw-1", AddressNamespace.Tron, "TXyz");
-        await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.CreateSnapshot(100m, new[] { ("op-1", 100m) }));
+        await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.AllocateFromCuts(100m, new[] { ("op-1", 100m) }));
 
         var sut = new WithdrawalTransferUseCase(
             ctx.Accounts,
@@ -252,14 +256,6 @@ public sealed class TransferUseCaseTests
                 Array.Empty<string>(),
                 DateTime.UtcNow,
                 DateTime.UtcNow));
-            await ctx.Accounts.CreateAsync(new Account(
-                "participant-1",
-                "participant",
-                "hash",
-                Array.Empty<string>(),
-                Array.Empty<string>(),
-                DateTime.UtcNow,
-                DateTime.UtcNow));
             ctx.SplitCalculation = new BalanceSplitCalculationService(new StubStrawManSettingsQueryService());
             return ctx;
         }
@@ -289,8 +285,8 @@ public sealed class TransferUseCaseTests
 
         public async Task<BankBalance> SeedBankBalanceAsync(BankAccount account, decimal amount)
         {
-            var origin = BalanceOriginSnapshot.Create("op-1", "operator-1", account.StrawManId).Value!;
-            var split = BalanceSplitSnapshot.Create("operator-1", 100m, amount, SplitKind.ProfitShare).Value!;
+            var origin = BankBalanceOrigin.Create("op-1", "operator-1", account.StrawManId).Value!;
+            var split = BankBalanceSplit.Create("operator-1", 100m, amount, BankSplitKind.ProfitShare).Value!;
             var balance = BankBalance.Create(amount, "seed-transfer", new[] { split }, Array.Empty<string>(), origin).Value!;
             account.CreditBalance(balance);
             await BankAccounts.UpdateAsync(account);
@@ -384,8 +380,8 @@ public sealed class TransferUseCaseTests
 
         public Task<BankAccount> CreateAsync(BankAccount entity)
         {
-            var record = AccountNodeRecordMapping.ToRecord(entity);
-            var persisted = AccountNodeRecordMapping.ToBankAccount(record);
+            var record = BankAccountRecordMapping.ToRecord(entity);
+            var persisted = BankAccountRecordMapping.ToBankAccount(record);
             _store.Add(persisted);
             return Task.FromResult(persisted);
         }
@@ -413,8 +409,8 @@ public sealed class TransferUseCaseTests
 
         public Task<CryptoWallet> CreateAsync(CryptoWallet entity)
         {
-            var record = AccountNodeRecordMapping.ToRecord(entity);
-            var persisted = AccountNodeRecordMapping.ToCryptoWallet(record);
+            var record = CryptoWalletRecordMapping.ToRecord(entity);
+            var persisted = CryptoWalletRecordMapping.ToCryptoWallet(record);
             _store.Add(persisted);
             return Task.FromResult(persisted);
         }

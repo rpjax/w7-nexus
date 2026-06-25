@@ -1,14 +1,16 @@
-using Aidan.Core.Patterns;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
-using Nexus.AccountNodes.Aggregates;
-using Nexus.AccountNodes.Application.Contracts;
+using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Application.Models;
-using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Administrators.Application.Contracts;
 
@@ -255,27 +257,27 @@ public interface IAdministrator
         SearchCryptoWalletsRequest? request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
+    Task<IOperationResult<SearchPaymentsResponse>> SearchPaymentsAsync(
         RequesterIdentity identity,
-        Payments.Application.Models.SearchPaymentsRequest request,
+        SearchPaymentsRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
-        RequesterIdentity identity,
-        string paymentId,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
+    Task<IOperationResult<PaymentDetails>> GetPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
+    Task<IOperationResult<PaymentDetails>> PayPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
+    Task<IOperationResult<PaymentDetails>> RefundPaymentAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<PaymentDetails>> KillPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         string reason,
@@ -286,13 +288,13 @@ public interface IAdministrator
         string paymentId,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
+    Task<IOperationResult<PaymentDetails>> BindPaymentOperatorAsync(
         RequesterIdentity identity,
         string paymentId,
         string operatorId,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
+    Task<IOperationResult<PaymentDetails>> BindPaymentStrawManAsync(
         RequesterIdentity identity,
         string paymentId,
         string strawManId,

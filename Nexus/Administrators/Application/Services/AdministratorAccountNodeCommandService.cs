@@ -1,7 +1,15 @@
+using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Application.Contracts;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Administrators.Application.Contracts;
+using Nexus.Authorization;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Errors;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Errors;
 
 namespace Nexus.Administrators.Application.Services;
 
@@ -11,36 +19,61 @@ public sealed class AdministratorAccountNodeCommandService : IAdministratorAccou
     private readonly ICryptoWalletService _cryptoWallets;
     private readonly IBankAccountRepository _bankAccountRepository;
     private readonly ICryptoWalletRepository _cryptoWalletRepository;
+    private readonly IAccountRepository _accounts;
 
     public AdministratorAccountNodeCommandService(
         IBankAccountService bankAccounts,
         ICryptoWalletService cryptoWallets,
         IBankAccountRepository bankAccountRepository,
-        ICryptoWalletRepository cryptoWalletRepository)
+        ICryptoWalletRepository cryptoWalletRepository,
+        IAccountRepository accounts)
     {
         _bankAccounts = bankAccounts;
         _cryptoWallets = cryptoWallets;
         _bankAccountRepository = bankAccountRepository;
         _cryptoWalletRepository = cryptoWalletRepository;
+        _accounts = accounts;
     }
 
-    public Task<IResult<AccountNodes.Aggregates.BankAccount>> CreateBankAccountAsync(CreateBankAccountRequest request) =>
-        _bankAccounts.CreateAsync(request);
+    public async Task<IResult<BankAccount>> CreateBankAccountAsync(CreateBankAccountRequest request)
+    {
+        var validation = ValidateStrawMan(
+            request.StrawManId,
+            BankAccountErrorCodes.StrawManInvalid,
+            BankAccountErrorCodes.StrawManNotFound,
+            BankAccountErrorCodes.StrawManRoleRequired);
 
-    public Task<IResult<AccountNodes.Aggregates.CryptoWallet>> CreateCryptoWalletAsync(CreateCryptoWalletRequest request) =>
-        _cryptoWallets.CreateAsync(request);
+        if (validation is not null)
+            return Result<BankAccount>.Failure(validation.Errors);
 
-    public Task<IResult<AccountNodes.Aggregates.CryptoWallet>> UpsertCryptoWalletAddressAsync(
+        return await _bankAccounts.CreateAsync(request);
+    }
+
+    public async Task<IResult<CryptoWallet>> CreateCryptoWalletAsync(CreateCryptoWalletRequest request)
+    {
+        var validation = ValidateStrawMan(
+            request.StrawManId,
+            CryptoWalletErrorCodes.StrawManInvalid,
+            CryptoWalletErrorCodes.StrawManNotFound,
+            CryptoWalletErrorCodes.StrawManRoleRequired);
+
+        if (validation is not null)
+            return Result<CryptoWallet>.Failure(validation.Errors);
+
+        return await _cryptoWallets.CreateAsync(request);
+    }
+
+    public Task<IResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
         UpsertCryptoWalletAddressRequest request) =>
         _cryptoWallets.UpsertAddressAsync(request);
 
-    public Task<IResult<AccountNodes.Aggregates.BankAccount>> GetBankAccountAsync(string bankAccountId) =>
+    public Task<IResult<BankAccount>> GetBankAccountAsync(string bankAccountId) =>
         _bankAccounts.GetByIdAsync(bankAccountId);
 
-    public Task<IResult<AccountNodes.Aggregates.CryptoWallet>> GetCryptoWalletAsync(string cryptoWalletId) =>
+    public Task<IResult<CryptoWallet>> GetCryptoWalletAsync(string cryptoWalletId) =>
         _cryptoWallets.GetByIdAsync(cryptoWalletId);
 
-    public Task<IResult<AccountNodes.Aggregates.BankAccount>> UpdateBankAccountLabelAsync(
+    public Task<IResult<BankAccount>> UpdateBankAccountLabelAsync(
         string bankAccountId,
         string? label) =>
         _bankAccounts.UpdateLabelAsync(bankAccountId, label);
@@ -87,6 +120,34 @@ public sealed class AdministratorAccountNodeCommandService : IAdministratorAccou
             Total = (int)total,
             Items = items,
         });
+    }
+
+    private IResult? ValidateStrawMan(
+        string strawManId,
+        string invalidCode,
+        string notFoundCode,
+        string roleRequiredCode)
+    {
+        if (string.IsNullOrWhiteSpace(strawManId))
+            return Result.Failure(Error.Create()
+                .WithCode(invalidCode)
+                .WithMessage("O ID do laranja é obrigatório.")
+                .Build());
+
+        var account = _accounts.AsQueryable().FirstOrDefault(a => a.Id == strawManId.Trim());
+        if (account is null)
+            return Result.Failure(Error.Create()
+                .WithCode(notFoundCode)
+                .WithMessage($"A conta laranja '{strawManId}' não foi encontrada.")
+                .Build());
+
+        if (!account.Roles.Contains(Roles.StrawMan, StringComparer.Ordinal))
+            return Result.Failure(Error.Create()
+                .WithCode(roleRequiredCode)
+                .WithMessage($"A conta '{strawManId}' não possui o perfil de laranja.")
+                .Build());
+
+        return null;
     }
 
     private static int NormalizeLimit(int limit) => limit <= 0 ? 30 : Math.Min(limit, 999);

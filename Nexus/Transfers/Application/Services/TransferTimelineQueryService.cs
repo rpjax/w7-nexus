@@ -1,8 +1,10 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Aggregates;
-using Nexus.AccountNodes.Application.Contracts;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Transfers.Aggregates;
@@ -155,11 +157,11 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
 
         foreach (var transfer in chain)
         {
-            var bankId = transfer.Destination?.BankAccountId?.Trim();
+            var bankId = transfer.DestinationBankAccount?.BankAccountId?.Trim();
             if (!string.IsNullOrWhiteSpace(bankId) && knownBankIds.Add(bankId))
                 extraBankIds.Add(bankId);
 
-            var walletId = transfer.Destination?.CryptoWalletId?.Trim();
+            var walletId = transfer.DestinationCryptoWallet?.CryptoWalletId?.Trim();
             if (!string.IsNullOrWhiteSpace(walletId) && knownWalletIds.Add(walletId))
                 extraWalletIds.Add(walletId);
         }
@@ -333,7 +335,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
                 Chain = balance.Chain,
                 Asset = balance.Asset,
                 Currency = balance.Asset ?? "BRL",
-                Account = balance.Kind == AccountNodeKind.BankAccount
+                Account = balance.Kind == "BankAccount"
                     ? EnrichBankAccount(balance.BankAccount!)
                     : EnrichCryptoWallet(balance.CryptoWallet!),
             });
@@ -350,7 +352,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
                 Chain = sourceBalance.Chain,
                 Asset = sourceBalance.Asset,
                 Currency = sourceBalance.Asset ?? "BRL",
-                Account = sourceBalance.Kind == AccountNodeKind.BankAccount
+                Account = sourceBalance.Kind == "BankAccount"
                     ? EnrichBankAccount(sourceBalance.BankAccount!)
                     : EnrichCryptoWallet(sourceBalance.CryptoWallet!),
             });
@@ -380,8 +382,8 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
                     PixAuthenticationCode = transfer.Proof.PixAuthenticationCode,
                     CryptoTransactionId = transfer.Proof.CryptoTransactionId,
                 },
-            Source = EnrichSnapshot(transfer.Source, accountLookup),
-            Destination = EnrichSnapshot(transfer.Destination, accountLookup),
+            Source = EnrichOrigin(transfer, accountLookup),
+            Destination = EnrichDestination(transfer, accountLookup),
             SourceAmount = transfer.SourceAmount,
             ProducedAmount = transfer.ProducedAmount,
             ProducedAsset = transfer.ProducedAsset?.ToString(),
@@ -393,29 +395,49 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails? EnrichSnapshot(
-        AccountNodeSnapshot? snapshot,
-        AccountLookup accountLookup)
+    private static EnrichedAccountNodeDetails? EnrichOrigin(Transfer transfer, AccountLookup accountLookup)
     {
-        if (snapshot is null)
+        if (transfer.OriginType is null)
             return null;
 
-        return snapshot.Kind switch
+        if (transfer.OriginType == TransferOriginType.BankAccount
+            && transfer.OriginBankAccount is not null
+            && accountLookup.BankAccounts.TryGetValue(transfer.OriginBankAccount.BankAccountId, out var bank))
+            return EnrichBankAccount(bank);
+
+        if (transfer.OriginType == TransferOriginType.CryptoWallet
+            && transfer.OriginCryptoWallet is not null
+            && accountLookup.CryptoWallets.TryGetValue(transfer.OriginCryptoWallet.CryptoWalletId, out var wallet))
+            return EnrichCryptoWallet(wallet);
+
+        return new EnrichedAccountNodeDetails
         {
-            AccountNodeKind.BankAccount when !string.IsNullOrWhiteSpace(snapshot.BankAccountId)
-                && accountLookup.BankAccounts.TryGetValue(snapshot.BankAccountId, out var bank) =>
-                EnrichBankAccount(bank),
-            AccountNodeKind.CryptoWallet when !string.IsNullOrWhiteSpace(snapshot.CryptoWalletId)
-                && accountLookup.CryptoWallets.TryGetValue(snapshot.CryptoWalletId, out var wallet) =>
-                EnrichCryptoWallet(wallet),
-            AccountNodeKind.Participant when !string.IsNullOrWhiteSpace(snapshot.ParticipantAccountId) =>
-                EnrichParticipant(snapshot.ParticipantAccountId, accountLookup),
-            _ => new EnrichedAccountNodeDetails
-            {
-                Kind = snapshot.Kind.ToString(),
-                Id = snapshot.BankAccountId ?? snapshot.CryptoWalletId ?? snapshot.ParticipantAccountId ?? snapshot.StrawManId,
-                DisplayName = snapshot.Kind.ToString(),
-            },
+            Kind = transfer.OriginType.ToString()!,
+            Id = transfer.OriginBankAccount?.BankAccountId ?? transfer.OriginCryptoWallet?.CryptoWalletId,
+            DisplayName = transfer.OriginType.ToString()!,
+        };
+    }
+
+    private static EnrichedAccountNodeDetails? EnrichDestination(Transfer transfer, AccountLookup accountLookup)
+    {
+        if (transfer.DestinationType is null)
+            return null;
+
+        if (transfer.DestinationType == TransferDestinationType.BankAccount
+            && transfer.DestinationBankAccount is not null
+            && accountLookup.BankAccounts.TryGetValue(transfer.DestinationBankAccount.BankAccountId, out var bank))
+            return EnrichBankAccount(bank);
+
+        if (transfer.DestinationType == TransferDestinationType.CryptoWallet
+            && transfer.DestinationCryptoWallet is not null
+            && accountLookup.CryptoWallets.TryGetValue(transfer.DestinationCryptoWallet.CryptoWalletId, out var wallet))
+            return EnrichCryptoWallet(wallet);
+
+        return new EnrichedAccountNodeDetails
+        {
+            Kind = transfer.DestinationType.ToString()!,
+            Id = transfer.DestinationBankAccount?.BankAccountId ?? transfer.DestinationCryptoWallet?.CryptoWalletId,
+            DisplayName = transfer.DestinationType.ToString()!,
         };
     }
 
@@ -427,7 +449,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
 
         return new EnrichedAccountNodeDetails
         {
-            Kind = AccountNodeKind.BankAccount.ToString(),
+            Kind = "BankAccount",
             Id = account.Id,
             DisplayName = displayName,
             Label = label,
@@ -448,26 +470,11 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
 
         return new EnrichedAccountNodeDetails
         {
-            Kind = AccountNodeKind.CryptoWallet.ToString(),
+            Kind = "CryptoWallet",
             Id = wallet.Id,
             DisplayName = displayName,
             Label = label,
             CryptoSummary = cryptoSummary,
-        };
-    }
-
-    private static EnrichedAccountNodeDetails EnrichParticipant(string participantAccountId, AccountLookup accountLookup)
-    {
-        var username = accountLookup.Accounts.TryGetValue(participantAccountId, out var account)
-            ? account.Username
-            : participantAccountId;
-
-        return new EnrichedAccountNodeDetails
-        {
-            Kind = AccountNodeKind.Participant.ToString(),
-            Id = participantAccountId,
-            DisplayName = username,
-            Username = username,
         };
     }
 
@@ -577,7 +584,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
                 index[balance.Id] = new BalanceReference(
                     balance.Id,
                     balance.TransferId,
-                    AccountNodeKind.BankAccount,
+                    "BankAccount",
                     account.Id,
                     balance.AmountBrl,
                     null,
@@ -594,7 +601,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
                 index[balance.Id] = new BalanceReference(
                     balance.Id,
                     balance.TransferId,
-                    AccountNodeKind.CryptoWallet,
+                    "CryptoWallet",
                     wallet.Id,
                     balance.Amount,
                     balance.Chain.ToString(),
@@ -615,7 +622,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
     private sealed record BalanceReference(
         string BalanceId,
         string TransferId,
-        AccountNodeKind Kind,
+        string Kind,
         string AccountId,
         decimal Amount,
         string? Chain,

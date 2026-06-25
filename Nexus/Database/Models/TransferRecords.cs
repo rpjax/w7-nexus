@@ -1,6 +1,6 @@
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
-using Nexus.AccountNodes.Aggregates;
+using Nexus.CryptoWallets.Aggregates;
 using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Database.Models;
@@ -12,12 +12,27 @@ public sealed class TransferProofRecord
     public string? CryptoTransactionId { get; set; }
 }
 
-public sealed class AccountNodeSnapshotRecord
+public sealed class TransferOriginBankAccountRecord
 {
-    public AccountNodeKind Kind { get; set; }
-    public string? BankAccountId { get; set; }
-    public string? CryptoWalletId { get; set; }
-    public string? ParticipantAccountId { get; set; }
+    public string BankAccountId { get; set; } = string.Empty;
+    public string StrawManId { get; set; } = string.Empty;
+}
+
+public sealed class TransferOriginCryptoWalletRecord
+{
+    public string CryptoWalletId { get; set; } = string.Empty;
+    public string StrawManId { get; set; } = string.Empty;
+}
+
+public sealed class TransferDestinationBankAccountRecord
+{
+    public string BankAccountId { get; set; } = string.Empty;
+    public string StrawManId { get; set; } = string.Empty;
+}
+
+public sealed class TransferDestinationCryptoWalletRecord
+{
+    public string CryptoWalletId { get; set; } = string.Empty;
     public string StrawManId { get; set; } = string.Empty;
 }
 
@@ -29,8 +44,12 @@ public sealed class TransferRecord
     public TransferType Type { get; set; }
     public OnrampingMethod? OnrampingMethod { get; set; }
     public TransferProofRecord? Proof { get; set; }
-    public AccountNodeSnapshotRecord? Source { get; set; }
-    public AccountNodeSnapshotRecord? Destination { get; set; }
+    public TransferOriginType? OriginType { get; set; }
+    public TransferOriginBankAccountRecord? OriginBankAccount { get; set; }
+    public TransferOriginCryptoWalletRecord? OriginCryptoWallet { get; set; }
+    public TransferDestinationType? DestinationType { get; set; }
+    public TransferDestinationBankAccountRecord? DestinationBankAccount { get; set; }
+    public TransferDestinationCryptoWalletRecord? DestinationCryptoWallet { get; set; }
     public decimal SourceAmount { get; set; }
     public decimal? ProducedAmount { get; set; }
     public CryptoAsset? ProducedAsset { get; set; }

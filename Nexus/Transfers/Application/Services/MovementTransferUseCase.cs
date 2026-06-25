@@ -1,9 +1,11 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Aggregates;
-using Nexus.AccountNodes.Application.Contracts;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Errors;
@@ -83,13 +85,16 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
         if (builder.ContainsError)
             return builder.Build();
 
-        AccountNodeSnapshot? sourceSnapshot = null;
-        AccountNodeSnapshot? destSnapshot = null;
+        TransferOriginType originType;
+        TransferOriginBankAccount? originBankAccount = null;
+        TransferOriginCryptoWallet? originCryptoWallet = null;
         BankBalance? debitedBankBalance = null;
         CryptoBalance? debitedCryptoBalance = null;
 
         if (hasBankSource)
         {
+            originType = TransferOriginType.BankAccount;
+
             var sourceAccount = _bankAccounts.AsQueryable()
                 .FirstOrDefault(a => a.Id == request.SourceBankAccountId!.Trim());
 
@@ -106,13 +111,15 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             debitedBankBalance = debitResult.Value!.DebitedBalance;
             await _bankAccounts.UpdateAsync(sourceAccount);
 
-            var sourceResult = AccountNodeSnapshot.ForBankAccount(sourceAccount.Id, sourceAccount.StrawManId);
+            var sourceResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.StrawManId);
             if (sourceResult.IsFailure)
                 return Result<Transfer>.Failure(sourceResult.Errors);
-            sourceSnapshot = sourceResult.Value;
+            originBankAccount = sourceResult.Value;
         }
         else
         {
+            originType = TransferOriginType.CryptoWallet;
+
             var sourceWallet = _cryptoWallets.AsQueryable()
                 .FirstOrDefault(w => w.Id == request.SourceCryptoWalletId!.Trim());
 
@@ -129,10 +136,10 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             debitedCryptoBalance = debitResult.Value!.DebitedBalance;
             await _cryptoWallets.UpdateAsync(sourceWallet);
 
-            var sourceResult = AccountNodeSnapshot.ForCryptoWallet(sourceWallet.Id, sourceWallet.StrawManId);
+            var sourceResult = TransferOriginCryptoWallet.Create(sourceWallet.Id, sourceWallet.StrawManId);
             if (sourceResult.IsFailure)
                 return Result<Transfer>.Failure(sourceResult.Errors);
-            sourceSnapshot = sourceResult.Value;
+            originCryptoWallet = sourceResult.Value;
         }
 
         var isBankToCrypto = hasBankSource && hasCryptoDest;
@@ -212,35 +219,42 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
         if (proofResult.IsFailure)
             return Result<Transfer>.Failure(proofResult.Errors);
 
-        BankAccount? destinationBankAccount = null;
-        CryptoWallet? destinationCryptoWallet = null;
+        TransferDestinationType destinationType;
+        TransferDestinationBankAccount? destinationBankAccount = null;
+        TransferDestinationCryptoWallet? destinationCryptoWallet = null;
+        BankAccount? destinationBankAccountEntity = null;
+        CryptoWallet? destinationCryptoWalletEntity = null;
 
         if (hasBankDest)
         {
-            destinationBankAccount = _bankAccounts.AsQueryable()
+            destinationType = TransferDestinationType.BankAccount;
+
+            destinationBankAccountEntity = _bankAccounts.AsQueryable()
                 .FirstOrDefault(a => a.Id == request.DestinationBankAccountId!.Trim());
 
-            if (destinationBankAccount is null)
+            if (destinationBankAccountEntity is null)
                 return Result<Transfer>.Failure(NotFoundBank(request.DestinationBankAccountId!).Errors);
 
-            var destSnapResult = AccountNodeSnapshot.ForBankAccount(
-                destinationBankAccount.Id,
-                destinationBankAccount.StrawManId);
-            if (destSnapResult.IsFailure)
-                return Result<Transfer>.Failure(destSnapResult.Errors);
-            destSnapshot = destSnapResult.Value;
+            var destResult = TransferDestinationBankAccount.Create(
+                destinationBankAccountEntity.Id,
+                destinationBankAccountEntity.StrawManId);
+            if (destResult.IsFailure)
+                return Result<Transfer>.Failure(destResult.Errors);
+            destinationBankAccount = destResult.Value;
         }
         else
         {
-            destinationCryptoWallet = _cryptoWallets.AsQueryable()
+            destinationType = TransferDestinationType.CryptoWallet;
+
+            destinationCryptoWalletEntity = _cryptoWallets.AsQueryable()
                 .FirstOrDefault(w => w.Id == request.DestinationCryptoWalletId!.Trim());
 
-            if (destinationCryptoWallet is null)
+            if (destinationCryptoWalletEntity is null)
                 return Result<Transfer>.Failure(NotFoundCrypto(request.DestinationCryptoWalletId!).Errors);
 
             if (isBankToCrypto
                 && producedChain is not null
-                && !destinationCryptoWallet.HasAddressForNamespace(producedChain.Value.GetNamespace()))
+                && !destinationCryptoWalletEntity.HasAddressForNamespace(producedChain.Value.GetNamespace()))
             {
                 return Result<Transfer>.Failure(Error.Create()
                     .WithCode(TransferErrorCodes.ProducedChainNamespaceMismatch)
@@ -248,20 +262,24 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
                     .Build());
             }
 
-            var destSnapResult = AccountNodeSnapshot.ForCryptoWallet(
-                destinationCryptoWallet.Id,
-                destinationCryptoWallet.StrawManId);
-            if (destSnapResult.IsFailure)
-                return Result<Transfer>.Failure(destSnapResult.Errors);
-            destSnapshot = destSnapResult.Value;
+            var destResult = TransferDestinationCryptoWallet.Create(
+                destinationCryptoWalletEntity.Id,
+                destinationCryptoWalletEntity.StrawManId);
+            if (destResult.IsFailure)
+                return Result<Transfer>.Failure(destResult.Errors);
+            destinationCryptoWallet = destResult.Value;
         }
 
         var transferResult = Transfer.Create(
             TransferType.Movement,
             onrampingMethod,
             proofResult.Value,
-            sourceSnapshot,
-            destSnapshot,
+            originType,
+            originBankAccount,
+            originCryptoWallet,
+            destinationType,
+            destinationBankAccount,
+            destinationCryptoWallet,
             request.SourceAmount,
             request.ProducedAmount,
             request.ProducedAsset,
@@ -276,25 +294,22 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
         var persistedTransfer = await _transfers.CreateAsync(transferResult.Value!);
 
         IReadOnlyList<string> appliedFeeIds;
-        IReadOnlyList<BalanceSplitSnapshot> originalSplits;
-        BalanceOriginSnapshot balanceOrigin;
+        IReadOnlyList<TransferBalanceSplit> originalSplits;
 
         if (debitedBankBalance is not null)
         {
             appliedFeeIds = debitedBankBalance.AppliedStrawManFeeIds;
-            originalSplits = debitedBankBalance.SplitSnapshot;
-            balanceOrigin = debitedBankBalance.OriginSnapshot;
+            originalSplits = BalanceSplitMapping.FromBankSplits(debitedBankBalance.Splits);
         }
         else
         {
             appliedFeeIds = debitedCryptoBalance!.AppliedStrawManFeeIds;
-            originalSplits = debitedCryptoBalance.SplitSnapshot;
-            balanceOrigin = debitedCryptoBalance.OriginSnapshot;
+            originalSplits = BalanceSplitMapping.FromCryptoSplits(debitedCryptoBalance.Splits);
         }
 
         var destinationStrawManId = hasBankDest
-            ? destinationBankAccount!.StrawManId
-            : destinationCryptoWallet!.StrawManId;
+            ? destinationBankAccountEntity!.StrawManId
+            : destinationCryptoWalletEntity!.StrawManId;
 
         var creditBaseAmount = isBankToCrypto
             ? request.ProducedAmount!.Value
@@ -314,14 +329,20 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
 
         if (hasBankDest)
         {
-            var destAccount = destinationBankAccount!;
+            var destAccount = destinationBankAccountEntity!;
+            IResult<BankBalanceOrigin> bankOriginResult = debitedBankBalance is not null
+                ? Result<BankBalanceOrigin>.Success(debitedBankBalance.Origin)
+                : CreateBankOriginFromCrypto(debitedCryptoBalance!.Origin);
+
+            if (bankOriginResult.IsFailure)
+                return Result<Transfer>.Failure(bankOriginResult.Errors);
 
             var balanceResult = BankBalance.Create(
                 creditBaseAmount,
                 persistedTransfer.Id,
-                    splitResult.Value!.SplitSnapshot,
-                    splitResult.Value.AppliedStrawManFeeIds,
-                    balanceOrigin);
+                BalanceSplitMapping.ToBankSplits(splitResult.Value!.Splits),
+                splitResult.Value.AppliedStrawManFeeIds,
+                bankOriginResult.Value!);
 
             if (balanceResult.IsFailure)
                 return Result<Transfer>.Failure(balanceResult.Errors);
@@ -334,7 +355,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
         }
         else
         {
-            var destWallet = destinationCryptoWallet!;
+            var destWallet = destinationCryptoWalletEntity!;
 
             var creditAmount = isBankToCrypto ? request.ProducedAmount!.Value : request.SourceAmount;
             var creditAsset = isBankToCrypto
@@ -344,14 +365,21 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
                 ? producedChain!.Value
                 : debitedCryptoBalance!.Chain;
 
+            IResult<CryptoBalanceOrigin> cryptoOriginResult = debitedCryptoBalance is not null
+                ? Result<CryptoBalanceOrigin>.Success(debitedCryptoBalance.Origin)
+                : CreateCryptoOriginFromBank(debitedBankBalance!.Origin);
+
+            if (cryptoOriginResult.IsFailure)
+                return Result<Transfer>.Failure(cryptoOriginResult.Errors);
+
             var balanceResult = CryptoBalance.Create(
                 creditChain,
                 creditAsset,
                 creditAmount,
                 persistedTransfer.Id,
-                    splitResult.Value!.SplitSnapshot,
-                    splitResult.Value.AppliedStrawManFeeIds,
-                    balanceOrigin);
+                BalanceSplitMapping.ToCryptoSplits(splitResult.Value!.Splits),
+                splitResult.Value.AppliedStrawManFeeIds,
+                cryptoOriginResult.Value!);
 
             if (balanceResult.IsFailure)
                 return Result<Transfer>.Failure(balanceResult.Errors);
@@ -365,6 +393,12 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
 
         return Result<Transfer>.Success(persistedTransfer);
     }
+
+    private static IResult<BankBalanceOrigin> CreateBankOriginFromCrypto(CryptoBalanceOrigin origin) =>
+        BankBalanceOrigin.Create(origin.OperationId, origin.OperatorId, origin.StrawManId);
+
+    private static IResult<CryptoBalanceOrigin> CreateCryptoOriginFromBank(BankBalanceOrigin origin) =>
+        CryptoBalanceOrigin.Create(origin.OperationId, origin.OperatorId, origin.StrawManId);
 
     private IResult? ValidateStrawMan(string strawManId)
     {

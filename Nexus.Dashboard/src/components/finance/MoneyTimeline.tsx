@@ -13,9 +13,9 @@ import { formatDateTime, shortId } from '../../utils/format';
 
 type MoneyTimelineProps = {
   timeline: TransferTimelineDetails;
-  strawManId: string;
   focusTransferId: string;
   onMoveBalance?: (balance: ActiveBalanceRow) => void;
+  onPayoutBalance?: (balance: ActiveBalanceRow) => void;
 };
 
 function formatBalanceAmount(balance: ActiveBalanceRow): string {
@@ -28,20 +28,6 @@ function formatEffectAmount(amount: number, currency: string, asset?: string | n
     return `${chainPrefix}${cryptoAssetLabel(asset ?? currency)} ${formatCryptoAmount(amount)}`;
   }
   return formatMoney(amount);
-}
-
-function buildPayoutUrl(balance: ActiveBalanceRow, strawManId: string): string {
-  const params = new URLSearchParams({
-    strawManId,
-    sourceBalanceId: balance.balanceId,
-    sourceAmount: String(balance.amount),
-  });
-
-  if (balance.account.id) {
-    params.set('sourceBankAccountId', balance.account.id);
-  }
-
-  return `/dashboard/transfers/payout?${params.toString()}`;
 }
 
 function stepTone(type: string): 'info' | 'success' | 'warn' {
@@ -207,7 +193,7 @@ function TimelineStepCard({
   );
 }
 
-export function MoneyTimeline({ timeline, strawManId, focusTransferId, onMoveBalance }: MoneyTimelineProps) {
+export function MoneyTimeline({ timeline, focusTransferId, onMoveBalance, onPayoutBalance }: MoneyTimelineProps) {
   const isChain = timeline.steps.length > 1;
   const supplementalSteps = isChain
     ? timeline.steps.filter((step) => step.transferId !== focusTransferId)
@@ -253,9 +239,22 @@ export function MoneyTimeline({ timeline, strawManId, focusTransferId, onMoveBal
                     )
                   ) : null}
                   {balance.canPayout ? (
-                    <Link className="btn btn-primary btn-sm" to={buildPayoutUrl(balance, strawManId)}>
-                      Repassar
-                    </Link>
+                    onPayoutBalance ? (
+                      <button
+                        type="button"
+                        className="btn btn-primary btn-sm"
+                        onClick={() => onPayoutBalance(balance)}
+                      >
+                        Repassar
+                      </button>
+                    ) : (
+                      <Link
+                        className="btn btn-primary btn-sm"
+                        to={`/dashboard/transfers/payout?from=${timeline.focusTransferId}&sourceBalanceId=${balance.balanceId}`}
+                      >
+                        Repassar
+                      </Link>
+                    )
                   ) : null}
                 </div>
               </li>

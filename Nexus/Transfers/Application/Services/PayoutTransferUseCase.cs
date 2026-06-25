@@ -1,8 +1,9 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Application.Contracts;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
+using Nexus.BankAccounts.Application.Contracts;
+using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Errors;
@@ -53,18 +54,13 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
                 .WithMessage("O valor de origem deve ser maior que zero.")
                 .Build());
 
-        var participantAccountId = request.ParticipantAccountId?.Trim() ?? string.Empty;
-        if (string.IsNullOrWhiteSpace(participantAccountId))
-            return Result<Transfer>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.ParticipantAccountRequired)
-                .WithMessage("A conta do participante é obrigatória.")
-                .Build());
+        var hasBankDest = !string.IsNullOrWhiteSpace(request.DestinationBankAccountId);
+        var hasCryptoDest = !string.IsNullOrWhiteSpace(request.DestinationCryptoWalletId);
 
-        var participant = _accounts.AsQueryable().FirstOrDefault(a => a.Id == participantAccountId);
-        if (participant is null)
+        if (hasBankDest == hasCryptoDest)
             return Result<Transfer>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.ParticipantAccountNotFound)
-                .WithMessage($"A conta participante '{participantAccountId}' não foi encontrada.")
+                .WithCode(TransferErrorCodes.DestinationRequired)
+                .WithMessage("Informe exatamente um destino: conta bancária ou wallet crypto.")
                 .Build());
 
         var proofResult = TransferProof.Create(
@@ -76,54 +72,92 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
         if (proofResult.IsFailure)
             return Result<Transfer>.Failure(proofResult.Errors);
 
-        AccountNodeSnapshot? sourceSnapshot = null;
-
-        if (!string.IsNullOrWhiteSpace(request.SourceBankAccountId))
-        {
-            var sourceAccount = _bankAccounts.AsQueryable()
-                .FirstOrDefault(a => a.Id == request.SourceBankAccountId.Trim());
-
-            if (sourceAccount is null)
-                return Result<Transfer>.Failure(Error.Create()
-                    .WithCode(TransferErrorCodes.BankAccountNotFound)
-                    .WithMessage($"A conta bancária '{request.SourceBankAccountId}' não foi encontrada.")
-                    .Build());
-
-            if (!string.Equals(sourceAccount.StrawManId, strawManId, StringComparison.Ordinal))
-                return Result<Transfer>.Failure(Error.Create()
-                    .WithCode(TransferErrorCodes.BankAccountMismatch)
-                    .WithMessage("A conta bancária de origem não pertence ao laranja informado.")
-                    .Build());
-
-            var debitResult = sourceAccount.DebitPartialBalance(balanceId, request.SourceAmount);
-            if (debitResult.IsFailure)
-                return Result<Transfer>.Failure(debitResult.Errors);
-
-            await _bankAccounts.UpdateAsync(sourceAccount);
-
-            var sourceResult = AccountNodeSnapshot.ForBankAccount(sourceAccount.Id, strawManId);
-            if (sourceResult.IsFailure)
-                return Result<Transfer>.Failure(sourceResult.Errors);
-            sourceSnapshot = sourceResult.Value;
-        }
-        else
-        {
+        if (string.IsNullOrWhiteSpace(request.SourceBankAccountId))
             return Result<Transfer>.Failure(Error.Create()
                 .WithCode(TransferErrorCodes.SourceRequired)
                 .WithMessage("Informe a conta bancária de origem para o repasse.")
                 .Build());
-        }
 
-        var destResult = AccountNodeSnapshot.ForParticipant(participantAccountId, strawManId);
-        if (destResult.IsFailure)
-            return Result<Transfer>.Failure(destResult.Errors);
+        var sourceAccount = _bankAccounts.AsQueryable()
+            .FirstOrDefault(a => a.Id == request.SourceBankAccountId.Trim());
+
+        if (sourceAccount is null)
+            return Result<Transfer>.Failure(Error.Create()
+                .WithCode(TransferErrorCodes.BankAccountNotFound)
+                .WithMessage($"A conta bancária '{request.SourceBankAccountId}' não foi encontrada.")
+                .Build());
+
+        if (!string.Equals(sourceAccount.StrawManId, strawManId, StringComparison.Ordinal))
+            return Result<Transfer>.Failure(Error.Create()
+                .WithCode(TransferErrorCodes.BankAccountMismatch)
+                .WithMessage("A conta bancária de origem não pertence ao laranja informado.")
+                .Build());
+
+        var debitResult = sourceAccount.DebitPartialBalance(balanceId, request.SourceAmount);
+        if (debitResult.IsFailure)
+            return Result<Transfer>.Failure(debitResult.Errors);
+
+        await _bankAccounts.UpdateAsync(sourceAccount);
+
+        var originResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.StrawManId);
+        if (originResult.IsFailure)
+            return Result<Transfer>.Failure(originResult.Errors);
+
+        TransferDestinationType destinationType;
+        TransferDestinationBankAccount? destinationBankAccount = null;
+        TransferDestinationCryptoWallet? destinationCryptoWallet = null;
+
+        if (hasBankDest)
+        {
+            destinationType = TransferDestinationType.BankAccount;
+
+            var destinationAccount = _bankAccounts.AsQueryable()
+                .FirstOrDefault(a => a.Id == request.DestinationBankAccountId!.Trim());
+
+            if (destinationAccount is null)
+                return Result<Transfer>.Failure(Error.Create()
+                    .WithCode(TransferErrorCodes.BankAccountNotFound)
+                    .WithMessage($"A conta bancária '{request.DestinationBankAccountId}' não foi encontrada.")
+                    .Build());
+
+            var destResult = TransferDestinationBankAccount.Create(
+                destinationAccount.Id,
+                destinationAccount.StrawManId);
+            if (destResult.IsFailure)
+                return Result<Transfer>.Failure(destResult.Errors);
+            destinationBankAccount = destResult.Value;
+        }
+        else
+        {
+            destinationType = TransferDestinationType.CryptoWallet;
+
+            var destinationWallet = _cryptoWallets.AsQueryable()
+                .FirstOrDefault(w => w.Id == request.DestinationCryptoWalletId!.Trim());
+
+            if (destinationWallet is null)
+                return Result<Transfer>.Failure(Error.Create()
+                    .WithCode(TransferErrorCodes.CryptoWalletNotFound)
+                    .WithMessage($"A wallet crypto '{request.DestinationCryptoWalletId}' não foi encontrada.")
+                    .Build());
+
+            var destResult = TransferDestinationCryptoWallet.Create(
+                destinationWallet.Id,
+                destinationWallet.StrawManId);
+            if (destResult.IsFailure)
+                return Result<Transfer>.Failure(destResult.Errors);
+            destinationCryptoWallet = destResult.Value;
+        }
 
         var transferResult = Transfer.Create(
             TransferType.Payout,
             onrampingMethod: null,
             proofResult.Value,
-            sourceSnapshot,
-            destResult.Value,
+            TransferOriginType.BankAccount,
+            originResult.Value,
+            originCryptoWallet: null,
+            destinationType,
+            destinationBankAccount,
+            destinationCryptoWallet,
             request.SourceAmount,
             producedAmount: null,
             producedAsset: null,

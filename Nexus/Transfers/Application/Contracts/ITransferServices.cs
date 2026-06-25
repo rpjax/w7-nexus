@@ -1,6 +1,6 @@
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
-using Nexus.AccountNodes.Aggregates;
+using Nexus.CryptoWallets.Aggregates;
 using Nexus.Transfers.Aggregates;
 
 namespace Nexus.Transfers.Application.Contracts;
@@ -72,7 +72,8 @@ public sealed class PayoutTransferRequest
     public string SourceBankAccountId { get; init; } = string.Empty;
     public string SourceBalanceId { get; init; } = string.Empty;
     public decimal SourceAmount { get; init; }
-    public string ParticipantAccountId { get; init; } = string.Empty;
+    public string? DestinationBankAccountId { get; init; }
+    public string? DestinationCryptoWalletId { get; init; }
     public string? PixTransactionId { get; init; }
     public string? PixAuthenticationCode { get; init; }
     public string? CryptoTransactionId { get; init; }

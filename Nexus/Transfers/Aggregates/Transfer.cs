@@ -1,5 +1,6 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
+using Nexus.CryptoWallets.Aggregates;
 using Nexus.Transfers.Errors;
 
 namespace Nexus.Transfers.Aggregates;
@@ -16,13 +17,6 @@ public enum OnrampingMethod
     Pix = 0,
     GiftCard,
     CreditDebitCard,
-}
-
-public enum AccountNodeKind
-{
-    BankAccount = 0,
-    CryptoWallet,
-    Participant,
 }
 
 public sealed class TransferProof
@@ -87,104 +81,22 @@ public sealed class TransferProof
     }
 }
 
-public sealed class AccountNodeSnapshot
-{
-    public AccountNodeKind Kind { get; }
-    public string? BankAccountId { get; }
-    public string? CryptoWalletId { get; }
-    public string? ParticipantAccountId { get; }
-    public string StrawManId { get; }
-
-    internal AccountNodeSnapshot(
-        AccountNodeKind kind,
-        string? bankAccountId,
-        string? cryptoWalletId,
-        string? participantAccountId,
-        string strawManId)
-    {
-        Kind = kind;
-        BankAccountId = bankAccountId;
-        CryptoWalletId = cryptoWalletId;
-        ParticipantAccountId = participantAccountId;
-        StrawManId = strawManId;
-    }
-
-    public static IResult<AccountNodeSnapshot> ForBankAccount(string bankAccountId, string strawManId)
-    {
-        bankAccountId = bankAccountId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(bankAccountId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.BankAccountRequired)
-                .WithMessage("A conta bancária é obrigatória.")
-                .Build());
-
-        if (string.IsNullOrWhiteSpace(strawManId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
-                .Build());
-
-        return Result<AccountNodeSnapshot>.Success(
-            new AccountNodeSnapshot(AccountNodeKind.BankAccount, bankAccountId, null, null, strawManId));
-    }
-
-    public static IResult<AccountNodeSnapshot> ForCryptoWallet(string cryptoWalletId, string strawManId)
-    {
-        cryptoWalletId = cryptoWalletId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(cryptoWalletId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.CryptoWalletRequired)
-                .WithMessage("A wallet crypto é obrigatória.")
-                .Build());
-
-        if (string.IsNullOrWhiteSpace(strawManId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
-                .Build());
-
-        return Result<AccountNodeSnapshot>.Success(
-            new AccountNodeSnapshot(AccountNodeKind.CryptoWallet, null, cryptoWalletId, null, strawManId));
-    }
-
-    public static IResult<AccountNodeSnapshot> ForParticipant(string participantAccountId, string strawManId)
-    {
-        participantAccountId = participantAccountId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(participantAccountId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.ParticipantAccountRequired)
-                .WithMessage("A conta do participante é obrigatória.")
-                .Build());
-
-        if (string.IsNullOrWhiteSpace(strawManId))
-            return Result<AccountNodeSnapshot>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
-                .Build());
-
-        return Result<AccountNodeSnapshot>.Success(
-            new AccountNodeSnapshot(AccountNodeKind.Participant, null, null, participantAccountId, strawManId));
-    }
-}
-
 public sealed class Transfer
 {
     public string Id { get; }
     public TransferType Type { get; }
     public OnrampingMethod? OnrampingMethod { get; }
     public TransferProof? Proof { get; }
-    public AccountNodeSnapshot? Source { get; }
-    public AccountNodeSnapshot? Destination { get; }
+    public TransferOriginType? OriginType { get; }
+    public TransferOriginBankAccount? OriginBankAccount { get; }
+    public TransferOriginCryptoWallet? OriginCryptoWallet { get; }
+    public TransferDestinationType? DestinationType { get; }
+    public TransferDestinationBankAccount? DestinationBankAccount { get; }
+    public TransferDestinationCryptoWallet? DestinationCryptoWallet { get; }
     public decimal SourceAmount { get; }
     public decimal? ProducedAmount { get; }
-    public Nexus.AccountNodes.Aggregates.CryptoAsset? ProducedAsset { get; }
-    public Nexus.AccountNodes.Aggregates.Chain? ProducedChain { get; }
+    public CryptoAsset? ProducedAsset { get; }
+    public Chain? ProducedChain { get; }
     public IReadOnlyList<string> PaymentIds { get; }
     public string? SourceBalanceId { get; }
     public string StrawManId { get; }
@@ -195,12 +107,16 @@ public sealed class Transfer
         TransferType type,
         OnrampingMethod? onrampingMethod,
         TransferProof? proof,
-        AccountNodeSnapshot? source,
-        AccountNodeSnapshot? destination,
+        TransferOriginType? originType,
+        TransferOriginBankAccount? originBankAccount,
+        TransferOriginCryptoWallet? originCryptoWallet,
+        TransferDestinationType? destinationType,
+        TransferDestinationBankAccount? destinationBankAccount,
+        TransferDestinationCryptoWallet? destinationCryptoWallet,
         decimal sourceAmount,
         decimal? producedAmount,
-        Nexus.AccountNodes.Aggregates.CryptoAsset? producedAsset,
-        Nexus.AccountNodes.Aggregates.Chain? producedChain,
+        CryptoAsset? producedAsset,
+        Chain? producedChain,
         IReadOnlyList<string> paymentIds,
         string? sourceBalanceId,
         string strawManId,
@@ -210,8 +126,12 @@ public sealed class Transfer
         Type = type;
         OnrampingMethod = onrampingMethod;
         Proof = proof;
-        Source = source;
-        Destination = destination;
+        OriginType = originType;
+        OriginBankAccount = originBankAccount;
+        OriginCryptoWallet = originCryptoWallet;
+        DestinationType = destinationType;
+        DestinationBankAccount = destinationBankAccount;
+        DestinationCryptoWallet = destinationCryptoWallet;
         SourceAmount = sourceAmount;
         ProducedAmount = producedAmount;
         ProducedAsset = producedAsset;
@@ -226,15 +146,19 @@ public sealed class Transfer
         TransferType type,
         OnrampingMethod? onrampingMethod,
         TransferProof? proof,
-        AccountNodeSnapshot? source,
-        AccountNodeSnapshot? destination,
+        TransferOriginType? originType,
+        TransferOriginBankAccount? originBankAccount,
+        TransferOriginCryptoWallet? originCryptoWallet,
+        TransferDestinationType? destinationType,
+        TransferDestinationBankAccount? destinationBankAccount,
+        TransferDestinationCryptoWallet? destinationCryptoWallet,
         decimal sourceAmount,
         decimal? producedAmount,
-        Nexus.AccountNodes.Aggregates.CryptoAsset? producedAsset,
+        CryptoAsset? producedAsset,
         IReadOnlyList<string> paymentIds,
         string strawManId,
         string? sourceBalanceId = null,
-        Nexus.AccountNodes.Aggregates.Chain? producedChain = null)
+        Chain? producedChain = null)
     {
         var builder = Result.Create<Transfer>();
         strawManId = strawManId?.Trim() ?? string.Empty;
@@ -263,6 +187,9 @@ public sealed class Transfer
                 .WithMessage("O valor de origem deve ser maior que zero.")
                 .Build());
 
+        ValidateOriginSide(builder, originType, originBankAccount, originCryptoWallet);
+        ValidateDestinationSide(builder, destinationType, destinationBankAccount, destinationCryptoWallet);
+
         if (type == TransferType.Withdrawal)
         {
             if (normalizedPaymentIds.Count == 0)
@@ -271,22 +198,28 @@ public sealed class Transfer
                     .WithMessage("É necessário vincular ao menos um pagamento à transferência de saque.")
                     .Build());
 
-            if (destination is null)
+            if (destinationType is null)
                 builder.WithError(Error.Create()
                     .WithCode(TransferErrorCodes.DestinationRequired)
                     .WithMessage("O destino é obrigatório para transferências de saque.")
                     .Build());
+
+            if (originType is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.SourceRequired)
+                    .WithMessage("Saque não deve ter origem.")
+                    .Build());
         }
         else if (type == TransferType.Movement)
         {
-            if (source is null || destination is null)
+            if (originType is null || destinationType is null)
                 builder.WithError(Error.Create()
                     .WithCode(TransferErrorCodes.SourceDestinationRequired)
                     .WithMessage("Origem e destino são obrigatórios para movimentações.")
                     .Build());
 
-            var isBankToCrypto = source?.Kind == AccountNodeKind.BankAccount
-                && destination?.Kind == AccountNodeKind.CryptoWallet;
+            var isBankToCrypto = originType == TransferOriginType.BankAccount
+                && destinationType == TransferDestinationType.CryptoWallet;
 
             if (isBankToCrypto && onrampingMethod is null)
                 builder.WithError(Error.Create()
@@ -302,16 +235,16 @@ public sealed class Transfer
         }
         else if (type == TransferType.Payout)
         {
-            if (source is null)
+            if (originType != TransferOriginType.BankAccount)
                 builder.WithError(Error.Create()
                     .WithCode(TransferErrorCodes.SourceRequired)
-                    .WithMessage("A origem é obrigatória para repasses.")
+                    .WithMessage("A origem do repasse deve ser uma conta bancária.")
                     .Build());
 
-            if (destination is null || destination.Kind != AccountNodeKind.Participant)
+            if (destinationType is null)
                 builder.WithError(Error.Create()
-                    .WithCode(TransferErrorCodes.ParticipantDestinationRequired)
-                    .WithMessage("O destino do repasse deve ser uma conta participante.")
+                    .WithCode(TransferErrorCodes.DestinationRequired)
+                    .WithMessage("O destino é obrigatório para repasses.")
                     .Build());
 
             if (proof is null)
@@ -329,8 +262,12 @@ public sealed class Transfer
             type: type,
             onrampingMethod: onrampingMethod,
             proof: proof,
-            source: source,
-            destination: destination,
+            originType: originType,
+            originBankAccount: originBankAccount,
+            originCryptoWallet: originCryptoWallet,
+            destinationType: destinationType,
+            destinationBankAccount: destinationBankAccount,
+            destinationCryptoWallet: destinationCryptoWallet,
             sourceAmount: sourceAmount,
             producedAmount: producedAmount,
             producedAsset: producedAsset,
@@ -339,5 +276,73 @@ public sealed class Transfer
             sourceBalanceId: sourceBalanceId,
             strawManId: strawManId,
             createdAt: DateTime.UtcNow)).Build();
+    }
+
+    private static void ValidateOriginSide(
+        ResultBuilder<Transfer> builder,
+        TransferOriginType? originType,
+        TransferOriginBankAccount? originBankAccount,
+        TransferOriginCryptoWallet? originCryptoWallet)
+    {
+        if (originType is null)
+        {
+            if (originBankAccount is not null || originCryptoWallet is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Origem inconsistente na transferência.")
+                    .Build());
+            return;
+        }
+
+        if (originType == TransferOriginType.BankAccount)
+        {
+            if (originBankAccount is null || originCryptoWallet is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Origem bancária inconsistente na transferência.")
+                    .Build());
+        }
+        else if (originType == TransferOriginType.CryptoWallet)
+        {
+            if (originCryptoWallet is null || originBankAccount is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Origem crypto inconsistente na transferência.")
+                    .Build());
+        }
+    }
+
+    private static void ValidateDestinationSide(
+        ResultBuilder<Transfer> builder,
+        TransferDestinationType? destinationType,
+        TransferDestinationBankAccount? destinationBankAccount,
+        TransferDestinationCryptoWallet? destinationCryptoWallet)
+    {
+        if (destinationType is null)
+        {
+            if (destinationBankAccount is not null || destinationCryptoWallet is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Destino inconsistente na transferência.")
+                    .Build());
+            return;
+        }
+
+        if (destinationType == TransferDestinationType.BankAccount)
+        {
+            if (destinationBankAccount is null || destinationCryptoWallet is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Destino bancário inconsistente na transferência.")
+                    .Build());
+        }
+        else if (destinationType == TransferDestinationType.CryptoWallet)
+        {
+            if (destinationCryptoWallet is null || destinationBankAccount is not null)
+                builder.WithError(Error.Create()
+                    .WithCode(TransferErrorCodes.InvalidAggregateState)
+                    .WithMessage("Destino crypto inconsistente na transferência.")
+                    .Build());
+        }
     }
 }

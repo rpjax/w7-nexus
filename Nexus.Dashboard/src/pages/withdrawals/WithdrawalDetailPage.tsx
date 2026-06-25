@@ -4,6 +4,7 @@ import { getTransferTimeline } from '../../api/transfers';
 import type { TransferTimelineDetails, TransferTimelineStep } from '../../api/types';
 import { MoneyTimeline } from '../../components/finance/MoneyTimeline';
 import { MovementComposerModal } from '../../components/finance/MovementComposerModal';
+import { PayoutComposerModal } from '../../components/finance/PayoutComposerModal';
 import { EmptyState } from '../../components/EmptyState';
 import { Icon } from '../../components/IconButton';
 import { StatusPill } from '../../components/finance/StatusPill';
@@ -20,11 +21,13 @@ function TransferHero({
   step,
   timeline,
   onOpenMovement,
+  onOpenPayout,
   canPayout,
 }: {
   step: TransferTimelineStep;
   timeline: TransferTimelineDetails;
   onOpenMovement: () => void;
+  onOpenPayout: () => void;
   canPayout: boolean;
 }) {
   const [copied, setCopied] = useState(false);
@@ -95,15 +98,15 @@ function TransferHero({
           <Icon name="chevron-right" />
           Nova movimentação
         </button>
-        <Link
+        <button
+          type="button"
           className={`btn btn-primary btn-sm btn-with-icon${canPayout ? '' : ' is-disabled'}`}
-          to={canPayout ? '/dashboard/transfers/payout' : '#'}
-          aria-disabled={!canPayout}
-          onClick={(e) => { if (!canPayout) e.preventDefault(); }}
+          disabled={!canPayout}
+          onClick={() => { if (canPayout) onOpenPayout(); }}
         >
           <Icon name="link" />
           Novo repasse
-        </Link>
+        </button>
         {timeline.activeBalances.length > 0 ? (
           <a className="btn btn-ghost btn-sm" href="#transfer-next-steps">
             Ver saldos disponíveis
@@ -126,6 +129,8 @@ export function WithdrawalDetailPage() {
   const [loading, setLoading] = useState(true);
   const [movementOpen, setMovementOpen] = useState(false);
   const [movementBalanceId, setMovementBalanceId] = useState<string | null>(null);
+  const [payoutOpen, setPayoutOpen] = useState(false);
+  const [payoutBalanceId, setPayoutBalanceId] = useState<string | null>(null);
 
   async function loadTimeline(id: string) {
     setLoading(true);
@@ -150,9 +155,23 @@ export function WithdrawalDetailPage() {
     setMovementOpen(true);
   }
 
+  function openPayout(balanceId?: string | null) {
+    const payable = timeline?.activeBalances.filter(
+      (balance) => balance.canPayout && balance.account.kind === 'BankAccount',
+    ) ?? [];
+    setPayoutBalanceId(balanceId ?? payable[0]?.balanceId ?? null);
+    setPayoutOpen(true);
+  }
+
   function handleMovementSuccess(newTransferId: string) {
     setMovementOpen(false);
     notifySuccess('Movimentação registrada.');
+    navigate(`/dashboard/transfers/${newTransferId}`);
+  }
+
+  function handlePayoutSuccess(newTransferId: string) {
+    setPayoutOpen(false);
+    notifySuccess('Repasse registrado.');
     navigate(`/dashboard/transfers/${newTransferId}`);
   }
 
@@ -184,7 +203,9 @@ export function WithdrawalDetailPage() {
 
   const focusStep = timeline.steps.find((step) => step.isFocus) ?? timeline.steps[timeline.steps.length - 1];
   const strawManId = timeline.strawMan?.id ?? focusStep?.transfer.strawMan.id ?? '';
-  const payoutBalances = timeline.activeBalances.filter((balance) => balance.canPayout);
+  const payoutBalances = timeline.activeBalances.filter(
+    (balance) => balance.canPayout && balance.account.kind === 'BankAccount',
+  );
 
   return (
     <div className="transfer-detail-page ops-page">
@@ -198,14 +219,15 @@ export function WithdrawalDetailPage() {
           timeline={timeline}
           canPayout={payoutBalances.length > 0}
           onOpenMovement={() => openMovement()}
+          onOpenPayout={() => openPayout()}
         />
       ) : null}
 
       <MoneyTimeline
         timeline={timeline}
-        strawManId={strawManId}
         focusTransferId={timeline.focusTransferId}
         onMoveBalance={(balance) => openMovement(balance.balanceId)}
+        onPayoutBalance={(balance) => openPayout(balance.balanceId)}
       />
 
       <MovementComposerModal
@@ -219,6 +241,19 @@ export function WithdrawalDetailPage() {
         activeBalances={timeline.activeBalances}
         initialBalanceId={movementBalanceId}
         onSuccess={handleMovementSuccess}
+      />
+
+      <PayoutComposerModal
+        open={payoutOpen}
+        onClose={() => {
+          setPayoutOpen(false);
+          setPayoutBalanceId(null);
+        }}
+        strawManId={strawManId}
+        strawManUsername={timeline.strawMan?.username}
+        activeBalances={timeline.activeBalances}
+        initialBalanceId={payoutBalanceId}
+        onSuccess={handlePayoutSuccess}
       />
     </div>
   );

@@ -13,6 +13,7 @@ public static class TransfersServiceCollectionExtensions
         services.AddScoped<IMovementTransferUseCase, MovementTransferUseCase>();
         services.AddScoped<IPayoutTransferUseCase, PayoutTransferUseCase>();
         services.AddScoped<ITransferTimelineQueryService, TransferTimelineQueryService>();
+        services.AddScoped<IBalanceSplitCalculationService, BalanceSplitCalculationService>();
         services.AddScoped<ITransferRepository, MongoTransferRepository>();
 
         return services;

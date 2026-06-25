@@ -267,7 +267,7 @@ def sanitize(name):
 
 used = set()
 lines = [
-    "namespace Nexus.AccountNodes.Aggregates;",
+    "namespace Nexus.BankAccounts.Aggregates;",
     "",
     "[AttributeUsage(AttributeTargets.Field)]",
     "public sealed class BrazilianBankMetadataAttribute(string name, string code, string ispb) : Attribute",
@@ -311,7 +311,7 @@ path = os.path.join(
     os.path.dirname(__file__),
     "..",
     "Nexus",
-    "AccountNodes",
+    "BankAccounts",
     "Aggregates",
     "BrazilianBank.cs",
 )

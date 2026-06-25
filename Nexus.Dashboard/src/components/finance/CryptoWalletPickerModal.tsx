@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { searchCryptoWallets } from '../../api/accountNodes';
+import { searchCryptoWallets } from '../../api/cryptoWallets';
 import type { CryptoWalletRow } from '../../api/types';
 import { formatCryptoWalletAddresses, formatCryptoWalletBalances } from '../../utils/cryptoWalletDisplay';
 import { shortId } from '../../utils/format';
