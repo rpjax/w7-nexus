@@ -15,25 +15,25 @@ public sealed class TransferProofRecord
 public sealed class TransferOriginBankAccountRecord
 {
     public string BankAccountId { get; set; } = string.Empty;
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 }
 
 public sealed class TransferOriginCryptoWalletRecord
 {
     public string CryptoWalletId { get; set; } = string.Empty;
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 }
 
 public sealed class TransferDestinationBankAccountRecord
 {
     public string BankAccountId { get; set; } = string.Empty;
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 }
 
 public sealed class TransferDestinationCryptoWalletRecord
 {
     public string CryptoWalletId { get; set; } = string.Empty;
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
 }
 
 public sealed class TransferRecord

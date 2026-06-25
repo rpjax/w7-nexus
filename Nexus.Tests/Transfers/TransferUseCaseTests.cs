@@ -285,7 +285,7 @@ public sealed class TransferUseCaseTests
 
         public async Task<BankBalance> SeedBankBalanceAsync(BankAccount account, decimal amount)
         {
-            var origin = BankBalanceOrigin.Create("op-1", "operator-1", account.StrawManId).Value!;
+            var origin = BankBalanceOrigin.Create("op-1", "operator-1", account.OwnerId).Value!;
             var split = BankBalanceSplit.Create("operator-1", 100m, amount, BankSplitKind.ProfitShare).Value!;
             var balance = BankBalance.Create(amount, "seed-transfer", new[] { split }, Array.Empty<string>(), origin).Value!;
             account.CreditBalance(balance);

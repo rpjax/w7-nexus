@@ -58,7 +58,7 @@ public sealed class CryptoWallet
     public const int MaxLabelLength = 100;
 
     public string Id { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
     public string? Label { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
@@ -71,7 +71,7 @@ public sealed class CryptoWallet
 
     internal CryptoWallet(
         string id,
-        string strawManId,
+        string ownerId,
         string? label,
         DateTime createdAt,
         DateTime updatedAt,
@@ -79,7 +79,7 @@ public sealed class CryptoWallet
         IReadOnlyList<CryptoBalance>? balances = null)
     {
         Id = id;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
         Label = label;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
@@ -88,20 +88,20 @@ public sealed class CryptoWallet
     }
 
     public static IResult<CryptoWallet> Create(
-        string strawManId,
+        string ownerId,
         IReadOnlyList<CryptoWalletAddress> addresses,
         string? label)
     {
         var builder = Result.Create<CryptoWallet>();
 
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
         label = string.IsNullOrWhiteSpace(label) ? null : label.Trim();
         addresses = addresses ?? Array.Empty<CryptoWalletAddress>();
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             builder.WithError(Error.Create()
-                .WithCode(CryptoWalletErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(CryptoWalletErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da wallet é obrigatório.")
                 .Build());
 
         if (addresses.Count == 0)
@@ -128,7 +128,7 @@ public sealed class CryptoWallet
         var now = DateTime.UtcNow;
         return builder.WithValue(new CryptoWallet(
             id: string.Empty,
-            strawManId: strawManId,
+            ownerId: ownerId,
             label: label,
             createdAt: now,
             updatedAt: now,

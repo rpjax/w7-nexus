@@ -18,7 +18,7 @@ const PAGE_SIZE = 20;
 
 export function CryptoWalletsPage() {
   const { notifyError, notifySuccess } = useNotifications();
-  const [strawManId, setStrawManId] = useState('');
+  const [ownerId, setOwnerId] = useState('');
   const [strawLabel, setStrawLabel] = useState<string | null>(null);
   const [rows, setRows] = useState<CryptoWalletRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
@@ -34,15 +34,15 @@ export function CryptoWalletsPage() {
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
   const canSubmit = useMemo(
-    () => Boolean(strawManId.trim() && address.trim()),
-    [strawManId, address],
+    () => Boolean(ownerId.trim() && address.trim()),
+    [ownerId, address],
   );
 
-  const load = useCallback(async (page: number, strawId: string) => {
+  const load = useCallback(async (page: number, filterOwnerId: string) => {
     const result = await searchCryptoWallets({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
-      strawManId: strawId.trim() || null,
+      ownerId: filterOwnerId.trim() || null,
     });
     if (!result.ok) {
       notifyError(result.error);
@@ -55,15 +55,15 @@ export function CryptoWalletsPage() {
   }, [notifyError]);
 
   useEffect(() => {
-    void load(currentPage, strawManId);
-  }, [currentPage, strawManId, load]);
+    void load(currentPage, ownerId);
+  }, [currentPage, ownerId, load]);
 
   async function handleCreate() {
     if (!canSubmit) return;
     setBusy(true);
     try {
       const result = await createCryptoWallet({
-        strawManId: strawManId.trim(),
+        ownerId: ownerId.trim(),
         addresses: [{ namespace, address: address.trim(), memo: memo.trim() || null }],
         label: label.trim() || null,
       });
@@ -74,7 +74,7 @@ export function CryptoWalletsPage() {
       notifySuccess('Carteira crypto cadastrada.');
       setShowForm(false);
       setCurrentPage(1);
-      await load(1, strawManId);
+      await load(1, ownerId);
     } finally {
       setBusy(false);
     }
@@ -92,13 +92,13 @@ export function CryptoWalletsPage() {
         searchValue={strawLabel ?? ''}
         onSearchChange={() => {}}
         onSearch={() => setStrawPickerOpen(true)}
-        onRefresh={() => void load(currentPage, strawManId)}
+        onRefresh={() => void load(currentPage, ownerId)}
         totalItems={totalItems}
         totalLabel={`${totalItems} carteira(s)`}
         onCreate={() => {
           setShowForm((open) => {
             const next = !open;
-            if (next && !strawManId.trim()) {
+            if (next && !ownerId.trim()) {
               setStrawPickerOpen(true);
             }
             return next;
@@ -119,8 +119,8 @@ export function CryptoWalletsPage() {
             <button type="button" className="account-select-trigger" onClick={() => setStrawPickerOpen(true)}>
               {strawLabel ?? 'Selecionar laranja para filtrar / cadastrar'}
             </button>
-            {strawManId ? (
-              <IconButton icon="x" label="Limpar laranja" onClick={() => { setStrawManId(''); setStrawLabel(null); setCurrentPage(1); }} />
+            {ownerId ? (
+              <IconButton icon="x" label="Limpar laranja" onClick={() => { setOwnerId(''); setStrawLabel(null); setCurrentPage(1); }} />
             ) : null}
           </div>
           <Link className="btn btn-ghost" to="/dashboard/transfers">Voltar às transferências</Link>
@@ -139,11 +139,11 @@ export function CryptoWalletsPage() {
                   hint="Conta laranja dona desta carteira."
                   emptyLabel="Selecionar laranja"
                   name={strawLabel}
-                  id={strawManId || null}
+                  id={ownerId || null}
                   accent="warm"
                   onPick={() => setStrawPickerOpen(true)}
                   onClear={() => {
-                    setStrawManId('');
+                    setOwnerId('');
                     setStrawLabel(null);
                     setCurrentPage(1);
                   }}
@@ -202,7 +202,7 @@ export function CryptoWalletsPage() {
                 {rows.map((row) => (
                   <tr key={row.id}>
                     <td data-label="ID"><span className="mono">{shortId(row.id)}</span></td>
-                    <td data-label="Laranja"><span className="mono">{shortId(row.strawManId)}</span></td>
+                    <td data-label="Dono"><span className="mono">{shortId(row.ownerId)}</span></td>
                     <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
                     <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>
                     <td data-label="Label">{row.label ?? '—'}</td>
@@ -221,7 +221,7 @@ export function CryptoWalletsPage() {
         searchAccounts={searchAdministratorStrawMenPicker}
         title="Conta laranja"
         onSelected={(row) => {
-          setStrawManId(row.id);
+          setOwnerId(row.id);
           setStrawLabel(`${row.username} (${shortId(row.id)})`);
           setCurrentPage(1);
         }}

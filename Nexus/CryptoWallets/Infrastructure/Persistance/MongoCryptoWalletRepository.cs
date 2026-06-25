@@ -18,7 +18,7 @@ public sealed class MongoCryptoWalletRepository : ICryptoWalletRepository
     private static readonly Expression<Func<CryptoWalletRecord, CryptoWallet>> ToCryptoWalletProjection = r =>
         new CryptoWallet(
             r.Id.ToString(),
-            r.StrawManId,
+            r.OwnerId,
             r.Label,
             r.CreatedAt,
             r.UpdatedAt,

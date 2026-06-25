@@ -18,7 +18,7 @@ public sealed class MongoBankAccountRepository : IBankAccountRepository
     private static readonly Expression<Func<BankAccountRecord, BankAccount>> ToBankAccountProjection = r =>
         new BankAccount(
             r.Id.ToString(),
-            r.StrawManId,
+            r.OwnerId,
             r.Bank,
             r.Agency,
             r.AccountNumber,

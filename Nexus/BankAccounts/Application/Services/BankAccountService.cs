@@ -74,8 +74,8 @@ public sealed class BankAccountService : IBankAccountService
         request ??= new SearchBankAccountsRequest();
         var query = _bankAccounts.AsQueryable();
 
-        if (!string.IsNullOrWhiteSpace(request.StrawManId))
-            query = query.Where(a => a.StrawManId == request.StrawManId.Trim());
+        if (!string.IsNullOrWhiteSpace(request.OwnerId))
+            query = query.Where(a => a.OwnerId == request.OwnerId.Trim());
 
         var total = await query.CountAsync();
         var items = await query

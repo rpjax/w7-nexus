@@ -19,7 +19,7 @@ public static class CryptoWalletApiMapping
         return new
         {
             id = wallet.Id,
-            strawManId = wallet.StrawManId,
+            ownerId = wallet.OwnerId,
             addresses = wallet.Addresses.Select(ToWalletAddress).ToArray(),
             label = wallet.Label,
             balancesByChainAsset,

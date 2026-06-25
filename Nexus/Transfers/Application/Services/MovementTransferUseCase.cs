@@ -101,7 +101,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             if (sourceAccount is null)
                 return Result<Transfer>.Failure(NotFoundBank(request.SourceBankAccountId!).Errors);
 
-            if (!string.Equals(sourceAccount.StrawManId, strawManId, StringComparison.Ordinal))
+            if (!string.Equals(sourceAccount.OwnerId, strawManId, StringComparison.Ordinal))
                 return Result<Transfer>.Failure(MismatchBank().Errors);
 
             var debitResult = sourceAccount.DebitPartialBalance(balanceId, request.SourceAmount);
@@ -111,7 +111,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             debitedBankBalance = debitResult.Value!.DebitedBalance;
             await _bankAccounts.UpdateAsync(sourceAccount);
 
-            var sourceResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.StrawManId);
+            var sourceResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.OwnerId);
             if (sourceResult.IsFailure)
                 return Result<Transfer>.Failure(sourceResult.Errors);
             originBankAccount = sourceResult.Value;
@@ -126,7 +126,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             if (sourceWallet is null)
                 return Result<Transfer>.Failure(NotFoundCrypto(request.SourceCryptoWalletId!).Errors);
 
-            if (!string.Equals(sourceWallet.StrawManId, strawManId, StringComparison.Ordinal))
+            if (!string.Equals(sourceWallet.OwnerId, strawManId, StringComparison.Ordinal))
                 return Result<Transfer>.Failure(MismatchCrypto().Errors);
 
             var debitResult = sourceWallet.DebitPartialBalance(balanceId, request.SourceAmount);
@@ -136,7 +136,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
             debitedCryptoBalance = debitResult.Value!.DebitedBalance;
             await _cryptoWallets.UpdateAsync(sourceWallet);
 
-            var sourceResult = TransferOriginCryptoWallet.Create(sourceWallet.Id, sourceWallet.StrawManId);
+            var sourceResult = TransferOriginCryptoWallet.Create(sourceWallet.Id, sourceWallet.OwnerId);
             if (sourceResult.IsFailure)
                 return Result<Transfer>.Failure(sourceResult.Errors);
             originCryptoWallet = sourceResult.Value;
@@ -237,7 +237,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
 
             var destResult = TransferDestinationBankAccount.Create(
                 destinationBankAccountEntity.Id,
-                destinationBankAccountEntity.StrawManId);
+                destinationBankAccountEntity.OwnerId);
             if (destResult.IsFailure)
                 return Result<Transfer>.Failure(destResult.Errors);
             destinationBankAccount = destResult.Value;
@@ -264,7 +264,7 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
 
             var destResult = TransferDestinationCryptoWallet.Create(
                 destinationCryptoWalletEntity.Id,
-                destinationCryptoWalletEntity.StrawManId);
+                destinationCryptoWalletEntity.OwnerId);
             if (destResult.IsFailure)
                 return Result<Transfer>.Failure(destResult.Errors);
             destinationCryptoWallet = destResult.Value;
@@ -308,8 +308,8 @@ public sealed class MovementTransferUseCase : IMovementTransferUseCase
         }
 
         var destinationStrawManId = hasBankDest
-            ? destinationBankAccountEntity!.StrawManId
-            : destinationCryptoWalletEntity!.StrawManId;
+            ? destinationBankAccountEntity!.OwnerId
+            : destinationCryptoWalletEntity!.OwnerId;
 
         var creditBaseAmount = isBankToCrypto
             ? request.ProducedAmount!.Value

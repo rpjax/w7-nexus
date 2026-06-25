@@ -2,6 +2,7 @@ namespace Nexus.Transfers.Errors;
 
 public static class TransferErrorCodes
 {
+    public const string OwnerInvalid = "Transfer.OWNER_INVALID";
     public const string StrawManInvalid = "Transfer.STRAW_MAN_INVALID";
     public const string StrawManNotFound = "Transfer.STRAW_MAN_NOT_FOUND";
     public const string StrawManRoleRequired = "Transfer.STRAW_MAN_ROLE_REQUIRED";

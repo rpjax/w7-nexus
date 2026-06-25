@@ -18,6 +18,7 @@ import { useNotifications } from '../../notifications/NotificationContext';
 const PAGE_SIZE = 20;
 
 type BankAccountsLocationState = {
+  ownerId?: string;
   strawManId?: string;
   strawLabel?: string;
   openCreate?: boolean;
@@ -31,21 +32,21 @@ export function BankAccountsPage() {
   const { notifyError, notifySuccess } = useNotifications();
 
   const [returnTo] = useState(() => locationState?.returnTo ?? null);
-  const [strawManId, setStrawManId] = useState(() => locationState?.strawManId ?? '');
+  const [ownerId, setOwnerId] = useState(() => locationState?.ownerId ?? locationState?.strawManId ?? '');
   const [strawLabel, setStrawLabel] = useState<string | null>(() => locationState?.strawLabel ?? null);
   const [rows, setRows] = useState<BankAccountRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [strawPickerOpen, setStrawPickerOpen] = useState(false);
   const [createOpen, setCreateOpen] = useState(
-    () => Boolean(locationState?.openCreate && locationState?.strawManId),
+    () => Boolean(locationState?.openCreate && (locationState?.ownerId ?? locationState?.strawManId)),
   );
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
-  const hasStraw = Boolean(strawManId.trim());
+  const hasOwner = Boolean(ownerId.trim());
 
   const filteredRows = useMemo(() => {
     const term = filter.trim().toLowerCase();
@@ -53,13 +54,13 @@ export function BankAccountsPage() {
     return rows.filter((row) => bankAccountSearchText(row).includes(term));
   }, [rows, filter]);
 
-  const load = useCallback(async (page: number, strawId: string) => {
+  const load = useCallback(async (page: number, filterOwnerId: string) => {
     setLoading(true);
     try {
       const result = await searchBankAccounts({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManId: strawId.trim() || null,
+        ownerId: filterOwnerId.trim() || null,
       });
       if (!result.ok) {
         notifyError(result.error);
@@ -75,11 +76,11 @@ export function BankAccountsPage() {
   }, [notifyError]);
 
   useEffect(() => {
-    void load(currentPage, strawManId);
-  }, [currentPage, strawManId, load]);
+    void load(currentPage, ownerId);
+  }, [currentPage, ownerId, load]);
 
-  function clearStraw() {
-    setStrawManId('');
+  function clearOwner() {
+    setOwnerId('');
     setStrawLabel(null);
     setCreateOpen(false);
     setCurrentPage(1);
@@ -92,14 +93,14 @@ export function BankAccountsPage() {
   }
 
   async function handleCreate(payload: BankAccountCreatePayload) {
-    if (!strawManId.trim()) {
+    if (!ownerId.trim()) {
       notifyError('Selecione o laranja antes de cadastrar.');
       return;
     }
     setBusy(true);
     try {
       const result = await createBankAccount({
-        strawManId: strawManId.trim(),
+        ownerId: ownerId.trim(),
         ...payload,
       });
       if (!result.ok) {
@@ -109,7 +110,7 @@ export function BankAccountsPage() {
       notifySuccess('Conta bancária cadastrada.');
       setCreateOpen(false);
       setCurrentPage(1);
-      await load(1, strawManId);
+      await load(1, ownerId);
 
       if (returnTo && result.data) {
         navigate(returnTo, {
@@ -124,11 +125,11 @@ export function BankAccountsPage() {
     }
   }
 
-  const heroCount = hasStraw
+  const heroCount = hasOwner
     ? `${totalItems} conta${totalItems === 1 ? '' : 's'}`
     : 'Escolha um laranja';
 
-  const heroHint = hasStraw
+  const heroHint = hasOwner
     ? `Destinos PIX de ${strawLabel ?? 'laranja selecionado'}.`
     : 'Contas bancárias são cadastradas por laranja e usadas em transferências PIX.';
 
@@ -156,7 +157,7 @@ export function BankAccountsPage() {
         <div className="pix-workspace__divider" aria-hidden="true" />
 
         <div className="pix-workspace__body">
-          {!hasStraw ? (
+          {!hasOwner ? (
             <section className="pix-section bank-section">
               <div className="bank-onboarding">
                 <div className="bank-section__head-text">
@@ -188,14 +189,14 @@ export function BankAccountsPage() {
                   </span>
                   <div className="bank-context-bar__text">
                     <span className="bank-context-bar__kicker">Laranja ativo</span>
-                    <strong className="bank-context-bar__name">{strawLabel ?? strawManId}</strong>
+                    <strong className="bank-context-bar__name">{strawLabel ?? ownerId}</strong>
                   </div>
                 </div>
                 <div className="bank-context-bar__actions">
                   <button type="button" className="bank-context-bar__change" onClick={() => setStrawPickerOpen(true)}>
                     Trocar
                   </button>
-                  <IconButton icon="x" label="Limpar laranja" onClick={clearStraw} />
+                  <IconButton icon="x" label="Limpar laranja" onClick={clearOwner} />
                 </div>
               </div>
 
@@ -224,7 +225,7 @@ export function BankAccountsPage() {
                     <IconButton
                       icon="refresh"
                       label="Atualizar lista"
-                      onClick={() => void load(currentPage, strawManId)}
+                      onClick={() => void load(currentPage, ownerId)}
                       disabled={loading}
                     />
                   </div>
@@ -279,7 +280,7 @@ export function BankAccountsPage() {
         searchAccounts={searchAdministratorStrawMenPicker}
         title="Conta laranja"
         onSelected={(row) => {
-          setStrawManId(row.id);
+          setOwnerId(row.id);
           setStrawLabel(row.username);
           setCurrentPage(1);
           setFilter('');

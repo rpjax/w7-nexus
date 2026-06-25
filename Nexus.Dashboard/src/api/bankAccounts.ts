@@ -10,7 +10,7 @@ export async function searchBankAccounts(payload: SearchScopedAccountsRequest) {
   return apiClient.post<SearchResponse<BankAccountRow>>('/api/administrator/bank-accounts/search', {
     Limit: payload.limit,
     Offset: payload.offset,
-    StrawManId: payload.strawManId ?? null,
+    OwnerId: payload.ownerId ?? null,
   }, { fallbackError: 'Não foi possível carregar as contas bancárias.' });
 }
 
@@ -29,7 +29,7 @@ export async function updateBankAccountLabel(bankAccountId: string, label: strin
 }
 
 export async function createBankAccount(payload: {
-  strawManId: string;
+  ownerId: string;
   bank: number;
   agency: string;
   accountNumber: string;
@@ -38,7 +38,7 @@ export async function createBankAccount(payload: {
   label?: string | null;
 }) {
   return apiClient.post<BankAccountRow>('/api/administrator/bank-accounts', {
-    StrawManId: payload.strawManId,
+    OwnerId: payload.ownerId,
     Bank: payload.bank,
     Agency: payload.agency,
     AccountNumber: payload.accountNumber,

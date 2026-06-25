@@ -9,7 +9,7 @@ import { PaginationBar } from '../ListControls';
 type CryptoWalletPickerModalProps = {
   open: boolean;
   onClose: () => void;
-  strawManId: string;
+  ownerId: string;
   allowAnyStrawMan?: boolean;
   onSelected: (row: CryptoWalletRow) => void;
   excludeAccountId?: string | null;
@@ -20,7 +20,7 @@ const PAGE_SIZE = 8;
 export function CryptoWalletPickerModal({
   open,
   onClose,
-  strawManId,
+  ownerId,
   allowAnyStrawMan = false,
   onSelected,
   excludeAccountId,
@@ -36,15 +36,15 @@ export function CryptoWalletPickerModal({
   const filterByStrawMan = allowAnyStrawMan ? scopeSameStrawMan : true;
 
   useEffect(() => {
-    if (!open || !strawManId.trim()) return;
+    if (!open || !ownerId.trim()) return;
     setScopeSameStrawMan(true);
     setCurrentPage(1);
-  }, [open, strawManId]);
+  }, [open, ownerId]);
 
   useEffect(() => {
-    if (!open || !strawManId.trim()) return;
+    if (!open || !ownerId.trim()) return;
     void load(currentPage);
-  }, [open, strawManId, currentPage, filterByStrawMan]);
+  }, [open, ownerId, currentPage, filterByStrawMan]);
 
   async function load(page: number) {
     setLoading(true);
@@ -53,7 +53,7 @@ export function CryptoWalletPickerModal({
       const result = await searchCryptoWallets({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManId: filterByStrawMan ? strawManId : null,
+        ownerId: filterByStrawMan ? ownerId : null,
       });
       if (!result.ok) {
         setItems([]);
@@ -136,7 +136,7 @@ export function CryptoWalletPickerModal({
                   <tr key={row.id}>
                     <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
                     <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>
-                    <td data-label="Laranja"><span className="mono">{shortId(row.strawManId)}</span></td>
+                    <td data-label="Dono"><span className="mono">{shortId(row.ownerId)}</span></td>
                     <td data-label="Label">{row.label ?? '—'}</td>
                     <td data-label="Ação">
                       <button

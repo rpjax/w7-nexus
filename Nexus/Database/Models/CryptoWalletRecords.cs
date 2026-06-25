@@ -44,7 +44,7 @@ public sealed class CryptoWalletRecord
     [BsonId]
     public ObjectId Id { get; set; }
 
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
     public List<CryptoWalletAddressRecord> Addresses { get; set; } = new();
     public string? Label { get; set; }
     public List<CryptoBalanceRecord> Balances { get; set; } = new();

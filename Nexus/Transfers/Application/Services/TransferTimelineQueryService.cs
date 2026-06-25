@@ -60,10 +60,10 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             .Where(a => a.Id == focus.StrawManId)
             .ToArrayAsync();
         var bankAccounts = await _bankAccounts.AsQueryable()
-            .Where(a => a.StrawManId == focus.StrawManId)
+            .Where(a => a.OwnerId == focus.StrawManId)
             .ToArrayAsync();
         var cryptoWallets = await _cryptoWallets.AsQueryable()
-            .Where(w => w.StrawManId == focus.StrawManId)
+            .Where(w => w.OwnerId == focus.StrawManId)
             .ToArrayAsync();
         var strawManTransfers = await _transfers.AsQueryable()
             .Where(t => t.StrawManId == focus.StrawManId)
@@ -185,8 +185,8 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
 
         var mergedBanks = bankAccounts.Concat(extraBanks).ToArray();
         var mergedWallets = cryptoWallets.Concat(extraWallets).ToArray();
-        var extraAccountIds = extraBanks.Select(a => a.StrawManId)
-            .Concat(extraWallets.Select(w => w.StrawManId))
+        var extraAccountIds = extraBanks.Select(a => a.OwnerId)
+            .Concat(extraWallets.Select(w => w.OwnerId))
             .Distinct(StringComparer.Ordinal)
             .Where(id => !accountLookup.Accounts.ContainsKey(id))
             .ToArray();

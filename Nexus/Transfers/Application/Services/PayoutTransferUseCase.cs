@@ -87,7 +87,7 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
                 .WithMessage($"A conta bancária '{request.SourceBankAccountId}' não foi encontrada.")
                 .Build());
 
-        if (!string.Equals(sourceAccount.StrawManId, strawManId, StringComparison.Ordinal))
+        if (!string.Equals(sourceAccount.OwnerId, strawManId, StringComparison.Ordinal))
             return Result<Transfer>.Failure(Error.Create()
                 .WithCode(TransferErrorCodes.BankAccountMismatch)
                 .WithMessage("A conta bancária de origem não pertence ao laranja informado.")
@@ -99,7 +99,7 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
 
         await _bankAccounts.UpdateAsync(sourceAccount);
 
-        var originResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.StrawManId);
+        var originResult = TransferOriginBankAccount.Create(sourceAccount.Id, sourceAccount.OwnerId);
         if (originResult.IsFailure)
             return Result<Transfer>.Failure(originResult.Errors);
 
@@ -122,7 +122,7 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
 
             var destResult = TransferDestinationBankAccount.Create(
                 destinationAccount.Id,
-                destinationAccount.StrawManId);
+                destinationAccount.OwnerId);
             if (destResult.IsFailure)
                 return Result<Transfer>.Failure(destResult.Errors);
             destinationBankAccount = destResult.Value;
@@ -142,7 +142,7 @@ public sealed class PayoutTransferUseCase : IPayoutTransferUseCase
 
             var destResult = TransferDestinationCryptoWallet.Create(
                 destinationWallet.Id,
-                destinationWallet.StrawManId);
+                destinationWallet.OwnerId);
             if (destResult.IsFailure)
                 return Result<Transfer>.Failure(destResult.Errors);
             destinationCryptoWallet = destResult.Value;

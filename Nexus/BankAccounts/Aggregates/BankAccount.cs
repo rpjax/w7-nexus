@@ -18,7 +18,7 @@ public sealed class BankAccount
     public const int MaxLabelLength = 100;
 
     public string Id { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
     public BrazilianBank Bank { get; }
     public string Agency { get; private set; }
     public string AccountNumber { get; private set; }
@@ -33,7 +33,7 @@ public sealed class BankAccount
 
     internal BankAccount(
         string id,
-        string strawManId,
+        string ownerId,
         BrazilianBank bank,
         string agency,
         string accountNumber,
@@ -45,7 +45,7 @@ public sealed class BankAccount
         IReadOnlyList<BankBalance>? balances = null)
     {
         Id = id;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
         Bank = bank;
         Agency = agency;
         AccountNumber = accountNumber;
@@ -132,7 +132,7 @@ public sealed class BankAccount
         var now = DateTime.UtcNow;
         return builder.WithValue(new BankAccount(
             id: string.Empty,
-            strawManId: ownerId,
+            ownerId: ownerId,
             bank: bank,
             agency: agency,
             accountNumber: accountNumber,

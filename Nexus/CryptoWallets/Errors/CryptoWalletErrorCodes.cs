@@ -2,9 +2,8 @@ namespace Nexus.CryptoWallets.Errors;
 
 public static class CryptoWalletErrorCodes
 {
-    public const string StrawManInvalid = "CryptoWallet.STRAW_MAN_INVALID";
-    public const string StrawManNotFound = "CryptoWallet.STRAW_MAN_NOT_FOUND";
-    public const string StrawManRoleRequired = "CryptoWallet.STRAW_MAN_ROLE_REQUIRED";
+    public const string OwnerInvalid = "CryptoWallet.OWNER_INVALID";
+    public const string OwnerNotFound = "CryptoWallet.OWNER_NOT_FOUND";
     public const string NamespaceInvalid = "CryptoWallet.NAMESPACE_INVALID";
     public const string AddressInvalid = "CryptoWallet.ADDRESS_INVALID";
     public const string AddressRequired = "CryptoWallet.ADDRESS_REQUIRED";

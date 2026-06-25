@@ -10,17 +10,17 @@ export async function searchCryptoWallets(payload: SearchScopedAccountsRequest) 
   return apiClient.post<SearchResponse<CryptoWalletRow>>('/api/administrator/crypto-wallets/search', {
     Limit: payload.limit,
     Offset: payload.offset,
-    StrawManId: payload.strawManId ?? null,
+    OwnerId: payload.ownerId ?? null,
   }, { fallbackError: 'Não foi possível carregar as carteiras crypto.' });
 }
 
 export async function createCryptoWallet(payload: {
-  strawManId: string;
+  ownerId: string;
   addresses: Array<{ namespace: number; address: string; memo?: string | null }>;
   label?: string | null;
 }) {
   return apiClient.post<CryptoWalletRow>('/api/administrator/crypto-wallets', {
-    StrawManId: payload.strawManId,
+    OwnerId: payload.ownerId,
     Addresses: payload.addresses.map((entry) => ({
       Namespace: namespaceEnumName(entry.namespace),
       Address: entry.address,

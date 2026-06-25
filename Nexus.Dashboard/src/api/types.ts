@@ -153,12 +153,12 @@ export type OnrampingMethod = 'Pix' | 'GiftCard' | 'CreditDebitCard';
 
 export type TransferEndpointBankAccount = {
   bankAccountId: string;
-  strawManId: string;
+  ownerId: string;
 };
 
 export type TransferEndpointCryptoWallet = {
   cryptoWalletId: string;
-  strawManId: string;
+  ownerId: string;
 };
 
 export type TransferProof = {
@@ -325,7 +325,7 @@ export type CryptoWalletAddressRow = {
 
 export type BankAccountRow = {
   id: string;
-  strawManId: string;
+  ownerId: string;
   bank: string;
   agency: string;
   accountNumber: string;
@@ -340,7 +340,7 @@ export type BankAccountRow = {
 
 export type CryptoWalletRow = {
   id: string;
-  strawManId: string;
+  ownerId: string;
   addresses: CryptoWalletAddressRow[];
   label?: string | null;
   balancesByChainAsset?: CryptoBalanceByChainAsset[];
@@ -352,7 +352,7 @@ export type CryptoWalletRow = {
 export type SearchScopedAccountsRequest = {
   limit: number;
   offset: number;
-  strawManId?: string | null;
+  ownerId?: string | null;
 };
 
 export type StrawManSettings = {

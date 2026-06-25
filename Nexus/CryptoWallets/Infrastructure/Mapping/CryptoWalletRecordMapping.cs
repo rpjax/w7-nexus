@@ -9,7 +9,7 @@ internal static class CryptoWalletRecordMapping
     public static CryptoWallet ToCryptoWallet(CryptoWalletRecord record) =>
         new(
             record.Id.ToString(),
-            record.StrawManId,
+            record.OwnerId,
             record.Label,
             record.CreatedAt,
             record.UpdatedAt,
@@ -20,7 +20,7 @@ internal static class CryptoWalletRecordMapping
         new()
         {
             Id = string.IsNullOrWhiteSpace(entity.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(entity.Id),
-            StrawManId = entity.StrawManId,
+            OwnerId = entity.OwnerId,
             Addresses = entity.Addresses.Select(ToRecord).ToList(),
             Label = entity.Label,
             Balances = entity.Balances.Select(ToRecord).ToList(),

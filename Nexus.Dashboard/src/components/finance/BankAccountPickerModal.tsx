@@ -8,7 +8,7 @@ import { PaginationBar } from '../ListControls';
 type BankAccountPickerModalProps = {
   open: boolean;
   onClose: () => void;
-  strawManId: string;
+  ownerId: string;
   onSelected: (row: BankAccountRow) => void;
   onCreateRequested?: () => void;
   excludeAccountId?: string | null;
@@ -19,7 +19,7 @@ const PAGE_SIZE = 8;
 export function BankAccountPickerModal({
   open,
   onClose,
-  strawManId,
+  ownerId,
   onSelected,
   onCreateRequested,
   excludeAccountId,
@@ -33,14 +33,14 @@ export function BankAccountPickerModal({
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
   useEffect(() => {
-    if (!open || !strawManId.trim()) return;
+    if (!open || !ownerId.trim()) return;
     setCurrentPage(1);
-  }, [open, strawManId]);
+  }, [open, ownerId]);
 
   useEffect(() => {
-    if (!open || !strawManId.trim()) return;
+    if (!open || !ownerId.trim()) return;
     void load(currentPage);
-  }, [open, strawManId, currentPage]);
+  }, [open, ownerId, currentPage]);
 
   async function load(page: number) {
     setLoading(true);
@@ -49,7 +49,7 @@ export function BankAccountPickerModal({
       const result = await searchBankAccounts({
         limit: PAGE_SIZE,
         offset: (page - 1) * PAGE_SIZE,
-        strawManId,
+        ownerId,
       });
       if (!result.ok) {
         setItems([]);

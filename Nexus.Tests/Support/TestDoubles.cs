@@ -354,7 +354,6 @@ internal sealed class ActorTestContext
             new AdministratorOperationPickerSearchService(Operations),
             new StubBankAccountService(),
             new StubCryptoWalletService(),
-            Accounts,
             new StubAdministratorTransferCommandService(),
             new AdministratorPaymentSearchService(Payments),
             new AdministratorPaymentCommandService(new PaymentService(
@@ -362,8 +361,7 @@ internal sealed class ActorTestContext
                 Payments,
                 Operations,
                 Teams)),
-            new StubAdministratorStrawManSettingsCommandService(),
-            AccountIdValidator);
+            new StubAdministratorStrawManSettingsCommandService());
     }
 
     public OperationAdministratorRole CreateOperationAdministrator()

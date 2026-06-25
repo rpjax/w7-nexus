@@ -11,7 +11,7 @@ internal static class BankAccountRecordMapping
         var balances = record.Balances.Select(ToBankBalance).ToList();
         return new BankAccount(
             record.Id.ToString(),
-            record.StrawManId,
+            record.OwnerId,
             record.Bank,
             record.Agency,
             record.AccountNumber,
@@ -27,7 +27,7 @@ internal static class BankAccountRecordMapping
         new()
         {
             Id = string.IsNullOrWhiteSpace(entity.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(entity.Id),
-            StrawManId = entity.StrawManId,
+            OwnerId = entity.OwnerId,
             Bank = entity.Bank,
             Agency = entity.Agency,
             AccountNumber = entity.AccountNumber,

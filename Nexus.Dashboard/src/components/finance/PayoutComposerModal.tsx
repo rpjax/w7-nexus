@@ -313,7 +313,7 @@ export function PayoutComposerModal({
       <BankAccountPickerModal
         open={bankPickerOpen}
         onClose={() => setBankPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         excludeAccountId={sourceAccountId}
         onSelected={(row) => {
           setDestBank(row);
@@ -324,7 +324,7 @@ export function PayoutComposerModal({
       <CryptoWalletPickerModal
         open={cryptoPickerOpen}
         onClose={() => setCryptoPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         allowAnyStrawMan
         onSelected={(row) => {
           setDestCrypto(row);

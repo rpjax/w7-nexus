@@ -10,7 +10,7 @@ public static class BankAccountApiMapping
         return new
         {
             id = account.Id,
-            strawManId = account.StrawManId,
+            ownerId = account.OwnerId,
             bank = account.Bank.ToString(),
             agency = account.Agency,
             accountNumber = account.AccountNumber,

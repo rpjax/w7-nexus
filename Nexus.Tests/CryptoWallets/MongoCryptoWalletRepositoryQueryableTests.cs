@@ -44,7 +44,7 @@ public sealed class MongoCryptoWalletRepositoryQueryableTests
             new CryptoWalletRecord
             {
                 Id = matchingId,
-                StrawManId = "straw-match",
+                OwnerId = "straw-match",
                 Addresses =
                 {
                     new CryptoWalletAddressRecord
@@ -59,7 +59,7 @@ public sealed class MongoCryptoWalletRepositoryQueryableTests
             new CryptoWalletRecord
             {
                 Id = otherId,
-                StrawManId = "straw-other",
+                OwnerId = "straw-other",
                 Addresses =
                 {
                     new CryptoWalletAddressRecord
@@ -74,7 +74,7 @@ public sealed class MongoCryptoWalletRepositoryQueryableTests
         ]);
 
         var count = await repository.AsQueryable()
-            .Where(w => w.StrawManId == "straw-match")
+            .Where(w => w.OwnerId == "straw-match")
             .CountAsync();
 
         Assert.Equal(1, count);

@@ -35,7 +35,7 @@ public sealed class BankAccountRecord
     [BsonId]
     public ObjectId Id { get; set; }
 
-    public string StrawManId { get; set; } = string.Empty;
+    public string OwnerId { get; set; } = string.Empty;
     public BrazilianBank Bank { get; set; }
     public string Agency { get; set; } = string.Empty;
     public string AccountNumber { get; set; } = string.Empty;

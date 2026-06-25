@@ -1,4 +1,3 @@
-using Nexus.Accounts.Application.Contracts;
 using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
@@ -10,7 +9,6 @@ using Nexus.BankAccounts.Application.Requests;
 using Nexus.BankAccounts.Application.Responses;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
-using Nexus.CryptoWallets.Errors;
 using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.Transfers.Aggregates;
@@ -33,7 +31,6 @@ public class Administrator : IAdministrator
     private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
     private IBankAccountService _bankAccountService { get; }
     private ICryptoWalletService _cryptoWalletService { get; }
-    private IAccountRepository _accounts { get; }
     private IAdministratorTransferCommandService _transfers { get; }
     private IAdministratorPaymentSearchService _paymentSearch { get; }
     private IAdministratorPaymentCommandService _paymentCommands { get; }
@@ -52,12 +49,10 @@ public class Administrator : IAdministrator
         IAdministratorOperationPickerSearchService operationPickerSearch,
         IBankAccountService bankAccountService,
         ICryptoWalletService cryptoWalletService,
-        IAccountRepository accounts,
         IAdministratorTransferCommandService transfers,
         IAdministratorPaymentSearchService paymentSearch,
         IAdministratorPaymentCommandService paymentCommands,
-        IAdministratorStrawManSettingsCommandService strawManSettings,
-        IAccountIdValidator accountIdValidator)
+        IAdministratorStrawManSettingsCommandService strawManSettings)
     {
         _policy = policy;
         _operationSearch = operationSearch;
@@ -71,7 +66,6 @@ public class Administrator : IAdministrator
         _operationPickerSearch = operationPickerSearch;
         _bankAccountService = bankAccountService;
         _cryptoWalletService = cryptoWalletService;
-        _accounts = accounts;
         _transfers = transfers;
         _paymentSearch = paymentSearch;
         _paymentCommands = paymentCommands;
@@ -930,17 +924,6 @@ public class Administrator : IAdministrator
 
         if (!authorization.IsAuthorized)
             return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
-
-        var validation = await StrawManValidation.ValidateStrawManAccountAsync(
-            _accounts,
-            request.StrawManId,
-            CryptoWalletErrorCodes.StrawManInvalid,
-            CryptoWalletErrorCodes.StrawManNotFound,
-            CryptoWalletErrorCodes.StrawManRoleRequired,
-            cancellationToken);
-
-        if (validation is not null)
-            return OperationResult<CryptoWallet>.Failure(validation.Errors);
 
         var result = await _cryptoWalletService.CreateAsync(request);
 

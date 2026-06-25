@@ -84,7 +84,7 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
                     .WithMessage($"A conta bancária '{request.BankAccountId}' não foi encontrada.")
                     .Build());
             }
-            else if (!string.Equals(bankAccount.StrawManId, strawManId, StringComparison.Ordinal))
+            else if (!string.Equals(bankAccount.OwnerId, strawManId, StringComparison.Ordinal))
             {
                 builder.WithError(Error.Create()
                     .WithCode(TransferErrorCodes.BankAccountMismatch)
@@ -93,7 +93,7 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             }
             else
             {
-                var destResult = TransferDestinationBankAccount.Create(bankAccount.Id, bankAccount.StrawManId);
+                var destResult = TransferDestinationBankAccount.Create(bankAccount.Id, bankAccount.OwnerId);
                 if (destResult.IsFailure)
                     return Result<Transfer>.Failure(destResult.Errors);
                 destinationBankAccount = destResult.Value;
@@ -113,7 +113,7 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
                     .WithMessage($"A wallet crypto '{request.CryptoWalletId}' não foi encontrada.")
                     .Build());
             }
-            else if (!string.Equals(cryptoWallet.StrawManId, strawManId, StringComparison.Ordinal))
+            else if (!string.Equals(cryptoWallet.OwnerId, strawManId, StringComparison.Ordinal))
             {
                 builder.WithError(Error.Create()
                     .WithCode(TransferErrorCodes.CryptoWalletMismatch)
@@ -122,7 +122,7 @@ public sealed class WithdrawalTransferUseCase : IWithdrawalTransferUseCase
             }
             else
             {
-                var destResult = TransferDestinationCryptoWallet.Create(cryptoWallet.Id, cryptoWallet.StrawManId);
+                var destResult = TransferDestinationCryptoWallet.Create(cryptoWallet.Id, cryptoWallet.OwnerId);
                 if (destResult.IsFailure)
                     return Result<Transfer>.Failure(destResult.Errors);
                 destinationCryptoWallet = destResult.Value;

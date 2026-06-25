@@ -18,7 +18,7 @@ public sealed class BankAccountAggregateTests
             "Main");
 
         Assert.True(result.IsSuccess);
-        Assert.Equal("straw-1", result.Value!.StrawManId);
+        Assert.Equal("straw-1", result.Value!.OwnerId);
         Assert.Empty(result.Value.Balances);
     }
 

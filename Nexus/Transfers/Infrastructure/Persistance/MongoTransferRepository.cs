@@ -32,21 +32,21 @@ public sealed class MongoTransferRepository : ITransferRepository
             r.OriginType,
             r.OriginBankAccount == null
                 ? null
-                : new TransferOriginBankAccount(r.OriginBankAccount.BankAccountId, r.OriginBankAccount.StrawManId),
+                : new TransferOriginBankAccount(r.OriginBankAccount.BankAccountId, r.OriginBankAccount.OwnerId),
             r.OriginCryptoWallet == null
                 ? null
-                : new TransferOriginCryptoWallet(r.OriginCryptoWallet.CryptoWalletId, r.OriginCryptoWallet.StrawManId),
+                : new TransferOriginCryptoWallet(r.OriginCryptoWallet.CryptoWalletId, r.OriginCryptoWallet.OwnerId),
             r.DestinationType,
             r.DestinationBankAccount == null
                 ? null
                 : new TransferDestinationBankAccount(
                     r.DestinationBankAccount.BankAccountId,
-                    r.DestinationBankAccount.StrawManId),
+                    r.DestinationBankAccount.OwnerId),
             r.DestinationCryptoWallet == null
                 ? null
                 : new TransferDestinationCryptoWallet(
                     r.DestinationCryptoWallet.CryptoWalletId,
-                    r.DestinationCryptoWallet.StrawManId),
+                    r.DestinationCryptoWallet.OwnerId),
             r.SourceAmount,
             r.ProducedAmount,
             r.ProducedAsset,

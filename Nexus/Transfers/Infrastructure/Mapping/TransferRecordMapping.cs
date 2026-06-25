@@ -82,42 +82,42 @@ internal static class TransferRecordMapping
     }
 
     private static TransferOriginBankAccount? MapOriginBankAccount(TransferOriginBankAccountRecord? record) =>
-        record is null ? null : new TransferOriginBankAccount(record.BankAccountId, record.StrawManId);
+        record is null ? null : new TransferOriginBankAccount(record.BankAccountId, record.OwnerId);
 
     private static TransferOriginBankAccountRecord? MapOriginBankAccount(TransferOriginBankAccount? endpoint) =>
         endpoint is null ? null : new TransferOriginBankAccountRecord
         {
             BankAccountId = endpoint.BankAccountId,
-            StrawManId = endpoint.StrawManId,
+            OwnerId = endpoint.OwnerId,
         };
 
     private static TransferOriginCryptoWallet? MapOriginCryptoWallet(TransferOriginCryptoWalletRecord? record) =>
-        record is null ? null : new TransferOriginCryptoWallet(record.CryptoWalletId, record.StrawManId);
+        record is null ? null : new TransferOriginCryptoWallet(record.CryptoWalletId, record.OwnerId);
 
     private static TransferOriginCryptoWalletRecord? MapOriginCryptoWallet(TransferOriginCryptoWallet? endpoint) =>
         endpoint is null ? null : new TransferOriginCryptoWalletRecord
         {
             CryptoWalletId = endpoint.CryptoWalletId,
-            StrawManId = endpoint.StrawManId,
+            OwnerId = endpoint.OwnerId,
         };
 
     private static TransferDestinationBankAccount? MapDestinationBankAccount(TransferDestinationBankAccountRecord? record) =>
-        record is null ? null : new TransferDestinationBankAccount(record.BankAccountId, record.StrawManId);
+        record is null ? null : new TransferDestinationBankAccount(record.BankAccountId, record.OwnerId);
 
     private static TransferDestinationBankAccountRecord? MapDestinationBankAccount(TransferDestinationBankAccount? endpoint) =>
         endpoint is null ? null : new TransferDestinationBankAccountRecord
         {
             BankAccountId = endpoint.BankAccountId,
-            StrawManId = endpoint.StrawManId,
+            OwnerId = endpoint.OwnerId,
         };
 
     private static TransferDestinationCryptoWallet? MapDestinationCryptoWallet(TransferDestinationCryptoWalletRecord? record) =>
-        record is null ? null : new TransferDestinationCryptoWallet(record.CryptoWalletId, record.StrawManId);
+        record is null ? null : new TransferDestinationCryptoWallet(record.CryptoWalletId, record.OwnerId);
 
     private static TransferDestinationCryptoWalletRecord? MapDestinationCryptoWallet(TransferDestinationCryptoWallet? endpoint) =>
         endpoint is null ? null : new TransferDestinationCryptoWalletRecord
         {
             CryptoWalletId = endpoint.CryptoWalletId,
-            StrawManId = endpoint.StrawManId,
+            OwnerId = endpoint.OwnerId,
         };
 }

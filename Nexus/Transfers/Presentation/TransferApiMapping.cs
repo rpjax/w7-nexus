@@ -34,14 +34,14 @@ public static class TransferApiMapping
     };
 
     private static object? ToOriginBankAccount(TransferOriginBankAccount? endpoint) =>
-        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, strawManId = endpoint.StrawManId };
+        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, ownerId = endpoint.OwnerId };
 
     private static object? ToOriginCryptoWallet(TransferOriginCryptoWallet? endpoint) =>
-        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, strawManId = endpoint.StrawManId };
+        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, ownerId = endpoint.OwnerId };
 
     private static object? ToDestinationBankAccount(TransferDestinationBankAccount? endpoint) =>
-        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, strawManId = endpoint.StrawManId };
+        endpoint is null ? null : new { bankAccountId = endpoint.BankAccountId, ownerId = endpoint.OwnerId };
 
     private static object? ToDestinationCryptoWallet(TransferDestinationCryptoWallet? endpoint) =>
-        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, strawManId = endpoint.StrawManId };
+        endpoint is null ? null : new { cryptoWalletId = endpoint.CryptoWalletId, ownerId = endpoint.OwnerId };
 }

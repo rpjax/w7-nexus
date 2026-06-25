@@ -19,18 +19,18 @@ public enum TransferDestinationType
 public sealed class TransferOriginBankAccount
 {
     public string BankAccountId { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
 
-    internal TransferOriginBankAccount(string bankAccountId, string strawManId)
+    internal TransferOriginBankAccount(string bankAccountId, string ownerId)
     {
         BankAccountId = bankAccountId;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
     }
 
-    public static IResult<TransferOriginBankAccount> Create(string bankAccountId, string strawManId)
+    public static IResult<TransferOriginBankAccount> Create(string bankAccountId, string ownerId)
     {
         bankAccountId = bankAccountId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(bankAccountId))
             return Result<TransferOriginBankAccount>.Failure(Error.Create()
@@ -38,32 +38,32 @@ public sealed class TransferOriginBankAccount
                 .WithMessage("A conta bancária de origem é obrigatória.")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             return Result<TransferOriginBankAccount>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(TransferErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da conta de origem é obrigatório.")
                 .Build());
 
         return Result<TransferOriginBankAccount>.Success(
-            new TransferOriginBankAccount(bankAccountId, strawManId));
+            new TransferOriginBankAccount(bankAccountId, ownerId));
     }
 }
 
 public sealed class TransferOriginCryptoWallet
 {
     public string CryptoWalletId { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
 
-    internal TransferOriginCryptoWallet(string cryptoWalletId, string strawManId)
+    internal TransferOriginCryptoWallet(string cryptoWalletId, string ownerId)
     {
         CryptoWalletId = cryptoWalletId;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
     }
 
-    public static IResult<TransferOriginCryptoWallet> Create(string cryptoWalletId, string strawManId)
+    public static IResult<TransferOriginCryptoWallet> Create(string cryptoWalletId, string ownerId)
     {
         cryptoWalletId = cryptoWalletId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(cryptoWalletId))
             return Result<TransferOriginCryptoWallet>.Failure(Error.Create()
@@ -71,32 +71,32 @@ public sealed class TransferOriginCryptoWallet
                 .WithMessage("A wallet crypto de origem é obrigatória.")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             return Result<TransferOriginCryptoWallet>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(TransferErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da wallet de origem é obrigatório.")
                 .Build());
 
         return Result<TransferOriginCryptoWallet>.Success(
-            new TransferOriginCryptoWallet(cryptoWalletId, strawManId));
+            new TransferOriginCryptoWallet(cryptoWalletId, ownerId));
     }
 }
 
 public sealed class TransferDestinationBankAccount
 {
     public string BankAccountId { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
 
-    internal TransferDestinationBankAccount(string bankAccountId, string strawManId)
+    internal TransferDestinationBankAccount(string bankAccountId, string ownerId)
     {
         BankAccountId = bankAccountId;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
     }
 
-    public static IResult<TransferDestinationBankAccount> Create(string bankAccountId, string strawManId)
+    public static IResult<TransferDestinationBankAccount> Create(string bankAccountId, string ownerId)
     {
         bankAccountId = bankAccountId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(bankAccountId))
             return Result<TransferDestinationBankAccount>.Failure(Error.Create()
@@ -104,32 +104,32 @@ public sealed class TransferDestinationBankAccount
                 .WithMessage("A conta bancária de destino é obrigatória.")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             return Result<TransferDestinationBankAccount>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(TransferErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da conta de destino é obrigatório.")
                 .Build());
 
         return Result<TransferDestinationBankAccount>.Success(
-            new TransferDestinationBankAccount(bankAccountId, strawManId));
+            new TransferDestinationBankAccount(bankAccountId, ownerId));
     }
 }
 
 public sealed class TransferDestinationCryptoWallet
 {
     public string CryptoWalletId { get; }
-    public string StrawManId { get; }
+    public string OwnerId { get; }
 
-    internal TransferDestinationCryptoWallet(string cryptoWalletId, string strawManId)
+    internal TransferDestinationCryptoWallet(string cryptoWalletId, string ownerId)
     {
         CryptoWalletId = cryptoWalletId;
-        StrawManId = strawManId;
+        OwnerId = ownerId;
     }
 
-    public static IResult<TransferDestinationCryptoWallet> Create(string cryptoWalletId, string strawManId)
+    public static IResult<TransferDestinationCryptoWallet> Create(string cryptoWalletId, string ownerId)
     {
         cryptoWalletId = cryptoWalletId?.Trim() ?? string.Empty;
-        strawManId = strawManId?.Trim() ?? string.Empty;
+        ownerId = ownerId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(cryptoWalletId))
             return Result<TransferDestinationCryptoWallet>.Failure(Error.Create()
@@ -137,13 +137,13 @@ public sealed class TransferDestinationCryptoWallet
                 .WithMessage("A wallet crypto de destino é obrigatória.")
                 .Build());
 
-        if (string.IsNullOrWhiteSpace(strawManId))
+        if (string.IsNullOrWhiteSpace(ownerId))
             return Result<TransferDestinationCryptoWallet>.Failure(Error.Create()
-                .WithCode(TransferErrorCodes.StrawManInvalid)
-                .WithMessage("O ID do laranja é obrigatório.")
+                .WithCode(TransferErrorCodes.OwnerInvalid)
+                .WithMessage("O ID do dono da wallet de destino é obrigatório.")
                 .Build());
 
         return Result<TransferDestinationCryptoWallet>.Success(
-            new TransferDestinationCryptoWallet(cryptoWalletId, strawManId));
+            new TransferDestinationCryptoWallet(cryptoWalletId, ownerId));
     }
 }

@@ -311,7 +311,7 @@ export function WithdrawalCreatePage() {
       <UnsettledPaymentsPicker
         open={paymentsPickerOpen}
         onClose={() => setPaymentsPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         selectedIds={selectedPaymentIds}
         onChange={setSelectedPaymentIds}
       />
@@ -319,7 +319,7 @@ export function WithdrawalCreatePage() {
       <BankAccountPickerModal
         open={bankPickerOpen}
         onClose={() => setBankPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         onCreateRequested={goToCreateBankAccount}
         onSelected={(row: BankAccountRow) => {
           setBankAccountId(row.id);
@@ -330,7 +330,7 @@ export function WithdrawalCreatePage() {
       <CryptoWalletPickerModal
         open={cryptoPickerOpen}
         onClose={() => setCryptoPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         allowAnyStrawMan
         onSelected={(row: CryptoWalletRow) => {
           setCryptoWalletId(row.id);

@@ -427,7 +427,7 @@ export function MovementComposerModal({
       <BankAccountPickerModal
         open={bankPickerOpen}
         onClose={() => setBankPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         excludeAccountId={sourceIsBank ? sourceAccountId : null}
         onSelected={(row) => {
           setDestBank(row);
@@ -438,7 +438,7 @@ export function MovementComposerModal({
       <CryptoWalletPickerModal
         open={cryptoPickerOpen}
         onClose={() => setCryptoPickerOpen(false)}
-        strawManId={strawManId}
+        ownerId={strawManId}
         allowAnyStrawMan
         excludeAccountId={sourceIsCrypto ? sourceAccountId : null}
         onSelected={(row) => {
