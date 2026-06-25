@@ -5,8 +5,8 @@ import { cryptoAssetLabel, formatCryptoAmount } from '../../utils/cryptoWalletDi
 import { chainLabel, formatMoney, paymentStatusLabel, paymentStatusTone, settlementStatusLabel, transferTypeLabel } from '../../utils/financeLabels';
 import { formatActiveBalanceAmount } from '../../utils/movementDisplay';
 import {
-  formatEnrichedAccountSubtitle,
-  formatEnrichedAccountTitle,
+  formatTransferEndpointSubtitle,
+  formatTransferEndpointTitle,
   formatStepAmount,
 } from '../../utils/transferDisplay';
 import { formatDateTime, shortId } from '../../utils/format';
@@ -94,18 +94,18 @@ function TimelineStepCard({
             {source ? (
               <div className="transfer-step__endpoint">
                 <span className="transfer-step__endpoint-label">Origem</span>
-                <strong>{formatEnrichedAccountTitle(source)}</strong>
-                {formatEnrichedAccountSubtitle(source) ? (
-                  <span className="muted small">{formatEnrichedAccountSubtitle(source)}</span>
+                <strong>{formatTransferEndpointTitle(source)}</strong>
+                {formatTransferEndpointSubtitle(source) ? (
+                  <span className="muted small">{formatTransferEndpointSubtitle(source)}</span>
                 ) : null}
               </div>
             ) : null}
             {destination ? (
               <div className="transfer-step__endpoint">
                 <span className="transfer-step__endpoint-label">Destino</span>
-                <strong>{formatEnrichedAccountTitle(destination)}</strong>
-                {formatEnrichedAccountSubtitle(destination) ? (
-                  <span className="muted small">{formatEnrichedAccountSubtitle(destination)}</span>
+                <strong>{formatTransferEndpointTitle(destination)}</strong>
+                {formatTransferEndpointSubtitle(destination) ? (
+                  <span className="muted small">{formatTransferEndpointSubtitle(destination)}</span>
                 ) : null}
               </div>
             ) : null}
@@ -128,7 +128,7 @@ function TimelineStepCard({
                     {formatEffectAmount(effect.amount, effect.currency, effect.asset, effect.chain)}
                   </span>
                   <span className="transfer-step__effect-account muted small">
-                    {formatEnrichedAccountTitle(effect.account)}
+                    {formatTransferEndpointTitle(effect.account)}
                   </span>
                 </li>
               ))}
@@ -219,7 +219,7 @@ export function MoneyTimeline({ timeline, focusTransferId, onMoveBalance, onPayo
               <li key={balance.balanceId} className="transfer-next-steps__item">
                 <div className="transfer-next-steps__summary">
                   <strong>{formatBalanceAmount(balance)}</strong>
-                  <span>{formatEnrichedAccountTitle(balance.account)}</span>
+                  <span>{formatTransferEndpointTitle(balance.account)}</span>
                   <span className="mono muted small">{shortId(balance.balanceId, 10)}</span>
                 </div>
                 <div className="transfer-next-steps__buttons">

@@ -1,7 +1,7 @@
 import type { ActiveBalanceRow } from '../api/types';
 import { cryptoAssetLabel, formatCryptoAmount } from './cryptoWalletDisplay';
 import { chainLabel, formatMoney } from './financeLabels';
-import { formatEnrichedAccountSubtitle, formatEnrichedAccountTitle } from './transferDisplay';
+import { formatTransferEndpointSubtitle, formatTransferEndpointTitle } from './transferDisplay';
 
 export function formatActiveBalanceAmount(balance: ActiveBalanceRow): string {
   if (balance.asset || balance.currency !== 'BRL') {
@@ -12,8 +12,8 @@ export function formatActiveBalanceAmount(balance: ActiveBalanceRow): string {
 }
 
 export function formatActiveBalanceSource(balance: ActiveBalanceRow): string {
-  const title = formatEnrichedAccountTitle(balance.account);
-  const subtitle = formatEnrichedAccountSubtitle(balance.account);
+  const title = formatTransferEndpointTitle(balance.account);
+  const subtitle = formatTransferEndpointSubtitle(balance.account);
   return subtitle ? `${title} · ${subtitle}` : title;
 }
 

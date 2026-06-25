@@ -1,18 +1,26 @@
 using Aidan.Core.Errors;
+using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.BankAccounts.Aggregates;
 using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Application.Requests;
+using Nexus.BankAccounts.Application.Responses;
 using Nexus.BankAccounts.Errors;
 
 namespace Nexus.BankAccounts.Application.Services;
 
 public sealed class BankAccountService : IBankAccountService
 {
-    private readonly IBankAccountRepository _bankAccounts;
+    private IBankAccountRepository _bankAccounts { get; }
+    private IAccountIdValidator _accountIdValidator { get; }
 
-    public BankAccountService(IBankAccountRepository bankAccounts)
+    public BankAccountService(
+        IBankAccountRepository bankAccounts,
+        IAccountIdValidator accountIdValidator)
     {
         _bankAccounts = bankAccounts;
+        _accountIdValidator = accountIdValidator;
     }
 
     public async Task<IResult<BankAccount>> CreateAsync(CreateBankAccountRequest request)
@@ -20,7 +28,7 @@ public sealed class BankAccountService : IBankAccountService
         ArgumentNullException.ThrowIfNull(request);
 
         var createResult = BankAccount.Create(
-            request.StrawManId,
+            request.OwnerId,
             request.Bank,
             request.Agency,
             request.AccountNumber,
@@ -56,6 +64,30 @@ public sealed class BankAccountService : IBankAccountService
             ? NotFound(bankAccountId)
             : Result<BankAccount>.Success(account));
     }
+
+    public async Task<IResult<SearchBankAccountsResponse>> SearchAsync(SearchBankAccountsRequest? request)
+    {
+        request ??= new SearchBankAccountsRequest();
+        var query = _bankAccounts.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.StrawManId))
+            query = query.Where(a => a.StrawManId == request.StrawManId.Trim());
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(a => a.CreatedAt)
+            .Skip(Math.Max(0, request.Offset))
+            .Take(NormalizeLimit(request.Limit))
+            .ToArrayAsync();
+
+        return Result<SearchBankAccountsResponse>.Success(new SearchBankAccountsResponse
+        {
+            Total = (int)total,
+            Items = items,
+        });
+    }
+
+    private static int NormalizeLimit(int limit) => limit <= 0 ? 30 : Math.Min(limit, 999);
 
     private BankAccount? FindBankAccount(string bankAccountId)
     {

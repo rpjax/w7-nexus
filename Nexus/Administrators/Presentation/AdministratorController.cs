@@ -5,12 +5,12 @@ using Nexus.Administrators.Application.Requests;
 using Nexus.Authorization.Application.Contracts;
 using Nexus.Controllers;
 using Nexus.StrawMen.Application.Contracts;
-using Nexus.BankAccounts.Application.Contracts;
 using Nexus.BankAccounts.Presentation;
 using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.CryptoWallets.Presentation;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Presentation;
+using Nexus.BankAccounts.Application.Requests;
 
 namespace Nexus.Administrators.Presentation;
 
@@ -563,7 +563,7 @@ public class AdministratorController : NexusController
 
     [HttpPost("bank-accounts/search")]
     public async Task<ActionResult> SearchBankAccountsAsync(
-        [FromBody] Application.Contracts.SearchBankAccountsRequest? request,
+        [FromBody] SearchBankAccountsRequest? request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
@@ -605,7 +605,7 @@ public class AdministratorController : NexusController
 
     [HttpPost("crypto-wallets/search")]
     public async Task<ActionResult> SearchCryptoWalletsAsync(
-        [FromBody] Application.Contracts.SearchCryptoWalletsRequest? request,
+        [FromBody] Nexus.CryptoWallets.Application.Contracts.SearchCryptoWalletsRequest? request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);

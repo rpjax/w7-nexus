@@ -395,7 +395,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails? EnrichOrigin(Transfer transfer, AccountLookup accountLookup)
+    private static TransferEndpointDetails? EnrichOrigin(Transfer transfer, AccountLookup accountLookup)
     {
         if (transfer.OriginType is null)
             return null;
@@ -410,7 +410,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             && accountLookup.CryptoWallets.TryGetValue(transfer.OriginCryptoWallet.CryptoWalletId, out var wallet))
             return EnrichCryptoWallet(wallet);
 
-        return new EnrichedAccountNodeDetails
+        return new TransferEndpointDetails
         {
             Kind = transfer.OriginType.ToString()!,
             Id = transfer.OriginBankAccount?.BankAccountId ?? transfer.OriginCryptoWallet?.CryptoWalletId,
@@ -418,7 +418,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails? EnrichDestination(Transfer transfer, AccountLookup accountLookup)
+    private static TransferEndpointDetails? EnrichDestination(Transfer transfer, AccountLookup accountLookup)
     {
         if (transfer.DestinationType is null)
             return null;
@@ -433,7 +433,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             && accountLookup.CryptoWallets.TryGetValue(transfer.DestinationCryptoWallet.CryptoWalletId, out var wallet))
             return EnrichCryptoWallet(wallet);
 
-        return new EnrichedAccountNodeDetails
+        return new TransferEndpointDetails
         {
             Kind = transfer.DestinationType.ToString()!,
             Id = transfer.DestinationBankAccount?.BankAccountId ?? transfer.DestinationCryptoWallet?.CryptoWalletId,
@@ -441,13 +441,13 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails EnrichBankAccount(BankAccount account)
+    private static TransferEndpointDetails EnrichBankAccount(BankAccount account)
     {
         var label = string.IsNullOrWhiteSpace(account.Label) ? null : account.Label.Trim();
         var bankSummary = $"{account.Bank} · Ag {account.Agency} · Cc {account.AccountNumber}{account.AccountDigit}";
         var displayName = string.IsNullOrWhiteSpace(label) ? bankSummary : label;
 
-        return new EnrichedAccountNodeDetails
+        return new TransferEndpointDetails
         {
             Kind = "BankAccount",
             Id = account.Id,
@@ -457,7 +457,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails EnrichCryptoWallet(CryptoWallet wallet)
+    private static TransferEndpointDetails EnrichCryptoWallet(CryptoWallet wallet)
     {
         var label = string.IsNullOrWhiteSpace(wallet.Label) ? null : wallet.Label.Trim();
         var addressParts = wallet.Addresses
@@ -468,7 +468,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             : "Sem endereços";
         var displayName = string.IsNullOrWhiteSpace(label) ? cryptoSummary : label;
 
-        return new EnrichedAccountNodeDetails
+        return new TransferEndpointDetails
         {
             Kind = "CryptoWallet",
             Id = wallet.Id,
@@ -478,12 +478,12 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         };
     }
 
-    private static EnrichedAccountNodeDetails EnrichStrawMan(string strawManId, AccountLookup accountLookup)
+    private static TransferEndpointDetails EnrichStrawMan(string strawManId, AccountLookup accountLookup)
     {
         var summary = ResolveAccountSummary(strawManId, accountLookup);
         var username = summary?.Username ?? strawManId;
 
-        return new EnrichedAccountNodeDetails
+        return new TransferEndpointDetails
         {
             Kind = "StrawMan",
             Id = strawManId,

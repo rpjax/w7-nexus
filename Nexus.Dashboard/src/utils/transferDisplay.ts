@@ -1,23 +1,23 @@
-import type { EnrichedAccountNode, TransferRow, TransferTimelineStep } from '../api/types';
+import type { TransferEndpoint, TransferRow, TransferTimelineStep } from '../api/types';
 import { resolveBankMetadata } from './bankAccountDisplay';
 import { formatMoney } from './financeLabels';
 import { shortId } from './format';
 
-export function formatEnrichedAccountTitle(node: EnrichedAccountNode): string {
-  if (node.label?.trim()) return node.label.trim();
-  if (node.username?.trim()) return `@${node.username.trim()}`;
-  const bank = resolveBankMetadata(node.displayName);
+export function formatTransferEndpointTitle(endpoint: TransferEndpoint): string {
+  if (endpoint.label?.trim()) return endpoint.label.trim();
+  if (endpoint.username?.trim()) return `@${endpoint.username.trim()}`;
+  const bank = resolveBankMetadata(endpoint.displayName);
   if (bank) return bank.name;
-  return humanizeAccountKey(node.displayName);
+  return humanizeAccountKey(endpoint.displayName);
 }
 
-export function formatEnrichedAccountSubtitle(node: EnrichedAccountNode): string | null {
-  if (node.bankSummary?.trim()) {
-    const bank = resolveBankMetadata(node.displayName);
-    if (bank) return `${bank.code} · ${node.bankSummary.trim()}`;
-    return node.bankSummary.trim();
+export function formatTransferEndpointSubtitle(endpoint: TransferEndpoint): string | null {
+  if (endpoint.bankSummary?.trim()) {
+    const bank = resolveBankMetadata(endpoint.displayName);
+    if (bank) return `${bank.code} · ${endpoint.bankSummary.trim()}`;
+    return endpoint.bankSummary.trim();
   }
-  if (node.cryptoSummary?.trim()) return node.cryptoSummary.trim();
+  if (endpoint.cryptoSummary?.trim()) return endpoint.cryptoSummary.trim();
   return null;
 }
 

@@ -1,4 +1,5 @@
 using Aidan.Core.Errors;
+using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
@@ -77,6 +78,30 @@ public sealed class CryptoWalletService : ICryptoWalletService
             ? NotFound(cryptoWalletId)
             : Result<CryptoWallet>.Success(wallet));
     }
+
+    public async Task<IResult<SearchCryptoWalletsResponse>> SearchAsync(SearchCryptoWalletsRequest? request)
+    {
+        request ??= new SearchCryptoWalletsRequest();
+        var query = _cryptoWallets.AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(request.StrawManId))
+            query = query.Where(w => w.StrawManId == request.StrawManId.Trim());
+
+        var total = await query.CountAsync();
+        var items = await query
+            .OrderByDescending(w => w.CreatedAt)
+            .Skip(Math.Max(0, request.Offset))
+            .Take(NormalizeLimit(request.Limit))
+            .ToArrayAsync();
+
+        return Result<SearchCryptoWalletsResponse>.Success(new SearchCryptoWalletsResponse
+        {
+            Total = (int)total,
+            Items = items,
+        });
+    }
+
+    private static int NormalizeLimit(int limit) => limit <= 0 ? 30 : Math.Min(limit, 999);
 
     private CryptoWallet? FindCryptoWallet(string cryptoWalletId)
     {

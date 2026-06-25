@@ -31,8 +31,8 @@ public sealed class TransferEnrichedDetails
     public required TransferType Type { get; init; }
     public string? OnrampingMethod { get; init; }
     public TransferProofDetails? Proof { get; init; }
-    public EnrichedAccountNodeDetails? Source { get; init; }
-    public EnrichedAccountNodeDetails? Destination { get; init; }
+    public TransferEndpointDetails? Source { get; init; }
+    public TransferEndpointDetails? Destination { get; init; }
     public required decimal SourceAmount { get; init; }
     public decimal? ProducedAmount { get; init; }
     public string? ProducedAsset { get; init; }
@@ -56,7 +56,7 @@ public sealed class AccountSummaryDetails
     public required string Username { get; init; }
 }
 
-public sealed class EnrichedAccountNodeDetails
+public sealed class TransferEndpointDetails
 {
     public required string Kind { get; init; }
     public string? Id { get; init; }
@@ -75,7 +75,7 @@ public sealed class BalanceEffectDetails
     public string? Chain { get; init; }
     public string? Asset { get; init; }
     public required string Currency { get; init; }
-    public required EnrichedAccountNodeDetails Account { get; init; }
+    public required TransferEndpointDetails Account { get; init; }
 }
 
 public sealed class PaymentSummaryDetails
@@ -98,7 +98,7 @@ public sealed class ActiveBalanceDetails
     public string? Chain { get; init; }
     public string? Asset { get; init; }
     public required string Currency { get; init; }
-    public required EnrichedAccountNodeDetails Account { get; init; }
+    public required TransferEndpointDetails Account { get; init; }
     public required bool CanMove { get; init; }
     public required bool CanPayout { get; init; }
 }

@@ -40,8 +40,8 @@ public static class TransferTimelineApiMapping
                 pixAuthenticationCode = transfer.Proof.PixAuthenticationCode,
                 cryptoTransactionId = transfer.Proof.CryptoTransactionId,
             },
-        source = ToNode(transfer.Source),
-        destination = ToNode(transfer.Destination),
+        source = ToEndpoint(transfer.Source),
+        destination = ToEndpoint(transfer.Destination),
         sourceAmount = transfer.SourceAmount,
         producedAmount = transfer.ProducedAmount,
         producedAsset = transfer.ProducedAsset,
@@ -64,20 +64,20 @@ public static class TransferTimelineApiMapping
         };
     }
 
-    private static object? ToNode(EnrichedAccountNodeDetails? node)
+    private static object? ToEndpoint(TransferEndpointDetails? endpoint)
     {
-        if (node is null)
+        if (endpoint is null)
             return null;
 
         return new
         {
-            kind = node.Kind,
-            id = node.Id,
-            displayName = node.DisplayName,
-            label = node.Label,
-            username = node.Username,
-            bankSummary = node.BankSummary,
-            cryptoSummary = node.CryptoSummary,
+            kind = endpoint.Kind,
+            id = endpoint.Id,
+            displayName = endpoint.DisplayName,
+            label = endpoint.Label,
+            username = endpoint.Username,
+            bankSummary = endpoint.BankSummary,
+            cryptoSummary = endpoint.CryptoSummary,
         };
     }
 
@@ -89,7 +89,7 @@ public static class TransferTimelineApiMapping
         chain = effect.Chain,
         asset = effect.Asset,
         currency = effect.Currency,
-        account = ToNode(effect.Account),
+        account = ToEndpoint(effect.Account),
     };
 
     private static object ToPayment(PaymentSummaryDetails payment) => new
@@ -112,7 +112,7 @@ public static class TransferTimelineApiMapping
         chain = balance.Chain,
         asset = balance.Asset,
         currency = balance.Currency,
-        account = ToNode(balance.Account),
+        account = ToEndpoint(balance.Account),
         canMove = balance.CanMove,
         canPayout = balance.CanPayout,
     };

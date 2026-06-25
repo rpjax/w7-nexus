@@ -193,7 +193,7 @@ export type AccountSummaryRow = {
   username: string;
 };
 
-export type EnrichedAccountNode = {
+export type TransferEndpoint = {
   kind: string;
   id?: string | null;
   displayName: string;
@@ -210,7 +210,7 @@ export type BalanceEffectRow = {
   chain?: string | null;
   asset?: string | null;
   currency: string;
-  account: EnrichedAccountNode;
+  account: TransferEndpoint;
 };
 
 export type PaymentSummaryRow = {
@@ -236,8 +236,8 @@ export type TransferEnrichedRow = {
   paymentIds: string[];
   sourceBalanceId?: string | null;
   createdAt: string;
-  source?: EnrichedAccountNode | null;
-  destination?: EnrichedAccountNode | null;
+  source?: TransferEndpoint | null;
+  destination?: TransferEndpoint | null;
   strawMan: AccountSummaryRow;
 };
 
@@ -261,7 +261,7 @@ export type ActiveBalanceRow = {
   chain?: string | null;
   asset?: string | null;
   currency: string;
-  account: EnrichedAccountNode;
+  account: TransferEndpoint;
   canMove: boolean;
   canPayout: boolean;
 };

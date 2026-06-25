@@ -1,4 +1,5 @@
 using Aidan.Core.Patterns;
+using Nexus.Accounts.Application.Contracts;
 using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
@@ -7,11 +8,15 @@ using Nexus.Authorization.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.BankAccounts.Aggregates;
 using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Errors;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Errors;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Application.Models;
 using Nexus.Transfers.Aggregates;
+using Nexus.BankAccounts.Application.Responses;
+using Nexus.BankAccounts.Application.Requests;
 
 namespace Nexus.Administrators.Application.Services;
 
@@ -27,7 +32,9 @@ public class Administrator : IAdministrator
     private IAdministratorOperatorAssignmentSearchService _operatorAssignmentSearch { get; }
     private IAdministratorProfitShareAccountSearchService _profitShareAccountSearch { get; }
     private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
-    private IAdministratorAccountNodeCommandService _accountNodes { get; }
+    private IBankAccountService _bankAccountService { get; }
+    private ICryptoWalletService _cryptoWallets { get; }
+    private IAccountRepository _accounts { get; }
     private IAdministratorTransferCommandService _transfers { get; }
     private IAdministratorPaymentSearchService _paymentSearch { get; }
     private IAdministratorPaymentCommandService _paymentCommands { get; }
@@ -44,11 +51,14 @@ public class Administrator : IAdministrator
         IAdministratorOperatorAssignmentSearchService operatorAssignmentSearch,
         IAdministratorProfitShareAccountSearchService profitShareAccountSearch,
         IAdministratorOperationPickerSearchService operationPickerSearch,
-        IAdministratorAccountNodeCommandService accountNodes,
+        IBankAccountService bankAccounts,
+        ICryptoWalletService cryptoWallets,
+        IAccountRepository accounts,
         IAdministratorTransferCommandService transfers,
         IAdministratorPaymentSearchService paymentSearch,
         IAdministratorPaymentCommandService paymentCommands,
-        IAdministratorStrawManSettingsCommandService strawManSettings)
+        IAdministratorStrawManSettingsCommandService strawManSettings,
+        IAccountIdValidator accountIdValidator)
     {
         _policy = policy;
         _operationSearch = operationSearch;
@@ -60,734 +70,1395 @@ public class Administrator : IAdministrator
         _operatorAssignmentSearch = operatorAssignmentSearch;
         _profitShareAccountSearch = profitShareAccountSearch;
         _operationPickerSearch = operationPickerSearch;
-        _accountNodes = accountNodes;
+        _bankAccountService = bankAccounts;
+        _cryptoWallets = cryptoWallets;
+        _accounts = accounts;
         _transfers = transfers;
         _paymentSearch = paymentSearch;
         _paymentCommands = paymentCommands;
         _strawManSettings = strawManSettings;
     }
 
-    public Task<IOperationResult<OperationDetails>> CreateOperationAsync(
+    public async Task<IOperationResult<OperationDetails>> CreateOperationAsync(
         RequesterIdentity identity,
         CreateOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.CreateOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<OperationDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<OperationDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.CreateOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<OperationDetails>.Failure(result.Errors);
+
+        if (result.Value is not OperationDetails value)
+            return OperationResult<OperationDetails>.Failure(result.Errors);
+
+        return OperationResult<OperationDetails>.Success(value);
     }
 
-    public Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
+    public async Task<IOperationResult<SearchOperationsResponse>> SearchOperationsAsync(
         RequesterIdentity identity,
         SearchOperationsRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationSearch.SearchOperationsAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchOperationsResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchOperationsResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationSearch.SearchOperationsAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchOperationsResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchOperationsResponse value)
+            return OperationResult<SearchOperationsResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchOperationsResponse>.Success(value);
     }
 
-    public Task<IOperationResult<DeleteOperationResponse>> DeleteOperationAsync(
+    public async Task<IOperationResult<DeleteOperationResponse>> DeleteOperationAsync(
         RequesterIdentity identity,
         DeleteOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.DeleteOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<DeleteOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<DeleteOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.DeleteOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<DeleteOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not DeleteOperationResponse value)
+            return OperationResult<DeleteOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<DeleteOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
+    public async Task<IOperationResult<AssignOperationAdministratorResponse>> AssignOperationAdministratorAsync(
         RequesterIdentity identity,
         AssignOperationAdministratorRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.AssignOperationAdministratorAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignOperationAdministratorResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignOperationAdministratorResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.AssignOperationAdministratorAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignOperationAdministratorResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignOperationAdministratorResponse value)
+            return OperationResult<AssignOperationAdministratorResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignOperationAdministratorResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
+    public async Task<IOperationResult<UnassignOperationAdministratorResponse>> UnassignOperationAdministratorAsync(
         RequesterIdentity identity,
         UnassignOperationAdministratorRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.UnassignOperationAdministratorAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignOperationAdministratorResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignOperationAdministratorResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.UnassignOperationAdministratorAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignOperationAdministratorResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignOperationAdministratorResponse value)
+            return OperationResult<UnassignOperationAdministratorResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignOperationAdministratorResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
+    public async Task<IOperationResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
         RequesterIdentity identity,
         SetOperationGatewaySelectionStrategyRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.SetOperationGatewaySelectionStrategyAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.SetOperationGatewaySelectionStrategyAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Failure(result.Errors);
+
+        if (result.Value is not SetOperationGatewaySelectionStrategyResponse value)
+            return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Failure(result.Errors);
+
+        return OperationResult<SetOperationGatewaySelectionStrategyResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
+    public async Task<IOperationResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
         RequesterIdentity identity,
         AssignStrawManToOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.AssignStrawManToOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignStrawManToOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignStrawManToOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.AssignStrawManToOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignStrawManToOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignStrawManToOperationResponse value)
+            return OperationResult<AssignStrawManToOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignStrawManToOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
+    public async Task<IOperationResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
         RequesterIdentity identity,
         UnassignStrawManFromOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.UnassignStrawManFromOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignStrawManFromOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignStrawManFromOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.UnassignStrawManFromOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignStrawManFromOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignStrawManFromOperationResponse value)
+            return OperationResult<UnassignStrawManFromOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignStrawManFromOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
+    public async Task<IOperationResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
         RequesterIdentity identity,
         AssignGatewayAccountGroupToOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.AssignGatewayAccountGroupToOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.AssignGatewayAccountGroupToOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignGatewayAccountGroupToOperationResponse value)
+            return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignGatewayAccountGroupToOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
+    public async Task<IOperationResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountGroupFromOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.UnassignGatewayAccountGroupFromOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.UnassignGatewayAccountGroupFromOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignGatewayAccountGroupFromOperationResponse value)
+            return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignGatewayAccountGroupFromOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
+    public async Task<IOperationResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
         RequesterIdentity identity,
         AssignGatewayAccountToOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.AssignGatewayAccountToOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignGatewayAccountToOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignGatewayAccountToOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.AssignGatewayAccountToOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignGatewayAccountToOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignGatewayAccountToOperationResponse value)
+            return OperationResult<AssignGatewayAccountToOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignGatewayAccountToOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
+    public async Task<IOperationResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountFromOperationRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationCommands.UnassignGatewayAccountFromOperationAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignGatewayAccountFromOperationResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignGatewayAccountFromOperationResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationCommands.UnassignGatewayAccountFromOperationAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignGatewayAccountFromOperationResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignGatewayAccountFromOperationResponse value)
+            return OperationResult<UnassignGatewayAccountFromOperationResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignGatewayAccountFromOperationResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
+    public async Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
         RequesterIdentity identity,
         SearchAccountsRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountSearch.SearchAccountsAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchAccountsResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchAccountsResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _accountSearch.SearchAccountsAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchAccountsResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchAccountsResponse value)
+            return OperationResult<SearchAccountsResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchAccountsResponse>.Success(value);
     }
 
-    public Task<IOperationResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(
+    public async Task<IOperationResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(
         RequesterIdentity identity,
         GrantAccountRoleRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountCommands.GrantAccountRoleAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<GrantAccountRoleResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<GrantAccountRoleResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _accountCommands.GrantAccountRoleAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<GrantAccountRoleResponse>.Failure(result.Errors);
+
+        if (result.Value is not GrantAccountRoleResponse value)
+            return OperationResult<GrantAccountRoleResponse>.Failure(result.Errors);
+
+        return OperationResult<GrantAccountRoleResponse>.Success(value);
     }
 
-    public Task<IOperationResult<RevokeAccountRoleResponse>> RevokeAccountRoleAsync(
+    public async Task<IOperationResult<RevokeAccountRoleResponse>> RevokeAccountRoleAsync(
         RequesterIdentity identity,
         RevokeAccountRoleRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountCommands.RevokeAccountRoleAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<RevokeAccountRoleResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<RevokeAccountRoleResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _accountCommands.RevokeAccountRoleAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<RevokeAccountRoleResponse>.Failure(result.Errors);
+
+        if (result.Value is not RevokeAccountRoleResponse value)
+            return OperationResult<RevokeAccountRoleResponse>.Failure(result.Errors);
+
+        return OperationResult<RevokeAccountRoleResponse>.Success(value);
     }
 
-    public Task<IOperationResult<GrantAccountPermissionResponse>> GrantAccountPermissionAsync(
+    public async Task<IOperationResult<GrantAccountPermissionResponse>> GrantAccountPermissionAsync(
         RequesterIdentity identity,
         GrantAccountPermissionRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountCommands.GrantAccountPermissionAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<GrantAccountPermissionResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<GrantAccountPermissionResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _accountCommands.GrantAccountPermissionAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<GrantAccountPermissionResponse>.Failure(result.Errors);
+
+        if (result.Value is not GrantAccountPermissionResponse value)
+            return OperationResult<GrantAccountPermissionResponse>.Failure(result.Errors);
+
+        return OperationResult<GrantAccountPermissionResponse>.Success(value);
     }
 
-    public Task<IOperationResult<RevokeAccountPermissionResponse>> RevokeAccountPermissionAsync(
+    public async Task<IOperationResult<RevokeAccountPermissionResponse>> RevokeAccountPermissionAsync(
         RequesterIdentity identity,
         RevokeAccountPermissionRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountCommands.RevokeAccountPermissionAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<RevokeAccountPermissionResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<RevokeAccountPermissionResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _accountCommands.RevokeAccountPermissionAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<RevokeAccountPermissionResponse>.Failure(result.Errors);
+
+        if (result.Value is not RevokeAccountPermissionResponse value)
+            return OperationResult<RevokeAccountPermissionResponse>.Failure(result.Errors);
+
+        return OperationResult<RevokeAccountPermissionResponse>.Success(value);
     }
 
-    public Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
+    public async Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
         RequesterIdentity identity,
         CreateOperationTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.CreateOperationTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<CreateOperationTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<CreateOperationTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.CreateOperationTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<CreateOperationTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not CreateOperationTeamResponse value)
+            return OperationResult<CreateOperationTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<CreateOperationTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<DeleteOperationTeamResponse>> DeleteOperationTeamAsync(
+    public async Task<IOperationResult<DeleteOperationTeamResponse>> DeleteOperationTeamAsync(
         RequesterIdentity identity,
         DeleteOperationTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.DeleteOperationTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<DeleteOperationTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<DeleteOperationTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.DeleteOperationTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<DeleteOperationTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not DeleteOperationTeamResponse value)
+            return OperationResult<DeleteOperationTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<DeleteOperationTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderAsync(
+    public async Task<IOperationResult<AssignOperationTeamLeaderResponse>> AssignOperationTeamLeaderAsync(
         RequesterIdentity identity,
         AssignOperationTeamLeaderRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.AssignOperationTeamLeaderAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignOperationTeamLeaderResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignOperationTeamLeaderResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.AssignOperationTeamLeaderAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignOperationTeamLeaderResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignOperationTeamLeaderResponse value)
+            return OperationResult<AssignOperationTeamLeaderResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignOperationTeamLeaderResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderAsync(
+    public async Task<IOperationResult<UnassignOperationTeamLeaderResponse>> UnassignOperationTeamLeaderAsync(
         RequesterIdentity identity,
         UnassignOperationTeamLeaderRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.UnassignOperationTeamLeaderAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignOperationTeamLeaderResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignOperationTeamLeaderResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.UnassignOperationTeamLeaderAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignOperationTeamLeaderResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignOperationTeamLeaderResponse value)
+            return OperationResult<UnassignOperationTeamLeaderResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignOperationTeamLeaderResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
+    public async Task<IOperationResult<SetTeamGatewaySelectionStrategyResponse>> SetTeamGatewaySelectionStrategyAsync(
         RequesterIdentity identity,
         SetTeamGatewaySelectionStrategyRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.SetTeamGatewaySelectionStrategyAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.SetTeamGatewaySelectionStrategyAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Failure(result.Errors);
+
+        if (result.Value is not SetTeamGatewaySelectionStrategyResponse value)
+            return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Failure(result.Errors);
+
+        return OperationResult<SetTeamGatewaySelectionStrategyResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
+    public async Task<IOperationResult<AssignStrawManToTeamResponse>> AssignStrawManToTeamAsync(
         RequesterIdentity identity,
         AssignStrawManToTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.AssignStrawManToTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignStrawManToTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignStrawManToTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.AssignStrawManToTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignStrawManToTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignStrawManToTeamResponse value)
+            return OperationResult<AssignStrawManToTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignStrawManToTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
+    public async Task<IOperationResult<UnassignStrawManFromTeamResponse>> UnassignStrawManFromTeamAsync(
         RequesterIdentity identity,
         UnassignStrawManFromTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.UnassignStrawManFromTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignStrawManFromTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignStrawManFromTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.UnassignStrawManFromTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignStrawManFromTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignStrawManFromTeamResponse value)
+            return OperationResult<UnassignStrawManFromTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignStrawManFromTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
+    public async Task<IOperationResult<AssignGatewayAccountGroupToTeamResponse>> AssignGatewayAccountGroupToTeamAsync(
         RequesterIdentity identity,
         AssignGatewayAccountGroupToTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.AssignGatewayAccountGroupToTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.AssignGatewayAccountGroupToTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignGatewayAccountGroupToTeamResponse value)
+            return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignGatewayAccountGroupToTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
+    public async Task<IOperationResult<UnassignGatewayAccountGroupFromTeamResponse>> UnassignGatewayAccountGroupFromTeamAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountGroupFromTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.UnassignGatewayAccountGroupFromTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.UnassignGatewayAccountGroupFromTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignGatewayAccountGroupFromTeamResponse value)
+            return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignGatewayAccountGroupFromTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
+    public async Task<IOperationResult<AssignGatewayAccountToTeamResponse>> AssignGatewayAccountToTeamAsync(
         RequesterIdentity identity,
         AssignGatewayAccountToTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.AssignGatewayAccountToTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignGatewayAccountToTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignGatewayAccountToTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.AssignGatewayAccountToTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignGatewayAccountToTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignGatewayAccountToTeamResponse value)
+            return OperationResult<AssignGatewayAccountToTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignGatewayAccountToTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
+    public async Task<IOperationResult<UnassignGatewayAccountFromTeamResponse>> UnassignGatewayAccountFromTeamAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountFromTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamCommands.UnassignGatewayAccountFromTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignGatewayAccountFromTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignGatewayAccountFromTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamCommands.UnassignGatewayAccountFromTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignGatewayAccountFromTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignGatewayAccountFromTeamResponse value)
+            return OperationResult<UnassignGatewayAccountFromTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignGatewayAccountFromTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
+    public async Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
         RequesterIdentity identity,
         AssignOperatorToTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamOperatorCommands.AssignOperatorToTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<AssignOperatorToTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<AssignOperatorToTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamOperatorCommands.AssignOperatorToTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<AssignOperatorToTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not AssignOperatorToTeamResponse value)
+            return OperationResult<AssignOperatorToTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<AssignOperatorToTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
+    public async Task<IOperationResult<UnassignOperatorFromTeamResponse>> UnassignOperatorFromTeamAsync(
         RequesterIdentity identity,
         UnassignOperatorFromTeamRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamOperatorCommands.UnassignOperatorFromTeamAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<UnassignOperatorFromTeamResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<UnassignOperatorFromTeamResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamOperatorCommands.UnassignOperatorFromTeamAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<UnassignOperatorFromTeamResponse>.Failure(result.Errors);
+
+        if (result.Value is not UnassignOperatorFromTeamResponse value)
+            return OperationResult<UnassignOperatorFromTeamResponse>.Failure(result.Errors);
+
+        return OperationResult<UnassignOperatorFromTeamResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
+    public async Task<IOperationResult<SetOperatorProfitShareRuleResponse>> SetOperatorProfitShareRuleAsync(
         RequesterIdentity identity,
         SetOperatorProfitShareRuleRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _teamOperatorCommands.SetOperatorProfitShareRuleAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SetOperatorProfitShareRuleResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SetOperatorProfitShareRuleResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _teamOperatorCommands.SetOperatorProfitShareRuleAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SetOperatorProfitShareRuleResponse>.Failure(result.Errors);
+
+        if (result.Value is not SetOperatorProfitShareRuleResponse value)
+            return OperationResult<SetOperatorProfitShareRuleResponse>.Failure(result.Errors);
+
+        return OperationResult<SetOperatorProfitShareRuleResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SearchOperatorsToAssignResponse>> SearchOperatorsToAssignAsync(
+    public async Task<IOperationResult<SearchOperatorsToAssignResponse>> SearchOperatorsToAssignAsync(
         RequesterIdentity identity,
         SearchOperatorsToAssignRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operatorAssignmentSearch.SearchOperatorsToAssignAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchOperatorsToAssignResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchOperatorsToAssignResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operatorAssignmentSearch.SearchOperatorsToAssignAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchOperatorsToAssignResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchOperatorsToAssignResponse value)
+            return OperationResult<SearchOperatorsToAssignResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchOperatorsToAssignResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SearchProfitShareAccountsToAssignResponse>> SearchProfitShareAccountsToAssignAsync(
+    public async Task<IOperationResult<SearchProfitShareAccountsToAssignResponse>> SearchProfitShareAccountsToAssignAsync(
         RequesterIdentity identity,
         SearchProfitShareAccountsToAssignRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _profitShareAccountSearch.SearchProfitShareAccountsToAssignAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchProfitShareAccountsToAssignResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchProfitShareAccountsToAssignResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _profitShareAccountSearch.SearchProfitShareAccountsToAssignAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchProfitShareAccountsToAssignResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchProfitShareAccountsToAssignResponse value)
+            return OperationResult<SearchProfitShareAccountsToAssignResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchProfitShareAccountsToAssignResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SearchOperationsToAssignResponse>> SearchOperationsToAssignAsync(
+    public async Task<IOperationResult<SearchOperationsToAssignResponse>> SearchOperationsToAssignAsync(
         RequesterIdentity identity,
         SearchOperationsToAssignRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _operationPickerSearch.SearchOperationsToAssignAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchOperationsToAssignResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchOperationsToAssignResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _operationPickerSearch.SearchOperationsToAssignAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchOperationsToAssignResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchOperationsToAssignResponse value)
+            return OperationResult<SearchOperationsToAssignResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchOperationsToAssignResponse>.Success(value);
     }
 
-    public Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
+    public async Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
         RequesterIdentity identity,
         CreateBankAccountRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.CreateBankAccountAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<BankAccount>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<BankAccount>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _bankAccountService.CreateAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<BankAccount>.Failure(result.Errors);
+
+        if (result.Value is not BankAccount value)
+            throw new InvalidOperationException();
+
+        return OperationResult<BankAccount>.Success(value);
     }
 
-    public Task<IOperationResult<CryptoWallet>> CreateCryptoWalletAsync(
+    public async Task<IOperationResult<CryptoWallet>> CreateCryptoWalletAsync(
         RequesterIdentity identity,
         CreateCryptoWalletRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.CreateCryptoWalletAsync(request),
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
+
+        var validation = await StrawManValidation.ValidateStrawManAccountAsync(
+            _accounts,
+            request.StrawManId,
+            CryptoWalletErrorCodes.StrawManInvalid,
+            CryptoWalletErrorCodes.StrawManNotFound,
+            CryptoWalletErrorCodes.StrawManRoleRequired,
             cancellationToken);
+
+        if (validation is not null)
+            return OperationResult<CryptoWallet>.Failure(validation.Errors);
+
+        var result = await _cryptoWallets.CreateAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        if (result.Value is not CryptoWallet value)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        return OperationResult<CryptoWallet>.Success(value);
     }
 
-    public Task<IOperationResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
+    public async Task<IOperationResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
         RequesterIdentity identity,
         UpsertCryptoWalletAddressRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.UpsertCryptoWalletAddressAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _cryptoWallets.UpsertAddressAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        if (result.Value is not CryptoWallet value)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        return OperationResult<CryptoWallet>.Success(value);
     }
 
-    public Task<IOperationResult<BankAccount>> GetBankAccountAsync(
+    public async Task<IOperationResult<BankAccount>> GetBankAccountAsync(
         RequesterIdentity identity,
         string bankAccountId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.GetBankAccountAsync(bankAccountId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<BankAccount>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<BankAccount>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _bankAccountService.GetByIdAsync(bankAccountId);
+
+        if (result.IsFailure)
+            return OperationResult<BankAccount>.Failure(result.Errors);
+
+        if (result.Value is not BankAccount value)
+            return OperationResult<BankAccount>.Failure(result.Errors);
+
+        return OperationResult<BankAccount>.Success(value);
     }
 
-    public Task<IOperationResult<CryptoWallet>> GetCryptoWalletAsync(
+    public async Task<IOperationResult<CryptoWallet>> GetCryptoWalletAsync(
         RequesterIdentity identity,
         string cryptoWalletId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.GetCryptoWalletAsync(cryptoWalletId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<CryptoWallet>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _cryptoWallets.GetByIdAsync(cryptoWalletId);
+
+        if (result.IsFailure)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        if (result.Value is not CryptoWallet value)
+            return OperationResult<CryptoWallet>.Failure(result.Errors);
+
+        return OperationResult<CryptoWallet>.Success(value);
     }
 
-    public Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
+    public async Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
         RequesterIdentity identity,
         WithdrawalTransferRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.ExecuteWithdrawalAsync(request, cancellationToken),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Transfer>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.ExecuteWithdrawalAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        if (result.Value is not Transfer value)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        return OperationResult<Transfer>.Success(value);
     }
 
-    public Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
+    public async Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
         RequesterIdentity identity,
         MovementTransferRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.ExecuteMovementAsync(request, cancellationToken),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Transfer>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.ExecuteMovementAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        if (result.Value is not Transfer value)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        return OperationResult<Transfer>.Success(value);
     }
 
-    public Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(
+    public async Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(
         RequesterIdentity identity,
         PayoutTransferRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.ExecutePayoutAsync(request, cancellationToken),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Transfer>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.ExecutePayoutAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        if (result.Value is not Transfer value)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        return OperationResult<Transfer>.Success(value);
     }
 
-    public Task<IOperationResult<Transfer>> GetTransferAsync(
+    public async Task<IOperationResult<Transfer>> GetTransferAsync(
         RequesterIdentity identity,
         string transferId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.GetTransferAsync(transferId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Transfer>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.GetTransferAsync(transferId);
+
+        if (result.IsFailure)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        if (result.Value is not Transfer value)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        return OperationResult<Transfer>.Success(value);
     }
 
-    public Task<IOperationResult<TransferTimelineDetails>> GetTransferTimelineAsync(
+    public async Task<IOperationResult<TransferTimelineDetails>> GetTransferTimelineAsync(
         RequesterIdentity identity,
         string transferId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.GetTransferTimelineAsync(transferId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<TransferTimelineDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<TransferTimelineDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.GetTransferTimelineAsync(transferId);
+
+        if (result.IsFailure)
+            return OperationResult<TransferTimelineDetails>.Failure(result.Errors);
+
+        if (result.Value is not TransferTimelineDetails value)
+            return OperationResult<TransferTimelineDetails>.Failure(result.Errors);
+
+        return OperationResult<TransferTimelineDetails>.Success(value);
     }
 
-    public Task<IOperationResult<SearchTransfersResponse>> SearchTransfersAsync(
+    public async Task<IOperationResult<SearchTransfersResponse>> SearchTransfersAsync(
         RequesterIdentity identity,
         SearchTransfersRequest? request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _transfers.SearchTransfersAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchTransfersResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchTransfersResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.SearchTransfersAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchTransfersResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchTransfersResponse value)
+            return OperationResult<SearchTransfersResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchTransfersResponse>.Success(value);
     }
 
-    public Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
+    public async Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
         RequesterIdentity identity,
         SearchBankAccountsRequest? request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.SearchBankAccountsAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchBankAccountsResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchBankAccountsResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _bankAccountService.SearchAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchBankAccountsResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchBankAccountsResponse value)
+            return OperationResult<SearchBankAccountsResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchBankAccountsResponse>.Success(value);
     }
 
-    public Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
+    public async Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
         RequesterIdentity identity,
         string bankAccountId,
         string? label,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.UpdateBankAccountLabelAsync(bankAccountId, label),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<BankAccount>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<BankAccount>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _bankAccountService.UpdateLabelAsync(bankAccountId, label);
+
+        if (result.IsFailure)
+            return OperationResult<BankAccount>.Failure(result.Errors);
+
+        if (result.Value is not BankAccount value)
+            return OperationResult<BankAccount>.Failure(result.Errors);
+
+        return OperationResult<BankAccount>.Success(value);
     }
 
-    public Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
+    public async Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
         RequesterIdentity identity,
         SearchCryptoWalletsRequest? request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _accountNodes.SearchCryptoWalletsAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<SearchCryptoWalletsResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<SearchCryptoWalletsResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _cryptoWallets.SearchAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<SearchCryptoWalletsResponse>.Failure(result.Errors);
+
+        if (result.Value is not SearchCryptoWalletsResponse value)
+            return OperationResult<SearchCryptoWalletsResponse>.Failure(result.Errors);
+
+        return OperationResult<SearchCryptoWalletsResponse>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
+    public async Task<IOperationResult<Payments.Application.Models.SearchPaymentsResponse>> SearchPaymentsAsync(
         RequesterIdentity identity,
         Payments.Application.Models.SearchPaymentsRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentSearch.SearchPaymentsAsync(request),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentSearch.SearchPaymentsAsync(request);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.SearchPaymentsResponse value)
+            return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.SearchPaymentsResponse>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> GetPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentSearch.GetPaymentAsync(paymentId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentSearch.GetPaymentAsync(paymentId);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> PayPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentCommands.PayAndGetAsync(paymentId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.PayAndGetAsync(paymentId);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> RefundPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentCommands.RefundAndGetAsync(paymentId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.RefundAndGetAsync(paymentId);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> KillPaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         string reason,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentCommands.KillAndGetAsync(paymentId, reason),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.KillAndGetAsync(paymentId, reason);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<bool>> DeletePaymentAsync(
+    public async Task<IOperationResult<bool>> DeletePaymentAsync(
         RequesterIdentity identity,
         string paymentId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync<bool>(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            async () =>
-            {
-                var deleteResult = await _paymentCommands.DeletePaymentAsync(paymentId);
-                if (deleteResult.IsFailure)
-                    return Result<bool>.Failure(deleteResult.Errors);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
-                return Result<bool>.Success(true);
-            },
-            cancellationToken);
+        if (authorization.IsFailure)
+            return OperationResult<bool>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<bool>.Unauthorized(authorization.AuthorizationErrors);
+
+        var deleteResult = await _paymentCommands.DeletePaymentAsync(paymentId);
+        if (deleteResult.IsFailure)
+            return OperationResult<bool>.Failure(deleteResult.Errors);
+
+        return OperationResult<bool>.Success(true);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentOperatorAsync(
         RequesterIdentity identity,
         string paymentId,
         string operatorAccountId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentCommands.BindOperatorAsync(paymentId, operatorAccountId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.BindOperatorAsync(paymentId, operatorAccountId);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
+    public async Task<IOperationResult<Payments.Application.Models.PaymentDetails>> BindPaymentStrawManAsync(
         RequesterIdentity identity,
         string paymentId,
         string strawManAccountId,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _paymentCommands.BindStrawManAsync(paymentId, strawManAccountId),
-            cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.BindStrawManAsync(paymentId, strawManAccountId);
+
+        if (result.IsFailure)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not Payments.Application.Models.PaymentDetails value)
+            return OperationResult<Payments.Application.Models.PaymentDetails>.Failure(result.Errors);
+
+        return OperationResult<Payments.Application.Models.PaymentDetails>.Success(value);
     }
 
-    public Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
+    public async Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
         RequesterIdentity identity,
         string strawManId,
         decimal movementFeePercentage,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(
-            identity,
-            _ => _policy.AuthorizeAdministratorAsync(identity),
-            () => _strawManSettings.UpsertStrawManSettingsAsync(
-                identity,
-                strawManId,
-                movementFeePercentage),
-            cancellationToken);
-    }
-
-    private async Task<IOperationResult<T>> ExecuteAsync<T>(
-        RequesterIdentity identity,
-        Func<CancellationToken, Task<IAuthorizationResult>> authorizeAsync,
-        Func<Task<IResult<T>>> executeAsync,
-        CancellationToken cancellationToken)
-    {
-        var authorization = await authorizeAsync(cancellationToken);
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
 
         if (authorization.IsFailure)
-            return OperationResult<T>.Failure(authorization.Errors);
+            return OperationResult<StrawManSettingsDetails>.Failure(authorization.Errors);
 
         if (!authorization.IsAuthorized)
-            return OperationResult<T>.Unauthorized(authorization.AuthorizationErrors);
+            return OperationResult<StrawManSettingsDetails>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await executeAsync();
+        var result = await _strawManSettings.UpsertStrawManSettingsAsync(
+                identity,
+                strawManId,
+                movementFeePercentage);
 
         if (result.IsFailure)
-            return OperationResult<T>.Failure(result.Errors);
+            return OperationResult<StrawManSettingsDetails>.Failure(result.Errors);
 
-        if (result.Value is not T value)
-            return OperationResult<T>.Failure(result.Errors);
+        if (result.Value is not StrawManSettingsDetails value)
+            return OperationResult<StrawManSettingsDetails>.Failure(result.Errors);
 
-        return OperationResult<T>.Success(value);
+        return OperationResult<StrawManSettingsDetails>.Success(value);
     }
 }

@@ -10,8 +10,8 @@ import { Icon } from '../../components/IconButton';
 import { StatusPill } from '../../components/finance/StatusPill';
 import { transferTypeLabel } from '../../utils/financeLabels';
 import {
-  formatEnrichedAccountSubtitle,
-  formatEnrichedAccountTitle,
+  formatTransferEndpointSubtitle,
+  formatTransferEndpointTitle,
   formatStepAmount,
 } from '../../utils/transferDisplay';
 import { formatDateTime, shortId } from '../../utils/format';
@@ -82,9 +82,9 @@ function TransferHero({
       {destination ? (
         <div className="transfer-hero__destination">
           <span className="transfer-hero__dest-label">Destino</span>
-          <strong className="transfer-hero__dest-title">{formatEnrichedAccountTitle(destination)}</strong>
-          {formatEnrichedAccountSubtitle(destination) ? (
-            <span className="transfer-hero__dest-sub muted">{formatEnrichedAccountSubtitle(destination)}</span>
+          <strong className="transfer-hero__dest-title">{formatTransferEndpointTitle(destination)}</strong>
+          {formatTransferEndpointSubtitle(destination) ? (
+            <span className="transfer-hero__dest-sub muted">{formatTransferEndpointSubtitle(destination)}</span>
           ) : null}
         </div>
       ) : null}

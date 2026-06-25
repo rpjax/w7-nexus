@@ -15,6 +15,7 @@ public interface ICryptoWalletService
     Task<IResult<CryptoWallet>> UpsertAddressAsync(UpsertCryptoWalletAddressRequest request);
     Task<IResult<CryptoWallet>> UpdateLabelAsync(string cryptoWalletId, string? label);
     Task<IResult<CryptoWallet>> GetByIdAsync(string cryptoWalletId);
+    Task<IResult<SearchCryptoWalletsResponse>> SearchAsync(SearchCryptoWalletsRequest? request);
 }
 
 public sealed class CreateCryptoWalletAddressRequest
@@ -49,4 +50,17 @@ public sealed class UpsertCryptoWalletAddressBody
 public sealed class UpdateCryptoWalletLabelRequest
 {
     public string? Label { get; init; }
+}
+
+public sealed class SearchCryptoWalletsRequest
+{
+    public string? StrawManId { get; init; }
+    public int Limit { get; init; } = 30;
+    public int Offset { get; init; }
+}
+
+public sealed class SearchCryptoWalletsResponse
+{
+    public int Total { get; init; }
+    public IReadOnlyList<CryptoWallet> Items { get; init; } = Array.Empty<CryptoWallet>();
 }

@@ -3,7 +3,8 @@ using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
 using Nexus.BankAccounts.Aggregates;
-using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Application.Requests;
+using Nexus.BankAccounts.Application.Responses;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
 using Nexus.Payments.Application.Models;
@@ -16,6 +17,10 @@ namespace Nexus.Administrators.Application.Contracts;
 
 public interface IAdministrator
 {
+    // ==========================================================================
+    // Operations
+    // ==========================================================================
+
     Task<IOperationResult<OperationDetails>> CreateOperationAsync(
         RequesterIdentity identity,
         CreateOperationRequest request,
@@ -76,6 +81,10 @@ public interface IAdministrator
         UnassignGatewayAccountFromOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // ==========================================================================
+    // Accounts
+    // ==========================================================================
+
     Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
         RequesterIdentity identity,
         SearchAccountsRequest request,
@@ -100,6 +109,10 @@ public interface IAdministrator
         RequesterIdentity identity,
         RevokeAccountPermissionRequest request,
         CancellationToken cancellationToken = default);
+
+    // ==========================================================================
+    // Teams
+    // ==========================================================================
 
     Task<IOperationResult<CreateOperationTeamResponse>> CreateOperationTeamAsync(
         RequesterIdentity identity,
@@ -156,6 +169,10 @@ public interface IAdministrator
         UnassignGatewayAccountFromTeamRequest request,
         CancellationToken cancellationToken = default);
 
+    // ==========================================================================
+    // Team operators
+    // ==========================================================================
+
     Task<IOperationResult<AssignOperatorToTeamResponse>> AssignOperatorToTeamAsync(
         RequesterIdentity identity,
         AssignOperatorToTeamRequest request,
@@ -171,6 +188,10 @@ public interface IAdministrator
         SetOperatorProfitShareRuleRequest request,
         CancellationToken cancellationToken = default);
 
+    // ==========================================================================
+    // Assignment search
+    // ==========================================================================
+
     Task<IOperationResult<SearchOperatorsToAssignResponse>> SearchOperatorsToAssignAsync(
         RequesterIdentity identity,
         SearchOperatorsToAssignRequest request,
@@ -185,6 +206,10 @@ public interface IAdministrator
         RequesterIdentity identity,
         SearchOperationsToAssignRequest request,
         CancellationToken cancellationToken = default);
+
+    // ==========================================================================
+    // Bank accounts and crypto wallets
+    // ==========================================================================
 
     Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
         RequesterIdentity identity,
@@ -210,6 +235,26 @@ public interface IAdministrator
         RequesterIdentity identity,
         string cryptoWalletId,
         CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
+        RequesterIdentity identity,
+        SearchBankAccountsRequest? request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
+        RequesterIdentity identity,
+        string bankAccountId,
+        string? label,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
+        RequesterIdentity identity,
+        SearchCryptoWalletsRequest? request,
+        CancellationToken cancellationToken = default);
+
+    // ==========================================================================
+    // Transfers
+    // ==========================================================================
 
     Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
         RequesterIdentity identity,
@@ -241,21 +286,9 @@ public interface IAdministrator
         SearchTransfersRequest? request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
-        RequesterIdentity identity,
-        SearchBankAccountsRequest? request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
-        RequesterIdentity identity,
-        string bankAccountId,
-        string? label,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
-        RequesterIdentity identity,
-        SearchCryptoWalletsRequest? request,
-        CancellationToken cancellationToken = default);
+    // ==========================================================================
+    // Payments
+    // ==========================================================================
 
     Task<IOperationResult<SearchPaymentsResponse>> SearchPaymentsAsync(
         RequesterIdentity identity,
@@ -299,6 +332,10 @@ public interface IAdministrator
         string paymentId,
         string strawManId,
         CancellationToken cancellationToken = default);
+
+    // ==========================================================================
+    // Straw men
+    // ==========================================================================
 
     Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
         RequesterIdentity identity,
