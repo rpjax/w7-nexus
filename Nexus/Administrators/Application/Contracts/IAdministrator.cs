@@ -6,12 +6,13 @@ using Nexus.BankAccounts.Aggregates;
 using Nexus.BankAccounts.Application.Requests;
 using Nexus.BankAccounts.Application.Responses;
 using Nexus.CryptoWallets.Aggregates;
-using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Application.Requests;
+using Nexus.CryptoWallets.Application.Responses;
 using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.Transfers.Aggregates;
-using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Application.Requests;
 
 namespace Nexus.Administrators.Application.Contracts;
 
@@ -261,9 +262,14 @@ public interface IAdministrator
         WithdrawalTransferRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
+    Task<IOperationResult<Transfer>> ExecuteBankAccountMovementTransferAsync(
         RequesterIdentity identity,
-        MovementTransferRequest request,
+        BankAccountMovementRequest request,
+        CancellationToken cancellationToken = default);
+
+    Task<IOperationResult<Transfer>> ExecuteCryptoWalletMovementTransferAsync(
+        RequesterIdentity identity,
+        CryptoWalletMovementRequest request,
         CancellationToken cancellationToken = default);
 
     Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(

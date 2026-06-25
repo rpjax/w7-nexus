@@ -14,6 +14,7 @@ public static class BankAccountErrorCodes
     public const string LabelTooLong = "BankAccount.LABEL_TOO_LONG";
     public const string BankAccountIdInvalid = "BankAccount.BANK_ACCOUNT_ID_INVALID";
     public const string BankAccountNotFound = "BankAccount.BANK_ACCOUNT_NOT_FOUND";
+    public const string BankAccountMismatch = "BankAccount.BANK_ACCOUNT_MISMATCH";
     public const string BalanceAmountInvalid = "BankAccount.BALANCE_AMOUNT_INVALID";
     public const string BalanceTransferIdInvalid = "BankAccount.BALANCE_TRANSFER_ID_INVALID";
     public const string BalanceSplitsRequired = "BankAccount.BALANCE_SPLITS_REQUIRED";

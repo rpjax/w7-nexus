@@ -1,16 +1,22 @@
+using Aidan.Core.Linq.Extensions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Administrators.Application.Contracts;
 using Nexus.Administrators.Application.Requests;
 using Nexus.Authorization.Application.Contracts;
-using Nexus.Controllers;
-using Nexus.StrawMen.Application.Contracts;
-using Nexus.BankAccounts.Presentation;
-using Nexus.CryptoWallets.Application.Contracts;
-using Nexus.CryptoWallets.Presentation;
-using Nexus.Transfers.Application.Contracts;
-using Nexus.Transfers.Presentation;
+using Nexus.BankAccounts.Aggregates;
+using Nexus.BankAccounts.Application.Contracts;
 using Nexus.BankAccounts.Application.Requests;
+using Nexus.BankAccounts.Presentation;
+using Nexus.Controllers;
+using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Application.Requests;
+using Nexus.CryptoWallets.Presentation;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Application.Requests;
+using Nexus.Transfers.Presentation;
 
 namespace Nexus.Administrators.Presentation;
 
@@ -20,13 +26,19 @@ public class AdministratorController : NexusController
 {
     private IAdministrator _administrator { get; }
     private IRequesterIdentityResolver _identityResolver { get; }
+    private IBankBalanceRepository _bankBalances { get; }
+    private ICryptoBalanceRepository _cryptoBalances { get; }
 
     public AdministratorController(
         IAdministrator administrator,
-        IRequesterIdentityResolver identityResolver)
+        IRequesterIdentityResolver identityResolver,
+        IBankBalanceRepository bankBalances,
+        ICryptoBalanceRepository cryptoBalances)
     {
         _administrator = administrator;
         _identityResolver = identityResolver;
+        _bankBalances = bankBalances;
+        _cryptoBalances = cryptoBalances;
     }
 
     [HttpPost("operations")]
@@ -484,7 +496,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(await ToBankAccountResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpGet("bank-accounts/{bankAccountId}")]
@@ -500,7 +512,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(await ToBankAccountResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpPost("crypto-wallets")]
@@ -516,7 +528,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(await ToCryptoWalletResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpPut("crypto-wallets/{cryptoWalletId}/addresses")]
@@ -542,7 +554,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(await ToCryptoWalletResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpGet("crypto-wallets/{cryptoWalletId}")]
@@ -558,7 +570,7 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(CryptoWalletApiMapping.ToCryptoWalletResponse(result.Value!));
+        return Ok(await ToCryptoWalletResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpPost("bank-accounts/search")]
@@ -578,7 +590,7 @@ public class AdministratorController : NexusController
         return Ok(new
         {
             Total = data.Total,
-            Items = data.Items.Select(BankAccountApiMapping.ToBankAccountResponse).ToArray(),
+            Items = await ToBankAccountResponsesAsync(data.Items, cancellationToken),
         });
     }
 
@@ -600,12 +612,12 @@ public class AdministratorController : NexusController
         if (result.IsFailure)
             return ProblemResponse(422, result.Errors);
 
-        return Ok(BankAccountApiMapping.ToBankAccountResponse(result.Value!));
+        return Ok(await ToBankAccountResponseAsync(result.Value!, cancellationToken));
     }
 
     [HttpPost("crypto-wallets/search")]
     public async Task<ActionResult> SearchCryptoWalletsAsync(
-        [FromBody] Nexus.CryptoWallets.Application.Contracts.SearchCryptoWalletsRequest? request,
+        [FromBody] SearchCryptoWalletsRequest? request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
@@ -620,13 +632,13 @@ public class AdministratorController : NexusController
         return Ok(new
         {
             Total = data.Total,
-            Items = data.Items.Select(CryptoWalletApiMapping.ToCryptoWalletResponse).ToArray(),
+            Items = await ToCryptoWalletResponsesAsync(data.Items, cancellationToken),
         });
     }
 
     [HttpPost("transfers/search")]
     public async Task<ActionResult> SearchTransfersAsync(
-        [FromBody] Application.Contracts.SearchTransfersRequest? request,
+        [FromBody] SearchTransfersRequest? request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
@@ -661,13 +673,29 @@ public class AdministratorController : NexusController
         return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
     }
 
-    [HttpPost("transfers/movement")]
-    public async Task<ActionResult> ExecuteMovementTransferAsync(
-        [FromBody] MovementTransferRequest request,
+    [HttpPost("transfers/bank-accounts/movement")]
+    public async Task<ActionResult> ExecuteBankAccountMovementTransferAsync(
+        [FromBody] BankAccountMovementRequest request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
-        var result = await _administrator.ExecuteMovementTransferAsync(identity, request, cancellationToken);
+        var result = await _administrator.ExecuteBankAccountMovementTransferAsync(identity, request, cancellationToken);
+
+        if (!result.IsAuthorized)
+            return ProblemResponse(403, result.AuthorizationErrors);
+        if (result.IsFailure)
+            return ProblemResponse(422, result.Errors);
+
+        return Ok(TransferApiMapping.ToTransferResponse(result.Value!));
+    }
+
+    [HttpPost("transfers/crypto-wallets/movement")]
+    public async Task<ActionResult> ExecuteCryptoWalletMovementTransferAsync(
+        [FromBody] CryptoWalletMovementRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        var result = await _administrator.ExecuteCryptoWalletMovementTransferAsync(identity, request, cancellationToken);
 
         if (!result.IsAuthorized)
             return ProblemResponse(403, result.AuthorizationErrors);
@@ -848,5 +876,69 @@ public class AdministratorController : NexusController
             strawManId,
             request?.MovementFeePercentage ?? 0m,
             cancellationToken));
+    }
+
+    private async Task<object> ToBankAccountResponseAsync(
+        BankAccount account,
+        CancellationToken cancellationToken)
+    {
+        var balances = await _bankBalances.AsQueryable()
+            .Where(b => b.BankAccountId == account.Id)
+            .ToArrayAsync();
+        return BankAccountApiMapping.ToBankAccountResponse(account, balances);
+    }
+
+    private async Task<object[]> ToBankAccountResponsesAsync(
+        IReadOnlyList<BankAccount> accounts,
+        CancellationToken cancellationToken)
+    {
+        if (accounts.Count == 0)
+            return Array.Empty<object>();
+
+        var accountIds = accounts.Select(a => a.Id).ToArray();
+        var balances = await _bankBalances.AsQueryable()
+            .Where(b => accountIds.Contains(b.BankAccountId))
+            .ToArrayAsync();
+        var balancesByAccount = balances
+            .GroupBy(b => b.BankAccountId, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<BankBalance>)g.ToArray(), StringComparer.Ordinal);
+
+        return accounts
+            .Select(account => BankAccountApiMapping.ToBankAccountResponse(
+                account,
+                balancesByAccount.GetValueOrDefault(account.Id) ?? Array.Empty<BankBalance>()))
+            .ToArray();
+    }
+
+    private async Task<object> ToCryptoWalletResponseAsync(
+        CryptoWallet wallet,
+        CancellationToken cancellationToken)
+    {
+        var balances = await _cryptoBalances.AsQueryable()
+            .Where(b => b.CryptoWalletId == wallet.Id)
+            .ToArrayAsync();
+        return CryptoWalletApiMapping.ToCryptoWalletResponse(wallet, balances);
+    }
+
+    private async Task<object[]> ToCryptoWalletResponsesAsync(
+        IReadOnlyList<CryptoWallet> wallets,
+        CancellationToken cancellationToken)
+    {
+        if (wallets.Count == 0)
+            return Array.Empty<object>();
+
+        var walletIds = wallets.Select(w => w.Id).ToArray();
+        var balances = await _cryptoBalances.AsQueryable()
+            .Where(b => walletIds.Contains(b.CryptoWalletId))
+            .ToArrayAsync();
+        var balancesByWallet = balances
+            .GroupBy(b => b.CryptoWalletId, StringComparer.Ordinal)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<CryptoBalance>)g.ToArray(), StringComparer.Ordinal);
+
+        return wallets
+            .Select(wallet => CryptoWalletApiMapping.ToCryptoWalletResponse(
+                wallet,
+                balancesByWallet.GetValueOrDefault(wallet.Id) ?? Array.Empty<CryptoBalance>()))
+            .ToArray();
     }
 }

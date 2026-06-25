@@ -10,6 +10,8 @@ public static class BankAccountsServiceCollectionExtensions
     {
         services.AddScoped<IBankAccountService, BankAccountService>();
         services.AddScoped<IBankAccountRepository, MongoBankAccountRepository>();
+        services.AddScoped<IBankBalanceService, BankBalanceService>();
+        services.AddScoped<IBankBalanceRepository, MongoBankBalanceRepository>();
 
         return services;
     }

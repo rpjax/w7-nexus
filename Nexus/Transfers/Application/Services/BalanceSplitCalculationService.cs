@@ -20,7 +20,6 @@ public sealed class BalanceSplitCalculationService : IBalanceSplitCalculationSer
         string destinationStrawManId,
         decimal amount,
         IReadOnlyList<TransferBalanceSplit> originalSplits,
-        IReadOnlyList<string> appliedStrawManFeeIds,
         CancellationToken cancellationToken = default)
     {
         destinationStrawManId = destinationStrawManId?.Trim() ?? string.Empty;
@@ -43,9 +42,10 @@ public sealed class BalanceSplitCalculationService : IBalanceSplitCalculationSer
                 .WithMessage("É necessário informar ao menos um split de origem.")
                 .Build());
 
-        var feeIds = (appliedStrawManFeeIds ?? Array.Empty<string>())
+        var feeIds = originalSplits
+            .Where(s => s.SplitKind == TransferSplitKind.StrawManMovementFee)
+            .Select(s => s.AccountId.Trim())
             .Where(id => !string.IsNullOrWhiteSpace(id))
-            .Select(id => id.Trim())
             .Distinct(StringComparer.Ordinal)
             .ToList();
 
@@ -97,7 +97,6 @@ public sealed class BalanceSplitCalculationService : IBalanceSplitCalculationSer
         return Result<BalanceSplitCalculationResult>.Success(new BalanceSplitCalculationResult
         {
             Splits = splits,
-            AppliedStrawManFeeIds = feeIds,
         });
     }
 

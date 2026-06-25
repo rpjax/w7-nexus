@@ -66,17 +66,13 @@ public sealed class CryptoWallet
     private readonly List<CryptoWalletAddress> _addresses;
     public IReadOnlyList<CryptoWalletAddress> Addresses => _addresses;
 
-    private readonly List<CryptoBalance> _balances;
-    public IReadOnlyList<CryptoBalance> Balances => _balances;
-
     internal CryptoWallet(
         string id,
         string ownerId,
         string? label,
         DateTime createdAt,
         DateTime updatedAt,
-        IReadOnlyList<CryptoWalletAddress>? addresses = null,
-        IReadOnlyList<CryptoBalance>? balances = null)
+        IReadOnlyList<CryptoWalletAddress>? addresses = null)
     {
         Id = id;
         OwnerId = ownerId;
@@ -84,7 +80,6 @@ public sealed class CryptoWallet
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
         _addresses = addresses?.ToList() ?? new List<CryptoWalletAddress>();
-        _balances = balances?.ToList() ?? new List<CryptoBalance>();
     }
 
     public static IResult<CryptoWallet> Create(
@@ -168,65 +163,6 @@ public sealed class CryptoWallet
 
         Touch();
         return Result.Success();
-    }
-
-    public IResult CreditBalance(CryptoBalance balance)
-    {
-        ArgumentNullException.ThrowIfNull(balance);
-        _balances.Add(balance);
-        Touch();
-        return Result.Success();
-    }
-
-    public IResult<CryptoDebitPartialResult> DebitPartialBalance(string balanceId, decimal amount)
-    {
-        balanceId = balanceId?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(balanceId))
-            return Result<CryptoDebitPartialResult>.Failure(Error.Create()
-                .WithCode(CryptoWalletErrorCodes.BalanceIdInvalid)
-                .WithMessage("O ID do saldo é obrigatório.")
-                .Build());
-
-        if (amount <= 0)
-            return Result<CryptoDebitPartialResult>.Failure(Error.Create()
-                .WithCode(CryptoWalletErrorCodes.BalanceAmountInvalid)
-                .WithMessage("O valor do débito deve ser maior que zero.")
-                .Build());
-
-        var index = _balances.FindIndex(b => b.Id == balanceId);
-        if (index < 0)
-            return Result<CryptoDebitPartialResult>.Failure(Error.Create()
-                .WithCode(CryptoWalletErrorCodes.BalanceNotFound)
-                .WithMessage($"O saldo '{balanceId}' não foi encontrado.")
-                .Build());
-
-        var balance = _balances[index];
-
-        if (amount > balance.Amount)
-            return Result<CryptoDebitPartialResult>.Failure(Error.Create()
-                .WithCode(CryptoWalletErrorCodes.BalanceInsufficient)
-                .WithMessage("O saldo é insuficiente para o débito solicitado.")
-                .Build());
-
-        CryptoBalance debitedBalance;
-        CryptoBalance? remainderBalance = null;
-
-        if (amount == balance.Amount)
-        {
-            _balances.RemoveAt(index);
-            debitedBalance = balance;
-        }
-        else
-        {
-            var remainderAmount = balance.Amount - amount;
-            remainderBalance = balance.WithAmount(remainderAmount);
-            debitedBalance = balance.WithId(Guid.NewGuid().ToString("N")).WithAmount(amount);
-            _balances[index] = remainderBalance;
-        }
-
-        Touch();
-        return Result<CryptoDebitPartialResult>.Success(new CryptoDebitPartialResult(debitedBalance, remainderBalance));
     }
 
     private void Touch() => UpdatedAt = DateTime.UtcNow;

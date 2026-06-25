@@ -16,18 +16,6 @@ public sealed class BankBalanceOriginRecord
 {
     public string OperationId { get; set; } = string.Empty;
     public string? OperatorId { get; set; }
-    public string StrawManId { get; set; } = string.Empty;
-}
-
-public sealed class BankBalanceRecord
-{
-    public string Id { get; set; } = string.Empty;
-    public decimal AmountBrl { get; set; }
-    public string TransferId { get; set; } = string.Empty;
-    public DateTime CreatedAt { get; set; }
-    public List<BankBalanceSplitRecord> Splits { get; set; } = new();
-    public List<string> AppliedStrawManFeeIds { get; set; } = new();
-    public BankBalanceOriginRecord Origin { get; set; } = new();
 }
 
 public sealed class BankAccountRecord
@@ -42,8 +30,6 @@ public sealed class BankAccountRecord
     public string? AccountDigit { get; set; }
     public BankAccountType AccountType { get; set; }
     public string? Label { get; set; }
-
-    public List<BankBalanceRecord> Balances { get; set; } = new();
 
     public DateTime CreatedAt { get; set; }
     public DateTime UpdatedAt { get; set; }

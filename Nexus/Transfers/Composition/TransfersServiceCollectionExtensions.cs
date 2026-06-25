@@ -9,9 +9,6 @@ public static class TransfersServiceCollectionExtensions
     public static IServiceCollection AddNexusTransfers(this IServiceCollection services)
     {
         services.AddScoped<ITransferService, TransferService>();
-        services.AddScoped<IWithdrawalTransferUseCase, WithdrawalTransferUseCase>();
-        services.AddScoped<IMovementTransferUseCase, MovementTransferUseCase>();
-        services.AddScoped<IPayoutTransferUseCase, PayoutTransferUseCase>();
         services.AddScoped<ITransferTimelineQueryService, TransferTimelineQueryService>();
         services.AddScoped<IBalanceSplitCalculationService, BalanceSplitCalculationService>();
         services.AddScoped<ITransferRepository, MongoTransferRepository>();

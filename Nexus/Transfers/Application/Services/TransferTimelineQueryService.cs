@@ -19,6 +19,8 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
     private readonly ITransferRepository _transfers;
     private readonly IBankAccountRepository _bankAccounts;
     private readonly ICryptoWalletRepository _cryptoWallets;
+    private readonly IBankBalanceRepository _bankBalances;
+    private readonly ICryptoBalanceRepository _cryptoBalances;
     private readonly IAccountRepository _accounts;
     private readonly IPaymentRepository _payments;
 
@@ -26,12 +28,16 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         ITransferRepository transfers,
         IBankAccountRepository bankAccounts,
         ICryptoWalletRepository cryptoWallets,
+        IBankBalanceRepository bankBalances,
+        ICryptoBalanceRepository cryptoBalances,
         IAccountRepository accounts,
         IPaymentRepository payments)
     {
         _transfers = transfers;
         _bankAccounts = bankAccounts;
         _cryptoWallets = cryptoWallets;
+        _bankBalances = bankBalances;
+        _cryptoBalances = cryptoBalances;
         _accounts = accounts;
         _payments = payments;
     }
@@ -47,7 +53,9 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         }
 
         var normalizedId = transferId.Trim();
-        var focus = _transfers.AsQueryable().FirstOrDefault(t => t.Id == normalizedId);
+        var focus = await _transfers.AsQueryable()
+            .Where(t => t.Id == normalizedId)
+            .FirstOrDefaultAsync();
         if (focus is null)
         {
             return Result<TransferTimelineDetails>.Failure(Error.Create()
@@ -69,7 +77,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             .Where(t => t.StrawManId == focus.StrawManId)
             .ToArrayAsync();
 
-        var balanceIndex = BuildBalanceIndex(bankAccounts, cryptoWallets);
+        var balanceIndex = await BuildBalanceIndexAsync(bankAccounts, cryptoWallets);
         var accountLookup = BuildAccountLookup(strawManAccounts, bankAccounts, cryptoWallets);
         var root = FindRootTransfer(focus, balanceIndex, strawManTransfers);
         var chainIds = BuildChainIds(root, strawManTransfers, balanceIndex);
@@ -84,7 +92,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             cryptoWallets,
             strawManAccounts,
             accountLookup);
-        balanceIndex = BuildBalanceIndex(bankAccounts, cryptoWallets);
+        balanceIndex = await BuildBalanceIndexAsync(bankAccounts, cryptoWallets);
 
         var paymentIds = chain
             .Where(t => t.Type == TransferType.Withdrawal)
@@ -99,7 +107,12 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         var paymentLookup = payments.ToDictionary(p => p.Id, StringComparer.Ordinal);
 
         var activeBalanceIds = new HashSet<string>(StringComparer.Ordinal);
-        var activeBalances = BuildActiveBalances(chainIds, bankAccounts, cryptoWallets, accountLookup, activeBalanceIds);
+        var activeBalances = await BuildActiveBalancesAsync(
+            chainIds,
+            bankAccounts,
+            cryptoWallets,
+            accountLookup,
+            activeBalanceIds);
 
         var strawManSummary = ResolveAccountSummary(focus.StrawManId, accountLookup);
         var steps = chain.Select(transfer =>
@@ -263,7 +276,7 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         return chainIds;
     }
 
-    private static IReadOnlyList<ActiveBalanceDetails> BuildActiveBalances(
+    private async Task<IReadOnlyList<ActiveBalanceDetails>> BuildActiveBalancesAsync(
         HashSet<string> chainIds,
         IReadOnlyList<BankAccount> bankAccounts,
         IReadOnlyList<CryptoWallet> cryptoWallets,
@@ -271,45 +284,62 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
         HashSet<string> activeBalanceIds)
     {
         var balances = new List<ActiveBalanceDetails>();
+        var bankAccountIds = bankAccounts.Select(a => a.Id).ToArray();
+        var walletIds = cryptoWallets.Select(w => w.Id).ToArray();
 
-        foreach (var account in bankAccounts)
+        var bankBalanceList = bankAccountIds.Length == 0
+            ? Array.Empty<BankBalance>()
+            : await _bankBalances.AsQueryable()
+                .Where(b => bankAccountIds.Contains(b.BankAccountId))
+                .ToArrayAsync();
+
+        var cryptoBalanceList = walletIds.Length == 0
+            ? Array.Empty<CryptoBalance>()
+            : await _cryptoBalances.AsQueryable()
+                .Where(b => walletIds.Contains(b.CryptoWalletId))
+                .ToArrayAsync();
+
+        var bankAccountsById = bankAccounts.ToDictionary(a => a.Id, StringComparer.Ordinal);
+        var walletsById = cryptoWallets.ToDictionary(w => w.Id, StringComparer.Ordinal);
+
+        foreach (var balance in bankBalanceList.Where(b => b.AmountBrl > 0 && chainIds.Contains(b.TransferId)))
         {
-            foreach (var balance in account.Balances.Where(b => b.AmountBrl > 0 && chainIds.Contains(b.TransferId)))
+            if (!bankAccountsById.TryGetValue(balance.BankAccountId, out var account))
+                continue;
+
+            activeBalanceIds.Add(balance.Id);
+            balances.Add(new ActiveBalanceDetails
             {
-                activeBalanceIds.Add(balance.Id);
-                balances.Add(new ActiveBalanceDetails
-                {
-                    BalanceId = balance.Id,
-                    TransferId = balance.TransferId,
-                    Amount = balance.AmountBrl,
-                    Chain = null,
-                    Asset = null,
-                    Currency = "BRL",
-                    Account = EnrichBankAccount(account),
-                    CanMove = true,
-                    CanPayout = true,
-                });
-            }
+                BalanceId = balance.Id,
+                TransferId = balance.TransferId,
+                Amount = balance.AmountBrl,
+                Chain = null,
+                Asset = null,
+                Currency = "BRL",
+                Account = EnrichBankAccount(account),
+                CanMove = true,
+                CanPayout = true,
+            });
         }
 
-        foreach (var wallet in cryptoWallets)
+        foreach (var balance in cryptoBalanceList.Where(b => b.Amount > 0 && chainIds.Contains(b.TransferId)))
         {
-            foreach (var balance in wallet.Balances.Where(b => b.Amount > 0 && chainIds.Contains(b.TransferId)))
+            if (!walletsById.TryGetValue(balance.CryptoWalletId, out var wallet))
+                continue;
+
+            activeBalanceIds.Add(balance.Id);
+            balances.Add(new ActiveBalanceDetails
             {
-                activeBalanceIds.Add(balance.Id);
-                balances.Add(new ActiveBalanceDetails
-                {
-                    BalanceId = balance.Id,
-                    TransferId = balance.TransferId,
-                    Amount = balance.Amount,
-                    Chain = balance.Chain.ToString(),
-                    Asset = balance.Asset.ToString(),
-                    Currency = balance.Asset.ToString(),
-                    Account = EnrichCryptoWallet(wallet),
-                    CanMove = true,
-                    CanPayout = false,
-                });
-            }
+                BalanceId = balance.Id,
+                TransferId = balance.TransferId,
+                Amount = balance.Amount,
+                Chain = balance.Chain.ToString(),
+                Asset = balance.Asset.ToString(),
+                Currency = balance.Asset.ToString(),
+                Account = EnrichCryptoWallet(wallet),
+                CanMove = true,
+                CanPayout = false,
+            });
         }
 
         return balances
@@ -571,44 +601,61 @@ public sealed class TransferTimelineQueryService : ITransferTimelineQueryService
             bankAccounts.ToDictionary(a => a.Id, StringComparer.Ordinal),
             cryptoWallets.ToDictionary(w => w.Id, StringComparer.Ordinal));
 
-    private static Dictionary<string, BalanceReference> BuildBalanceIndex(
+    private async Task<Dictionary<string, BalanceReference>> BuildBalanceIndexAsync(
         IReadOnlyList<BankAccount> bankAccounts,
         IReadOnlyList<CryptoWallet> cryptoWallets)
     {
         var index = new Dictionary<string, BalanceReference>(StringComparer.Ordinal);
+        var bankAccountIds = bankAccounts.Select(a => a.Id).ToArray();
+        var walletIds = cryptoWallets.Select(w => w.Id).ToArray();
 
-        foreach (var account in bankAccounts)
+        var bankBalanceList = bankAccountIds.Length == 0
+            ? Array.Empty<BankBalance>()
+            : await _bankBalances.AsQueryable()
+                .Where(b => bankAccountIds.Contains(b.BankAccountId))
+                .ToArrayAsync();
+
+        var cryptoBalanceList = walletIds.Length == 0
+            ? Array.Empty<CryptoBalance>()
+            : await _cryptoBalances.AsQueryable()
+                .Where(b => walletIds.Contains(b.CryptoWalletId))
+                .ToArrayAsync();
+
+        var bankAccountsById = bankAccounts.ToDictionary(a => a.Id, StringComparer.Ordinal);
+        var walletsById = cryptoWallets.ToDictionary(w => w.Id, StringComparer.Ordinal);
+
+        foreach (var balance in bankBalanceList)
         {
-            foreach (var balance in account.Balances)
-            {
-                index[balance.Id] = new BalanceReference(
-                    balance.Id,
-                    balance.TransferId,
-                    "BankAccount",
-                    account.Id,
-                    balance.AmountBrl,
-                    null,
-                    null,
-                    account,
-                    null);
-            }
+            if (!bankAccountsById.TryGetValue(balance.BankAccountId, out var account))
+                continue;
+
+            index[balance.Id] = new BalanceReference(
+                balance.Id,
+                balance.TransferId,
+                "BankAccount",
+                account.Id,
+                balance.AmountBrl,
+                null,
+                null,
+                account,
+                null);
         }
 
-        foreach (var wallet in cryptoWallets)
+        foreach (var balance in cryptoBalanceList)
         {
-            foreach (var balance in wallet.Balances)
-            {
-                index[balance.Id] = new BalanceReference(
-                    balance.Id,
-                    balance.TransferId,
-                    "CryptoWallet",
-                    wallet.Id,
-                    balance.Amount,
-                    balance.Chain.ToString(),
-                    balance.Asset.ToString(),
-                    null,
-                    wallet);
-            }
+            if (!walletsById.TryGetValue(balance.CryptoWalletId, out var wallet))
+                continue;
+
+            index[balance.Id] = new BalanceReference(
+                balance.Id,
+                balance.TransferId,
+                "CryptoWallet",
+                wallet.Id,
+                balance.Amount,
+                balance.Chain.ToString(),
+                balance.Asset.ToString(),
+                null,
+                wallet);
         }
 
         return index;

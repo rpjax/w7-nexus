@@ -1,4 +1,5 @@
 using Aidan.Core.Errors;
+using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
@@ -36,7 +37,9 @@ public sealed class StrawManSettingsCommandService : IStrawManSettingsCommandSer
                 .WithMessage("O ID do laranja é obrigatório.")
                 .Build());
 
-        var strawMan = _accounts.AsQueryable().FirstOrDefault(a => a.Id == strawManId);
+        var strawMan = await _accounts.AsQueryable()
+            .Where(a => a.Id == strawManId)
+            .FirstOrDefaultAsync();
         if (strawMan is null)
             return Result<StrawManSettingsDetails>.Failure(Error.Create()
                 .WithCode(StrawManSettingsErrorCodes.StrawManNotFound)
@@ -49,8 +52,9 @@ public sealed class StrawManSettingsCommandService : IStrawManSettingsCommandSer
                 .WithMessage($"A conta '{strawManId}' não possui o perfil de laranja.")
                 .Build());
 
-        var existing = _settings.AsQueryable()
-            .FirstOrDefault(s => s.StrawManId == strawManId);
+        var existing = await _settings.AsQueryable()
+            .Where(s => s.StrawManId == strawManId)
+            .FirstOrDefaultAsync();
 
         if (existing is null)
         {

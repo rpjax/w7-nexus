@@ -1,5 +1,7 @@
 using Aidan.Core.Patterns;
 using Nexus.CryptoWallets.Aggregates;
+using Nexus.CryptoWallets.Application.Requests;
+using Nexus.CryptoWallets.Application.Responses;
 
 namespace Nexus.CryptoWallets.Application.Contracts;
 

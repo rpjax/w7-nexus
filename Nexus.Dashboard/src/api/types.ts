@@ -286,7 +286,6 @@ export type BankAccountType = 'Checking' | 'Savings';
 export type BalanceOrigin = {
   operationId: string;
   operatorId?: string | null;
-  strawManId: string;
 };
 
 export type BankBalanceRow = {
@@ -295,7 +294,6 @@ export type BankBalanceRow = {
   transferId: string;
   createdAt: string;
   splits: unknown[];
-  appliedStrawManFeeIds: string[];
   origin: BalanceOrigin;
 };
 
@@ -307,7 +305,6 @@ export type CryptoBalanceRow = {
   transferId: string;
   createdAt: string;
   splits: unknown[];
-  appliedStrawManFeeIds: string[];
   origin: BalanceOrigin;
 };
 

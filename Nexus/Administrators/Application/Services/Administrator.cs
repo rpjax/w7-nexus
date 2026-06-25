@@ -9,11 +9,14 @@ using Nexus.BankAccounts.Application.Requests;
 using Nexus.BankAccounts.Application.Responses;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Application.Requests;
+using Nexus.CryptoWallets.Application.Responses;
 using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
 using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Application.Requests;
 
 namespace Nexus.Administrators.Application.Services;
 
@@ -31,7 +34,7 @@ public class Administrator : IAdministrator
     private IAdministratorOperationPickerSearchService _operationPickerSearch { get; }
     private IBankAccountService _bankAccountService { get; }
     private ICryptoWalletService _cryptoWalletService { get; }
-    private IAdministratorTransferCommandService _transfers { get; }
+    private ITransferService _transfers { get; }
     private IAdministratorPaymentSearchService _paymentSearch { get; }
     private IAdministratorPaymentCommandService _paymentCommands { get; }
     private IAdministratorStrawManSettingsCommandService _strawManSettings { get; }
@@ -49,7 +52,7 @@ public class Administrator : IAdministrator
         IAdministratorOperationPickerSearchService operationPickerSearch,
         IBankAccountService bankAccountService,
         ICryptoWalletService cryptoWalletService,
-        IAdministratorTransferCommandService transfers,
+        ITransferService transfers,
         IAdministratorPaymentSearchService paymentSearch,
         IAdministratorPaymentCommandService paymentCommands,
         IAdministratorStrawManSettingsCommandService strawManSettings)
@@ -1032,9 +1035,9 @@ public class Administrator : IAdministrator
         return OperationResult<Transfer>.Success(value);
     }
 
-    public async Task<IOperationResult<Transfer>> ExecuteMovementTransferAsync(
+    public async Task<IOperationResult<Transfer>> ExecuteBankAccountMovementTransferAsync(
         RequesterIdentity identity,
-        MovementTransferRequest request,
+        BankAccountMovementRequest request,
         CancellationToken cancellationToken = default)
     {
         var authorization = await _policy.AuthorizeAdministratorAsync(identity);
@@ -1045,7 +1048,31 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _transfers.ExecuteMovementAsync(request, cancellationToken);
+        var result = await _transfers.ExecuteBankAccountMovementAsync(request, cancellationToken);
+
+        if (result.IsFailure)
+            return OperationResult<Transfer>.Failure(result.Errors);
+
+        if (result.Value is not Transfer value)
+            throw new InvalidOperationException();
+
+        return OperationResult<Transfer>.Success(value);
+    }
+
+    public async Task<IOperationResult<Transfer>> ExecuteCryptoWalletMovementTransferAsync(
+        RequesterIdentity identity,
+        CryptoWalletMovementRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<Transfer>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _transfers.ExecuteCryptoWalletMovementAsync(request, cancellationToken);
 
         if (result.IsFailure)
             return OperationResult<Transfer>.Failure(result.Errors);
@@ -1093,7 +1120,7 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<Transfer>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _transfers.GetTransferAsync(transferId);
+        var result = await _transfers.GetByIdAsync(transferId);
 
         if (result.IsFailure)
             return OperationResult<Transfer>.Failure(result.Errors);
@@ -1117,7 +1144,7 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<TransferTimelineDetails>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _transfers.GetTransferTimelineAsync(transferId);
+        var result = await _transfers.GetTimelineAsync(transferId, cancellationToken);
 
         if (result.IsFailure)
             return OperationResult<TransferTimelineDetails>.Failure(result.Errors);
@@ -1141,7 +1168,7 @@ public class Administrator : IAdministrator
         if (!authorization.IsAuthorized)
             return OperationResult<SearchTransfersResponse>.Unauthorized(authorization.AuthorizationErrors);
 
-        var result = await _transfers.SearchTransfersAsync(request);
+        var result = await _transfers.SearchAsync(request, cancellationToken);
 
         if (result.IsFailure)
             return OperationResult<SearchTransfersResponse>.Failure(result.Errors);

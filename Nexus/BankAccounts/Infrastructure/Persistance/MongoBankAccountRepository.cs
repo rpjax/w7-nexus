@@ -26,22 +26,7 @@ public sealed class MongoBankAccountRepository : IBankAccountRepository
             r.AccountType,
             r.Label,
             r.CreatedAt,
-            r.UpdatedAt,
-            r.Balances.Select(b => new BankBalance(
-                b.Id,
-                b.AmountBrl,
-                b.TransferId,
-                b.CreatedAt,
-                b.Splits.Select(s => new BankBalanceSplit(
-                    s.AccountId,
-                    s.Percentage,
-                    s.Amount,
-                    s.SplitKind)).ToList(),
-                b.AppliedStrawManFeeIds,
-                new BankBalanceOrigin(
-                    b.Origin.OperationId,
-                    b.Origin.OperatorId,
-                    b.Origin.StrawManId))).ToList());
+            r.UpdatedAt);
 
     public MongoBankAccountRepository(IMongoCollection<BankAccountRecord> collection)
     {

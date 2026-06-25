@@ -1,6 +1,6 @@
 using Nexus.CryptoWallets.Aggregates;
 
-namespace Nexus.CryptoWallets.Application.Contracts;
+namespace Nexus.CryptoWallets.Application.Responses;
 
 public sealed class SearchCryptoWalletsResponse
 {

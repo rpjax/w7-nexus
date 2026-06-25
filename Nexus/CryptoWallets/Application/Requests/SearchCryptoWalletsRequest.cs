@@ -1,4 +1,4 @@
-namespace Nexus.CryptoWallets.Application.Contracts;
+namespace Nexus.CryptoWallets.Application.Requests;
 
 public sealed class SearchCryptoWalletsRequest
 {

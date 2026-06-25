@@ -38,7 +38,7 @@ public sealed class BalanceSplitCalculationServiceTests
             ProfitShare("partner-1", 50m, 50m),
         };
 
-        var result = await sut.CalculateForCreditAsync("straw-d", 100m, original, Array.Empty<string>());
+        var result = await sut.CalculateForCreditAsync("straw-d", 100m, original);
 
         Assert.True(result.IsSuccess);
         var splits = result.Value!.Splits;
@@ -52,8 +52,6 @@ public sealed class BalanceSplitCalculationServiceTests
         Assert.Equal("straw-d", strawSplit.AccountId);
         Assert.Equal(10m, strawSplit.Percentage);
         Assert.Equal(10m, strawSplit.Amount);
-
-        Assert.Contains("straw-d", result.Value.AppliedStrawManFeeIds);
     }
 
     [Fact]
@@ -68,15 +66,10 @@ public sealed class BalanceSplitCalculationServiceTests
             TransferBalanceSplit.Create("straw-d", 10m, 10m, TransferSplitKind.StrawManMovementFee).Value!,
         };
 
-        var result = await sut.CalculateForCreditAsync(
-            "straw-d",
-            100m,
-            diluted,
-            new[] { "straw-d" });
+        var result = await sut.CalculateForCreditAsync("straw-d", 100m, diluted);
 
         Assert.True(result.IsSuccess);
         Assert.Equal(2, result.Value!.Splits.Count);
-        Assert.Single(result.Value.AppliedStrawManFeeIds);
     }
 
     [Fact]
@@ -85,10 +78,9 @@ public sealed class BalanceSplitCalculationServiceTests
         var sut = new BalanceSplitCalculationService(new StubStrawManSettingsQueryService());
         var original = new[] { ProfitShare("operator-1", 100m, 100m) };
 
-        var result = await sut.CalculateForCreditAsync("straw-d", 100m, original, Array.Empty<string>());
+        var result = await sut.CalculateForCreditAsync("straw-d", 100m, original);
 
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Splits);
-        Assert.Empty(result.Value.AppliedStrawManFeeIds);
     }
 }

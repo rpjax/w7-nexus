@@ -23,87 +23,119 @@ export async function getTransferTimeline(transferId: string) {
 }
 
 export async function createWithdrawalTransfer(payload: {
-  strawManId: string;
-  bankAccountId?: string | null;
-  cryptoWalletId?: string | null;
+  destinationBankAccountId?: string | null;
+  destinationCryptoWalletId?: string | null;
   paymentIds: string[];
   onrampingMethod?: string | null;
   producedAmount?: number | null;
   producedAsset?: string | null;
   producedChain?: string | null;
-  pixTransactionId?: string | null;
-  pixAuthenticationCode?: string | null;
-  cryptoTransactionId?: string | null;
+  proof?: {
+    pixTransactionId?: string | null;
+    pixAuthenticationCode?: string | null;
+    cryptoTransactionId?: string | null;
+  } | null;
 }) {
   return apiClient.post<TransferRow>('/api/administrator/transfers/withdrawal', {
-    StrawManId: payload.strawManId,
-    BankAccountId: payload.bankAccountId ?? null,
-    CryptoWalletId: payload.cryptoWalletId ?? null,
+    DestinationBankAccountId: payload.destinationBankAccountId ?? null,
+    DestinationCryptoWalletId: payload.destinationCryptoWalletId ?? null,
     PaymentIds: payload.paymentIds,
     OnrampingMethod: payload.onrampingMethod ?? null,
     ProducedAmount: payload.producedAmount ?? null,
     ProducedAsset: payload.producedAsset ?? null,
     ProducedChain: payload.producedChain ?? null,
-    PixTransactionId: payload.pixTransactionId ?? null,
-    PixAuthenticationCode: payload.pixAuthenticationCode ?? null,
-    CryptoTransactionId: payload.cryptoTransactionId ?? null,
+    Proof: payload.proof
+      ? {
+          PixTransactionId: payload.proof.pixTransactionId ?? null,
+          PixAuthenticationCode: payload.proof.pixAuthenticationCode ?? null,
+          CryptoTransactionId: payload.proof.cryptoTransactionId ?? null,
+        }
+      : null,
   }, { fallbackError: 'Não foi possível registrar a transferência de saque. Verifique os dados e tente novamente.' });
 }
 
-export async function createMovementTransfer(payload: {
-  strawManId: string;
-  sourceBankAccountId?: string | null;
-  sourceCryptoWalletId?: string | null;
+export async function createBankAccountMovement(payload: {
   sourceBalanceId: string;
-  sourceAmount: number;
+  amount: number;
   destinationBankAccountId?: string | null;
   destinationCryptoWalletId?: string | null;
   onrampingMethod?: string | null;
   producedAmount?: number | null;
   producedAsset?: string | null;
   producedChain?: string | null;
-  pixTransactionId?: string | null;
-  pixAuthenticationCode?: string | null;
-  cryptoTransactionId?: string | null;
+  proof?: {
+    pixTransactionId?: string | null;
+    pixAuthenticationCode?: string | null;
+    cryptoTransactionId?: string | null;
+  } | null;
 }) {
-  return apiClient.post<TransferRow>('/api/administrator/transfers/movement', {
-    StrawManId: payload.strawManId,
-    SourceBankAccountId: payload.sourceBankAccountId ?? null,
-    SourceCryptoWalletId: payload.sourceCryptoWalletId ?? null,
+  return apiClient.post<TransferRow>('/api/administrator/transfers/bank-accounts/movement', {
     SourceBalanceId: payload.sourceBalanceId,
-    SourceAmount: payload.sourceAmount,
+    Amount: payload.amount,
     DestinationBankAccountId: payload.destinationBankAccountId ?? null,
     DestinationCryptoWalletId: payload.destinationCryptoWalletId ?? null,
     OnrampingMethod: payload.onrampingMethod ?? null,
     ProducedAmount: payload.producedAmount ?? null,
     ProducedAsset: payload.producedAsset ?? null,
     ProducedChain: payload.producedChain ?? null,
-    PixTransactionId: payload.pixTransactionId ?? null,
-    PixAuthenticationCode: payload.pixAuthenticationCode ?? null,
-    CryptoTransactionId: payload.cryptoTransactionId ?? null,
+    Proof: payload.proof
+      ? {
+          PixTransactionId: payload.proof.pixTransactionId ?? null,
+          PixAuthenticationCode: payload.proof.pixAuthenticationCode ?? null,
+          CryptoTransactionId: payload.proof.cryptoTransactionId ?? null,
+        }
+      : null,
+  }, { fallbackError: 'Não foi possível registrar a movimentação.' });
+}
+
+export async function createCryptoWalletMovement(payload: {
+  sourceBalanceId: string;
+  amount: number;
+  destinationBankAccountId?: string | null;
+  destinationCryptoWalletId?: string | null;
+  producedAmount?: number | null;
+  proof?: {
+    pixTransactionId?: string | null;
+    pixAuthenticationCode?: string | null;
+    cryptoTransactionId?: string | null;
+  } | null;
+}) {
+  return apiClient.post<TransferRow>('/api/administrator/transfers/crypto-wallets/movement', {
+    SourceBalanceId: payload.sourceBalanceId,
+    Amount: payload.amount,
+    DestinationBankAccountId: payload.destinationBankAccountId ?? null,
+    DestinationCryptoWalletId: payload.destinationCryptoWalletId ?? null,
+    ProducedAmount: payload.producedAmount ?? null,
+    Proof: payload.proof
+      ? {
+          PixTransactionId: payload.proof.pixTransactionId ?? null,
+          PixAuthenticationCode: payload.proof.pixAuthenticationCode ?? null,
+          CryptoTransactionId: payload.proof.cryptoTransactionId ?? null,
+        }
+      : null,
   }, { fallbackError: 'Não foi possível registrar a movimentação.' });
 }
 
 export async function createPayoutTransfer(payload: {
-  strawManId: string;
-  sourceBankAccountId: string;
   sourceBalanceId: string;
-  sourceAmount: number;
+  amount: number;
   destinationBankAccountId?: string | null;
   destinationCryptoWalletId?: string | null;
-  pixTransactionId?: string | null;
-  pixAuthenticationCode?: string | null;
-  cryptoTransactionId?: string | null;
+  proof: {
+    pixTransactionId?: string | null;
+    pixAuthenticationCode?: string | null;
+    cryptoTransactionId?: string | null;
+  };
 }) {
   return apiClient.post<TransferRow>('/api/administrator/transfers/payout', {
-    StrawManId: payload.strawManId,
-    SourceBankAccountId: payload.sourceBankAccountId,
     SourceBalanceId: payload.sourceBalanceId,
-    SourceAmount: payload.sourceAmount,
+    Amount: payload.amount,
     DestinationBankAccountId: payload.destinationBankAccountId ?? null,
     DestinationCryptoWalletId: payload.destinationCryptoWalletId ?? null,
-    PixTransactionId: payload.pixTransactionId ?? null,
-    PixAuthenticationCode: payload.pixAuthenticationCode ?? null,
-    CryptoTransactionId: payload.cryptoTransactionId ?? null,
+    Proof: {
+      PixTransactionId: payload.proof.pixTransactionId ?? null,
+      PixAuthenticationCode: payload.proof.pixAuthenticationCode ?? null,
+      CryptoTransactionId: payload.proof.cryptoTransactionId ?? null,
+    },
   }, { fallbackError: 'Não foi possível registrar o repasse.' });
 }

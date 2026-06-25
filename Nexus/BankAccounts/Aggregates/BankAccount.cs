@@ -28,9 +28,6 @@ public sealed class BankAccount
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
 
-    private readonly List<BankBalance> _balances;
-    public IReadOnlyList<BankBalance> Balances => _balances;
-
     internal BankAccount(
         string id,
         string ownerId,
@@ -41,8 +38,7 @@ public sealed class BankAccount
         BankAccountType accountType,
         string? label,
         DateTime createdAt,
-        DateTime updatedAt,
-        IReadOnlyList<BankBalance>? balances = null)
+        DateTime updatedAt)
     {
         Id = id;
         OwnerId = ownerId;
@@ -54,7 +50,6 @@ public sealed class BankAccount
         Label = label;
         CreatedAt = createdAt;
         UpdatedAt = updatedAt;
-        _balances = balances?.ToList() ?? new List<BankBalance>();
     }
 
     public static IResult<BankAccount> Create(
@@ -156,65 +151,6 @@ public sealed class BankAccount
         Label = label;
         Touch();
         return Result.Success();
-    }
-
-    public IResult CreditBalance(BankBalance balance)
-    {
-        ArgumentNullException.ThrowIfNull(balance);
-        _balances.Add(balance);
-        Touch();
-        return Result.Success();
-    }
-
-    public IResult<BankDebitPartialResult> DebitPartialBalance(string balanceId, decimal amountBrl)
-    {
-        balanceId = balanceId?.Trim() ?? string.Empty;
-
-        if (string.IsNullOrWhiteSpace(balanceId))
-            return Result<BankDebitPartialResult>.Failure(Error.Create()
-                .WithCode(BankAccountErrorCodes.BalanceIdInvalid)
-                .WithMessage("O ID do saldo é obrigatório.")
-                .Build());
-
-        if (amountBrl <= 0)
-            return Result<BankDebitPartialResult>.Failure(Error.Create()
-                .WithCode(BankAccountErrorCodes.BalanceAmountInvalid)
-                .WithMessage("O valor do débito deve ser maior que zero.")
-                .Build());
-
-        var index = _balances.FindIndex(b => b.Id == balanceId);
-        if (index < 0)
-            return Result<BankDebitPartialResult>.Failure(Error.Create()
-                .WithCode(BankAccountErrorCodes.BalanceNotFound)
-                .WithMessage($"O saldo '{balanceId}' não foi encontrado.")
-                .Build());
-
-        var balance = _balances[index];
-
-        if (amountBrl > balance.AmountBrl)
-            return Result<BankDebitPartialResult>.Failure(Error.Create()
-                .WithCode(BankAccountErrorCodes.BalanceInsufficient)
-                .WithMessage("O saldo é insuficiente para o débito solicitado.")
-                .Build());
-
-        BankBalance debitedBalance;
-        BankBalance? remainderBalance = null;
-
-        if (amountBrl == balance.AmountBrl)
-        {
-            _balances.RemoveAt(index);
-            debitedBalance = balance;
-        }
-        else
-        {
-            var remainderAmount = balance.AmountBrl - amountBrl;
-            remainderBalance = balance.WithAmount(remainderAmount);
-            debitedBalance = balance.WithId(Guid.NewGuid().ToString("N")).WithAmount(amountBrl);
-            _balances[index] = remainderBalance;
-        }
-
-        Touch();
-        return Result<BankDebitPartialResult>.Success(new BankDebitPartialResult(debitedBalance, remainderBalance));
     }
 
     private void Touch() => UpdatedAt = DateTime.UtcNow;

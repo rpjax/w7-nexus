@@ -115,13 +115,14 @@ export function WithdrawalCreatePage() {
     setBusy(true);
     try {
       const result = await createWithdrawalTransfer({
-        strawManId: strawManId.trim(),
-        bankAccountId: destinationType === 'Pix' ? bankAccountId : null,
-        cryptoWalletId: destinationType === 'Crypto' ? cryptoWalletId : null,
+        destinationBankAccountId: destinationType === 'Pix' ? bankAccountId : null,
+        destinationCryptoWalletId: destinationType === 'Crypto' ? cryptoWalletId : null,
         paymentIds: [...selectedPaymentIds],
-        pixTransactionId: destinationType === 'Pix' ? pixTransactionId.trim() || null : null,
-        pixAuthenticationCode: destinationType === 'Pix' ? pixAuthenticationCode.trim() || null : null,
-        cryptoTransactionId: destinationType === 'Crypto' ? cryptoTransactionId.trim() || null : null,
+        proof: {
+          pixTransactionId: destinationType === 'Pix' ? pixTransactionId.trim() || null : null,
+          pixAuthenticationCode: destinationType === 'Pix' ? pixAuthenticationCode.trim() || null : null,
+          cryptoTransactionId: destinationType === 'Crypto' ? cryptoTransactionId.trim() || null : null,
+        },
       });
       if (!result.ok) {
         setError(result.error);

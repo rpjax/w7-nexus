@@ -10,6 +10,8 @@ public static class CryptoWalletsServiceCollectionExtensions
     {
         services.AddScoped<ICryptoWalletService, CryptoWalletService>();
         services.AddScoped<ICryptoWalletRepository, MongoCryptoWalletRepository>();
+        services.AddScoped<ICryptoBalanceService, CryptoBalanceService>();
+        services.AddScoped<ICryptoBalanceRepository, MongoCryptoBalanceRepository>();
 
         return services;
     }

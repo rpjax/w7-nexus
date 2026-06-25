@@ -115,14 +115,14 @@ export function PayoutComposerModal({
     setBusy(true);
     try {
       const result = await createPayoutTransfer({
-        strawManId: strawManId.trim(),
-        sourceBankAccountId: sourceAccountId,
         sourceBalanceId: selectedBalance.balanceId,
-        sourceAmount: amount,
+        amount,
         destinationBankAccountId: destIsBank ? destBank?.id ?? null : null,
         destinationCryptoWalletId: destIsCrypto ? destCrypto?.id ?? null : null,
-        pixTransactionId: pixTransactionId.trim() || null,
-        pixAuthenticationCode: pixAuthenticationCode.trim() || null,
+        proof: {
+          pixTransactionId: pixTransactionId.trim() || null,
+          pixAuthenticationCode: pixAuthenticationCode.trim() || null,
+        },
       });
       if (!result.ok) {
         setError(result.error);

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { createMovementTransfer } from '../../api/transfers';
+import { createBankAccountMovement, createCryptoWalletMovement } from '../../api/transfers';
 import type { ActiveBalanceRow, BankAccountRow, CryptoWalletRow } from '../../api/types';
 import { BankAccountPickerModal } from './BankAccountPickerModal';
 import { CryptoWalletPickerModal } from './CryptoWalletPickerModal';
@@ -161,19 +161,20 @@ export function MovementComposerModal({
     setError('');
     setBusy(true);
     try {
-      const result = await createMovementTransfer({
-        strawManId: strawManId.trim(),
-        sourceBankAccountId: sourceIsBank ? selectedBalance.account.id ?? null : null,
-        sourceCryptoWalletId: sourceIsCrypto ? selectedBalance.account.id ?? null : null,
+      const movementPayload = {
         sourceBalanceId: selectedBalance.balanceId,
-        sourceAmount: amount,
+        amount,
         destinationBankAccountId: destIsBank ? destBank?.id ?? null : null,
         destinationCryptoWalletId: destIsCrypto ? destCrypto?.id ?? null : null,
         onrampingMethod: isBankToCrypto ? onrampingMethod : null,
         producedAmount: isBankToCrypto || isCryptoToBank ? producedAmount : null,
         producedAsset: isBankToCrypto ? cryptoAssetEnumName(producedAsset) : null,
         producedChain: isBankToCrypto ? chainEnumName(producedChain) : null,
-      });
+      };
+
+      const result = sourceIsBank
+        ? await createBankAccountMovement(movementPayload)
+        : await createCryptoWalletMovement(movementPayload);
       if (!result.ok) {
         setError(result.error);
         return;

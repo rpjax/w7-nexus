@@ -4,9 +4,11 @@ using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.BankAccounts.Aggregates;
 using Nexus.BankAccounts.Application.Contracts;
+using Nexus.BankAccounts.Application.Services;
 using Nexus.BankAccounts.Infrastructure.Mapping;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Application.Services;
 using Nexus.CryptoWallets.Infrastructure.Mapping;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Application.Contracts;
@@ -17,6 +19,8 @@ using Nexus.StrawMen.Application.Contracts;
 using Nexus.Tests.Payments;
 using Nexus.Transfers.Aggregates;
 using Nexus.Transfers.Application.Contracts;
+using Nexus.Transfers.Application.Models;
+using Nexus.Transfers.Application.Requests;
 using Nexus.Transfers.Application.Services;
 using Nexus.Transfers.Errors;
 using Nexus.Transfers.Infrastructure.Mapping;
@@ -26,6 +30,18 @@ namespace Nexus.Tests.Transfers;
 
 public sealed class TransferUseCaseTests
 {
+    private static TransferService CreateSut(TransferTestContext ctx) =>
+        new(
+            ctx.Accounts,
+            ctx.Payments,
+            ctx.BankAccounts,
+            ctx.CryptoWallets,
+            ctx.BankBalanceService,
+            ctx.CryptoBalanceService,
+            ctx.Transfers,
+            ctx.SplitCalculation,
+            new StubTransferTimelineQueryService());
+
     [Fact]
     public async Task PayoutTransfer_WithoutProof_Fails()
     {
@@ -34,14 +50,12 @@ public sealed class TransferUseCaseTests
         var destination = await ctx.SeedBankAccountAsync("straw-1", "dest");
         var balance = await ctx.SeedBankBalanceAsync(bank, 500m);
 
-        var sut = new PayoutTransferUseCase(ctx.Accounts, ctx.BankAccounts, ctx.CryptoWallets, ctx.Transfers);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new PayoutTransferRequest
+        var result = await sut.ExecutePayoutAsync(new PayoutTransferRequest
         {
-            StrawManId = "straw-1",
-            SourceBankAccountId = bank.Id,
             SourceBalanceId = balance.Id,
-            SourceAmount = 100m,
+            Amount = 100m,
             DestinationBankAccountId = destination.Id,
         });
 
@@ -59,25 +73,18 @@ public sealed class TransferUseCaseTests
         await ctx.SeedPaymentAsync("pay-1", 60m, splits);
         await ctx.SeedPaymentAsync("pay-2", 40m, splits);
 
-        var sut = new WithdrawalTransferUseCase(
-            ctx.Accounts,
-            ctx.Payments,
-            ctx.BankAccounts,
-            ctx.CryptoWallets,
-            ctx.Transfers,
-            ctx.SplitCalculation);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new WithdrawalTransferRequest
+        var result = await sut.ExecuteWithdrawalAsync(new WithdrawalTransferRequest
         {
-            StrawManId = "straw-1",
-            BankAccountId = bank.Id,
+            DestinationBankAccountId = bank.Id,
             PaymentIds = new[] { "pay-1", "pay-2" },
         });
 
         Assert.True(result.IsSuccess, result.IsFailure ? string.Join("; ", result.Errors.Select(e => e.Code)) : null);
-        var updated = ctx.BankAccounts.AsQueryable().First(b => b.Id == bank.Id);
-        Assert.Single(updated.Balances);
-        Assert.Equal(100m, updated.Balances[0].AmountBrl);
+        var balances = ctx.BankBalances.AsQueryable().Where(b => b.BankAccountId == bank.Id).ToList();
+        Assert.Single(balances);
+        Assert.Equal(100m, balances[0].AmountBrl);
     }
 
     [Fact]
@@ -95,60 +102,46 @@ public sealed class TransferUseCaseTests
             40m,
             PaymentSplit.AllocateFromCuts(40m, new[] { ("op-2", 100m) }));
 
-        var sut = new WithdrawalTransferUseCase(
-            ctx.Accounts,
-            ctx.Payments,
-            ctx.BankAccounts,
-            ctx.CryptoWallets,
-            ctx.Transfers,
-            ctx.SplitCalculation);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new WithdrawalTransferRequest
+        var result = await sut.ExecuteWithdrawalAsync(new WithdrawalTransferRequest
         {
-            StrawManId = "straw-1",
-            BankAccountId = bank.Id,
+            DestinationBankAccountId = bank.Id,
             PaymentIds = new[] { "pay-1", "pay-2" },
         });
 
         Assert.True(result.IsSuccess, result.IsFailure ? string.Join("; ", result.Errors.Select(e => e.Code)) : null);
-        var updated = ctx.BankAccounts.AsQueryable().First(b => b.Id == bank.Id);
-        Assert.Equal(2, updated.Balances.Count);
-        Assert.Equal(100m, updated.Balances.Sum(l => l.AmountBrl));
+        var balances = ctx.BankBalances.AsQueryable().Where(b => b.BankAccountId == bank.Id).ToList();
+        Assert.Equal(2, balances.Count);
+        Assert.Equal(100m, balances.Sum(l => l.AmountBrl));
     }
 
     [Fact]
-    public async Task MovementTransfer_PartialDebit_LeavesRemainderOnSource()
+    public async Task BankAccountMovement_PartialDebit_LeavesRemainderOnSource()
     {
         var ctx = await TransferTestContext.CreateAsync();
         var source = await ctx.SeedBankAccountAsync("straw-1", "bank-source");
         var dest = await ctx.SeedBankAccountAsync("straw-1", "bank-dest");
         var balance = await ctx.SeedBankBalanceAsync(source, 1000m);
 
-        var sut = new MovementTransferUseCase(
-            ctx.Accounts,
-            ctx.BankAccounts,
-            ctx.CryptoWallets,
-            ctx.Transfers,
-            ctx.SplitCalculation);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new MovementTransferRequest
+        var result = await sut.ExecuteBankAccountMovementAsync(new BankAccountMovementRequest
         {
-            StrawManId = "straw-1",
-            SourceBankAccountId = source.Id,
             SourceBalanceId = balance.Id,
-            SourceAmount = 400m,
+            Amount = 400m,
             DestinationBankAccountId = dest.Id,
         });
 
         Assert.True(result.IsSuccess, result.IsFailure ? string.Join("; ", result.Errors.Select(e => e.Code)) : null);
 
-        var updatedSource = ctx.BankAccounts.AsQueryable().First(b => b.Id == source.Id);
-        var updatedDest = ctx.BankAccounts.AsQueryable().First(b => b.Id == dest.Id);
+        var sourceBalances = ctx.BankBalances.AsQueryable().Where(b => b.BankAccountId == source.Id).ToList();
+        var destBalances = ctx.BankBalances.AsQueryable().Where(b => b.BankAccountId == dest.Id).ToList();
 
-        Assert.Single(updatedSource.Balances);
-        Assert.Equal(600m, updatedSource.Balances[0].AmountBrl);
-        Assert.Single(updatedDest.Balances);
-        Assert.Equal(400m, updatedDest.Balances[0].AmountBrl);
+        Assert.Single(sourceBalances);
+        Assert.Equal(600m, sourceBalances[0].AmountBrl);
+        Assert.Single(destBalances);
+        Assert.Equal(400m, destBalances[0].AmountBrl);
         Assert.Equal(balance.Id, result.Value!.SourceBalanceId);
     }
 
@@ -160,16 +153,14 @@ public sealed class TransferUseCaseTests
         var destination = await ctx.SeedBankAccountAsync("straw-1", "dest");
         var balance = await ctx.SeedBankBalanceAsync(bank, 500m);
 
-        var sut = new PayoutTransferUseCase(ctx.Accounts, ctx.BankAccounts, ctx.CryptoWallets, ctx.Transfers);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new PayoutTransferRequest
+        var result = await sut.ExecutePayoutAsync(new PayoutTransferRequest
         {
-            StrawManId = "straw-1",
-            SourceBankAccountId = bank.Id,
             SourceBalanceId = balance.Id,
-            SourceAmount = 100m,
+            Amount = 100m,
             DestinationBankAccountId = destination.Id,
-            PixTransactionId = "pix-123",
+            Proof = new TransferProofRequest { PixTransactionId = "pix-123" },
         });
 
         Assert.True(result.IsSuccess, result.IsFailure ? string.Join("; ", result.Errors.Select(e => e.Code)) : null);
@@ -183,18 +174,11 @@ public sealed class TransferUseCaseTests
         var wallet = await ctx.SeedCryptoWalletAsync("straw-1", AddressNamespace.Evm, "0xabc");
         await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.AllocateFromCuts(100m, new[] { ("op-1", 100m) }));
 
-        var sut = new WithdrawalTransferUseCase(
-            ctx.Accounts,
-            ctx.Payments,
-            ctx.BankAccounts,
-            ctx.CryptoWallets,
-            ctx.Transfers,
-            ctx.SplitCalculation);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new WithdrawalTransferRequest
+        var result = await sut.ExecuteWithdrawalAsync(new WithdrawalTransferRequest
         {
-            StrawManId = "straw-1",
-            CryptoWalletId = wallet.Id,
+            DestinationCryptoWalletId = wallet.Id,
             PaymentIds = new[] { "pay-1" },
             OnrampingMethod = OnrampingMethod.Pix,
             ProducedAmount = 0.01m,
@@ -213,18 +197,11 @@ public sealed class TransferUseCaseTests
         var wallet = await ctx.SeedCryptoWalletAsync("straw-1", AddressNamespace.Tron, "TXyz");
         await ctx.SeedPaymentAsync("pay-1", 100m, PaymentSplit.AllocateFromCuts(100m, new[] { ("op-1", 100m) }));
 
-        var sut = new WithdrawalTransferUseCase(
-            ctx.Accounts,
-            ctx.Payments,
-            ctx.BankAccounts,
-            ctx.CryptoWallets,
-            ctx.Transfers,
-            ctx.SplitCalculation);
+        var sut = CreateSut(ctx);
 
-        var result = await sut.ExecuteAsync(new WithdrawalTransferRequest
+        var result = await sut.ExecuteWithdrawalAsync(new WithdrawalTransferRequest
         {
-            StrawManId = "straw-1",
-            CryptoWalletId = wallet.Id,
+            DestinationCryptoWalletId = wallet.Id,
             PaymentIds = new[] { "pay-1" },
             OnrampingMethod = OnrampingMethod.Pix,
             ProducedAmount = 100m,
@@ -242,7 +219,11 @@ public sealed class TransferUseCaseTests
         public InMemoryPaymentRepository Payments { get; } = new();
         public InMemoryBankAccountRepository BankAccounts { get; } = new();
         public InMemoryCryptoWalletRepository CryptoWallets { get; } = new();
+        public InMemoryBankBalanceRepository BankBalances { get; } = new();
+        public InMemoryCryptoBalanceRepository CryptoBalances { get; } = new();
         public InMemoryTransferRepository Transfers { get; } = new();
+        public BankBalanceService BankBalanceService { get; private set; } = null!;
+        public CryptoBalanceService CryptoBalanceService { get; private set; } = null!;
         public BalanceSplitCalculationService SplitCalculation { get; private set; } = null!;
 
         public static async Task<TransferTestContext> CreateAsync()
@@ -256,6 +237,8 @@ public sealed class TransferUseCaseTests
                 Array.Empty<string>(),
                 DateTime.UtcNow,
                 DateTime.UtcNow));
+            ctx.BankBalanceService = new BankBalanceService(ctx.BankBalances);
+            ctx.CryptoBalanceService = new CryptoBalanceService(ctx.CryptoBalances);
             ctx.SplitCalculation = new BalanceSplitCalculationService(new StubStrawManSettingsQueryService());
             return ctx;
         }
@@ -285,12 +268,15 @@ public sealed class TransferUseCaseTests
 
         public async Task<BankBalance> SeedBankBalanceAsync(BankAccount account, decimal amount)
         {
-            var origin = BankBalanceOrigin.Create("op-1", "operator-1", account.OwnerId).Value!;
+            var origin = BankBalanceOrigin.Create("op-1", "operator-1").Value!;
             var split = BankBalanceSplit.Create("operator-1", 100m, amount, BankSplitKind.ProfitShare).Value!;
-            var balance = BankBalance.Create(amount, "seed-transfer", new[] { split }, Array.Empty<string>(), origin).Value!;
-            account.CreditBalance(balance);
-            await BankAccounts.UpdateAsync(account);
-            return balance;
+            var balance = BankBalance.Create(
+                account.Id,
+                amount,
+                "seed-transfer",
+                new[] { split },
+                origin).Value!;
+            return await BankBalances.CreateAsync(balance);
         }
 
         public async Task SeedPaymentAsync(string id, decimal amount, IReadOnlyList<PaymentSplit> splits)
@@ -306,6 +292,12 @@ public sealed class TransferUseCaseTests
                 paidAt: DateTime.UtcNow);
             await Payments.CreateAsync(payment);
         }
+    }
+
+    private sealed class StubTransferTimelineQueryService : ITransferTimelineQueryService
+    {
+        public Task<IResult<TransferTimelineDetails>> GetTimelineAsync(string transferId) =>
+            throw new NotSupportedException();
     }
 
     private sealed class StubStrawManSettingsQueryService : IStrawManSettingsQueryService
@@ -422,6 +414,60 @@ public sealed class TransferUseCaseTests
         public Task UpdateAsync(CryptoWallet entity)
         {
             var index = _store.FindIndex(w => w.Id == entity.Id);
+            if (index >= 0) _store[index] = entity;
+            return Task.CompletedTask;
+        }
+
+        public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+    }
+
+    private sealed class InMemoryBankBalanceRepository : IBankBalanceRepository
+    {
+        private readonly List<BankBalance> _store = new();
+
+        public IAsyncQueryable<BankBalance> AsQueryable() =>
+            new QueryableToAsyncQueryableAdapter<BankBalance>(_store.AsQueryable());
+
+        public Task<BankBalance> CreateAsync(BankBalance entity)
+        {
+            _store.Add(entity);
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<BankBalance>.CreateAsync(BankBalance entity) => await CreateAsync(entity);
+        public Task CreateAsync(IEnumerable<BankBalance> entities) { _store.AddRange(entities); return Task.CompletedTask; }
+        public Task DeleteAsync(BankBalance entity) { _store.RemoveAll(b => b.Id == entity.Id); return Task.CompletedTask; }
+        public Task<long> DeleteAsync(Expression<Func<BankBalance, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(BankBalance entity)
+        {
+            var index = _store.FindIndex(b => b.Id == entity.Id);
+            if (index >= 0) _store[index] = entity;
+            return Task.CompletedTask;
+        }
+
+        public Task<long> UpdateAsync(Expression expression) => Task.FromResult(0L);
+    }
+
+    private sealed class InMemoryCryptoBalanceRepository : ICryptoBalanceRepository
+    {
+        private readonly List<CryptoBalance> _store = new();
+
+        public IAsyncQueryable<CryptoBalance> AsQueryable() =>
+            new QueryableToAsyncQueryableAdapter<CryptoBalance>(_store.AsQueryable());
+
+        public Task<CryptoBalance> CreateAsync(CryptoBalance entity)
+        {
+            _store.Add(entity);
+            return Task.FromResult(entity);
+        }
+
+        async Task IRepository<CryptoBalance>.CreateAsync(CryptoBalance entity) => await CreateAsync(entity);
+        public Task CreateAsync(IEnumerable<CryptoBalance> entities) { _store.AddRange(entities); return Task.CompletedTask; }
+        public Task DeleteAsync(CryptoBalance entity) { _store.RemoveAll(b => b.Id == entity.Id); return Task.CompletedTask; }
+        public Task<long> DeleteAsync(Expression<Func<CryptoBalance, bool>> predicate) => Task.FromResult(0L);
+        public Task UpdateAsync(CryptoBalance entity)
+        {
+            var index = _store.FindIndex(b => b.Id == entity.Id);
             if (index >= 0) _store[index] = entity;
             return Task.CompletedTask;
         }

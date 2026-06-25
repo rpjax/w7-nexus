@@ -49,7 +49,7 @@ public sealed class BankAccountService : IBankAccountService
 
     public async Task<IResult<BankAccount>> UpdateLabelAsync(string bankAccountId, string? label)
     {
-        var account = FindBankAccount(bankAccountId);
+        var account = await FindBankAccountAsync(bankAccountId);
         if (account is null)
             return NotFound(bankAccountId);
 
@@ -61,12 +61,12 @@ public sealed class BankAccountService : IBankAccountService
         return Result<BankAccount>.Success(account);
     }
 
-    public Task<IResult<BankAccount>> GetByIdAsync(string bankAccountId)
+    public async Task<IResult<BankAccount>> GetByIdAsync(string bankAccountId)
     {
-        var account = FindBankAccount(bankAccountId);
-        return Task.FromResult(account is null
+        var account = await FindBankAccountAsync(bankAccountId);
+        return account is null
             ? NotFound(bankAccountId)
-            : Result<BankAccount>.Success(account));
+            : Result<BankAccount>.Success(account);
     }
 
     public async Task<IResult<SearchBankAccountsResponse>> SearchAsync(SearchBankAccountsRequest? request)
@@ -115,13 +115,14 @@ public sealed class BankAccountService : IBankAccountService
         return null;
     }
 
-    private BankAccount? FindBankAccount(string bankAccountId)
+    private async Task<BankAccount?> FindBankAccountAsync(string bankAccountId)
     {
         if (string.IsNullOrWhiteSpace(bankAccountId))
             return null;
 
-        return _bankAccounts.AsQueryable()
-            .FirstOrDefault(a => a.Id == bankAccountId.Trim());
+        return await _bankAccounts.AsQueryable()
+            .Where(a => a.Id == bankAccountId.Trim())
+            .FirstOrDefaultAsync();
     }
 
     private static IResult<BankAccount> NotFound(string bankAccountId) =>

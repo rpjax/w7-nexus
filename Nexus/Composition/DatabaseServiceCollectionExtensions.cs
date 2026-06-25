@@ -29,7 +29,9 @@ public static class DatabaseServiceCollectionExtensions
         services.AddMongoCollection<TeamRecord>("teams");
         services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
         services.AddMongoCollection<BankAccountRecord>("bank_accounts");
+        services.AddMongoCollection<BankBalanceDocument>("bank_balances");
         services.AddMongoCollection<CryptoWalletRecord>("crypto_wallets");
+        services.AddMongoCollection<CryptoBalanceDocument>("crypto_balances");
         services.AddMongoCollection<TransferRecord>("transfers");
         services.AddMongoCollection<StrawManSettingsRecord>("straw_man_settings");
 

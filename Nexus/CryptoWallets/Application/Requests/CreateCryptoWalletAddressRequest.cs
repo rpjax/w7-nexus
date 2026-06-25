@@ -1,8 +1,8 @@
 using Nexus.CryptoWallets.Aggregates;
 
-namespace Nexus.CryptoWallets.Application.Contracts;
+namespace Nexus.CryptoWallets.Application.Requests;
 
-public sealed class UpsertCryptoWalletAddressBody
+public sealed class CreateCryptoWalletAddressRequest
 {
     public AddressNamespace Namespace { get; init; }
     public string Address { get; init; } = string.Empty;

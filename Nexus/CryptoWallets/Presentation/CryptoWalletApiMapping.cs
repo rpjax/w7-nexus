@@ -4,9 +4,9 @@ namespace Nexus.CryptoWallets.Presentation;
 
 public static class CryptoWalletApiMapping
 {
-    public static object ToCryptoWalletResponse(CryptoWallet wallet)
+    public static object ToCryptoWalletResponse(CryptoWallet wallet, IReadOnlyList<CryptoBalance> balances)
     {
-        var balancesByChainAsset = wallet.Balances
+        var balancesByChainAsset = balances
             .GroupBy(balance => new { balance.Chain, balance.Asset })
             .Select(group => new
             {
@@ -23,7 +23,7 @@ public static class CryptoWalletApiMapping
             addresses = wallet.Addresses.Select(ToWalletAddress).ToArray(),
             label = wallet.Label,
             balancesByChainAsset,
-            balances = wallet.Balances.Select(ToCryptoBalance).ToArray(),
+            balances = balances.Select(ToCryptoBalance).ToArray(),
             createdAt = wallet.CreatedAt,
             updatedAt = wallet.UpdatedAt,
         };
@@ -39,13 +39,19 @@ public static class CryptoWalletApiMapping
     private static object ToCryptoBalance(CryptoBalance balance) => new
     {
         id = balance.Id,
+        cryptoWalletId = balance.CryptoWalletId,
         chain = balance.Chain.ToString(),
         asset = balance.Asset.ToString(),
         amount = balance.Amount,
         transferId = balance.TransferId,
         createdAt = balance.CreatedAt,
         splits = balance.Splits,
-        appliedStrawManFeeIds = balance.AppliedStrawManFeeIds,
-        origin = balance.Origin,
+        origin = ToBalanceOrigin(balance.Origin),
+    };
+
+    private static object ToBalanceOrigin(CryptoBalanceOrigin origin) => new
+    {
+        operationId = origin.OperationId,
+        operatorId = origin.OperatorId,
     };
 }

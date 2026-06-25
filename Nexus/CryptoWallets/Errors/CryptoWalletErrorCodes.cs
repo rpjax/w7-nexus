@@ -14,6 +14,7 @@ public static class CryptoWalletErrorCodes
     public const string LabelTooLong = "CryptoWallet.LABEL_TOO_LONG";
     public const string CryptoWalletIdInvalid = "CryptoWallet.CRYPTO_WALLET_ID_INVALID";
     public const string CryptoWalletNotFound = "CryptoWallet.CRYPTO_WALLET_NOT_FOUND";
+    public const string CryptoWalletMismatch = "CryptoWallet.CRYPTO_WALLET_MISMATCH";
     public const string BalanceAmountInvalid = "CryptoWallet.BALANCE_AMOUNT_INVALID";
     public const string BalanceTransferIdInvalid = "CryptoWallet.BALANCE_TRANSFER_ID_INVALID";
     public const string BalanceSplitsRequired = "CryptoWallet.BALANCE_SPLITS_REQUIRED";

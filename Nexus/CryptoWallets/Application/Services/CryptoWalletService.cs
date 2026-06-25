@@ -4,6 +4,8 @@ using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.CryptoWallets.Aggregates;
 using Nexus.CryptoWallets.Application.Contracts;
+using Nexus.CryptoWallets.Application.Requests;
+using Nexus.CryptoWallets.Application.Responses;
 using Nexus.CryptoWallets.Errors;
 
 namespace Nexus.CryptoWallets.Application.Services;
@@ -50,7 +52,7 @@ public sealed class CryptoWalletService : ICryptoWalletService
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var wallet = FindCryptoWallet(request.CryptoWalletId);
+        var wallet = await FindCryptoWalletAsync(request.CryptoWalletId);
         if (wallet is null)
             return NotFound(request.CryptoWalletId);
 
@@ -68,7 +70,7 @@ public sealed class CryptoWalletService : ICryptoWalletService
 
     public async Task<IResult<CryptoWallet>> UpdateLabelAsync(string cryptoWalletId, string? label)
     {
-        var wallet = FindCryptoWallet(cryptoWalletId);
+        var wallet = await FindCryptoWalletAsync(cryptoWalletId);
         if (wallet is null)
             return NotFound(cryptoWalletId);
 
@@ -80,12 +82,12 @@ public sealed class CryptoWalletService : ICryptoWalletService
         return Result<CryptoWallet>.Success(wallet);
     }
 
-    public Task<IResult<CryptoWallet>> GetByIdAsync(string cryptoWalletId)
+    public async Task<IResult<CryptoWallet>> GetByIdAsync(string cryptoWalletId)
     {
-        var wallet = FindCryptoWallet(cryptoWalletId);
-        return Task.FromResult(wallet is null
+        var wallet = await FindCryptoWalletAsync(cryptoWalletId);
+        return wallet is null
             ? NotFound(cryptoWalletId)
-            : Result<CryptoWallet>.Success(wallet));
+            : Result<CryptoWallet>.Success(wallet);
     }
 
     public async Task<IResult<SearchCryptoWalletsResponse>> SearchAsync(SearchCryptoWalletsRequest? request)
@@ -134,13 +136,14 @@ public sealed class CryptoWalletService : ICryptoWalletService
         return null;
     }
 
-    private CryptoWallet? FindCryptoWallet(string cryptoWalletId)
+    private async Task<CryptoWallet?> FindCryptoWalletAsync(string cryptoWalletId)
     {
         if (string.IsNullOrWhiteSpace(cryptoWalletId))
             return null;
 
-        return _cryptoWallets.AsQueryable()
-            .FirstOrDefault(w => w.Id == cryptoWalletId.Trim());
+        return await _cryptoWallets.AsQueryable()
+            .Where(w => w.Id == cryptoWalletId.Trim())
+            .FirstOrDefaultAsync();
     }
 
     private static IResult<CryptoWallet> NotFound(string cryptoWalletId) =>

@@ -4,9 +4,9 @@ namespace Nexus.BankAccounts.Presentation;
 
 public static class BankAccountApiMapping
 {
-    public static object ToBankAccountResponse(BankAccount account)
+    public static object ToBankAccountResponse(BankAccount account, IReadOnlyList<BankBalance> balances)
     {
-        var totalBrl = account.Balances.Sum(balance => balance.AmountBrl);
+        var totalBrl = balances.Sum(balance => balance.AmountBrl);
         return new
         {
             id = account.Id,
@@ -18,7 +18,7 @@ public static class BankAccountApiMapping
             accountType = account.AccountType.ToString(),
             label = account.Label,
             totalBalanceBrl = totalBrl,
-            balances = account.Balances.Select(ToBankBalance).ToArray(),
+            balances = balances.Select(ToBankBalance).ToArray(),
             createdAt = account.CreatedAt,
             updatedAt = account.UpdatedAt,
         };
@@ -27,11 +27,17 @@ public static class BankAccountApiMapping
     private static object ToBankBalance(BankBalance balance) => new
     {
         id = balance.Id,
+        bankAccountId = balance.BankAccountId,
         amountBrl = balance.AmountBrl,
         transferId = balance.TransferId,
         createdAt = balance.CreatedAt,
         splits = balance.Splits,
-        appliedStrawManFeeIds = balance.AppliedStrawManFeeIds,
-        origin = balance.Origin,
+        origin = ToBalanceOrigin(balance.Origin),
+    };
+
+    private static object ToBalanceOrigin(BankBalanceOrigin origin) => new
+    {
+        operationId = origin.OperationId,
+        operatorId = origin.OperatorId,
     };
 }

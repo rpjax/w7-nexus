@@ -1,3 +1,4 @@
+using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.StrawMen.Aggregates;
@@ -13,41 +14,42 @@ public sealed class StrawManSettingsQueryService : IStrawManSettingsQueryService
         _settings = settings;
     }
 
-    public Task<decimal> GetMovementFeePercentageAsync(
+    public async Task<decimal> GetMovementFeePercentageAsync(
         string strawManId,
         CancellationToken cancellationToken = default)
     {
         strawManId = strawManId?.Trim() ?? string.Empty;
         if (string.IsNullOrWhiteSpace(strawManId))
-            return Task.FromResult(0m);
+            return 0m;
 
-        var settings = _settings.AsQueryable()
-            .FirstOrDefault(s => s.StrawManId == strawManId);
+        var settings = await _settings.AsQueryable()
+            .Where(s => s.StrawManId == strawManId)
+            .FirstOrDefaultAsync();
 
-        return Task.FromResult(settings?.MovementFeePercentage ?? 0m);
+        return settings?.MovementFeePercentage ?? 0m;
     }
 
-    public Task<IResult<StrawManSettingsDetails>> GetSettingsAsync(
+    public async Task<IResult<StrawManSettingsDetails>> GetSettingsAsync(
         string strawManId,
         CancellationToken cancellationToken = default)
     {
         strawManId = strawManId?.Trim() ?? string.Empty;
 
-        var settings = _settings.AsQueryable()
-            .FirstOrDefault(s => s.StrawManId == strawManId);
+        var settings = await _settings.AsQueryable()
+            .Where(s => s.StrawManId == strawManId)
+            .FirstOrDefaultAsync();
 
         if (settings is null)
         {
-            return Task.FromResult<IResult<StrawManSettingsDetails>>(Result<StrawManSettingsDetails>.Success(
+            return Result<StrawManSettingsDetails>.Success(
                 new StrawManSettingsDetails
                 {
                     StrawManId = strawManId,
                     MovementFeePercentage = 0m,
-                }));
+                });
         }
 
-        return Task.FromResult<IResult<StrawManSettingsDetails>>(Result<StrawManSettingsDetails>.Success(
-            ToDetails(settings)));
+        return Result<StrawManSettingsDetails>.Success(ToDetails(settings));
     }
 
     internal static StrawManSettingsDetails ToDetails(StrawManSettings settings) =>

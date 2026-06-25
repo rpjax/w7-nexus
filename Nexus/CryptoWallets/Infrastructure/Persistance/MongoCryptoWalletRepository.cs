@@ -22,24 +22,7 @@ public sealed class MongoCryptoWalletRepository : ICryptoWalletRepository
             r.Label,
             r.CreatedAt,
             r.UpdatedAt,
-            r.Addresses.Select(a => new CryptoWalletAddress(a.Namespace, a.Address, a.Memo)).ToList(),
-            r.Balances.Select(b => new CryptoBalance(
-                b.Id,
-                b.Chain,
-                b.Asset,
-                b.Amount,
-                b.TransferId,
-                b.CreatedAt,
-                b.Splits.Select(s => new CryptoBalanceSplit(
-                    s.AccountId,
-                    s.Percentage,
-                    s.Amount,
-                    s.SplitKind)).ToList(),
-                b.AppliedStrawManFeeIds,
-                new CryptoBalanceOrigin(
-                    b.Origin.OperationId,
-                    b.Origin.OperatorId,
-                    b.Origin.StrawManId))).ToList());
+            r.Addresses.Select(a => new CryptoWalletAddress(a.Namespace, a.Address, a.Memo)).ToList());
 
     public MongoCryptoWalletRepository(IMongoCollection<CryptoWalletRecord> collection)
     {
