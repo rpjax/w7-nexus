@@ -1,219 +1,271 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
 import { createCryptoWallet, searchCryptoWallets } from '../../api/cryptoWallets';
 import type { CryptoWalletRow } from '../../api/types';
-import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
+import { CryptoWalletCard } from '../../components/finance/CryptoWalletCard';
+import { CryptoWalletCreateModal } from '../../components/finance/CryptoWalletCreateModal';
+import type { CryptoWalletCreatePayload } from '../../components/finance/CryptoWalletCreateModal';
 import { PixEntityField } from '../../components/finance/PixEntityField';
 import { EmptyState } from '../../components/EmptyState';
 import { IconButton } from '../../components/IconButton';
 import { PaginationBar } from '../../components/ListControls';
-import { ADDRESS_NAMESPACE_OPTIONS } from '../../utils/financeLabels';
-import { formatCryptoWalletAddresses, formatCryptoWalletBalances } from '../../utils/cryptoWalletDisplay';
-import { formatUtc, shortId } from '../../utils/format';
+import { PageHeading } from '../../layouts/PageHeading';
+import { cryptoWalletSearchText } from '../../utils/cryptoWalletDisplay';
 import { useNotifications } from '../../notifications/NotificationContext';
 
 const PAGE_SIZE = 20;
 
+type CryptoWalletsLocationState = {
+  ownerId?: string;
+  strawManId?: string;
+  strawLabel?: string;
+  openCreate?: boolean;
+  returnTo?: string;
+};
+
 export function CryptoWalletsPage() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const locationState = location.state as CryptoWalletsLocationState | null;
   const { notifyError, notifySuccess } = useNotifications();
-  const [ownerId, setOwnerId] = useState('');
-  const [strawLabel, setStrawLabel] = useState<string | null>(null);
+
+  const [returnTo] = useState(() => locationState?.returnTo ?? null);
+  const [ownerId, setOwnerId] = useState(() => locationState?.ownerId ?? locationState?.strawManId ?? '');
+  const [strawLabel, setStrawLabel] = useState<string | null>(() => locationState?.strawLabel ?? null);
   const [rows, setRows] = useState<CryptoWalletRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [strawPickerOpen, setStrawPickerOpen] = useState(false);
-  const [showForm, setShowForm] = useState(false);
+  const [createOpen, setCreateOpen] = useState(
+    () => Boolean(locationState?.openCreate && (locationState?.ownerId ?? locationState?.strawManId)),
+  );
   const [busy, setBusy] = useState(false);
-
-  const [namespace, setNamespace] = useState(1);
-  const [address, setAddress] = useState('');
-  const [memo, setMemo] = useState('');
-  const [label, setLabel] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [filter, setFilter] = useState('');
 
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
-  const canSubmit = useMemo(
-    () => Boolean(ownerId.trim() && address.trim()),
-    [ownerId, address],
-  );
+  const hasOwner = Boolean(ownerId.trim());
+
+  const filteredRows = useMemo(() => {
+    const term = filter.trim().toLowerCase();
+    if (!term) return rows;
+    return rows.filter((row) => cryptoWalletSearchText(row).includes(term));
+  }, [rows, filter]);
 
   const load = useCallback(async (page: number, filterOwnerId: string) => {
-    const result = await searchCryptoWallets({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      ownerId: filterOwnerId.trim() || null,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      setRows([]);
-      setTotalItems(0);
-      return;
+    setLoading(true);
+    try {
+      const result = await searchCryptoWallets({
+        limit: PAGE_SIZE,
+        offset: (page - 1) * PAGE_SIZE,
+        ownerId: filterOwnerId.trim() || null,
+      });
+      if (!result.ok) {
+        notifyError(result.error);
+        setRows([]);
+        setTotalItems(0);
+        return;
+      }
+      setRows(result.data?.items ?? []);
+      setTotalItems(result.data?.total ?? 0);
+    } finally {
+      setLoading(false);
     }
-    setRows(result.data?.items ?? []);
-    setTotalItems(result.data?.total ?? 0);
   }, [notifyError]);
 
   useEffect(() => {
     void load(currentPage, ownerId);
   }, [currentPage, ownerId, load]);
 
-  async function handleCreate() {
-    if (!canSubmit) return;
+  function clearOwner() {
+    setOwnerId('');
+    setStrawLabel(null);
+    setCreateOpen(false);
+    setCurrentPage(1);
+    setFilter('');
+  }
+
+  function handleWalletUpdated(updated: CryptoWalletRow) {
+    setRows((prev) => prev.map((row) => (row.id === updated.id ? updated : row)));
+    notifySuccess('Carteira atualizada.');
+  }
+
+  async function handleCreate(payload: CryptoWalletCreatePayload) {
+    if (!ownerId.trim()) {
+      notifyError('Selecione o laranja antes de cadastrar.');
+      return;
+    }
     setBusy(true);
     try {
       const result = await createCryptoWallet({
         ownerId: ownerId.trim(),
-        addresses: [{ namespace, address: address.trim(), memo: memo.trim() || null }],
-        label: label.trim() || null,
+        addresses: [{ namespace: payload.namespace, address: payload.address, memo: payload.memo }],
+        label: payload.label,
       });
       if (!result.ok) {
         notifyError(result.error);
         return;
       }
       notifySuccess('Carteira crypto cadastrada.');
-      setShowForm(false);
+      setCreateOpen(false);
       setCurrentPage(1);
       await load(1, ownerId);
+
+      if (returnTo && result.data) {
+        navigate(returnTo, {
+          replace: true,
+          state: { cryptoWallet: result.data },
+        });
+      }
     } finally {
       setBusy(false);
     }
   }
 
+  const heroCount = hasOwner
+    ? `${totalItems} carteira${totalItems === 1 ? '' : 's'}`
+    : 'Escolha um laranja';
+
+  const heroHint = hasOwner
+    ? `Destinos on-chain de ${strawLabel ?? 'laranja selecionado'}.`
+    : 'Carteiras são cadastradas por laranja e usadas em saques e movimentações crypto.';
+
   return (
-    <>
-      <OpsWorkspace
+    <div className="ops-page crypto-wallets-page">
+      <PageHeading
         kicker="Financeiro"
         title="Carteiras crypto"
-        lead="Cadastre endereços por namespace (EVM, Tron, Bitcoin…). Cada saldo carrega rede e ativo específicos."
-        searchId="cryptoWalletStraw"
-        searchLabel="Filtrar por laranja"
-        searchPlaceholder="Selecione o laranja abaixo…"
-        searchValue={strawLabel ?? ''}
-        onSearchChange={() => {}}
-        onSearch={() => setStrawPickerOpen(true)}
-        onRefresh={() => void load(currentPage, ownerId)}
-        totalItems={totalItems}
-        totalLabel={`${totalItems} carteira(s)`}
-        onCreate={() => {
-          setShowForm((open) => {
-            const next = !open;
-            if (next && !ownerId.trim()) {
-              setStrawPickerOpen(true);
-            }
-            return next;
-          });
-        }}
-        createLabel={showForm ? 'Fechar formulário' : 'Nova carteira'}
-        footer={totalItems > 0 ? (
-          <PaginationBar
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-            onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-          />
-        ) : undefined}
-      >
-        <div className="ops-workspace__filters">
-          <div className="account-select-row">
-            <button type="button" className="account-select-trigger" onClick={() => setStrawPickerOpen(true)}>
-              {strawLabel ?? 'Selecionar laranja para filtrar / cadastrar'}
-            </button>
-            {ownerId ? (
-              <IconButton icon="x" label="Limpar laranja" onClick={() => { setOwnerId(''); setStrawLabel(null); setCurrentPage(1); }} />
-            ) : null}
-          </div>
-          <Link className="btn btn-ghost" to="/dashboard/transfers">Voltar às transferências</Link>
-        </div>
+        subtitle="Endereços on-chain vinculados a contas laranja."
+        backLink={{ to: '/dashboard/transfers', label: 'Transferências' }}
+      />
 
-        {showForm ? (
-          <section className="card ops-card inset-card">
-            <h2 className="section-title">Cadastrar carteira</h2>
-            <p className="muted small form-hint">
-              Informe ao menos um endereço por namespace. Saldos aparecem após transferências creditarem valores nesta carteira.
-            </p>
-            <div className="form-grid form-grid-wide">
-              <div className="field span-2">
+      <section className="pix-workspace crypto-workspace" aria-labelledby="crypto-wallets-title">
+        <header className="pix-workspace__hero crypto-workspace__hero">
+          <div className="pix-workspace__hero-main">
+            <span className="crypto-workspace__badge">Destino on-chain</span>
+            <p className="crypto-workspace__count" aria-live="polite">{heroCount}</p>
+            <p className="pix-workspace__hero-hint muted small">{heroHint}</p>
+          </div>
+          <div className="pix-workspace__hero-mark crypto-workspace__mark" aria-hidden="true">
+            <span className="crypto-workspace__mark-icon">WEB3</span>
+          </div>
+        </header>
+
+        <div className="pix-workspace__divider" aria-hidden="true" />
+
+        <div className="pix-workspace__body">
+          {!hasOwner ? (
+            <section className="pix-section crypto-section">
+              <div className="crypto-onboarding">
+                <div className="bank-section__head-text">
+                  <span className="bank-section__kicker">Começar</span>
+                  <h2 id="crypto-wallets-title" className="bank-section-title">Selecione o laranja</h2>
+                  <p className="bank-section-desc muted small">
+                    Cada laranja pode ter várias carteiras. Escolha qual titular deseja gerenciar.
+                  </p>
+                </div>
                 <PixEntityField
-                  label="Laranja titular"
-                  hint="Conta laranja dona desta carteira."
+                  label="Laranja"
                   emptyLabel="Selecionar laranja"
                   name={strawLabel}
-                  id={ownerId || null}
-                  accent="warm"
+                  id={null}
                   onPick={() => setStrawPickerOpen(true)}
-                  onClear={() => {
-                    setOwnerId('');
-                    setStrawLabel(null);
-                    setCurrentPage(1);
-                  }}
+                  accent="warm"
                 />
               </div>
-              <div className="field span-2">
-                <label htmlFor="namespace">Namespace</label>
-                <select id="namespace" className="nexus-input" value={namespace} onChange={(e) => setNamespace(Number(e.target.value))}>
-                  {ADDRESS_NAMESPACE_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                  ))}
-                </select>
+            </section>
+          ) : (
+            <section className="pix-section crypto-managed-section crypto-section">
+              <div className="bank-context-bar">
+                <div className="bank-context-bar__main">
+                  <span className="bank-context-bar__avatar crypto-context-bar__avatar" aria-hidden="true">
+                    {(strawLabel ?? '?')[0]?.toUpperCase()}
+                  </span>
+                  <div className="bank-context-bar__text">
+                    <span className="bank-context-bar__kicker">Laranja ativo</span>
+                    <strong className="bank-context-bar__name">{strawLabel ?? ownerId}</strong>
+                  </div>
+                </div>
+                <div className="bank-context-bar__actions">
+                  <button type="button" className="bank-context-bar__change" onClick={() => setStrawPickerOpen(true)}>
+                    Trocar
+                  </button>
+                  <IconButton icon="x" label="Limpar laranja" onClick={clearOwner} />
+                </div>
               </div>
-              <div className="field span-2">
-                <label htmlFor="address">Endereço</label>
-                <input id="address" className="nexus-input mono" value={address} onChange={(e) => setAddress(e.target.value)} />
-              </div>
-              <div className="field span-2">
-                <label htmlFor="memo">Memo / tag <span className="muted small">opcional</span></label>
-                <input id="memo" className="nexus-input" value={memo} onChange={(e) => setMemo(e.target.value)} />
-              </div>
-              <div className="field span-2">
-                <label htmlFor="walletLabel">Label <span className="muted small">opcional</span></label>
-                <input id="walletLabel" className="nexus-input" value={label} onChange={(e) => setLabel(e.target.value)} />
-              </div>
-            </div>
-            <div className="card-actions">
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={busy || !canSubmit}
-                onClick={() => void handleCreate()}
-              >
-                {busy ? 'Salvando…' : 'Cadastrar carteira'}
-              </button>
-            </div>
-          </section>
-        ) : null}
 
-        {rows.length === 0 ? (
-          <EmptyState title="Nenhuma carteira encontrada" message="Selecione um laranja ou cadastre uma nova carteira." />
-        ) : (
-          <div className="table-wrap table-top-gap">
-            <table className="responsive-data ops-table">
-              <thead>
-                <tr>
-                  <th>ID</th>
-                  <th>Laranja</th>
-                  <th>Endereços</th>
-                  <th>Saldos</th>
-                  <th>Label</th>
-                  <th>Atualizado</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.id}>
-                    <td data-label="ID"><span className="mono">{shortId(row.id)}</span></td>
-                    <td data-label="Dono"><span className="mono">{shortId(row.ownerId)}</span></td>
-                    <td data-label="Endereços">{formatCryptoWalletAddresses(row)}</td>
-                    <td data-label="Saldos">{formatCryptoWalletBalances(row)}</td>
-                    <td data-label="Label">{row.label ?? '—'}</td>
-                    <td data-label="Atualizado" className="muted small">{formatUtc(row.updatedAt)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </OpsWorkspace>
+              <div className="bank-section__head">
+                <div className="bank-section__head-text">
+                  <span className="bank-section__kicker">Carteiras</span>
+                  <h2 className="bank-section-title">Cadastradas</h2>
+                  <p className="bank-section-desc muted small">
+                    {loading ? 'Carregando…' : `${totalItems} carteira(s) neste laranja.`}
+                  </p>
+                </div>
+                <button type="button" className="btn btn-primary btn-sm bank-section-create" onClick={() => setCreateOpen(true)}>
+                  Nova carteira
+                </button>
+              </div>
+
+              <div className="bank-section__body">
+                <div className="bank-list-toolbar">
+                  <input
+                    className="nexus-input bank-list-toolbar__search"
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value)}
+                    placeholder="Buscar por apelido ou endereço…"
+                    aria-label="Filtrar carteiras"
+                  />
+                  <IconButton
+                    icon="refresh"
+                    label="Atualizar lista"
+                    onClick={() => void load(currentPage, ownerId)}
+                    disabled={loading}
+                  />
+                </div>
+
+                {loading ? (
+                  <p className="muted bank-list-loading">Carregando carteiras…</p>
+                ) : rows.length === 0 ? (
+                  <div className="bank-empty-block">
+                    <EmptyState
+                      title="Nenhuma carteira cadastrada"
+                      message="Cadastre a primeira carteira de destino para este laranja."
+                    />
+                    <button type="button" className="btn btn-primary" onClick={() => setCreateOpen(true)}>
+                      Cadastrar primeira carteira
+                    </button>
+                  </div>
+                ) : filteredRows.length === 0 ? (
+                  <EmptyState title="Nenhum resultado" message="Ajuste o filtro ou cadastre uma nova carteira." />
+                ) : (
+                  <ul className="crypto-wallet-list">
+                    {filteredRows.map((row) => (
+                      <CryptoWalletCard
+                        key={row.id}
+                        row={row}
+                        onUpdated={handleWalletUpdated}
+                        onError={notifyError}
+                      />
+                    ))}
+                  </ul>
+                )}
+
+                {totalItems > PAGE_SIZE ? (
+                  <PaginationBar
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                    onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                  />
+                ) : null}
+              </div>
+            </section>
+          )}
+        </div>
+      </section>
 
       <AccountPickerModal
         open={strawPickerOpen}
@@ -222,10 +274,19 @@ export function CryptoWalletsPage() {
         title="Conta laranja"
         onSelected={(row) => {
           setOwnerId(row.id);
-          setStrawLabel(`${row.username} (${shortId(row.id)})`);
+          setStrawLabel(row.username);
           setCurrentPage(1);
+          setFilter('');
         }}
       />
-    </>
+
+      <CryptoWalletCreateModal
+        open={createOpen}
+        busy={busy}
+        strawLabel={strawLabel}
+        onClose={() => setCreateOpen(false)}
+        onSubmit={(payload) => void handleCreate(payload)}
+      />
+    </div>
   );
 }

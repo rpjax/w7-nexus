@@ -9,9 +9,10 @@ import { PaginationBar } from '../ListControls';
 type UnsettledPaymentsPickerProps = {
   open: boolean;
   onClose: () => void;
-  strawManId: string;
+  ownerId: string;
   selectedIds: Set<string>;
   onChange: (ids: Set<string>) => void;
+  onSelectedTotalChange?: (total: number) => void;
 };
 
 const FETCH_LIMIT = 300;
@@ -20,9 +21,10 @@ const PAGE_SIZE = 8;
 export function UnsettledPaymentsPicker({
   open,
   onClose,
-  strawManId,
+  ownerId,
   selectedIds,
   onChange,
+  onSelectedTotalChange,
 }: UnsettledPaymentsPickerProps) {
   const searchInputId = useId();
   const [keyword, setKeyword] = useState('');
@@ -35,12 +37,12 @@ export function UnsettledPaymentsPicker({
     if (!open) return;
     setKeyword('');
     setCurrentPage(1);
-  }, [open, strawManId]);
+  }, [open, ownerId]);
 
   useEffect(() => {
-    if (!open || !strawManId.trim()) return;
+    if (!open || !ownerId.trim()) return;
     void loadEligible();
-  }, [open, strawManId]);
+  }, [open, ownerId]);
 
   async function loadEligible() {
     setLoading(true);
@@ -50,7 +52,7 @@ export function UnsettledPaymentsPicker({
         limit: FETCH_LIMIT,
         offset: 0,
         keyword: null,
-        strawManId,
+        strawManId: ownerId,
       });
       if (!result.ok) {
         setAllRows([]);
@@ -80,6 +82,10 @@ export function UnsettledPaymentsPicker({
     () => allRows.filter((r) => selectedIds.has(r.id)).reduce((sum, r) => sum + r.amount, 0),
     [allRows, selectedIds],
   );
+
+  useEffect(() => {
+    onSelectedTotalChange?.(selectedTotal);
+  }, [selectedTotal, onSelectedTotalChange]);
 
   function toggle(id: string) {
     const next = new Set(selectedIds);

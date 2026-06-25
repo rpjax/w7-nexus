@@ -6,60 +6,37 @@ import { MovementComposerModal } from '../../components/finance/MovementComposer
 import { PageHeading } from '../../layouts/PageHeading';
 import { useNotifications } from '../../notifications/NotificationContext';
 
-function balanceFromSearchParams(params: URLSearchParams): ActiveBalanceRow | null {
-  const balanceId = params.get('sourceBalanceId');
-  if (!balanceId) return null;
-
-  const amount = Number(params.get('sourceAmount') ?? '0');
-  const bankId = params.get('sourceBankAccountId');
-  const cryptoId = params.get('sourceCryptoWalletId');
-
-  return {
-    balanceId,
-    transferId: params.get('from') ?? '',
-    amount: Number.isFinite(amount) ? amount : 0,
-    currency: bankId ? 'BRL' : 'CRYPTO',
-    account: {
-      kind: bankId ? 'BankAccount' : 'CryptoWallet',
-      id: bankId ?? cryptoId,
-      displayName: bankId ? 'Conta bancária de origem' : 'Carteira crypto de origem',
-    },
-    canMove: true,
-    canPayout: Boolean(bankId),
-  };
-}
-
 export function MovementCreatePage() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { notifyError } = useNotifications();
   const fromTransferId = searchParams.get('from') ?? searchParams.get('fromTransferId');
-  const [strawManId, setStrawManId] = useState(searchParams.get('strawManId') ?? '');
+  const [strawManId, setStrawManId] = useState('');
   const [strawManUsername, setStrawManUsername] = useState<string | null>(null);
   const [balances, setBalances] = useState<ActiveBalanceRow[]>([]);
   const [loading, setLoading] = useState(Boolean(fromTransferId));
 
   useEffect(() => {
-    if (fromTransferId) {
-      void (async () => {
-        setLoading(true);
-        const result = await getTransferTimeline(fromTransferId);
-        if (!result.ok) {
-          notifyError(result.error);
-          setBalances([]);
-        } else {
-          setStrawManId(result.data?.strawMan?.id ?? searchParams.get('strawManId') ?? '');
-          setStrawManUsername(result.data?.strawMan?.username ?? null);
-          setBalances((result.data?.activeBalances ?? []).filter((balance) => balance.canMove));
-        }
-        setLoading(false);
-      })();
+    if (!fromTransferId) {
+      setBalances([]);
+      setLoading(false);
       return;
     }
 
-    const legacyBalance = balanceFromSearchParams(searchParams);
-    setBalances(legacyBalance ? [legacyBalance] : []);
-  }, [fromTransferId, notifyError, searchParams]);
+    void (async () => {
+      setLoading(true);
+      const result = await getTransferTimeline(fromTransferId);
+      if (!result.ok) {
+        notifyError(result.error);
+        setBalances([]);
+      } else {
+        setStrawManId(result.data?.strawMan?.id ?? '');
+        setStrawManUsername(result.data?.strawMan?.username ?? null);
+        setBalances((result.data?.activeBalances ?? []).filter((balance) => balance.canMove));
+      }
+      setLoading(false);
+    })();
+  }, [fromTransferId, notifyError]);
 
   const initialBalanceId = searchParams.get('sourceBalanceId');
 
@@ -68,16 +45,26 @@ export function MovementCreatePage() {
       <PageHeading
         kicker="Financeiro"
         title="Nova movimentação"
-        subtitle="Selecione o saldo, o destino e confirme. Sem digitar IDs manualmente."
+        subtitle="Transfira saldos disponíveis na cadeia de uma transferência."
         backLink={{ to: fromTransferId ? `/dashboard/transfers/${fromTransferId}` : '/dashboard/transfers', label: 'Voltar' }}
       />
 
       {loading ? (
         <p className="muted">Carregando saldos disponíveis…</p>
+      ) : !fromTransferId ? (
+        <section className="card ops-card finance-guide-card">
+          <h2 className="finance-guide-card__title">Abra uma transferência primeiro</h2>
+          <p className="muted">
+            Movimentações partem dos saldos ativos na cadeia. Na lista, abra um saque ou movimentação e use
+            <strong> Nova movimentação</strong> no detalhe.
+          </p>
+          <Link className="btn btn-primary" to="/dashboard/transfers">Ir para transferências</Link>
+        </section>
       ) : balances.length === 0 ? (
-        <section className="card ops-card">
-          <p className="muted">Nenhum saldo disponível para movimentar.</p>
-          <p><Link className="btn btn-primary" to="/dashboard/transfers">Ir para transferências</Link></p>
+        <section className="card ops-card finance-guide-card">
+          <h2 className="finance-guide-card__title">Sem saldo para movimentar</h2>
+          <p className="muted">Nesta cadeia não há saldos disponíveis — o valor já foi movimentado ou repassado.</p>
+          <Link className="btn btn-primary" to={`/dashboard/transfers/${fromTransferId}`}>Voltar ao detalhe</Link>
         </section>
       ) : (
         <MovementComposerModal

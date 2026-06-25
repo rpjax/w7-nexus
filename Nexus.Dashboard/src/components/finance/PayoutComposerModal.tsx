@@ -49,6 +49,7 @@ export function PayoutComposerModal({
   const [destCrypto, setDestCrypto] = useState<CryptoWalletRow | null>(null);
   const [pixTransactionId, setPixTransactionId] = useState('');
   const [pixAuthenticationCode, setPixAuthenticationCode] = useState('');
+  const [cryptoTransactionId, setCryptoTransactionId] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
 
@@ -62,7 +63,9 @@ export function PayoutComposerModal({
   const maxAmount = selectedBalance?.amount ?? 0;
   const amount = parseMovementAmount(amountInput);
   const amountValid = isMovementAmountWithinLimit(amount, maxAmount);
-  const hasProof = Boolean(pixTransactionId.trim() || pixAuthenticationCode.trim());
+  const hasProof = destIsCrypto
+    ? Boolean(cryptoTransactionId.trim() || pixTransactionId.trim() || pixAuthenticationCode.trim())
+    : Boolean(pixTransactionId.trim() || pixAuthenticationCode.trim());
 
   const selectBalance = useCallback((balance: ActiveBalanceRow) => {
     setSelectedBalanceId(balance.balanceId);
@@ -78,6 +81,7 @@ export function PayoutComposerModal({
     setBusy(false);
     setPixTransactionId('');
     setPixAuthenticationCode('');
+    setCryptoTransactionId('');
     setDestinationType('Pix');
     const defaultBalance = payoutBalances.find((b) => b.balanceId === initialBalanceId)
       ?? payoutBalances[0]
@@ -122,6 +126,7 @@ export function PayoutComposerModal({
         proof: {
           pixTransactionId: pixTransactionId.trim() || null,
           pixAuthenticationCode: pixAuthenticationCode.trim() || null,
+          cryptoTransactionId: cryptoTransactionId.trim() || null,
         },
       });
       if (!result.ok) {
@@ -241,7 +246,27 @@ export function PayoutComposerModal({
               </section>
 
               <section className="movement-composer__section movement-composer__section--conversion">
-                <h3 className="movement-composer__section-title">4. Comprovante PIX</h3>
+                <h3 className="movement-composer__section-title">4. Comprovante</h3>
+                {destIsCrypto ? (
+                  <>
+                    <p className="muted small movement-composer__hint">
+                      Para destino crypto, informe o hash on-chain ou dados do PIX utilizado no repasse.
+                    </p>
+                    <div className="field">
+                      <label htmlFor="payoutCryptoTx">Hash on-chain</label>
+                      <input
+                        id="payoutCryptoTx"
+                        className="nexus-input mono"
+                        value={cryptoTransactionId}
+                        onChange={(e) => setCryptoTransactionId(e.target.value)}
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <p className="muted small movement-composer__hint">
+                    Comprovante PIX obrigatório para repasses bancários.
+                  </p>
+                )}
                 <div className="form-grid form-grid-wide">
                   <div className="field span-2">
                     <label htmlFor="payoutPixTx">ID transação PIX</label>
@@ -263,7 +288,7 @@ export function PayoutComposerModal({
                   </div>
                 </div>
                 {!hasProof ? (
-                  <p className="feedback warn movement-composer__hint">Informe ao menos um campo do comprovante PIX.</p>
+                  <p className="feedback warn movement-composer__hint">Informe ao menos um campo de comprovante.</p>
                 ) : null}
               </section>
             </>

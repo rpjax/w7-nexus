@@ -34,6 +34,15 @@ export function formatCryptoWalletBalances(row: CryptoWalletRow): string {
     .join(' · ');
 }
 
+export function cryptoWalletSearchText(row: CryptoWalletRow): string {
+  const parts = [
+    row.label ?? '',
+    row.id,
+    ...(row.addresses ?? []).flatMap((entry) => [entry.address, entry.namespace, entry.memo ?? '']),
+  ];
+  return parts.join(' ').toLowerCase();
+}
+
 export function cryptoWalletPickerLabel(row: CryptoWalletRow, addressChars = 16): string {
   const balances = formatCryptoWalletBalances(row);
   const balanceHint = balances === 'Sem saldo' ? '' : ` · ${balances}`;
