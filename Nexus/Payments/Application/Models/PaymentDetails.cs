@@ -4,8 +4,11 @@ public sealed class PaymentDetails
 {
     public string Id { get; init; } = string.Empty;
     public string OperationId { get; init; } = string.Empty;
+    public string? OperationName { get; init; }
     public string? OperatorId { get; init; }
+    public string? OperatorUsername { get; init; }
     public string StrawManId { get; init; } = string.Empty;
+    public string? StrawManUsername { get; init; }
     public string Gateway { get; init; } = string.Empty;
     public string GatewayTransactionId { get; init; } = string.Empty;
     public decimal Amount { get; init; }

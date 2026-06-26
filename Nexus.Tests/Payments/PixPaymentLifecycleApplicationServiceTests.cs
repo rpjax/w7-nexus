@@ -271,7 +271,7 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var team = TeamTestFactory.WithOperatorProfitShare("team-1", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
-        var sut = new PaymentService(accounts, payments, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
@@ -329,7 +329,7 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var team = TeamTestFactory.WithOperatorProfitShare("team-3", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
-        var sut = new PaymentService(accounts, payments, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
@@ -383,7 +383,7 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var strawAccount = new Account("straw-2", "straw2", "hash", new[] { Roles.StrawMan }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(new[] { adminAccount, strawAccount });
 
-        var sut = new PaymentService(accounts, payments, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {

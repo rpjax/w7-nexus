@@ -48,7 +48,7 @@ public sealed class BalanceSplitCalculationServiceTests
         Assert.Equal(45m, operatorSplit.Percentage);
         Assert.Equal(45m, operatorSplit.Amount);
 
-        var strawSplit = splits.Single(s => s.SplitKind == TransferSplitKind.StrawManMovementFee);
+        var strawSplit = splits.Single(s => s.SplitKind == TransferSplitKind.StrawManFee);
         Assert.Equal("straw-d", strawSplit.AccountId);
         Assert.Equal(10m, strawSplit.Percentage);
         Assert.Equal(10m, strawSplit.Amount);
@@ -63,7 +63,7 @@ public sealed class BalanceSplitCalculationServiceTests
         var diluted = new[]
         {
             ProfitShare("operator-1", 45m, 45m),
-            TransferBalanceSplit.Create("straw-d", 10m, 10m, TransferSplitKind.StrawManMovementFee).Value!,
+            TransferBalanceSplit.Create("straw-d", 10m, 10m, TransferSplitKind.StrawManFee).Value!,
         };
 
         var result = await sut.CalculateForCreditAsync("straw-d", 100m, diluted);

@@ -124,6 +124,8 @@ export type OperationWithLedTeamsDetails = {
 
 export type PaymentSplitRow = {
   accountId: string;
+  username?: string | null;
+  role?: string | null;
   percentage: number;
   amount: number;
 };
@@ -131,6 +133,7 @@ export type PaymentSplitRow = {
 export type PaymentRow = {
   id: string;
   operationId: string;
+  operationName?: string | null;
   gateway: string;
   gatewayTransactionId: string;
   amount: number;
@@ -139,7 +142,9 @@ export type PaymentRow = {
   settlementStatus: string;
   distributionStatus: string;
   operatorId?: string | null;
+  operatorUsername?: string | null;
   strawManId: string;
+  strawManUsername?: string | null;
   createdAt: string;
   paidAt?: string | null;
   refundedAt?: string | null;

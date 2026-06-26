@@ -38,6 +38,7 @@ public class Administrator : IAdministrator
     private IAdministratorPaymentSearchService _paymentSearch { get; }
     private IAdministratorPaymentCommandService _paymentCommands { get; }
     private IAdministratorStrawManSettingsCommandService _strawManSettings { get; }
+    private IAdministratorStrawManSettingsQueryService _strawManSettingsQuery { get; }
 
     public Administrator(
         IAdministratorAccessPolicy policy,
@@ -55,7 +56,8 @@ public class Administrator : IAdministrator
         ITransferService transfers,
         IAdministratorPaymentSearchService paymentSearch,
         IAdministratorPaymentCommandService paymentCommands,
-        IAdministratorStrawManSettingsCommandService strawManSettings)
+        IAdministratorStrawManSettingsCommandService strawManSettings,
+        IAdministratorStrawManSettingsQueryService strawManSettingsQuery)
     {
         _policy = policy;
         _operationSearch = operationSearch;
@@ -73,6 +75,7 @@ public class Administrator : IAdministrator
         _paymentSearch = paymentSearch;
         _paymentCommands = paymentCommands;
         _strawManSettings = strawManSettings;
+        _strawManSettingsQuery = strawManSettingsQuery;
     }
 
     public async Task<IOperationResult<OperationDetails>> CreateOperationAsync(
@@ -1465,6 +1468,30 @@ public class Administrator : IAdministrator
             throw new InvalidOperationException();
 
         return OperationResult<PaymentDetails>.Success(value);
+    }
+
+    public async Task<IOperationResult<StrawManSettingsDetails>> GetStrawManSettingsAsync(
+        RequesterIdentity identity,
+        string strawManId,
+        CancellationToken cancellationToken = default)
+    {
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<StrawManSettingsDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<StrawManSettingsDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _strawManSettingsQuery.GetStrawManSettingsAsync(strawManId);
+
+        if (result.IsFailure)
+            return OperationResult<StrawManSettingsDetails>.Failure(result.Errors);
+
+        if (result.Value is not StrawManSettingsDetails value)
+            throw new InvalidOperationException();
+
+        return OperationResult<StrawManSettingsDetails>.Success(value);
     }
 
     public async Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(

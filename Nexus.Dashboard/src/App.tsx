@@ -23,7 +23,7 @@ import { AccountsPage } from './pages/AccountsPage';
 import { PaymentsPixPage } from './pages/PaymentsPixPage';
 import { StrawManPaymentDetailPage } from './pages/strawMan/StrawManPaymentDetailPage';
 import { StrawManPaymentsPage } from './pages/strawMan/StrawManPaymentsPage';
-import { AdminStrawManSettingsPage, StrawManSettingsPage } from './pages/strawMan/StrawManSettingsPage';
+import { AdminStrawManManagementPage, StrawManSelfSettingsPage } from './pages/strawMan/StrawManSettingsPage';
 import { BankAccountsPage } from './pages/withdrawals/BankAccountsPage';
 import { CryptoWalletsPage } from './pages/withdrawals/CryptoWalletsPage';
 import { WithdrawalCreatePage } from './pages/withdrawals/WithdrawalCreatePage';
@@ -80,13 +80,14 @@ export default function App() {
             <Route path="/dashboard/transfers/bank-accounts" element={<BankAccountsPage />} />
             <Route path="/dashboard/transfers/crypto-wallets" element={<CryptoWalletsPage />} />
             <Route path="/dashboard/transfers/:transferId" element={<WithdrawalDetailPage />} />
-            <Route path="/dashboard/admin/straw-man-settings" element={<AdminStrawManSettingsPage />} />
+            <Route path="/dashboard/admin/straw-men" element={<AdminStrawManManagementPage />} />
+            <Route path="/dashboard/admin/straw-man-settings" element={<Navigate to="/dashboard/admin/straw-men" replace />} />
           </Route>
 
           <Route element={<RequireRole role={ROLES.StrawMan} />}>
             <Route path="/dashboard/straw-man/payments" element={<StrawManPaymentsPage />} />
             <Route path="/dashboard/straw-man/payments/:paymentId" element={<StrawManPaymentDetailPage />} />
-            <Route path="/dashboard/straw-man/settings" element={<StrawManSettingsPage />} />
+            <Route path="/dashboard/straw-man/settings" element={<StrawManSelfSettingsPage />} />
           </Route>
         </Route>
       </Route>

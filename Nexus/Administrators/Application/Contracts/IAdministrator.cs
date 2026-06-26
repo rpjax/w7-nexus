@@ -348,6 +348,11 @@ public interface IAdministrator
     // Straw men
     // ==========================================================================
 
+    Task<IOperationResult<StrawManSettingsDetails>> GetStrawManSettingsAsync(
+        RequesterIdentity identity,
+        string strawManId,
+        CancellationToken cancellationToken = default);
+
     Task<IOperationResult<StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
         RequesterIdentity identity,
         string strawManId,

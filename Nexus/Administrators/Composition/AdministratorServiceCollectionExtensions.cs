@@ -20,6 +20,7 @@ public static class AdministratorServiceCollectionExtensions
         services.AddScoped<IAdministratorPaymentSearchService, AdministratorPaymentSearchService>();
         services.AddScoped<IAdministratorPaymentCommandService, AdministratorPaymentCommandService>();
         services.AddScoped<IAdministratorStrawManSettingsCommandService, AdministratorStrawManSettingsCommandService>();
+        services.AddScoped<IAdministratorStrawManSettingsQueryService, AdministratorStrawManSettingsQueryService>();
         services.AddScoped<IAdministrator, Administrator>();
         services.AddScoped<ITeamGatewayDetailsLoader, TeamGatewayDetailsLoader>();
 

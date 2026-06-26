@@ -13,10 +13,14 @@ namespace Nexus.Administrators.Application.Services;
 public sealed class AdministratorPaymentSearchService : IAdministratorPaymentSearchService
 {
     private IPaymentRepository _payments { get; }
+    private IPaymentDetailsEnrichmentService _enrichment { get; }
 
-    public AdministratorPaymentSearchService(IPaymentRepository payments)
+    public AdministratorPaymentSearchService(
+        IPaymentRepository payments,
+        IPaymentDetailsEnrichmentService enrichment)
     {
         _payments = payments;
+        _enrichment = enrichment;
     }
 
     public async Task<IResult<SearchPaymentsResponse>> SearchPaymentsAsync(SearchPaymentsRequest? request)
@@ -45,7 +49,7 @@ public sealed class AdministratorPaymentSearchService : IAdministratorPaymentSea
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = PaymentDetailsMapper.MapMany(items),
+            Items = await _enrichment.EnrichManyAsync(PaymentDetailsMapper.MapMany(items)),
         });
     }
 
@@ -71,6 +75,7 @@ public sealed class AdministratorPaymentSearchService : IAdministratorPaymentSea
                 .Build());
         }
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(payment));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(payment)));
     }
 }

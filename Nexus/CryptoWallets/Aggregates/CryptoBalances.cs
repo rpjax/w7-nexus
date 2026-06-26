@@ -7,7 +7,7 @@ namespace Nexus.CryptoWallets.Aggregates;
 public enum CryptoSplitKind
 {
     ProfitShare = 0,
-    StrawManMovementFee,
+    StrawManFee,
 }
 
 public sealed class CryptoBalanceSplit

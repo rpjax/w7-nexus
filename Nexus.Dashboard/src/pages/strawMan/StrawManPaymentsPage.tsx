@@ -43,10 +43,10 @@ export function StrawManPaymentsPage() {
   return (
     <div className="ops-page">
       <PageHeading
-        kicker="Laranja"
-        title="Pagamentos do laranja"
+        kicker="Laranjas"
+        title="Meus pagamentos"
         subtitle="Cobranças vinculadas à sua conta laranja — somente leitura."
-        backLink={{ to: '/dashboard', label: 'Visão geral' }}
+        backLink={{ to: '/dashboard/straw-man/settings', label: 'Minhas configurações' }}
       />
 
       <section className="ops-page__toolbar bank-managed-section">

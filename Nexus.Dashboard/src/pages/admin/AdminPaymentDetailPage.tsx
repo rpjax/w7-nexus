@@ -46,7 +46,7 @@ export function AdminPaymentDetailPage() {
         kicker="Administração"
         kickerVariant="admin"
         title="Detalhe do pagamento"
-        subtitle="Transições aplicam as mesmas regras do domínio — sem bypass administrativo."
+        subtitle="Transições do domínio, com contexto legível e ações administrativas ao lado."
         backLink={{ to: listPath('global-admin'), label: 'Todos os pagamentos' }}
       />
 
@@ -54,8 +54,11 @@ export function AdminPaymentDetailPage() {
         <p className="muted">Carregando…</p>
       ) : payment ? (
         <>
-          <PaymentDetailPanel payment={payment} scope="global-admin" />
-          {actionBar}
+          <PaymentDetailPanel
+            payment={payment}
+            scope="global-admin"
+            actionsSlot={actionBar}
+          />
         </>
       ) : (
         <p className="muted">Pagamento não encontrado.</p>

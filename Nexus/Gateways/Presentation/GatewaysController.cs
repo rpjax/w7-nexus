@@ -1,7 +1,6 @@
 using Aidan.Web.Controllers;
 using Nexus.Gateways.Application.Contracts;
 using Microsoft.AspNetCore.Mvc;
-using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
 
 namespace Nexus.Gateways.Presentation;

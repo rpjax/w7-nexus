@@ -43,7 +43,7 @@ public sealed class BalanceSplitCalculationService : IBalanceSplitCalculationSer
                 .Build());
 
         var feeIds = originalSplits
-            .Where(s => s.SplitKind == TransferSplitKind.StrawManMovementFee)
+            .Where(s => s.SplitKind == TransferSplitKind.StrawManFee)
             .Select(s => s.AccountId.Trim())
             .Where(id => !string.IsNullOrWhiteSpace(id))
             .Distinct(StringComparer.Ordinal)
@@ -84,7 +84,7 @@ public sealed class BalanceSplitCalculationService : IBalanceSplitCalculationSer
                     destinationStrawManId,
                     feePct,
                     feeAmount,
-                    TransferSplitKind.StrawManMovementFee);
+                    TransferSplitKind.StrawManFee);
 
                 if (feeSplit.IsFailure)
                     return Result<BalanceSplitCalculationResult>.Failure(feeSplit.Errors);

@@ -19,13 +19,16 @@ public sealed class OperatorPaymentSearchService : IOperatorPaymentSearchService
 {
     private IPaymentRepository _payments { get; }
     private ITeamRepository _teams { get; }
+    private IPaymentDetailsEnrichmentService _enrichment { get; }
 
     public OperatorPaymentSearchService(
         IPaymentRepository payments,
-        ITeamRepository teams)
+        ITeamRepository teams,
+        IPaymentDetailsEnrichmentService enrichment)
     {
         _payments = payments;
         _teams = teams;
+        _enrichment = enrichment;
     }
 
     public async Task<IResult<SearchPaymentsResponse>> SearchPaymentsAsync(
@@ -59,7 +62,7 @@ public sealed class OperatorPaymentSearchService : IOperatorPaymentSearchService
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = PaymentDetailsMapper.MapMany(page),
+            Items = await _enrichment.EnrichManyAsync(PaymentDetailsMapper.MapMany(page)),
         });
     }
 
@@ -98,7 +101,8 @@ public sealed class OperatorPaymentSearchService : IOperatorPaymentSearchService
                 .Build());
         }
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(payment));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(payment)));
     }
 
     private async Task<List<Payment>> LoadScopedPaymentsAsync(string accountId, IReadOnlyList<Team> assignedTeams)

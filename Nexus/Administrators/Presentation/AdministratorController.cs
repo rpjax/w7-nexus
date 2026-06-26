@@ -876,6 +876,19 @@ public class AdministratorController : NexusController
             cancellationToken));
     }
 
+    [HttpGet("straw-men/{strawManId}/settings")]
+    public async Task<ActionResult> GetStrawManSettingsAsync(
+        string strawManId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.GetStrawManSettingsAsync(
+            identity,
+            strawManId,
+            cancellationToken));
+    }
+
     [HttpPut("straw-men/{strawManId}/settings")]
     public async Task<ActionResult> UpsertStrawManSettingsAsync(
         string strawManId,

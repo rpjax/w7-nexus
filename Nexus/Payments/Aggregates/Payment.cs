@@ -34,17 +34,29 @@ public enum PaymentDistributionStatus
     Complete,
 }
 
+public enum PaymentSplitKind
+{
+    ProfitShare = 0,
+    StrawManFee,
+}
+
 public sealed class PaymentSplit
 {
     public string AccountId { get; }
     public decimal Percentage { get; }
     public decimal Amount { get; }
+    public PaymentSplitKind SplitKind { get; }
 
-    internal PaymentSplit(string accountId, decimal percentage, decimal amount)
+    internal PaymentSplit(
+        string accountId,
+        decimal percentage,
+        decimal amount,
+        PaymentSplitKind splitKind = PaymentSplitKind.ProfitShare)
     {
         AccountId = accountId.Trim();
         Percentage = percentage;
         Amount = amount;
+        SplitKind = splitKind;
     }
 
     public static IReadOnlyList<PaymentSplit> AllocateFromCuts(
@@ -92,7 +104,7 @@ public sealed class Payment
 
     public decimal Amount { get; }
 
-    public IReadOnlyList<PaymentSplit> Splits { get; }
+    public IReadOnlyList<PaymentSplit> Splits { get; private set; }
 
     public PaymentStatus Status { get; private set; }
     public PaymentSettlementStatus SettlementStatus { get; private set; }
@@ -167,6 +179,24 @@ public sealed class Payment
                 .Build());
 
         StrawManId = strawManId;
+        return Result.Success();
+    }
+
+    public IResult ReplaceSplits(IReadOnlyList<PaymentSplit> splits)
+    {
+        if (Status != PaymentStatus.Pending)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidTransition)
+                .WithMessage("Não é possível alterar os splits de um pagamento que não está pendente.")
+                .Build());
+
+        if (splits is null || splits.Count == 0)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.SplitsRequired)
+                .WithMessage("É necessário informar ao menos um split de repasse.")
+                .Build());
+
+        Splits = splits;
         return Result.Success();
     }
 

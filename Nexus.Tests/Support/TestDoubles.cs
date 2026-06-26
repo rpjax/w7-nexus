@@ -362,13 +362,16 @@ internal sealed class ActorTestContext
             new StubBankAccountService(),
             new StubCryptoWalletService(),
             new StubTransferService(),
-            new AdministratorPaymentSearchService(Payments),
+            new AdministratorPaymentSearchService(Payments, PaymentTestDoubles.PassthroughEnrichment()),
             new AdministratorPaymentCommandService(new PaymentService(
                 Accounts,
                 Payments,
                 Operations,
-                Teams)),
-            new StubAdministratorStrawManSettingsCommandService());
+                Teams,
+                PaymentTestDoubles.SplitCalculation()),
+                PaymentTestDoubles.PassthroughEnrichment()),
+            new StubAdministratorStrawManSettingsCommandService(),
+            new StubAdministratorStrawManSettingsQueryService());
     }
 
     public OperationAdministratorRole CreateOperationAdministrator()
@@ -408,7 +411,7 @@ internal sealed class ActorTestContext
         => new(
             new OperatorAccessPolicy(),
             new OperatorOperationSearchService(Operations, Teams, Accounts),
-            new OperatorPaymentSearchService(Payments, Teams));
+            new OperatorPaymentSearchService(Payments, Teams, PaymentTestDoubles.PassthroughEnrichment()));
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
     {
@@ -623,6 +626,13 @@ internal sealed class StubAdministratorStrawManSettingsCommandService : IAdminis
         Nexus.Authorization.Application.Models.RequesterIdentity identity,
         string strawManId,
         decimal movementFeePercentage) =>
+        throw new NotImplementedException();
+}
+
+internal sealed class StubAdministratorStrawManSettingsQueryService : IAdministratorStrawManSettingsQueryService
+{
+    public Task<IResult<Nexus.StrawMen.Application.Contracts.StrawManSettingsDetails>> GetStrawManSettingsAsync(
+        string strawManId) =>
         throw new NotImplementedException();
 }
 

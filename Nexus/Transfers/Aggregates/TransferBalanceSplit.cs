@@ -7,7 +7,7 @@ namespace Nexus.Transfers.Aggregates;
 public enum TransferSplitKind
 {
     ProfitShare = 0,
-    StrawManMovementFee,
+    StrawManFee,
 }
 
 public sealed class TransferBalanceSplit

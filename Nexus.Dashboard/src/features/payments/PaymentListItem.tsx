@@ -10,7 +10,8 @@ import {
   distributionStatusLabel,
   distributionStatusTone,
 } from '../../utils/financeLabels';
-import { formatUtc, shortId, shortTx } from '../../utils/format';
+import { formatUtc } from '../../utils/format';
+import { formatPaymentOperation } from './paymentDisplay';
 import { detailPath, type PaymentScope } from './paymentPaths';
 
 type PaymentListItemProps = {
@@ -61,8 +62,6 @@ export function PaymentListItem({ payment, scope, highlightAccountId }: PaymentL
             />
           </div>
           <p className="payment-list-item__meta muted small">
-            <span className="mono" title={payment.id}>{shortId(payment.id)}</span>
-            <span className="ops-list-row__meta-sep" aria-hidden="true">·</span>
             {payment.gateway}
             <span className="ops-list-row__meta-sep" aria-hidden="true">·</span>
             {formatUtc(payment.createdAt)}
@@ -71,14 +70,16 @@ export function PaymentListItem({ payment, scope, highlightAccountId }: PaymentL
 
         <div className="payment-list-item__stats ops-list-row__stats">
           <div className="ops-list-row__stat">
-            <span className="ops-list-row__stat-value mono">{shortId(payment.operationId)}</span>
+            <span className="ops-list-row__stat-value">{formatPaymentOperation(payment)}</span>
             <span className="ops-list-row__stat-label">Operação</span>
           </div>
           <div className="ops-list-row__stat">
-            <span className="ops-list-row__stat-value mono" title={payment.gatewayTransactionId}>
-              {shortTx(payment.gatewayTransactionId)}
+            <span className="ops-list-row__stat-value">
+              {payment.operatorUsername ? `@${payment.operatorUsername}` : payment.strawManUsername ? `@${payment.strawManUsername}` : '—'}
             </span>
-            <span className="ops-list-row__stat-label">Tx gateway</span>
+            <span className="ops-list-row__stat-label">
+              {payment.operatorUsername ? 'Operador' : payment.strawManUsername ? 'Laranja' : 'Participante'}
+            </span>
           </div>
           {operatorSplit ? (
             <div className="ops-list-row__stat">

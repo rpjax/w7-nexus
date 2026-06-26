@@ -148,6 +148,7 @@ public sealed class MockGatewayOrchestratorTests
             teams,
             new StubPaymentService(),
             paymentRepo,
+            PaymentTestDoubles.SplitCalculation(),
             resolver,
             NullLogger<MockGatewayOrchestrator>.Instance);
     }

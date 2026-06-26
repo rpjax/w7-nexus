@@ -38,7 +38,10 @@ public sealed class PaymentSearchServiceTests
             splits: new[] { new PaymentSplit("operator-1", 100m, 10m) }));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-other", operatorId: "operator-2"));
 
-        var sut = new Nexus.Operators.Application.Services.OperatorPaymentSearchService(payments, teams);
+        var sut = new Nexus.Operators.Application.Services.OperatorPaymentSearchService(
+            payments,
+            teams,
+            PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(OperatorIdentity(), new SearchPaymentsRequest { Limit = 50 });
 
         Assert.True(result.IsSuccess);
@@ -53,7 +56,9 @@ public sealed class PaymentSearchServiceTests
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-mine", strawManId: "straw-1"));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-other", strawManId: "straw-2"));
 
-        var sut = new Nexus.StrawMen.Application.Services.StrawManPaymentSearchService(payments);
+        var sut = new Nexus.StrawMen.Application.Services.StrawManPaymentSearchService(
+            payments,
+            PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(StrawManIdentity(), new SearchPaymentsRequest { Limit = 50 });
 
         Assert.True(result.IsSuccess);
@@ -67,7 +72,9 @@ public sealed class PaymentSearchServiceTests
         var payments = new InMemoryPaymentRepository();
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-a", status: PaymentStatus.Paid, paidAt: DateTime.UtcNow));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(payments);
+        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+            payments,
+            PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(null);
 
         Assert.True(result.IsSuccess);
@@ -82,7 +89,9 @@ public sealed class PaymentSearchServiceTests
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-b", operationId: "op-1", status: PaymentStatus.Paid, paidAt: DateTime.UtcNow));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-c", operationId: "op-2", status: PaymentStatus.Pending));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(payments);
+        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+            payments,
+            PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(new SearchPaymentsRequest
         {
             Limit = 50,
@@ -115,7 +124,9 @@ public sealed class PaymentSearchServiceTests
             withdrawnAt: DateTime.UtcNow,
             distributedAt: DateTime.UtcNow));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(payments);
+        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+            payments,
+            PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(new SearchPaymentsRequest
         {
             Limit = 50,
@@ -146,7 +157,8 @@ public sealed class PaymentSearchServiceTests
             new InMemoryAccountRepository(),
             payments,
             new InMemoryOperationRepository(),
-            new InMemoryTeamRepository());
+            new InMemoryTeamRepository(),
+            PaymentTestDoubles.SplitCalculation());
 
         var result = await sut.MarkAsDistributedAsync("pay-ready");
 
@@ -169,7 +181,8 @@ public sealed class PaymentSearchServiceTests
             new InMemoryAccountRepository(),
             payments,
             new InMemoryOperationRepository(),
-            new InMemoryTeamRepository());
+            new InMemoryTeamRepository(),
+            PaymentTestDoubles.SplitCalculation());
 
         var result = await sut.PayAsync("pay-pending");
 
@@ -207,7 +220,8 @@ public sealed class PaymentSearchServiceTests
             ctx.Accounts,
             ctx.Payments,
             ctx.Operations,
-            ctx.Teams);
+            ctx.Teams,
+            PaymentTestDoubles.SplitCalculation());
 
         var result = await sut.PayAsync("pay-ready");
 

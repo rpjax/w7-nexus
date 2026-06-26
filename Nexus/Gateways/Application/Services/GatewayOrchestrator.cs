@@ -18,6 +18,7 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
     private ITeamRepository _teamRepository { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
+    private IPaymentSplitCalculationService _splitCalculation { get; }
     private GatewayCredentialProviderResolver _credentialProviderResolver { get; }
 
     public GatewayOrchestrator(
@@ -25,12 +26,14 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
         ITeamRepository teamRepository,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
+        IPaymentSplitCalculationService splitCalculation,
         GatewayCredentialProviderResolver credentialProviderResolver)
     {
         _operationRepository = operationRepository;
         _teamRepository = teamRepository;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
+        _splitCalculation = splitCalculation;
         _credentialProviderResolver = credentialProviderResolver;
     }
 
@@ -181,6 +184,27 @@ public sealed class GatewayOrchestrator : IGatewayOrchestrator
                     return Result.Create<GatewayPix>()
                         .WithErrors(bindStrawMan.Errors)
                         .Build();
+                }
+
+                if (payment.Splits.Count > 0)
+                {
+                    var profitShareSplits = payment.Splits
+                        .Where(s => s.SplitKind == PaymentSplitKind.ProfitShare)
+                        .ToList();
+
+                    var recalculated = await _splitCalculation.ApplyStrawManFeeAsync(
+                        payment.Amount,
+                        profitShareSplits,
+                        provider.StrawManId!);
+
+                    var replaceSplits = payment.ReplaceSplits(recalculated);
+                    if (replaceSplits.IsFailure)
+                    {
+                        await _paymentService.DeletePaymentAsync(payment.Id);
+                        return Result.Create<GatewayPix>()
+                            .WithErrors(replaceSplits.Errors)
+                            .Build();
+                    }
                 }
 
                 await _paymentRepository.UpdateAsync(payment);

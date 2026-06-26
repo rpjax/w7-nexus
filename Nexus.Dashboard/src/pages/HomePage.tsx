@@ -152,12 +152,16 @@ export function HomePage() {
               <Link className="quick-action quick-action-admin" to="/dashboard/admin/operations">Todas as operações</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/admin/payments">Todos os pagamentos</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/accounts">Contas</Link>
+              <Link className="quick-action quick-action-admin" to="/dashboard/admin/straw-men">Gestão de laranjas</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/transfers">Transferências</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/transfers/new">Registrar saque</Link>
             </>
           ) : null}
           {strawManPanel ? (
-            <Link className="quick-action" to="/dashboard/straw-man/payments">Pagamentos do laranja</Link>
+            <>
+              <Link className="quick-action" to="/dashboard/straw-man/payments">Meus pagamentos</Link>
+              <Link className="quick-action" to="/dashboard/straw-man/settings">Minhas configurações</Link>
+            </>
           ) : null}
         </div>
       </section>

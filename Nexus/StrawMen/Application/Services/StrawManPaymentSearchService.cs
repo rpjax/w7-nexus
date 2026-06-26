@@ -14,10 +14,14 @@ namespace Nexus.StrawMen.Application.Services;
 public sealed class StrawManPaymentSearchService : IStrawManPaymentSearchService
 {
     private IPaymentRepository _payments { get; }
+    private IPaymentDetailsEnrichmentService _enrichment { get; }
 
-    public StrawManPaymentSearchService(IPaymentRepository payments)
+    public StrawManPaymentSearchService(
+        IPaymentRepository payments,
+        IPaymentDetailsEnrichmentService enrichment)
     {
         _payments = payments;
+        _enrichment = enrichment;
     }
 
     public async Task<IResult<SearchPaymentsResponse>> SearchPaymentsAsync(
@@ -49,7 +53,7 @@ public sealed class StrawManPaymentSearchService : IStrawManPaymentSearchService
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = PaymentDetailsMapper.MapMany(items),
+            Items = await _enrichment.EnrichManyAsync(PaymentDetailsMapper.MapMany(items)),
         });
     }
 
@@ -78,6 +82,7 @@ public sealed class StrawManPaymentSearchService : IStrawManPaymentSearchService
                 .Build());
         }
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(payment));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(payment)));
     }
 }

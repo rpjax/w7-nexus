@@ -12,6 +12,7 @@ export function NavMenu() {
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
+  const [strawMenOpen, setStrawMenOpen] = useState(true);
   const [transfersOpen, setTransfersOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
 
@@ -21,7 +22,9 @@ export function NavMenu() {
       ? 'Administração do sistema'
       : showOperatorPanel
         ? 'Operações e pagamentos'
-        : 'Dashboard';
+        : showStrawManPanel
+          ? 'Painel do laranja'
+          : 'Dashboard';
 
   return (
     <nav className="nav-shell">
@@ -102,7 +105,7 @@ export function NavMenu() {
           </div>
         ) : null}
 
-        {showOperatorPanel || showGlobalAdminItems || showStrawManPanel ? (
+        {showOperatorPanel || showGlobalAdminItems ? (
           <div className="nav-group nav-group-gateways">
             <button
               type="button"
@@ -128,22 +131,47 @@ export function NavMenu() {
                     Todos os pagamentos
                   </NavLink>
                 ) : null}
-                {showStrawManPanel ? (
-                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/payments" onClick={() => setPaymentsOpen(true)}>
-                    <span className="submenu-bullet" aria-hidden="true" />
-                    Pagamentos do laranja
-                  </NavLink>
-                ) : null}
-                {showStrawManPanel ? (
-                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/settings" onClick={() => setPaymentsOpen(true)}>
-                    <span className="submenu-bullet" aria-hidden="true" />
-                    Configurações
-                  </NavLink>
-                ) : null}
                 {showOperatorPanel ? (
                   <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/payments/pix" onClick={() => setPaymentsOpen(true)}>
                     <span className="submenu-bullet" aria-hidden="true" />
                     Gerar PIX
+                  </NavLink>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {showStrawManPanel || showGlobalAdminItems ? (
+          <div className="nav-group nav-group-straw-men">
+            <button
+              type="button"
+              className="nav-dropdown nav-dropdown-full"
+              onClick={() => setStrawMenOpen((v) => !v)}
+              aria-expanded={strawMenOpen}
+              aria-controls="straw-men-submenu"
+            >
+              <span className="nav-dropdown-label">Laranjas</span>
+              <span className="nav-caret" aria-hidden="true">{strawMenOpen ? '▲' : '▼'}</span>
+            </button>
+            <div id="straw-men-submenu" className={`submenu-tree ${strawMenOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!strawMenOpen}>
+              <div className="submenu-tree-inner">
+                {showStrawManPanel ? (
+                  <>
+                    <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/payments" onClick={() => setStrawMenOpen(true)}>
+                      <span className="submenu-bullet" aria-hidden="true" />
+                      Meus pagamentos
+                    </NavLink>
+                    <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/straw-man/settings" onClick={() => setStrawMenOpen(true)}>
+                      <span className="submenu-bullet" aria-hidden="true" />
+                      Minhas configurações
+                    </NavLink>
+                  </>
+                ) : null}
+                {showGlobalAdminItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/admin/straw-men" onClick={() => setStrawMenOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Gestão de laranjas
                   </NavLink>
                 ) : null}
               </div>
@@ -188,10 +216,6 @@ export function NavMenu() {
                 <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/crypto-wallets" onClick={() => setTransfersOpen(true)}>
                   <span className="submenu-bullet" aria-hidden="true" />
                   Carteiras crypto
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/admin/straw-man-settings" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Config. laranja
                 </NavLink>
               </div>
             </div>

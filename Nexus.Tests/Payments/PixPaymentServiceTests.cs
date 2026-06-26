@@ -177,8 +177,14 @@ public sealed class PixPaymentServiceTests
         StubAccountRepository accounts,
         StubPixPaymentRepository payments,
         StubOperationRepository operations,
-        StubTeamRepository? teams = null) =>
-        new(accounts, payments, operations, teams ?? new StubTeamRepository());
+        StubTeamRepository? teams = null,
+        PaymentSplitCalculationService? splitCalculation = null) =>
+        new(
+            accounts,
+            payments,
+            operations,
+            teams ?? new StubTeamRepository(),
+            splitCalculation ?? PaymentTestDoubles.SplitCalculation());
 
     [Fact]
     public async Task CreatePaymentAsync_GatewayNone_ReturnsGatewayInvalid()
@@ -533,6 +539,47 @@ public sealed class PixPaymentServiceTests
         Assert.Equal("sm", result.Value.StrawManId);
         Assert.Equal(2, result.Value.Splits.Count);
         Assert.Equal(3m, result.Value.Splits.Sum(split => split.Amount));
+    }
+
+    [Fact]
+    public async Task CreatePaymentAsync_WithStrawManFee_IncludesStrawManSplit()
+    {
+        var team = TeamTestFactory.WithOperatorProfitShare(
+            "team-1",
+            "op-1",
+            "op-42",
+            "straw-1",
+            ("op-42", 50m),
+            ("partner-1", 50m));
+        var sut = CreateSut(
+            new StubAccountRepository("op-42", "partner-1", "straw-1"),
+            new StubPixPaymentRepository(),
+            new StubOperationRepository("op-1"),
+            new StubTeamRepository(team),
+            PaymentTestDoubles.SplitCalculation(new Dictionary<string, decimal> { ["straw-1"] = 10m }));
+
+        var result = await sut.CreatePaymentAsync(new CreatePaymentRequest
+        {
+            OperationId = "op-1",
+            OperatorId = "op-42",
+            StrawManId = "straw-1",
+            Gateway = PaymentGateway.SigiloPay,
+            Amount = 100m,
+            GatewayPaymentId = "gw-fee",
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value!.Splits.Count);
+        Assert.Equal(100m, result.Value.Splits.Sum(split => split.Amount));
+
+        var strawSplit = result.Value.Splits.Single(s => s.AccountId == "straw-1");
+        Assert.Equal(PaymentSplitKind.StrawManFee, strawSplit.SplitKind);
+        Assert.Equal(10m, strawSplit.Percentage);
+        Assert.Equal(10m, strawSplit.Amount);
+
+        var operatorSplit = result.Value.Splits.Single(s => s.AccountId == "op-42");
+        Assert.Equal(45m, operatorSplit.Percentage);
+        Assert.Equal(45m, operatorSplit.Amount);
     }
 
     [Fact]

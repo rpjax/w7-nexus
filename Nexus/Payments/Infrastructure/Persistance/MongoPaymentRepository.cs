@@ -23,7 +23,7 @@ public sealed class MongoPaymentRepository : IPaymentRepository
             r.Gateway,
             r.GatewayPaymentId,
             r.Amount,
-            r.Splits.Select(s => new PaymentSplit(s.AccountId, s.Percentage, s.Amount)).ToList(),
+            r.Splits.Select(s => new PaymentSplit(s.AccountId, s.Percentage, s.Amount, s.SplitKind)).ToList(),
             r.Status,
             r.SettlementStatus,
             r.DistributionStatus,

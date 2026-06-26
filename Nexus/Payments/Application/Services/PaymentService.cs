@@ -18,17 +18,20 @@ public sealed class PaymentService : IPaymentService
     private IPaymentRepository _paymentRepository { get; }
     private IOperationRepository _operationRepository { get; }
     private ITeamRepository _teamRepository { get; }
+    private IPaymentSplitCalculationService _splitCalculation { get; }
 
     public PaymentService(
         IAccountRepository accountRepository,
         IPaymentRepository pixPaymentRepository,
         IOperationRepository operationRepository,
-        ITeamRepository teamRepository)
+        ITeamRepository teamRepository,
+        IPaymentSplitCalculationService splitCalculation)
     {
         _accountRepository = accountRepository;
         _paymentRepository = pixPaymentRepository;
         _operationRepository = operationRepository;
         _teamRepository = teamRepository;
+        _splitCalculation = splitCalculation;
     }
 
     public async Task<IResult<Payment>> CreatePaymentAsync(CreatePaymentRequest request)
@@ -203,6 +206,14 @@ public sealed class PaymentService : IPaymentService
         if (builder.ContainsError)
             return builder.Build();
 
+        if (!string.IsNullOrWhiteSpace(strawManId) && splits.Count > 0)
+        {
+            splits = await _splitCalculation.ApplyStrawManFeeAsync(
+                amount,
+                splits,
+                strawManId);
+        }
+
         var validatedGatewayPaymentId = gatewayPaymentId!;
         var id = string.IsNullOrWhiteSpace(explicitPaymentId) ? string.Empty : explicitPaymentId!;
         var createdAt = DateTime.UtcNow;
@@ -282,6 +293,22 @@ public sealed class PaymentService : IPaymentService
         var bindResult = payment.BindToStrawMan(strawManId);
         if (bindResult.IsFailure)
             return Result<Payment>.Failure(bindResult.Errors);
+
+        if (payment.Splits.Count > 0)
+        {
+            var profitShareSplits = payment.Splits
+                .Where(s => s.SplitKind == PaymentSplitKind.ProfitShare)
+                .ToList();
+
+            var recalculated = await _splitCalculation.ApplyStrawManFeeAsync(
+                payment.Amount,
+                profitShareSplits,
+                strawManId);
+
+            var replaceResult = payment.ReplaceSplits(recalculated);
+            if (replaceResult.IsFailure)
+                return Result<Payment>.Failure(replaceResult.Errors);
+        }
 
         await _paymentRepository.UpdateAsync(payment);
         return Result<Payment>.Success(payment);

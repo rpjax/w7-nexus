@@ -453,7 +453,13 @@ public sealed class GatewayOrchestratorTests
             new StubWintechGatewayPixServiceFactory(gatewayPixService),
             groups);
 
-        return new GatewayOrchestrator(operations, teams, paymentService, paymentRepo, resolver);
+        return new GatewayOrchestrator(
+            operations,
+            teams,
+            paymentService,
+            paymentRepo,
+            PaymentTestDoubles.SplitCalculation(),
+            resolver);
     }
 
     private sealed class StubPaymentService : IPaymentService

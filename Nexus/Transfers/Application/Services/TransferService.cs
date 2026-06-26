@@ -805,8 +805,12 @@ public sealed class TransferService : ITransferService
             var originalSplits = new List<TransferBalanceSplit>();
             foreach (var s in referencePayment.Splits)
             {
+                var splitKind = s.SplitKind == PaymentSplitKind.StrawManFee
+                    ? TransferSplitKind.StrawManFee
+                    : TransferSplitKind.ProfitShare;
+
                 var splitResult = TransferBalanceSplit.Create(
-                    s.AccountId, s.Percentage, s.Amount, TransferSplitKind.ProfitShare);
+                    s.AccountId, s.Percentage, s.Amount, splitKind);
                 if (splitResult.IsFailure)
                     return Result<Transfer>.Failure(splitResult.Errors);
                 originalSplits.Add(splitResult.Value!);

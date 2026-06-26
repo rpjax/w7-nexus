@@ -42,6 +42,7 @@ internal static class PaymentRecordMapping
                 AccountId = split.AccountId,
                 Percentage = split.Percentage,
                 Amount = split.Amount,
+                SplitKind = split.SplitKind,
             }).ToList(),
             Status = entity.Status,
             SettlementStatus = entity.SettlementStatus,
@@ -64,7 +65,7 @@ internal static class PaymentRecordMapping
             return Array.Empty<PaymentSplit>();
 
         return splits
-            .Select(split => new PaymentSplit(split.AccountId, split.Percentage, split.Amount))
+            .Select(split => new PaymentSplit(split.AccountId, split.Percentage, split.Amount, split.SplitKind))
             .ToList();
     }
 }

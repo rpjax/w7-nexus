@@ -7,7 +7,7 @@ namespace Nexus.BankAccounts.Aggregates;
 public enum BankSplitKind
 {
     ProfitShare = 0,
-    StrawManMovementFee,
+    StrawManFee,
 }
 
 public sealed class BankBalanceSplit

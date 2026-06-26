@@ -13,7 +13,7 @@ internal static class BalanceSplitMapping
             s.Amount,
             s.SplitKind == BankSplitKind.ProfitShare
                 ? TransferSplitKind.ProfitShare
-                : TransferSplitKind.StrawManMovementFee)).ToList();
+                : TransferSplitKind.StrawManFee)).ToList();
 
     public static IReadOnlyList<TransferBalanceSplit> FromCryptoSplits(IReadOnlyList<CryptoBalanceSplit> splits) =>
         splits.Select(s => new TransferBalanceSplit(
@@ -22,7 +22,7 @@ internal static class BalanceSplitMapping
             s.Amount,
             s.SplitKind == CryptoSplitKind.ProfitShare
                 ? TransferSplitKind.ProfitShare
-                : TransferSplitKind.StrawManMovementFee)).ToList();
+                : TransferSplitKind.StrawManFee)).ToList();
 
     public static IReadOnlyList<BankBalanceSplit> ToBankSplits(IReadOnlyList<TransferBalanceSplit> splits)
     {
@@ -35,7 +35,7 @@ internal static class BalanceSplitMapping
                 split.Amount,
                 split.SplitKind == TransferSplitKind.ProfitShare
                     ? BankSplitKind.ProfitShare
-                    : BankSplitKind.StrawManMovementFee);
+                    : BankSplitKind.StrawManFee);
 
             if (mapped.IsFailure)
                 throw new InvalidOperationException(string.Join("; ", mapped.Errors.Select(e => e.Message)));
@@ -57,7 +57,7 @@ internal static class BalanceSplitMapping
                 split.Amount,
                 split.SplitKind == TransferSplitKind.ProfitShare
                     ? CryptoSplitKind.ProfitShare
-                    : CryptoSplitKind.StrawManMovementFee);
+                    : CryptoSplitKind.StrawManFee);
 
             if (mapped.IsFailure)
                 throw new InvalidOperationException(string.Join("; ", mapped.Errors.Select(e => e.Message)));

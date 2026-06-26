@@ -9,10 +9,14 @@ namespace Nexus.Administrators.Application.Services;
 public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCommandService
 {
     private IPaymentService _payments { get; }
+    private IPaymentDetailsEnrichmentService _enrichment { get; }
 
-    public AdministratorPaymentCommandService(IPaymentService payments)
+    public AdministratorPaymentCommandService(
+        IPaymentService payments,
+        IPaymentDetailsEnrichmentService enrichment)
     {
         _payments = payments;
+        _enrichment = enrichment;
     }
 
     public async Task<IResult<PaymentDetails>> PayAndGetAsync(string paymentId)
@@ -60,7 +64,8 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
         if (result.IsFailure)
             return Result<PaymentDetails>.Failure(result.Errors);
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(result.Value!));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(result.Value!)));
     }
 
     public async Task<IResult<PaymentDetails>> BindStrawManAsync(string paymentId, string strawManAccountId)
@@ -69,7 +74,8 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
         if (result.IsFailure)
             return Result<PaymentDetails>.Failure(result.Errors);
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(result.Value!));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(result.Value!)));
     }
 
     private async Task<IResult<PaymentDetails>> LoadDetailsAsync(string paymentId)
@@ -78,6 +84,7 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
         if (paymentResult.IsFailure)
             return Result<PaymentDetails>.Failure(paymentResult.Errors);
 
-        return Result<PaymentDetails>.Success(PaymentDetailsMapper.Map(paymentResult.Value!));
+        return Result<PaymentDetails>.Success(
+            await _enrichment.EnrichAsync(PaymentDetailsMapper.Map(paymentResult.Value!)));
     }
 }
