@@ -215,6 +215,7 @@ public sealed class PaymentService : IPaymentService
             splits,
             PaymentStatus.Pending,
             PaymentSettlementStatus.Unsettled,
+            PaymentDistributionStatus.Pending,
             OperatorId: null,
             strawManId: strawManId ?? string.Empty,
             createdAt,
@@ -222,7 +223,8 @@ public sealed class PaymentService : IPaymentService
             RefundedAt: null,
             KilledAt: null,
             KillReason: null,
-            WithdrawnAt: null);
+            WithdrawnAt: null,
+            DistributedAt: null);
 
         if (operatorId is not null)
         {
@@ -364,6 +366,31 @@ public sealed class PaymentService : IPaymentService
                 .Build());
 
         var result = payment.Kill(reason);
+        if (result.IsFailure)
+            return result;
+
+        await _paymentRepository.UpdateAsync(payment);
+        return Result.Success();
+    }
+
+    public async Task<IResult> MarkAsDistributedAsync(string paymentId)
+    {
+        if (string.IsNullOrWhiteSpace(paymentId))
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
+                .WithMessage("O ID do pagamento é obrigatório.")
+                .Build());
+
+        var payment = _paymentRepository.AsQueryable()
+            .FirstOrDefault(p => p.Id == paymentId);
+
+        if (payment is null)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.PaymentNotFound)
+                .WithMessage($"O pagamento '{paymentId}' não foi encontrado.")
+                .Build());
+
+        var result = payment.MarkAsDistributed();
         if (result.IsFailure)
             return result;
 

@@ -13,6 +13,7 @@ internal static class PaymentTestFactory
         IReadOnlyList<PaymentSplit>? splits = null,
         PaymentStatus status = PaymentStatus.Pending,
         PaymentSettlementStatus settlementStatus = PaymentSettlementStatus.Unsettled,
+        PaymentDistributionStatus distributionStatus = PaymentDistributionStatus.Pending,
         string? operatorId = null,
         string strawManId = "sm-1",
         DateTime? createdAt = null,
@@ -20,7 +21,8 @@ internal static class PaymentTestFactory
         DateTime? refundedAt = null,
         DateTime? killedAt = null,
         string? killReason = null,
-        DateTime? withdrawnAt = null) =>
+        DateTime? withdrawnAt = null,
+        DateTime? distributedAt = null) =>
         new(
             id ?? Guid.NewGuid().ToString("N"),
             operationId,
@@ -30,6 +32,7 @@ internal static class PaymentTestFactory
             splits ?? Array.Empty<PaymentSplit>(),
             status,
             settlementStatus,
+            distributionStatus,
             operatorId,
             strawManId,
             createdAt ?? DateTime.UtcNow,
@@ -37,5 +40,6 @@ internal static class PaymentTestFactory
             refundedAt,
             killedAt,
             killReason,
-            withdrawnAt);
+            withdrawnAt,
+            distributedAt);
 }

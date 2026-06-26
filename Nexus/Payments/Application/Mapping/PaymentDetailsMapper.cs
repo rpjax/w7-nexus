@@ -24,12 +24,14 @@ public static class PaymentDetailsMapper
             .ToArray(),
         Status = payment.Status.ToString(),
         SettlementStatus = payment.SettlementStatus.ToString(),
+        DistributionStatus = payment.DistributionStatus.ToString(),
         CreatedAt = payment.CreatedAt,
         PaidAt = payment.PaidAt,
         RefundedAt = payment.RefundedAt,
         KilledAt = payment.KilledAt,
         KillReason = payment.KillReason,
         WithdrawnAt = payment.WithdrawnAt,
+        DistributedAt = payment.DistributedAt,
     };
 
     public static IReadOnlyList<PaymentDetails> MapMany(IEnumerable<Payment> payments) =>

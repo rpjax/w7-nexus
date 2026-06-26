@@ -32,6 +32,9 @@ public static class PixPaymentErrorCodes
     public const string SplitsRequired = "PixPayment.SPLITS_REQUIRED";
     public const string InvalidSettlementTransition = "PixPayment.INVALID_SETTLEMENT_TRANSITION";
     public const string AlreadyWithdrawn = "PixPayment.ALREADY_WITHDRAWN";
+    public const string AlreadyDistributed = "PixPayment.ALREADY_DISTRIBUTED";
+    public const string DistributionRequiresWithdrawal = "PixPayment.DISTRIBUTION_REQUIRES_WITHDRAWAL";
+    public const string InvalidDistributionTransition = "PixPayment.INVALID_DISTRIBUTION_TRANSITION";
     public const string SearchLimitInvalid = "Payment.SEARCH_LIMIT_INVALID";
     public const string SearchOffsetInvalid = "Payment.SEARCH_OFFSET_INVALID";
     public const string SearchKeywordTooLong = "Payment.SEARCH_KEYWORD_TOO_LONG";

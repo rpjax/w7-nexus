@@ -4,6 +4,7 @@ import type { PaymentRow, SearchRequest, SearchResponse } from '../types';
 export type AdminPaymentSearchRequest = SearchRequest & {
   status?: string | null;
   settlementStatus?: string | null;
+  distributionStatus?: string | null;
   operationId?: string | null;
   strawManId?: string | null;
 };
@@ -15,6 +16,7 @@ export async function searchAdministratorPayments(payload: AdminPaymentSearchReq
     Keyword: payload.keyword ?? null,
     Status: payload.status ?? null,
     SettlementStatus: payload.settlementStatus ?? null,
+    DistributionStatus: payload.distributionStatus ?? null,
     OperationId: payload.operationId ?? null,
     StrawManId: payload.strawManId ?? null,
   }, { fallbackError: 'Não foi possível carregar os pagamentos do sistema.' });
@@ -60,4 +62,10 @@ export async function bindAdministratorPaymentStrawMan(paymentId: string, strawM
   return apiClient.post<PaymentRow>(`/api/administrator/payments/${encodeURIComponent(paymentId)}/bind-straw-man`, {
     StrawManId: strawManId,
   }, { fallbackError: 'Não foi possível vincular o laranja.' });
+}
+
+export async function markAdministratorPaymentDistributed(paymentId: string) {
+  return apiClient.post<PaymentRow>(`/api/administrator/payments/${encodeURIComponent(paymentId)}/mark-distributed`, {}, {
+    fallbackError: 'Não foi possível marcar o pagamento como repassado.',
+  });
 }

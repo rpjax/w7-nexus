@@ -32,6 +32,7 @@ public sealed class GatewayPaymentWebhookServiceTests
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
+                    distributionStatus: entity.DistributionStatus,
                     operatorId: entity.OperatorId,
                     strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
@@ -39,7 +40,8 @@ public sealed class GatewayPaymentWebhookServiceTests
                     refundedAt: entity.RefundedAt,
                     killedAt: entity.KilledAt,
                     killReason: entity.KillReason,
-                    withdrawnAt: entity.WithdrawnAt)
+                    withdrawnAt: entity.WithdrawnAt,
+                    distributedAt: entity.DistributedAt)
                 : entity;
 
             return Task.FromResult(persisted);
@@ -86,6 +88,9 @@ public sealed class GatewayPaymentWebhookServiceTests
             KillCalls.Add((paymentId, reason));
             return Task.FromResult<IResult>(Result.Success());
         }
+
+        public Task<IResult> MarkAsDistributedAsync(string paymentId) =>
+            Task.FromResult<IResult>(Result.Success());
 
         public Task<IResult<Payment>> GetByIdAsync(string paymentId) =>
             throw new NotSupportedException();

@@ -3,6 +3,7 @@ import {
   bindAdministratorPaymentOperator,
   deleteAdministratorPayment,
   killAdministratorPayment,
+  markAdministratorPaymentDistributed,
   payAdministratorPayment,
   refundAdministratorPayment,
 } from '../../api/administrator/payments';
@@ -13,6 +14,7 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { useNotifications } from '../../notifications/NotificationContext';
 import {
   canKillPayment,
+  canMarkPaymentDistributed,
   canPayPayment,
   canRefundPayment,
   needsOperatorBind,
@@ -44,6 +46,7 @@ export function usePaymentAdminActions({
         canPay: false,
         canRefund: false,
         canKill: false,
+        canMarkDistributed: false,
         canDelete: false,
         needsOperator: false,
         needsSplits: false,
@@ -54,6 +57,7 @@ export function usePaymentAdminActions({
       canPay: canPayPayment(payment),
       canRefund: canRefundPayment(payment),
       canKill: canKillPayment(payment),
+      canMarkDistributed: canMarkPaymentDistributed(payment),
       canDelete: true,
       needsOperator: needsOperatorBind(payment),
       needsSplits: needsSplitsForPay(payment),
@@ -89,6 +93,14 @@ export function usePaymentAdminActions({
     await run(
       () => refundAdministratorPayment(payment.id),
       'Pagamento reembolsado.',
+    );
+  }
+
+  async function handleMarkDistributed() {
+    if (!payment) return;
+    await run(
+      () => markAdministratorPaymentDistributed(payment.id),
+      'Pagamento marcado como repassado às partes.',
     );
   }
 
@@ -157,6 +169,9 @@ export function usePaymentAdminActions({
         </button>
         <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canRefund} onClick={() => setRefundOpen(true)}>
           Reembolsar
+        </button>
+        <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canMarkDistributed} onClick={() => void handleMarkDistributed()}>
+          Marcar como repassado
         </button>
         <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canKill} onClick={() => setKillOpen(true)}>
           Cancelar

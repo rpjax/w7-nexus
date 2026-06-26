@@ -28,6 +28,12 @@ public enum PaymentSettlementStatus
     Withdrawn,
 }
 
+public enum PaymentDistributionStatus
+{
+    Pending = 0,
+    Complete,
+}
+
 public sealed class PaymentSplit
 {
     public string AccountId { get; }
@@ -90,12 +96,14 @@ public sealed class Payment
 
     public PaymentStatus Status { get; private set; }
     public PaymentSettlementStatus SettlementStatus { get; private set; }
+    public PaymentDistributionStatus DistributionStatus { get; private set; }
     public DateTime CreatedAt { get; }
     public DateTime? PaidAt { get; private set; }
     public DateTime? RefundedAt { get; private set; }
     public DateTime? KilledAt { get; private set; }
     public string? KillReason { get; private set; }
     public DateTime? WithdrawnAt { get; private set; }
+    public DateTime? DistributedAt { get; private set; }
 
     internal Payment(
         string Id,
@@ -106,6 +114,7 @@ public sealed class Payment
         IReadOnlyList<PaymentSplit> Splits,
         PaymentStatus Status,
         PaymentSettlementStatus SettlementStatus,
+        PaymentDistributionStatus DistributionStatus,
         string? OperatorId,
         string strawManId,
         DateTime CreatedAt,
@@ -113,7 +122,8 @@ public sealed class Payment
         DateTime? RefundedAt,
         DateTime? KilledAt,
         string? KillReason,
-        DateTime? WithdrawnAt)
+        DateTime? WithdrawnAt,
+        DateTime? DistributedAt)
     {
         this.Id = Id;
         this.OperationId = OperationId;
@@ -124,6 +134,7 @@ public sealed class Payment
 
         this.Status = Status;
         this.SettlementStatus = SettlementStatus;
+        this.DistributionStatus = DistributionStatus;
         this.OperatorId = OperatorId;
         this.StrawManId = strawManId?.Trim() ?? string.Empty;
 
@@ -133,6 +144,7 @@ public sealed class Payment
         this.KilledAt = KilledAt;
         this.KillReason = KillReason;
         this.WithdrawnAt = WithdrawnAt;
+        this.DistributedAt = DistributedAt;
     }
 
     public IResult BindToStrawMan(string strawManId)
@@ -251,6 +263,37 @@ public sealed class Payment
         return Result.Success();
     }
 
+    public IResult MarkAsDistributed()
+    {
+        if (DistributionStatus == PaymentDistributionStatus.Complete)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.AlreadyDistributed)
+                .WithMessage("Este pagamento já foi marcado como repassado às partes.")
+                .Build());
+
+        if (Status != PaymentStatus.Paid)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidDistributionTransition)
+                .WithMessage($"Não é possível marcar repasse a partir do status {DescribeStatus(Status)}.")
+                .Build());
+
+        if (SettlementStatus != PaymentSettlementStatus.Withdrawn)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.DistributionRequiresWithdrawal)
+                .WithMessage("O pagamento precisa estar sacado do gateway antes de marcar o repasse às partes.")
+                .Build());
+
+        if (DistributionStatus != PaymentDistributionStatus.Pending)
+            return Result.Failure(Error.Create()
+                .WithCode(PixPaymentErrorCodes.InvalidDistributionTransition)
+                .WithMessage($"Não é possível marcar repasse com distribuição {DescribeDistributionStatus(DistributionStatus)}.")
+                .Build());
+
+        DistributionStatus = PaymentDistributionStatus.Complete;
+        DistributedAt = DateTime.UtcNow;
+        return Result.Success();
+    }
+
     public IResult Refund()
     {
         if (Status != PaymentStatus.Paid)
@@ -303,6 +346,13 @@ public sealed class Payment
     {
         PaymentSettlementStatus.Unsettled => "pendente de saque",
         PaymentSettlementStatus.Withdrawn => "sacado",
+        _ => status.ToString(),
+    };
+
+    private static string DescribeDistributionStatus(PaymentDistributionStatus status) => status switch
+    {
+        PaymentDistributionStatus.Pending => "pendente de repasse",
+        PaymentDistributionStatus.Complete => "repassado",
         _ => status.ToString(),
     };
 }

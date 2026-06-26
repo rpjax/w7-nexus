@@ -12,10 +12,12 @@ public sealed class PaymentDetails
     public IReadOnlyList<PaymentSplitDetails> Splits { get; init; } = Array.Empty<PaymentSplitDetails>();
     public string Status { get; init; } = string.Empty;
     public string SettlementStatus { get; init; } = string.Empty;
+    public string DistributionStatus { get; init; } = string.Empty;
     public DateTime CreatedAt { get; init; }
     public DateTime? PaidAt { get; init; }
     public DateTime? RefundedAt { get; init; }
     public DateTime? KilledAt { get; init; }
     public string? KillReason { get; init; }
     public DateTime? WithdrawnAt { get; init; }
+    public DateTime? DistributedAt { get; init; }
 }

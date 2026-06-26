@@ -17,6 +17,7 @@ internal static class PaymentRecordMapping
             MapSplits(record.Splits),
             record.Status,
             record.SettlementStatus,
+            record.DistributionStatus,
             record.OperatorId,
             record.StrawManId ?? string.Empty,
             record.CreatedAt,
@@ -24,7 +25,8 @@ internal static class PaymentRecordMapping
             record.RefundedAt,
             record.KilledAt,
             record.KillReason,
-            record.WithdrawnAt);
+            record.WithdrawnAt,
+            record.DistributedAt);
 
     public static PaymentRecord ToRecord(Payment entity)
     {
@@ -43,6 +45,7 @@ internal static class PaymentRecordMapping
             }).ToList(),
             Status = entity.Status,
             SettlementStatus = entity.SettlementStatus,
+            DistributionStatus = entity.DistributionStatus,
             OperatorId = entity.OperatorId,
             StrawManId = entity.StrawManId,
             CreatedAt = entity.CreatedAt,
@@ -51,6 +54,7 @@ internal static class PaymentRecordMapping
             KilledAt = entity.KilledAt,
             KillReason = entity.KillReason,
             WithdrawnAt = entity.WithdrawnAt,
+            DistributedAt = entity.DistributedAt,
         };
     }
 

@@ -18,6 +18,7 @@ public sealed class PaymentRecord
     public PaymentStatus Status { get; set; }
     public List<PaymentSplitRecord> Splits { get; set; } = new();
     public PaymentSettlementStatus SettlementStatus { get; set; }
+    public PaymentDistributionStatus DistributionStatus { get; set; }
 
     public string? OperatorId { get; set; }
     public string StrawManId { get; set; } = string.Empty;
@@ -28,4 +29,5 @@ public sealed class PaymentRecord
     public DateTime? KilledAt { get; set; }
     public string? KillReason { get; set; }
     public DateTime? WithdrawnAt { get; set; }
+    public DateTime? DistributedAt { get; set; }
 }

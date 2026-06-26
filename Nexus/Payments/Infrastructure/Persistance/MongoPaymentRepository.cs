@@ -26,6 +26,7 @@ public sealed class MongoPaymentRepository : IPaymentRepository
             r.Splits.Select(s => new PaymentSplit(s.AccountId, s.Percentage, s.Amount)).ToList(),
             r.Status,
             r.SettlementStatus,
+            r.DistributionStatus,
             r.OperatorId,
             r.StrawManId ?? string.Empty,
             r.CreatedAt,
@@ -33,7 +34,8 @@ public sealed class MongoPaymentRepository : IPaymentRepository
             r.RefundedAt,
             r.KilledAt,
             r.KillReason,
-            r.WithdrawnAt);
+            r.WithdrawnAt,
+            r.DistributedAt);
 
     public MongoPaymentRepository(IMongoCollection<PaymentRecord> collection)
     {

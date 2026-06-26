@@ -42,6 +42,15 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
         return await LoadDetailsAsync(paymentId);
     }
 
+    public async Task<IResult<PaymentDetails>> MarkAsDistributedAndGetAsync(string paymentId)
+    {
+        var markResult = await _payments.MarkAsDistributedAsync(paymentId);
+        if (markResult.IsFailure)
+            return Result<PaymentDetails>.Failure(markResult.Errors);
+
+        return await LoadDetailsAsync(paymentId);
+    }
+
     public Task<IResult> DeletePaymentAsync(string paymentId) =>
         _payments.DeletePaymentAsync(paymentId);
 

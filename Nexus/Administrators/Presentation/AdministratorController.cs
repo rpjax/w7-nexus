@@ -820,6 +820,19 @@ public class AdministratorController : NexusController
             cancellationToken));
     }
 
+    [HttpPost("payments/{paymentId}/mark-distributed")]
+    public async Task<ActionResult> MarkPaymentAsDistributedAsync(
+        string paymentId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.MarkPaymentAsDistributedAsync(
+            identity,
+            paymentId,
+            cancellationToken));
+    }
+
     [HttpDelete("payments/{paymentId}")]
     public async Task<ActionResult> DeletePaymentAsync(
         string paymentId,

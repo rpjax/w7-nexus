@@ -33,6 +33,9 @@ internal static class PaymentSearchQueryExtensions
         if (request.SettlementStatus is PaymentSettlementStatus settlementStatus)
             query = query.Where(p => p.SettlementStatus == settlementStatus);
 
+        if (request.DistributionStatus is PaymentDistributionStatus distributionStatus)
+            query = query.Where(p => p.DistributionStatus == distributionStatus);
+
         var operationId = request.OperationId?.Trim();
         if (!string.IsNullOrWhiteSpace(operationId))
             query = query.Where(p => p.OperationId == operationId);

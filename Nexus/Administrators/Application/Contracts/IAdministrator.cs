@@ -322,6 +322,11 @@ public interface IAdministrator
         string reason,
         CancellationToken cancellationToken = default);
 
+    Task<IOperationResult<PaymentDetails>> MarkPaymentAsDistributedAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default);
+
     Task<IOperationResult<bool>> DeletePaymentAsync(
         RequesterIdentity identity,
         string paymentId,

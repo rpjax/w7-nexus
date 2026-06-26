@@ -486,6 +486,9 @@ public sealed class GatewayOrchestratorTests
         public Task<IResult> KillAsync(string paymentId, string reason) =>
             Task.FromResult<IResult>(Result.Success());
 
+        public Task<IResult> MarkAsDistributedAsync(string paymentId) =>
+            Task.FromResult<IResult>(Result.Success());
+
         public Task<IResult<Payment>> GetByIdAsync(string paymentId)
         {
             IResult<Payment> ok = Result.Create<Payment>()
@@ -529,6 +532,7 @@ public sealed class GatewayOrchestratorTests
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
+                    distributionStatus: entity.DistributionStatus,
                     operatorId: entity.OperatorId,
                     strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
@@ -536,7 +540,8 @@ public sealed class GatewayOrchestratorTests
                     refundedAt: entity.RefundedAt,
                     killedAt: entity.KilledAt,
                     killReason: entity.KillReason,
-                    withdrawnAt: entity.WithdrawnAt)
+                    withdrawnAt: entity.WithdrawnAt,
+                    distributedAt: entity.DistributedAt)
                 : entity;
 
             return Task.FromResult(persisted);

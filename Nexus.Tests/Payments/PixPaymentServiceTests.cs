@@ -35,6 +35,7 @@ public sealed class PixPaymentServiceTests
                     splits: entity.Splits,
                     status: entity.Status,
                     settlementStatus: entity.SettlementStatus,
+                    distributionStatus: entity.DistributionStatus,
                     operatorId: entity.OperatorId,
                     strawManId: entity.StrawManId,
                     createdAt: entity.CreatedAt,
@@ -42,7 +43,8 @@ public sealed class PixPaymentServiceTests
                     refundedAt: entity.RefundedAt,
                     killedAt: entity.KilledAt,
                     killReason: entity.KillReason,
-                    withdrawnAt: entity.WithdrawnAt)
+                    withdrawnAt: entity.WithdrawnAt,
+                    distributedAt: entity.DistributedAt)
                 : entity;
 
             return Task.FromResult(persisted);

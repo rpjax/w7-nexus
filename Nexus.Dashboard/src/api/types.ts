@@ -137,6 +137,7 @@ export type PaymentRow = {
   splits?: PaymentSplitRow[];
   status: string;
   settlementStatus: string;
+  distributionStatus: string;
   operatorId?: string | null;
   strawManId: string;
   createdAt: string;
@@ -145,6 +146,7 @@ export type PaymentRow = {
   killedAt?: string | null;
   killReason?: string | null;
   withdrawnAt?: string | null;
+  distributedAt?: string | null;
 };
 
 export type TransferType = 'Withdrawal' | 'Movement' | 'Payout';

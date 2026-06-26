@@ -197,6 +197,9 @@ public sealed class MockGatewayOrchestratorTests
         public Task<IResult> KillAsync(string paymentId, string reason) =>
             Task.FromResult<IResult>(Result.Success());
 
+        public Task<IResult> MarkAsDistributedAsync(string paymentId) =>
+            Task.FromResult<IResult>(Result.Success());
+
         public Task<IResult<Payment>> GetByIdAsync(string paymentId)
         {
             IResult<Payment> ok = Result.Create<Payment>()

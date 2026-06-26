@@ -99,6 +99,22 @@ export function settlementStatusTone(status: string): 'info' | 'success' | 'warn
   }
 }
 
+export function distributionStatusLabel(status: string): string {
+  switch (status) {
+    case 'Pending': return 'Pendente de repasse';
+    case 'Complete': return 'Repassado';
+    default: return status;
+  }
+}
+
+export function distributionStatusTone(status: string): 'info' | 'success' | 'warn' {
+  switch (status) {
+    case 'Pending': return 'warn';
+    case 'Complete': return 'success';
+    default: return 'info';
+  }
+}
+
 export function transferTypeLabel(type: string): string {
   switch (type) {
     case 'Withdrawal': return 'Saque';

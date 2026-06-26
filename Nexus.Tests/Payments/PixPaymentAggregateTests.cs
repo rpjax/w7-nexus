@@ -48,6 +48,7 @@ public sealed class PixPaymentAggregateTests
         Assert.Single(p.Splits);
         Assert.Equal(55.5m, p.Splits.Sum(split => split.Amount));
         Assert.Equal(PaymentSettlementStatus.Unsettled, p.SettlementStatus);
+        Assert.Equal(PaymentDistributionStatus.Pending, p.DistributionStatus);
         Assert.Null(p.PaidAt);
     }
 
@@ -347,6 +348,59 @@ public sealed class PixPaymentAggregateTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.GatewayPaymentIdInvalid);
+    }
+
+    [Fact]
+    public void MarkAsDistributed_WhenPaidAndWithdrawn_Succeeds()
+    {
+        var p = CreateSut(status: PaymentStatus.Paid, settlementStatus: PaymentSettlementStatus.Withdrawn);
+        BindForPaid(p);
+
+        var result = p.MarkAsDistributed();
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(PaymentDistributionStatus.Complete, p.DistributionStatus);
+        Assert.NotNull(p.DistributedAt);
+    }
+
+    [Fact]
+    public void MarkAsDistributed_WhenUnsettled_Fails()
+    {
+        var p = PaymentTestFactory.Create(
+            status: PaymentStatus.Paid,
+            settlementStatus: PaymentSettlementStatus.Unsettled,
+            operatorId: "op",
+            paidAt: DateTime.UtcNow);
+
+        var result = p.MarkAsDistributed();
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.DistributionRequiresWithdrawal);
+    }
+
+    [Fact]
+    public void MarkAsDistributed_WhenPendingPayment_Fails()
+    {
+        var p = CreateSut();
+        BindForPaid(p);
+
+        var result = p.MarkAsDistributed();
+
+        Assert.True(result.IsFailure);
+        Assert.Contains(result.Errors, e => e.Code == PixPaymentErrorCodes.InvalidDistributionTransition);
+    }
+
+    [Fact]
+    public void MarkAsDistributed_WhenAlreadyComplete_Fails()
+    {
+        var p = CreateSut(status: PaymentStatus.Paid, settlementStatus: PaymentSettlementStatus.Withdrawn);
+        BindForPaid(p);
+        Assert.True(p.MarkAsDistributed().IsSuccess);
+
+        var second = p.MarkAsDistributed();
+
+        Assert.True(second.IsFailure);
+        Assert.Contains(second.Errors, e => e.Code == PixPaymentErrorCodes.AlreadyDistributed);
     }
 
     [Fact]

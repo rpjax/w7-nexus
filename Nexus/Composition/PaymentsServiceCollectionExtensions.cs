@@ -14,6 +14,7 @@ public static class PaymentsServiceCollectionExtensions
     {
         services.AddScoped<IPaymentService, PaymentService>();
         services.AddScoped<IPaymentRepository, MongoPaymentRepository>();
+        services.AddScoped<IPaymentDistributionTracker, NoOpPaymentDistributionTracker>();
         services.AddScoped<IGatewayPaymentWebhookService, GatewayPaymentWebhookService>();
         services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
         services.AddScoped<IAccountIdValidator, AccountIdValidator>();

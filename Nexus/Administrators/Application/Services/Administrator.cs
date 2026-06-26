@@ -1373,6 +1373,30 @@ public class Administrator : IAdministrator
         return OperationResult<PaymentDetails>.Success(value);
     }
 
+    public async Task<IOperationResult<PaymentDetails>> MarkPaymentAsDistributedAsync(
+        RequesterIdentity identity,
+        string paymentId,
+        CancellationToken cancellationToken = default)
+    {
+        var authorization = await _policy.AuthorizeAdministratorAsync(identity);
+
+        if (authorization.IsFailure)
+            return OperationResult<PaymentDetails>.Failure(authorization.Errors);
+
+        if (!authorization.IsAuthorized)
+            return OperationResult<PaymentDetails>.Unauthorized(authorization.AuthorizationErrors);
+
+        var result = await _paymentCommands.MarkAsDistributedAndGetAsync(paymentId);
+
+        if (result.IsFailure)
+            return OperationResult<PaymentDetails>.Failure(result.Errors);
+
+        if (result.Value is not PaymentDetails value)
+            throw new InvalidOperationException();
+
+        return OperationResult<PaymentDetails>.Success(value);
+    }
+
     public async Task<IOperationResult<bool>> DeletePaymentAsync(
         RequesterIdentity identity,
         string paymentId,

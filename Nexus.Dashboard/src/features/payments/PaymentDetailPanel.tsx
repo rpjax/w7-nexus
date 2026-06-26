@@ -7,6 +7,8 @@ import {
   paymentStatusTone,
   settlementStatusLabel,
   settlementStatusTone,
+  distributionStatusLabel,
+  distributionStatusTone,
 } from '../../utils/financeLabels';
 import { formatUtc, shortId, shortTx } from '../../utils/format';
 import type { PaymentScope } from './paymentPaths';
@@ -45,6 +47,10 @@ export function PaymentDetailPanel({ payment, scope, viewerAccountId }: PaymentD
           <StatusPill
             label={settlementStatusLabel(payment.settlementStatus)}
             tone={settlementStatusTone(payment.settlementStatus)}
+          />
+          <StatusPill
+            label={distributionStatusLabel(payment.distributionStatus)}
+            tone={distributionStatusTone(payment.distributionStatus)}
           />
         </div>
       </header>
@@ -88,6 +94,7 @@ export function PaymentDetailPanel({ payment, scope, viewerAccountId }: PaymentD
           <MetaRow label="Pago em" value={payment.paidAt ? formatUtc(payment.paidAt) : '—'} />
           <MetaRow label="Reembolsado em" value={payment.refundedAt ? formatUtc(payment.refundedAt) : '—'} />
           <MetaRow label="Sacado em" value={payment.withdrawnAt ? formatUtc(payment.withdrawnAt) : '—'} />
+          <MetaRow label="Repassado em" value={payment.distributedAt ? formatUtc(payment.distributedAt) : '—'} />
           {payment.killedAt ? <MetaRow label="Cancelado em" value={formatUtc(payment.killedAt)} /> : null}
           {payment.killReason ? <MetaRow label="Motivo do cancelamento" value={payment.killReason} /> : null}
         </div>
@@ -112,6 +119,12 @@ export function canPayPayment(payment: PaymentRow): boolean {
 
 export function canRefundPayment(payment: PaymentRow): boolean {
   return payment.status === 'Paid' && payment.settlementStatus !== 'Withdrawn';
+}
+
+export function canMarkPaymentDistributed(payment: PaymentRow): boolean {
+  return payment.status === 'Paid'
+    && payment.settlementStatus === 'Withdrawn'
+    && payment.distributionStatus === 'Pending';
 }
 
 export function canKillPayment(payment: PaymentRow): boolean {

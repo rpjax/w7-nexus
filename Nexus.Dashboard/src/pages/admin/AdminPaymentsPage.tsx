@@ -24,14 +24,22 @@ const SETTLEMENT_OPTIONS = [
   { value: 'Withdrawn', label: 'Sacado' },
 ];
 
+const DISTRIBUTION_OPTIONS = [
+  { value: '', label: 'Todo repasse' },
+  { value: 'Pending', label: 'Pendente de repasse' },
+  { value: 'Complete', label: 'Repassado' },
+];
+
 export function AdminPaymentsPage() {
   const { notifyError } = useNotifications();
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [settlementFilter, setSettlementFilter] = useState('');
+  const [distributionFilter, setDistributionFilter] = useState('');
   const [appliedStatus, setAppliedStatus] = useState('');
   const [appliedSettlement, setAppliedSettlement] = useState('');
+  const [appliedDistribution, setAppliedDistribution] = useState('');
   const [rows, setRows] = useState<PaymentRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
@@ -42,6 +50,7 @@ export function AdminPaymentsPage() {
     keyword: string,
     status: string,
     settlement: string,
+    distribution: string,
   ) => {
     const result = await searchAdministratorPayments({
       limit: PAGE_SIZE,
@@ -49,6 +58,7 @@ export function AdminPaymentsPage() {
       keyword: keyword.trim() || null,
       status: status || null,
       settlementStatus: settlement || null,
+      distributionStatus: distribution || null,
     });
     if (!result.ok) {
       notifyError(result.error);
@@ -61,14 +71,15 @@ export function AdminPaymentsPage() {
   }, [notifyError]);
 
   useEffect(() => {
-    void load(currentPage, query, appliedStatus, appliedSettlement);
-  }, [currentPage, query, appliedStatus, appliedSettlement, load]);
+    void load(currentPage, query, appliedStatus, appliedSettlement, appliedDistribution);
+  }, [currentPage, query, appliedStatus, appliedSettlement, appliedDistribution, load]);
 
   function handleSearch() {
     setCurrentPage(1);
     setQuery(search);
     setAppliedStatus(statusFilter);
     setAppliedSettlement(settlementFilter);
+    setAppliedDistribution(distributionFilter);
   }
 
   return (
@@ -120,12 +131,20 @@ export function AdminPaymentsPage() {
               ))}
             </select>
           </label>
+          <label className="field">
+            <span className="field-label">Repasse</span>
+            <select className="field-input" value={distributionFilter} onChange={(event) => setDistributionFilter(event.target.value)}>
+              {DISTRIBUTION_OPTIONS.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
+              ))}
+            </select>
+          </label>
           <div className="payment-search-form__actions">
             <button type="submit" className="btn btn-primary btn-small">Buscar</button>
             <button
               type="button"
               className="btn btn-ghost btn-small"
-              onClick={() => void load(currentPage, query, appliedStatus, appliedSettlement)}
+              onClick={() => void load(currentPage, query, appliedStatus, appliedSettlement, appliedDistribution)}
             >
               Atualizar
             </button>

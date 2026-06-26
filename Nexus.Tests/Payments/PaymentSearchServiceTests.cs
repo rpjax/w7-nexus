@@ -96,6 +96,67 @@ public sealed class PaymentSearchServiceTests
     }
 
     [Fact]
+    public async Task AdminSearch_AppliesDistributionStatusFilter()
+    {
+        var payments = new InMemoryPaymentRepository();
+        await payments.CreateAsync(PaymentTestFactory.Create(
+            id: "pay-pending-dist",
+            status: PaymentStatus.Paid,
+            settlementStatus: PaymentSettlementStatus.Withdrawn,
+            distributionStatus: PaymentDistributionStatus.Pending,
+            paidAt: DateTime.UtcNow,
+            withdrawnAt: DateTime.UtcNow));
+        await payments.CreateAsync(PaymentTestFactory.Create(
+            id: "pay-complete-dist",
+            status: PaymentStatus.Paid,
+            settlementStatus: PaymentSettlementStatus.Withdrawn,
+            distributionStatus: PaymentDistributionStatus.Complete,
+            paidAt: DateTime.UtcNow,
+            withdrawnAt: DateTime.UtcNow,
+            distributedAt: DateTime.UtcNow));
+
+        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(payments);
+        var result = await sut.SearchPaymentsAsync(new SearchPaymentsRequest
+        {
+            Limit = 50,
+            DistributionStatus = PaymentDistributionStatus.Complete,
+        });
+
+        Assert.True(result.IsSuccess);
+        Assert.Single(result.Value!.Items);
+        Assert.Equal("pay-complete-dist", result.Value.Items[0].Id);
+        Assert.Equal("Complete", result.Value.Items[0].DistributionStatus);
+    }
+
+    [Fact]
+    public async Task MarkAsDistributed_SucceedsWhenPaidAndWithdrawn()
+    {
+        var payments = new InMemoryPaymentRepository();
+        await payments.CreateAsync(PaymentTestFactory.Create(
+            id: "pay-ready",
+            status: PaymentStatus.Paid,
+            settlementStatus: PaymentSettlementStatus.Withdrawn,
+            operatorId: "operator-1",
+            strawManId: "straw-1",
+            splits: new[] { new PaymentSplit("operator-1", 100m, 10m) },
+            paidAt: DateTime.UtcNow,
+            withdrawnAt: DateTime.UtcNow));
+
+        var sut = new PaymentService(
+            new InMemoryAccountRepository(),
+            payments,
+            new InMemoryOperationRepository(),
+            new InMemoryTeamRepository());
+
+        var result = await sut.MarkAsDistributedAsync("pay-ready");
+
+        Assert.True(result.IsSuccess);
+        var updated = payments.AsQueryable().First(p => p.Id == "pay-ready");
+        Assert.Equal(PaymentDistributionStatus.Complete, updated.DistributionStatus);
+        Assert.NotNull(updated.DistributedAt);
+    }
+
+    [Fact]
     public async Task AdminPay_FailsWhenPendingWithoutOperator()
     {
         var payments = new InMemoryPaymentRepository();

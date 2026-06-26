@@ -7,6 +7,8 @@ import {
   paymentStatusTone,
   settlementStatusLabel,
   settlementStatusTone,
+  distributionStatusLabel,
+  distributionStatusTone,
 } from '../../utils/financeLabels';
 import { formatUtc, shortId, shortTx } from '../../utils/format';
 import { detailPath, type PaymentScope } from './paymentPaths';
@@ -52,6 +54,10 @@ export function PaymentListItem({ payment, scope, highlightAccountId }: PaymentL
             <StatusPill
               label={settlementStatusLabel(payment.settlementStatus)}
               tone={settlementStatusTone(payment.settlementStatus)}
+            />
+            <StatusPill
+              label={distributionStatusLabel(payment.distributionStatus)}
+              tone={distributionStatusTone(payment.distributionStatus)}
             />
           </div>
           <p className="payment-list-item__meta muted small">

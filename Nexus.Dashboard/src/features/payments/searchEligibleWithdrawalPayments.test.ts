@@ -13,6 +13,7 @@ function payment(overrides: Partial<PaymentRow> = {}): PaymentRow {
     amount: 100,
     status: 'Paid',
     settlementStatus: 'Unsettled',
+    distributionStatus: 'Pending',
     createdAt: '2026-01-01T00:00:00Z',
     ...overrides,
   };
