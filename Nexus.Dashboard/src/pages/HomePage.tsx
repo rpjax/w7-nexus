@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchAdministratorOperations } from '../api/administrator/operations';
+import { searchOlxAdminAdSpoofs } from '../api/olx/admin';
+import { searchOlxOperatorAdSpoofs } from '../api/olx/operator';
 import { searchGatewayCredentials } from '../api/gateways';
 import { searchOperatorOperations } from '../api/operator/operations';
 import { useAuth } from '../auth/AuthContext';
-import { canUseOperatorPanel, canUseStrawManPanel, isAdministrator } from '../auth/roles';
+import { canUseOperatorPanel, canUseOlxPanel, canUseStrawManPanel, isAdministrator, isOlxOperator } from '../auth/roles';
 import { StatCard } from '../components/StatCard';
 import { PageHeading } from '../layouts/PageHeading';
 
@@ -35,12 +37,15 @@ export function HomePage() {
   const operatorPanel = canUseOperatorPanel(user);
   const adminView = isAdministrator(user);
   const strawManPanel = canUseStrawManPanel(user);
+  const olxPanel = canUseOlxPanel(user);
+  const olxOperator = isOlxOperator(user);
 
   const [myOperationsTotal, setMyOperationsTotal] = useState<number | null>(null);
   const [systemOperationsTotal, setSystemOperationsTotal] = useState<number | null>(null);
   const [frendz, setFrendz] = useState<CredentialStat>(defaultStat);
   const [sigiloPay, setSigiloPay] = useState<CredentialStat>(defaultStat);
   const [wintech, setWintech] = useState<CredentialStat>(defaultStat);
+  const [olxSpoofsTotal, setOlxSpoofsTotal] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -52,6 +57,18 @@ export function HomePage() {
       if (adminView) {
         const ops = await searchAdministratorOperations({ limit: 1, offset: 0, keyword: null });
         if (ops.ok) setSystemOperationsTotal(ops.data?.total ?? 0);
+      }
+
+      if (olxPanel) {
+        const search = olxOperator
+          ? searchOlxOperatorAdSpoofs
+          : adminView
+            ? searchOlxAdminAdSpoofs
+            : null;
+        if (search) {
+          const spoofs = await search({ limit: 1, offset: 0, keyword: null, operationIds: [] });
+          if (spoofs.ok) setOlxSpoofsTotal(spoofs.data?.total ?? 0);
+        }
       }
 
       if (!operatorPanel) return;
@@ -75,23 +92,31 @@ export function HomePage() {
         loadGateway('wintech', setWintech),
       ]);
     })();
-  }, [operatorPanel, adminView]);
+  }, [operatorPanel, adminView, olxPanel, olxOperator]);
 
   const homeKicker = adminView && operatorPanel
     ? 'Administração e operação'
     : adminView
       ? 'Administração'
-      : operatorPanel
-        ? 'Painel do operador'
-        : 'Dashboard';
+      : olxOperator
+        ? 'Painel OLX'
+        : operatorPanel
+          ? 'Painel do operador'
+          : strawManPanel
+            ? 'Painel laranja'
+            : 'Dashboard';
 
   const homeSubtitle = adminView && operatorPanel
     ? 'Visão operacional das suas alocações e gestão global do sistema.'
     : adminView
       ? 'Gerencie o catálogo global de operações e contas do sistema.'
-      : operatorPanel
-        ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
-        : 'Nenhum papel operacional ou administrativo associado à sua sessão.';
+      : olxOperator
+        ? 'Impersonação de anúncios OLX, spoof de preços e liberação de slots.'
+        : operatorPanel
+          ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
+          : strawManPanel
+            ? 'Acompanhe pagamentos e configurações da sua conta laranja.'
+            : 'Nenhum papel operacional ou administrativo associado à sua sessão.';
 
   return (
     <>
@@ -125,6 +150,14 @@ export function HomePage() {
             <StatCard label="Credencial SigiloPay" value={sigiloPay.status} caption={sigiloPay.caption} tone={sigiloPay.tone} />
             <StatCard label="Credencial Wintech" value={wintech.status} caption={wintech.caption} tone={wintech.tone} />
           </>
+        ) : null}
+        {olxPanel ? (
+          <StatCard
+            label="Anúncios OLX"
+            value={olxSpoofsTotal?.toString() ?? '—'}
+            caption={olxOperator ? 'Spoofs sob seu controle' : 'Registros globais de spoof'}
+            tone="success"
+          />
         ) : null}
         <StatCard
           label="Sessão"
@@ -161,6 +194,16 @@ export function HomePage() {
             <>
               <Link className="quick-action" to="/dashboard/straw-man/payments">Meus pagamentos</Link>
               <Link className="quick-action" to="/dashboard/straw-man/settings">Minhas configurações</Link>
+            </>
+          ) : null}
+          {olxPanel ? (
+            <>
+              {olxOperator ? (
+                <Link className="quick-action" to="/dashboard/olx/ads">OLX — Meus anúncios</Link>
+              ) : null}
+              {adminView ? (
+                <Link className="quick-action quick-action-admin" to="/dashboard/olx/admin/ads">OLX — Gestão global</Link>
+              ) : null}
             </>
           ) : null}
         </div>

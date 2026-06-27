@@ -33,6 +33,8 @@ import { WithdrawalDetailPage } from './pages/withdrawals/WithdrawalDetailPage';
 import { WithdrawalsListPage } from './pages/withdrawals/WithdrawalsListPage';
 import { GatewaysHubPage } from './pages/GatewaysHubPage';
 import { GatewayCredentialsPage } from './pages/GatewayCredentialsPage';
+import { OlxAdminAdsPage } from './pages/olx/OlxAdminAdsPage';
+import { OlxOperatorAdsPage } from './pages/olx/OlxOperatorAdsPage';
 import { GatewayPlaceholderPage } from './pages/GatewayPlaceholderPage';
 
 export default function App() {
@@ -88,6 +90,14 @@ export default function App() {
             <Route path="/dashboard/straw-man/payments" element={<StrawManPaymentsPage />} />
             <Route path="/dashboard/straw-man/payments/:paymentId" element={<StrawManPaymentDetailPage />} />
             <Route path="/dashboard/straw-man/settings" element={<StrawManSelfSettingsPage />} />
+          </Route>
+
+          <Route element={<RequireAnyRole roles={[ROLES.OlxOperator, ROLES.Administrator]} />}>
+            <Route path="/dashboard/olx/ads" element={<OlxOperatorAdsPage />} />
+          </Route>
+
+          <Route element={<RequireRole role={ROLES.Administrator} />}>
+            <Route path="/dashboard/olx/admin/ads" element={<OlxAdminAdsPage />} />
           </Route>
         </Route>
       </Route>

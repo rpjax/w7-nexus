@@ -4,6 +4,7 @@ export const ROLES = {
   Administrator: 'Administrator',
   Operator: 'Operator',
   StrawMan: 'StrawMan',
+  OlxOperator: 'OlxOperator',
 } as const;
 
 export type AppRole = (typeof ROLES)[keyof typeof ROLES];
@@ -24,6 +25,10 @@ export function isStrawMan(user: AuthUser | null | undefined): boolean {
   return hasRole(user, ROLES.StrawMan);
 }
 
+export function isOlxOperator(user: AuthUser | null | undefined): boolean {
+  return hasRole(user, ROLES.OlxOperator);
+}
+
 export function hasAnyRole(user: AuthUser | null | undefined, roles: AppRole[]): boolean {
   return roles.some((role) => hasRole(user, role));
 }
@@ -36,4 +41,9 @@ export function canUseOperatorPanel(user: AuthUser | null | undefined): boolean 
 /** Conta com role laranja — painel de pagamentos do laranja. */
 export function canUseStrawManPanel(user: AuthUser | null | undefined): boolean {
   return isStrawMan(user);
+}
+
+/** Operador OLX ou administrador — painel de spoof de anúncios. */
+export function canUseOlxPanel(user: AuthUser | null | undefined): boolean {
+  return isOlxOperator(user) || isAdministrator(user);
 }

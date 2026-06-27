@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import {
   grantAdministratorAccountPermission,
   grantAdministratorAccountRole,
@@ -6,14 +6,11 @@ import {
   revokeAdministratorAccountRole,
 } from '../../api/administrator/accounts';
 import {
-  MANAGEABLE_ACCOUNT_PERMISSIONS,
-  MANAGEABLE_ACCOUNT_ROLES,
+  ACCOUNT_PERMISSION_CATALOG,
+  ACCOUNT_ROLE_CATALOG,
   hasPermissionIgnoreCase,
   hasRoleIgnoreCase,
-  permissionLabel,
-  roleLabel,
 } from '../../utils/accountAccess';
-import { IconButton } from '../IconButton';
 
 type AccountAccessEditorProps = {
   accountId: string;
@@ -32,16 +29,6 @@ export function AccountAccessEditor({
 }: AccountAccessEditorProps) {
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
-  const availableRoles = useMemo(
-    () => MANAGEABLE_ACCOUNT_ROLES.filter((role) => !hasRoleIgnoreCase(roles, role)),
-    [roles],
-  );
-
-  const availablePermissions = useMemo(
-    () => MANAGEABLE_ACCOUNT_PERMISSIONS.filter((permission) => !hasPermissionIgnoreCase(permissions, permission)),
-    [permissions],
-  );
-
   async function runAction(key: string, action: () => Promise<{ ok: boolean; error?: string }>) {
     setBusyKey(key);
     try {
@@ -56,95 +43,115 @@ export function AccountAccessEditor({
     }
   }
 
+  async function toggleRole(roleId: string, active: boolean) {
+    const key = active ? `role-remove:${roleId}` : `role-add:${roleId}`;
+    await runAction(
+      key,
+      () => (active
+        ? revokeAdministratorAccountRole(accountId, roleId)
+        : grantAdministratorAccountRole(accountId, roleId)),
+    );
+  }
+
+  async function togglePermission(permissionId: string, active: boolean) {
+    const key = active ? `perm-remove:${permissionId}` : `perm-add:${permissionId}`;
+    await runAction(
+      key,
+      () => (active
+        ? revokeAdministratorAccountPermission(accountId, permissionId)
+        : grantAdministratorAccountPermission(accountId, permissionId)),
+    );
+  }
+
+  const activeRoleCount = ACCOUNT_ROLE_CATALOG.filter((role) => hasRoleIgnoreCase(roles, role.id)).length;
+  const activePermissionCount = ACCOUNT_PERMISSION_CATALOG.filter(
+    (permission) => hasPermissionIgnoreCase(permissions, permission.id),
+  ).length;
+
   return (
     <div className="account-access-editor">
-      <section className="account-access-section">
-        <div className="account-access-section__head">
-          <h4 className="account-access-section__title">Funções (roles)</h4>
-          <p className="account-access-section__hint muted small">
-            Conceda ou remova papéis de acesso da conta.
-          </p>
-        </div>
-        <div className="account-access-chips">
-          {roles.length === 0 ? (
-            <span className="account-access-empty muted small">Nenhuma função atribuída.</span>
-          ) : (
-            roles.map((role) => (
-              <span key={role} className="account-access-chip account-access-chip--role">
-                <span className="account-access-chip__label">{roleLabel(role)}</span>
-                <span className="account-access-chip__code mono">{role}</span>
-                <IconButton
-                  icon="x"
-                  label={`Remover função ${roleLabel(role)}`}
-                  disabled={busyKey !== null}
-                  onClick={() => void runAction(`role-remove:${role}`, () => revokeAdministratorAccountRole(accountId, role))}
-                />
-              </span>
-            ))
-          )}
-        </div>
-        {availableRoles.length > 0 ? (
-          <div className="account-access-add-row">
-            {availableRoles.map((role) => (
-              <button
-                key={role}
-                type="button"
-                className="account-access-add-btn"
-                disabled={busyKey !== null}
-                onClick={() => void runAction(`role-add:${role}`, () => grantAdministratorAccountRole(accountId, role))}
-              >
-                + {roleLabel(role)}
-              </button>
-            ))}
+      <section className="account-access-block">
+        <header className="account-access-block__head">
+          <div>
+            <h4 className="account-access-block__title">Funções</h4>
+            <p className="account-access-block__hint muted small">
+              Ative os papéis que esta conta pode exercer na plataforma.
+            </p>
           </div>
-        ) : null}
+          <span className="account-access-block__count muted small">
+            {activeRoleCount} / {ACCOUNT_ROLE_CATALOG.length}
+          </span>
+        </header>
+
+        <div className="access-toggle-grid" role="group" aria-label="Funções da conta">
+          {ACCOUNT_ROLE_CATALOG.map((role) => {
+            const active = hasRoleIgnoreCase(roles, role.id);
+
+            return (
+              <button
+                key={role.id}
+                type="button"
+                className={`access-toggle-card access-toggle-card--${role.tone}${active ? ' is-active' : ''}`}
+                disabled={busyKey !== null}
+                aria-pressed={active}
+                title={role.id}
+                onClick={() => void toggleRole(role.id, active)}
+              >
+                <span className="access-toggle-card__row">
+                  <span className="access-toggle-card__copy">
+                    <strong className="access-toggle-card__label">{role.label}</strong>
+                    <span className="access-toggle-card__desc">{role.description}</span>
+                  </span>
+                  <span className={`access-toggle-card__switch${active ? ' is-on' : ''}`} aria-hidden="true">
+                    <span className="access-toggle-card__knob" />
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </section>
 
-      <section className="account-access-section">
-        <div className="account-access-section__head">
-          <h4 className="account-access-section__title">Permissões</h4>
-          <p className="account-access-section__hint muted small">
-            Permissões extras além das funções base.
-          </p>
-        </div>
-        <div className="account-access-chips">
-          {permissions.length === 0 ? (
-            <span className="account-access-empty muted small">Nenhuma permissão atribuída.</span>
-          ) : (
-            permissions.map((permission) => (
-              <span key={permission} className="account-access-chip account-access-chip--permission">
-                <span className="account-access-chip__label">{permissionLabel(permission)}</span>
-                <IconButton
-                  icon="x"
-                  label={`Remover permissão ${permissionLabel(permission)}`}
-                  disabled={busyKey !== null}
-                  onClick={() => void runAction(
-                    `perm-remove:${permission}`,
-                    () => revokeAdministratorAccountPermission(accountId, permission),
-                  )}
-                />
-              </span>
-            ))
-          )}
-        </div>
-        {availablePermissions.length > 0 ? (
-          <div className="account-access-add-row">
-            {availablePermissions.map((permission) => (
-              <button
-                key={permission}
-                type="button"
-                className="account-access-add-btn account-access-add-btn--permission"
-                disabled={busyKey !== null}
-                onClick={() => void runAction(
-                  `perm-add:${permission}`,
-                  () => grantAdministratorAccountPermission(accountId, permission),
-                )}
-              >
-                + {permissionLabel(permission)}
-              </button>
-            ))}
+      <section className="account-access-block account-access-block--permissions">
+        <header className="account-access-block__head">
+          <div>
+            <h4 className="account-access-block__title">Permissões extras</h4>
+            <p className="account-access-block__hint muted small">
+              Capacidades adicionais além das funções base.
+            </p>
           </div>
-        ) : null}
+          <span className="account-access-block__count muted small">
+            {activePermissionCount} / {ACCOUNT_PERMISSION_CATALOG.length}
+          </span>
+        </header>
+
+        <div className="access-toggle-grid access-toggle-grid--compact" role="group" aria-label="Permissões da conta">
+          {ACCOUNT_PERMISSION_CATALOG.map((permission) => {
+            const active = hasPermissionIgnoreCase(permissions, permission.id);
+
+            return (
+              <button
+                key={permission.id}
+                type="button"
+                className={`access-toggle-card access-toggle-card--permission${active ? ' is-active' : ''}`}
+                disabled={busyKey !== null}
+                aria-pressed={active}
+                title={permission.id}
+                onClick={() => void togglePermission(permission.id, active)}
+              >
+                <span className="access-toggle-card__row">
+                  <span className="access-toggle-card__copy">
+                    <strong className="access-toggle-card__label">{permission.label}</strong>
+                    <span className="access-toggle-card__desc">{permission.description}</span>
+                  </span>
+                  <span className={`access-toggle-card__switch${active ? ' is-on' : ''}`} aria-hidden="true">
+                    <span className="access-toggle-card__knob" />
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </section>
     </div>
   );

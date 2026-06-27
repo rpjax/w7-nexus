@@ -137,6 +137,8 @@ public sealed class PaymentDetailsEnrichmentService : IPaymentDetailsEnrichmentS
             return Roles.StrawMan;
         if (account.Roles.Contains(Roles.Operator, StringComparer.Ordinal))
             return Roles.Operator;
+        if (account.Roles.Contains(Roles.OlxOperator, StringComparer.Ordinal))
+            return Roles.OlxOperator;
         if (account.Roles.Contains(Roles.Administrator, StringComparer.Ordinal))
             return Roles.Administrator;
         return account.Roles.FirstOrDefault() ?? "Account";

@@ -2,6 +2,7 @@ using Nexus.Administrators.Composition;
 using Nexus.Authorization.Composition;
 using Nexus.OperationAdministrators.Composition;
 using Nexus.Operators.Composition;
+using Nexus.Olx.Composition;
 using Nexus.StrawMen.Composition;
 using Nexus.TeamLeaders.Composition;
 
@@ -28,6 +29,9 @@ public static class RolesServiceCollectionExtensions
 
         // Straw man
         services.AddNexusStrawMan();
+
+        // OLX
+        services.AddNexusOlx();
 
         return services;
     }

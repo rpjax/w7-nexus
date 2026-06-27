@@ -1,13 +1,14 @@
 import { NavLink } from 'react-router-dom';
 import { useState } from 'react';
 import { useAuth } from '../auth/AuthContext';
-import { canUseOperatorPanel, canUseStrawManPanel, isAdministrator } from '../auth/roles';
+import { canUseOperatorPanel, canUseOlxPanel, canUseStrawManPanel, isAdministrator, isOlxOperator } from '../auth/roles';
 
 export function NavMenu() {
   const { user } = useAuth();
   const showOperatorPanel = canUseOperatorPanel(user);
   const showGlobalAdminItems = isAdministrator(user);
   const showStrawManPanel = canUseStrawManPanel(user);
+  const showOlxPanel = canUseOlxPanel(user);
 
   const [operationsOpen, setOperationsOpen] = useState(true);
   const [accountsOpen, setAccountsOpen] = useState(true);
@@ -15,6 +16,7 @@ export function NavMenu() {
   const [strawMenOpen, setStrawMenOpen] = useState(true);
   const [transfersOpen, setTransfersOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
+  const [olxOpen, setOlxOpen] = useState(true);
 
   const brandSubtitle = showGlobalAdminItems && showOperatorPanel
     ? 'Operações, pagamentos e administração'
@@ -22,7 +24,9 @@ export function NavMenu() {
       ? 'Administração do sistema'
       : showOperatorPanel
         ? 'Operações e pagamentos'
-        : showStrawManPanel
+        : showOlxPanel
+          ? 'Painel OLX'
+          : showStrawManPanel
           ? 'Painel do laranja'
           : 'Dashboard';
 
@@ -217,6 +221,37 @@ export function NavMenu() {
                   <span className="submenu-bullet" aria-hidden="true" />
                   Carteiras crypto
                 </NavLink>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {showOlxPanel ? (
+          <div className="nav-group nav-group-olx">
+            <button
+              type="button"
+              className="nav-dropdown nav-dropdown-full"
+              onClick={() => setOlxOpen((v) => !v)}
+              aria-expanded={olxOpen}
+              aria-controls="olx-submenu"
+            >
+              <span className="nav-dropdown-label">OLX</span>
+              <span className="nav-caret" aria-hidden="true">{olxOpen ? '▲' : '▼'}</span>
+            </button>
+            <div id="olx-submenu" className={`submenu-tree ${olxOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!olxOpen}>
+              <div className="submenu-tree-inner">
+                {isOlxOperator(user) || showGlobalAdminItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink${isActive ? ' active' : ''}`} to="/dashboard/olx/ads" onClick={() => setOlxOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Meus anúncios
+                  </NavLink>
+                ) : null}
+                {showGlobalAdminItems ? (
+                  <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/olx/admin/ads" onClick={() => setOlxOpen(true)}>
+                    <span className="submenu-bullet" aria-hidden="true" />
+                    Gestão global
+                  </NavLink>
+                ) : null}
               </div>
             </div>
           </div>

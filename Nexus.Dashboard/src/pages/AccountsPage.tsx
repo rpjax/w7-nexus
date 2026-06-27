@@ -6,6 +6,7 @@ import { AccountCard } from '../components/admin/AccountCard';
 import { EmptyState } from '../components/EmptyState';
 import { PageHeading } from '../layouts/PageHeading';
 import { useNotifications } from '../notifications/NotificationContext';
+import { ACCOUNT_ROLE_CATALOG } from '../utils/accountAccess';
 
 const PAGE_SIZE = 20;
 
@@ -14,6 +15,7 @@ export function AccountsPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [createBusy, setCreateBusy] = useState(false);
+  const [createOpen, setCreateOpen] = useState(false);
 
   const [search, setSearch] = useState('');
   const [query, setQuery] = useState('');
@@ -64,6 +66,7 @@ export function AccountsPage() {
       notifySuccess('Conta criada com sucesso.');
       setUsername('');
       setPassword('');
+      setCreateOpen(false);
       setCurrentPage(1);
       setQuery('');
       setSearch('');
@@ -74,49 +77,79 @@ export function AccountsPage() {
   }
 
   return (
-    <>
+    <div className="accounts-page">
       <PageHeading
         kicker="Administração"
         kickerVariant="admin"
         title="Contas"
-        subtitle="Gerencie usuários, funções e permissões. Conceda Operator para alocar contas em equipes."
+        subtitle="Gerencie usuários e ative funções com um clique. Cada conta pode acumular vários papéis."
       />
 
-      <section className="card ops-card ops-create admin-surface">
-        <div className="card-title-row">
-          <h2>Registrar conta</h2>
-          <span className="post-badge">POST /api/account</span>
+      <section className="accounts-legend card ops-card admin-surface">
+        <div className="accounts-legend__head">
+          <h2 className="accounts-legend__title">Funções disponíveis</h2>
+          <p className="accounts-legend__lead muted small">
+            Referência rápida dos papéis que você pode atribuir a qualquer conta.
+          </p>
         </div>
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="accUsername">Usuário</label>
-            <input
-              id="accUsername"
-              className="nexus-input"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              autoComplete="off"
-              placeholder="Nome de login"
-            />
+        <ul className="accounts-legend__list">
+          {ACCOUNT_ROLE_CATALOG.map((role) => (
+            <li key={role.id} className={`accounts-legend__item accounts-legend__item--${role.tone}`}>
+              <strong>{role.label}</strong>
+              <span className="muted small">{role.description}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+
+      <section className="card ops-card admin-surface accounts-create-panel">
+        <button
+          type="button"
+          className="accounts-create-panel__toggle"
+          aria-expanded={createOpen}
+          onClick={() => setCreateOpen((open) => !open)}
+        >
+          <span>
+            <strong>Registrar nova conta</strong>
+            <span className="muted small">Login e senha inicial — funções são atribuídas depois.</span>
+          </span>
+          <span aria-hidden="true">{createOpen ? '▾' : '▸'}</span>
+        </button>
+
+        {createOpen ? (
+          <div className="accounts-create-panel__body">
+            <div className="form-grid">
+              <div className="field">
+                <label htmlFor="accUsername">Usuário</label>
+                <input
+                  id="accUsername"
+                  className="nexus-input"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="off"
+                  placeholder="nome.de.login"
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="accPassword">Senha</label>
+                <input
+                  id="accPassword"
+                  className="nexus-input"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  autoComplete="new-password"
+                  placeholder="Senha inicial"
+                />
+              </div>
+            </div>
+            <div className="card-actions">
+              <button type="button" className="btn btn-primary" onClick={() => void handleCreate()} disabled={createBusy}>
+                {createBusy ? 'Registrando…' : 'Registrar conta'}
+              </button>
+            </div>
           </div>
-          <div className="field">
-            <label htmlFor="accPassword">Senha</label>
-            <input
-              id="accPassword"
-              className="nexus-input"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              placeholder="Senha inicial"
-            />
-          </div>
-        </div>
-        <div className="card-actions">
-          <button type="button" className="btn btn-primary" onClick={() => void handleCreate()} disabled={createBusy}>
-            {createBusy ? 'Registrando…' : 'Registrar conta'}
-          </button>
-        </div>
+        ) : null}
       </section>
 
       <section className="card ops-card admin-surface accounts-panel">
@@ -127,7 +160,7 @@ export function AccountsPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') void handleSearch(); }}
-            placeholder="Buscar por nome ou ID…"
+            placeholder="Buscar por @username…"
             aria-label="Buscar contas"
           />
           <button type="button" className="btn btn-primary accounts-search-btn" onClick={() => void handleSearch()}>
@@ -138,12 +171,12 @@ export function AccountsPage() {
           </button>
         </div>
 
-        <div className="card-title-row accounts-panel-head">
-          <div className="card-title-group">
+        <div className="accounts-panel-head">
+          <div className="accounts-panel-head__copy">
             <h2 className="section-title">Contas cadastradas</h2>
-            <span className="post-badge">POST /api/administrator/accounts/search</span>
+            <p className="muted small">Expanda uma conta para alternar funções e permissões.</p>
           </div>
-          <span className="muted small">{totalItems} registro(s)</span>
+          <span className="accounts-panel-head__count muted small">{totalItems} registro(s)</span>
         </div>
 
         {items.length === 0 ? (
@@ -154,10 +187,11 @@ export function AccountsPage() {
         ) : (
           <>
             <div className="accounts-list">
-              {items.map((account) => (
+              {items.map((account, index) => (
                 <AccountCard
                   key={account.id}
                   account={account}
+                  defaultExpanded={index === 0 && items.length === 1}
                   onMutated={() => {
                     notifySuccess('Conta atualizada.');
                     void load(currentPage, query);
@@ -191,6 +225,6 @@ export function AccountsPage() {
           </>
         )}
       </section>
-    </>
+    </div>
   );
 }

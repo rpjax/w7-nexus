@@ -182,6 +182,8 @@ public sealed class Account
     {
         global::Nexus.Authorization.Roles.Administrator => "administrador",
         global::Nexus.Authorization.Roles.Operator => "operador",
+        global::Nexus.Authorization.Roles.StrawMan => "laranja",
+        global::Nexus.Authorization.Roles.OlxOperator => "operador OLX",
         _ => role,
     };
 }

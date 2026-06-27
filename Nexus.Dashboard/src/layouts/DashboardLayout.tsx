@@ -44,6 +44,8 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard/gateways/wintech': 'Wintech',
     '/dashboard/gateways/gateway-2': 'GATEWAY2',
     '/dashboard/gateways/gateway-3': 'GATEWAY3',
+    '/dashboard/olx/ads': 'OLX — Meus anúncios',
+    '/dashboard/olx/admin/ads': 'OLX — Gestão global',
   };
   return map[relative] ?? 'Websete Nexus';
 }

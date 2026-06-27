@@ -6,6 +6,7 @@ import {
 } from './administrator/accountPickers';
 import {
   searchAdministratorAccountsForPicker,
+  searchAdministratorOlxOperatorsForPicker,
   searchAdministratorStrawMenForPicker,
 } from './administrator/accounts';
 import {
@@ -22,6 +23,9 @@ export const searchAdministratorAccountsPicker = toAccountPickerSearchFn(searchA
 
 /** Busca laranjas via `POST /api/administrator/accounts/search` (filtro StrawMan). */
 export const searchAdministratorStrawMenPicker = toAccountPickerSearchFn(searchAdministratorStrawMenForPicker);
+
+/** Busca operadores OLX via `POST /api/administrator/accounts/search` (filtro OlxOperator). */
+export const searchAdministratorOlxOperatorsPicker = toAccountPickerSearchFn(searchAdministratorOlxOperatorsForPicker);
 
 /** Busca operadores via `POST /api/administrator/teams/operators/search`. */
 export const searchAdministratorOperatorsPicker = toAccountPickerSearchFn(searchAdministratorOperatorsForPicker);

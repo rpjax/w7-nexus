@@ -1,4 +1,4 @@
-﻿namespace Nexus.Olx.Application.Contracts;
+﻿namespace Nexus.Olx.Application.Requests;
 
 public class UnimpersonateAdRequest
 {

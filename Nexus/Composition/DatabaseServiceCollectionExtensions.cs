@@ -34,6 +34,7 @@ public static class DatabaseServiceCollectionExtensions
         services.AddMongoCollection<CryptoBalanceDocument>("crypto_balances");
         services.AddMongoCollection<TransferRecord>("transfers");
         services.AddMongoCollection<StrawManSettingsRecord>("straw_man_settings");
+        services.AddMongoCollection<AdSpoofRecord>("olx_ad_spoofs");
 
         return services;
     }
