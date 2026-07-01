@@ -21,14 +21,14 @@ public sealed class OlxOperatorController : NexusController
         _identityResolver = identityResolver;
     }
 
-    [HttpPost("ad-spoofs/search")]
-    public async Task<ActionResult> SearchAdSpoofsAsync(
-        [FromBody] SearchAdSpoofsRequest request,
+    [HttpPost("ad-patches/search")]
+    public async Task<ActionResult> SearchAdPatchesAsync(
+        [FromBody] SearchAdPatchesRequest request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _olxOperator.SearchAdSpoofsAsync(
+        return ToOperationResult(await _olxOperator.SearchAdPatchesAsync(
             identity,
             request,
             cancellationToken));
@@ -60,14 +60,14 @@ public sealed class OlxOperatorController : NexusController
             cancellationToken));
     }
 
-    [HttpPut("ads/spoof")]
-    public async Task<ActionResult> UpdateAdDetailsSpoofAsync(
-        [FromBody] UpdateAdDetailsSpoofRequest request,
+    [HttpPut("ads/patch")]
+    public async Task<ActionResult> UpdateAdDetailsPatchAsync(
+        [FromBody] UpdateAdDetailsPatchRequest request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _olxOperator.UpdateAdDetailsSpoofAsync(
+        return ToOperationResult(await _olxOperator.UpdateAdDetailsPatchAsync(
             identity,
             request,
             cancellationToken));

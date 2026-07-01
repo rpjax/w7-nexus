@@ -1,3 +1,4 @@
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Aggregates;
 
 namespace Nexus.Tests.Payments;

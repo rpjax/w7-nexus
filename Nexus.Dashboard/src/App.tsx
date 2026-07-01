@@ -24,13 +24,6 @@ import { PaymentsPixPage } from './pages/PaymentsPixPage';
 import { StrawManPaymentDetailPage } from './pages/strawMan/StrawManPaymentDetailPage';
 import { StrawManPaymentsPage } from './pages/strawMan/StrawManPaymentsPage';
 import { AdminStrawManManagementPage, StrawManSelfSettingsPage } from './pages/strawMan/StrawManSettingsPage';
-import { BankAccountsPage } from './pages/withdrawals/BankAccountsPage';
-import { CryptoWalletsPage } from './pages/withdrawals/CryptoWalletsPage';
-import { WithdrawalCreatePage } from './pages/withdrawals/WithdrawalCreatePage';
-import { MovementCreatePage } from './pages/withdrawals/MovementCreatePage';
-import { PayoutCreatePage } from './pages/withdrawals/PayoutCreatePage';
-import { WithdrawalDetailPage } from './pages/withdrawals/WithdrawalDetailPage';
-import { WithdrawalsListPage } from './pages/withdrawals/WithdrawalsListPage';
 import { GatewaysHubPage } from './pages/GatewaysHubPage';
 import { GatewayCredentialsPage } from './pages/GatewayCredentialsPage';
 import { OlxAdminAdsPage } from './pages/olx/OlxAdminAdsPage';
@@ -75,13 +68,6 @@ export default function App() {
             <Route path="/dashboard/admin/payments" element={<AdminPaymentsPage />} />
             <Route path="/dashboard/admin/payments/:paymentId" element={<AdminPaymentDetailPage />} />
             <Route path="/dashboard/accounts" element={<AccountsPage />} />
-            <Route path="/dashboard/transfers" element={<WithdrawalsListPage />} />
-            <Route path="/dashboard/transfers/new" element={<WithdrawalCreatePage />} />
-            <Route path="/dashboard/transfers/movement" element={<MovementCreatePage />} />
-            <Route path="/dashboard/transfers/payout" element={<PayoutCreatePage />} />
-            <Route path="/dashboard/transfers/bank-accounts" element={<BankAccountsPage />} />
-            <Route path="/dashboard/transfers/crypto-wallets" element={<CryptoWalletsPage />} />
-            <Route path="/dashboard/transfers/:transferId" element={<WithdrawalDetailPage />} />
             <Route path="/dashboard/admin/straw-men" element={<AdminStrawManManagementPage />} />
             <Route path="/dashboard/admin/straw-man-settings" element={<Navigate to="/dashboard/admin/straw-men" replace />} />
           </Route>

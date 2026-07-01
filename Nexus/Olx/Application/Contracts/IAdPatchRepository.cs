@@ -4,7 +4,7 @@ using Nexus.Olx.Aggregates;
 
 namespace Nexus.Olx.Application.Contracts;
 
-public interface IAdSpoofRepository : IRepository<AdSpoof>
+public interface IAdPatchRepository : IRepository<AdPatch>
 {
-    new Task<AdSpoof> CreateAsync(AdSpoof entity);
+    new Task<AdPatch> CreateAsync(AdPatch entity);
 }

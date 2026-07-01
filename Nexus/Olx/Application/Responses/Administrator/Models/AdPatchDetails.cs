@@ -1,6 +1,6 @@
 namespace Nexus.Olx.Application.Responses.Administrator.Models;
 
-public class AdSpoofDetails
+public class AdPatchDetails
 {
     public string Id { get; init; } = string.Empty;
     public string OperationId { get; init; } = string.Empty;

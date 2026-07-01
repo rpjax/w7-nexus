@@ -33,13 +33,6 @@ using Nexus.Tests.Accounts;
 using Nexus.Authentication.Application.Services;
 using Nexus.Authorization;
 using Nexus.Authorization.Application.Models;
-using Nexus.BankAccounts.Application.Responses;
-using Nexus.BankAccounts.Application.Requests;
-using Nexus.CryptoWallets.Application.Requests;
-using Nexus.CryptoWallets.Application.Responses;
-using Nexus.Transfers.Application.Contracts;
-using Nexus.Transfers.Application.Models;
-using Nexus.Transfers.Application.Requests;
 
 namespace Nexus.Tests.Support;
 
@@ -359,9 +352,6 @@ internal sealed class ActorTestContext
             new AdministratorOperatorAssignmentSearchService(Accounts),
             new AdministratorProfitShareAccountSearchService(Accounts),
             new AdministratorOperationPickerSearchService(Operations),
-            new StubBankAccountService(),
-            new StubCryptoWalletService(),
-            new StubTransferService(),
             new AdministratorPaymentSearchService(Payments, PaymentTestDoubles.PassthroughEnrichment()),
             new AdministratorPaymentCommandService(new PaymentService(
                 Accounts,
@@ -540,84 +530,6 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
         IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
-}
-
-internal sealed class StubBankAccountService : Nexus.BankAccounts.Application.Contracts.IBankAccountService
-{
-    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> CreateAsync(
-        CreateBankAccountRequest request) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> UpdateLabelAsync(
-        string bankAccountId,
-        string? label) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.BankAccounts.Aggregates.BankAccount>> GetByIdAsync(string bankAccountId) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<SearchBankAccountsResponse>> SearchAsync(
-        SearchBankAccountsRequest? request) =>
-        throw new NotImplementedException();
-}
-
-internal sealed class StubCryptoWalletService : Nexus.CryptoWallets.Application.Contracts.ICryptoWalletService
-{
-    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> CreateAsync(
-        CreateCryptoWalletRequest request) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> UpsertAddressAsync(
-        UpsertCryptoWalletAddressRequest request) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> UpdateLabelAsync(
-        string cryptoWalletId,
-        string? label) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.CryptoWallets.Aggregates.CryptoWallet>> GetByIdAsync(string cryptoWalletId) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<SearchCryptoWalletsResponse>> SearchAsync(
-        SearchCryptoWalletsRequest? request) =>
-        throw new NotImplementedException();
-}
-
-internal sealed class StubTransferService : ITransferService
-{
-    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecuteBankAccountMovementAsync(
-        BankAccountMovementRequest request,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecuteCryptoWalletMovementAsync(
-        CryptoWalletMovementRequest request,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecuteWithdrawalAsync(
-        WithdrawalTransferRequest request,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> ExecutePayoutAsync(
-        PayoutTransferRequest request,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<Nexus.Transfers.Aggregates.Transfer>> GetByIdAsync(string transferId) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<SearchTransfersResponse>> SearchAsync(
-        SearchTransfersRequest? request,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
-
-    public Task<IResult<TransferTimelineDetails>> GetTimelineAsync(
-        string transferId,
-        CancellationToken cancellationToken = default) =>
-        throw new NotImplementedException();
 }
 
 internal sealed class StubAdministratorStrawManSettingsCommandService : IAdministratorStrawManSettingsCommandService

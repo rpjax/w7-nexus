@@ -7,4 +7,3 @@ public class ImpersonateAdRequest
     public string AdId { get; set; } = string.Empty;
     public string AdUrl { get; set; } = string.Empty;
 }
-

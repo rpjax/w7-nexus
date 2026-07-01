@@ -3,14 +3,14 @@ using Xunit;
 
 namespace Nexus.Tests.Olx;
 
-public sealed class AdSpoofTests
+public sealed class AdPatchTests
 {
   private const string ValidAdUrl = "https://www.olx.com.br/anuncio/iphone-1513407983";
 
   [Fact]
   public void Create_ValidIds_Succeeds()
   {
-    var result = AdSpoof.Create("op-1", "ad-1", ValidAdUrl);
+    var result = AdPatch.Create("op-1", "ad-1", ValidAdUrl);
 
     Assert.True(result.IsSuccess);
     Assert.Equal("op-1", result.Value!.OperationId);
@@ -22,7 +22,7 @@ public sealed class AdSpoofTests
   [Fact]
   public void Create_WithoutAdUrl_Fails()
   {
-    var result = AdSpoof.Create("op-1", "ad-1", "");
+    var result = AdPatch.Create("op-1", "ad-1", "");
 
     Assert.True(result.IsFailure);
   }
@@ -30,7 +30,7 @@ public sealed class AdSpoofTests
   [Fact]
   public void Create_WithInvalidAdUrl_Fails()
   {
-    var result = AdSpoof.Create("op-1", "ad-1", "not-a-url");
+    var result = AdPatch.Create("op-1", "ad-1", "http://");
 
     Assert.True(result.IsFailure);
   }
@@ -38,17 +38,17 @@ public sealed class AdSpoofTests
   [Fact]
   public void TryNormalizeAdUrl_AcceptsHttpAndHttps()
   {
-    Assert.True(AdSpoof.TryNormalizeAdUrl("https://olx.com.br/item-123", out var https).IsSuccess);
+    Assert.True(AdPatch.TryNormalizeAdUrl("https://olx.com.br/item-123", out var https).IsSuccess);
     Assert.Equal("https://olx.com.br/item-123", https);
 
-    Assert.True(AdSpoof.TryNormalizeAdUrl("http://olx.com.br/item-123", out var http).IsSuccess);
+    Assert.True(AdPatch.TryNormalizeAdUrl("http://olx.com.br/item-123", out var http).IsSuccess);
     Assert.Equal("http://olx.com.br/item-123", http);
   }
 
   [Fact]
   public void TryNormalizeAdUrl_RejectsNonHttpScheme()
   {
-    var result = AdSpoof.TryNormalizeAdUrl("ftp://olx.com.br/item-123", out _);
+    var result = AdPatch.TryNormalizeAdUrl("ftp://olx.com.br/item-123", out _);
 
     Assert.True(result.IsFailure);
   }
@@ -56,82 +56,82 @@ public sealed class AdSpoofTests
   [Fact]
   public void Impersonate_SetsOperatorAndFlag()
   {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
 
-    var result = spoof.Impersonate("operator-1");
+    var result = patch.Impersonate("operator-1");
 
     Assert.True(result.IsSuccess);
-    Assert.True(spoof.IsImpersonating);
-    Assert.Equal("operator-1", spoof.OperatorId);
+    Assert.True(patch.IsImpersonating);
+    Assert.Equal("operator-1", patch.OperatorId);
   }
 
   [Fact]
   public void Unimpersonate_ClearsOperatorAndFlag()
   {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    spoof.Impersonate("operator-1");
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    patch.Impersonate("operator-1");
 
-    var result = spoof.Unimpersonate();
-
-    Assert.True(result.IsSuccess);
-    Assert.False(spoof.IsImpersonating);
-    Assert.Null(spoof.OperatorId);
-  }
-
-  [Fact]
-  public void Impersonate_WhenAlreadySpoofedByAnotherOperator_Fails()
-  {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    spoof.Impersonate("operator-1");
-
-    var result = spoof.Impersonate("operator-2");
-
-    Assert.True(result.IsFailure);
-    Assert.Equal("operator-1", spoof.OperatorId);
-    Assert.True(spoof.IsImpersonating);
-  }
-
-  [Fact]
-  public void UpdatePriceSpoof_WhenAlreadySpoofedByAnotherOperator_Fails()
-  {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    spoof.Impersonate("operator-1");
-
-    var result = spoof.UpdatePriceSpoof("operator-2", 100m, 80m);
-
-    Assert.True(result.IsFailure);
-  }
-
-  [Fact]
-  public void UpdatePriceSpoof_RequiresAtLeastOnePrice()
-  {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-
-    var result = spoof.UpdatePriceSpoof("operator-1", null, null);
-
-    Assert.True(result.IsFailure);
-  }
-
-  [Fact]
-  public void UpdatePriceSpoof_RequiresActiveImpersonation()
-  {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-
-    var result = spoof.UpdatePriceSpoof("operator-1", 100m, 80m);
-
-    Assert.True(result.IsFailure);
-  }
-
-  [Fact]
-  public void UpdatePriceSpoof_PersistsPrices_WhenImpersonating()
-  {
-    var spoof = AdSpoof.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    spoof.Impersonate("operator-1");
-
-    var result = spoof.UpdatePriceSpoof("operator-1", 100m, 80m);
+    var result = patch.Unimpersonate();
 
     Assert.True(result.IsSuccess);
-    Assert.Equal(100m, spoof.OriginalPrice);
-    Assert.Equal(80m, spoof.PromotionalPrice);
+    Assert.False(patch.IsImpersonating);
+    Assert.Null(patch.OperatorId);
+  }
+
+  [Fact]
+  public void Impersonate_WhenAlreadyPatchedByAnotherOperator_Fails()
+  {
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    patch.Impersonate("operator-1");
+
+    var result = patch.Impersonate("operator-2");
+
+    Assert.True(result.IsFailure);
+    Assert.Equal("operator-1", patch.OperatorId);
+    Assert.True(patch.IsImpersonating);
+  }
+
+  [Fact]
+  public void UpdatePricePatch_WhenAlreadyPatchedByAnotherOperator_Fails()
+  {
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    patch.Impersonate("operator-1");
+
+    var result = patch.UpdatePricePatch("operator-2", 100m, 80m);
+
+    Assert.True(result.IsFailure);
+  }
+
+  [Fact]
+  public void UpdatePricePatch_RequiresAtLeastOnePrice()
+  {
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+
+    var result = patch.UpdatePricePatch("operator-1", null, null);
+
+    Assert.True(result.IsFailure);
+  }
+
+  [Fact]
+  public void UpdatePricePatch_RequiresActiveImpersonation()
+  {
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+
+    var result = patch.UpdatePricePatch("operator-1", 100m, 80m);
+
+    Assert.True(result.IsFailure);
+  }
+
+  [Fact]
+  public void UpdatePricePatch_PersistsPrices_WhenImpersonating()
+  {
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    patch.Impersonate("operator-1");
+
+    var result = patch.UpdatePricePatch("operator-1", 100m, 80m);
+
+    Assert.True(result.IsSuccess);
+    Assert.Equal(100m, patch.OriginalPrice);
+    Assert.Equal(80m, patch.PromotionalPrice);
   }
 }

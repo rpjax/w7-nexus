@@ -1,4 +1,4 @@
-﻿using Aidan.Core.Patterns;
+using Aidan.Core.Patterns;
 using Nexus.Authorization.Application.Models;
 using Nexus.Olx.Application.Requests;
 using Nexus.Olx.Application.Requests.Operator;
@@ -9,9 +9,9 @@ namespace Nexus.Olx.Application.Contracts;
 
 public interface IOlxOperator
 {
-    Task<IOperationResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    Task<IOperationResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request,
+        SearchAdPatchesRequest request,
         CancellationToken cancellationToken = default);
 
     Task<IOperationResult<ImpersonateAdResponse>> ImpersonateAdAsync(
@@ -24,8 +24,8 @@ public interface IOlxOperator
         UnimpersonateAdRequest request,
         CancellationToken cancellationToken = default);
 
-    Task<IOperationResult<UpdateAdDetailsSpoofResponse>> UpdateAdDetailsSpoofAsync(
+    Task<IOperationResult<UpdateAdDetailsPatchResponse>> UpdateAdDetailsPatchAsync(
         RequesterIdentity identity,
-        UpdateAdDetailsSpoofRequest request,
+        UpdateAdDetailsPatchRequest request,
         CancellationToken cancellationToken = default);
 }

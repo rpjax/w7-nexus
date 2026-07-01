@@ -1,7 +1,5 @@
 using Nexus.Composition;
-using Nexus.BankAccounts.Composition;
-using Nexus.CryptoWallets.Composition;
-using Nexus.Transfers.Composition;
+using Nexus.Charges.Composition;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -22,19 +20,17 @@ builder.Services
     .AddNexusAuthentication(builder.Configuration)
     .AddNexusAccounts()
     .AddNexusPayments()
-    .AddNexusBankAccounts()
-    .AddNexusCryptoWallets()
-    .AddNexusTransfers()
     .AddNexusOperations()
     .AddNexusRoles()
-    .AddNexusGateways(builder.Configuration);
+    .AddNexusGateways(builder.Configuration)
+    .AddNexusCharges();
 
 var app = builder.Build();
 
 if (builder.Configuration.GetValue<bool>("Gateways:UseMockOrchestrator"))
 {
     app.Logger.LogWarning(
-        "Gateways:UseMockOrchestrator is enabled — PIX charges are generated locally without calling external gateway APIs.");
+        "Gateways:UseMockOrchestrator is enabled — external gateway APIs are bypassed in GatewayOrchestrator.");
 }
 
 app.UseNexusPipeline();

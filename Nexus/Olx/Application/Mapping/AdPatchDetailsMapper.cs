@@ -1,37 +1,37 @@
 using Nexus.Olx.Aggregates;
-using AdminAdSpoofDetails = Nexus.Olx.Application.Responses.Administrator.Models.AdSpoofDetails;
-using OperatorAdSpoofDetails = Nexus.Olx.Application.Responses.Operator.Models.AdSpoofDetails;
+using AdminAdPatchDetails = Nexus.Olx.Application.Responses.Administrator.Models.AdPatchDetails;
+using OperatorAdPatchDetails = Nexus.Olx.Application.Responses.Operator.Models.AdPatchDetails;
 
 namespace Nexus.Olx.Application.Mapping;
 
-internal static class AdSpoofDetailsMapper
+internal static class AdPatchDetailsMapper
 {
-    public static AdminAdSpoofDetails ToAdministratorDetails(AdSpoof spoof) =>
+    public static AdminAdPatchDetails ToAdministratorDetails(AdPatch patch) =>
         new()
         {
-            Id = spoof.Id,
-            OperationId = spoof.OperationId,
-            AdId = spoof.AdId,
-            AdUrl = spoof.AdUrl,
-            OperatorId = spoof.OperatorId,
-            IsImpersonating = spoof.IsImpersonating,
-            OriginalPrice = spoof.OriginalPrice,
-            PromotionalPrice = spoof.PromotionalPrice,
-            CreatedAt = spoof.CreatedAt,
-            UpdatedAt = spoof.UpdatedAt,
+            Id = patch.Id,
+            OperationId = patch.OperationId,
+            AdId = patch.AdId,
+            AdUrl = patch.AdUrl,
+            OperatorId = patch.OperatorId,
+            IsImpersonating = patch.IsImpersonating,
+            OriginalPrice = patch.OriginalPrice,
+            PromotionalPrice = patch.PromotionalPrice,
+            CreatedAt = patch.CreatedAt,
+            UpdatedAt = patch.UpdatedAt,
         };
 
-    public static OperatorAdSpoofDetails ToOperatorDetails(AdSpoof spoof) =>
+    public static OperatorAdPatchDetails ToOperatorDetails(AdPatch patch) =>
         new()
         {
-            Id = spoof.Id,
-            OperationId = spoof.OperationId,
-            AdId = spoof.AdId,
-            AdUrl = spoof.AdUrl,
-            IsImpersonating = spoof.IsImpersonating,
-            OriginalPrice = spoof.OriginalPrice,
-            PromotionalPrice = spoof.PromotionalPrice,
-            CreatedAt = spoof.CreatedAt,
-            UpdatedAt = spoof.UpdatedAt,
+            Id = patch.Id,
+            OperationId = patch.OperationId,
+            AdId = patch.AdId,
+            AdUrl = patch.AdUrl,
+            IsImpersonating = patch.IsImpersonating,
+            OriginalPrice = patch.OriginalPrice,
+            PromotionalPrice = patch.PromotionalPrice,
+            CreatedAt = patch.CreatedAt,
+            UpdatedAt = patch.UpdatedAt,
         };
 }

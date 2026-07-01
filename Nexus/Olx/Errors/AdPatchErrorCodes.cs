@@ -1,6 +1,6 @@
 namespace Nexus.Olx.Errors;
 
-public static class AdSpoofErrorCodes
+public static class AdPatchErrorCodes
 {
     public const string OperationIdInvalid = "Olx.OPERATION_ID_INVALID";
     public const string AdIdInvalid = "Olx.AD_ID_INVALID";
@@ -11,12 +11,12 @@ public static class AdSpoofErrorCodes
     public const string OperatorNotAssignedToOperation = "Olx.OPERATOR_NOT_ASSIGNED_TO_OPERATION";
     public const string OperatorScopeMismatch = "Olx.OPERATOR_SCOPE_MISMATCH";
     public const string OperationNotFound = "Olx.OPERATION_NOT_FOUND";
-    public const string AdSpoofNotFound = "Olx.AD_SPOOF_NOT_FOUND";
+    public const string AdPatchNotFound = "Olx.AD_PATCH_NOT_FOUND";
     public const string NotImpersonating = "Olx.NOT_IMPERSONATING";
     public const string ImpersonationOperatorMismatch = "Olx.IMPERSONATION_OPERATOR_MISMATCH";
-    public const string AdAlreadySpoofed = "Olx.AD_ALREADY_SPOOFED";
+    public const string AdAlreadyPatched = "Olx.AD_ALREADY_PATCHED";
     public const string ImpersonationRequired = "Olx.IMPERSONATION_REQUIRED";
-    public const string PriceSpoofRequired = "Olx.PRICE_SPOOF_REQUIRED";
+    public const string PricePatchRequired = "Olx.PRICE_PATCH_REQUIRED";
     public const string OriginalPriceInvalid = "Olx.ORIGINAL_PRICE_INVALID";
     public const string PromotionalPriceInvalid = "Olx.PROMOTIONAL_PRICE_INVALID";
     public const string RequestBodyRequired = "Olx.REQUEST_BODY_REQUIRED";

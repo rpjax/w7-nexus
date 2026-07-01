@@ -50,7 +50,7 @@ export const ACCOUNT_ROLE_CATALOG: readonly AccountRoleDefinition[] = [
   {
     id: 'OlxOperator',
     label: 'Operador OLX',
-    description: 'Fluxos OLX e gestão de anúncios spoof.',
+    description: 'Fluxos OLX e gestão de patches de anúncios.',
     tone: 'olx',
   },
 ] as const;

@@ -11,12 +11,12 @@ using Nexus.Olx.Infrastructure.Mapping;
 
 namespace Nexus.Olx.Infrastructure.Persistance;
 
-public sealed class MongoAdSpoofRepository : IAdSpoofRepository
+public sealed class MongoAdPatchRepository : IAdPatchRepository
 {
-    private readonly IMongoCollection<AdSpoofRecord> _collection;
+    private readonly IMongoCollection<OlxAdPatchRecord> _collection;
 
-    private static readonly Expression<Func<AdSpoofRecord, AdSpoof>> ToProjection = r =>
-        new AdSpoof(
+    private static readonly Expression<Func<OlxAdPatchRecord, AdPatch>> ToProjection = r =>
+        new AdPatch(
             r.Id.ToString(),
             r.OperationId,
             r.AdId,
@@ -28,37 +28,37 @@ public sealed class MongoAdSpoofRepository : IAdSpoofRepository
             r.CreatedAt,
             r.UpdatedAt);
 
-    public MongoAdSpoofRepository(IMongoCollection<AdSpoofRecord> collection)
+    public MongoAdPatchRepository(IMongoCollection<OlxAdPatchRecord> collection)
     {
         _collection = collection;
     }
 
-    public IAsyncQueryable<AdSpoof> AsQueryable()
+    public IAsyncQueryable<AdPatch> AsQueryable()
     {
         var source = _collection.AsQueryable().Select(ToProjection);
-        return new MongoAsyncQueryable<AdSpoof>(source);
+        return new MongoAsyncQueryable<AdPatch>(source);
     }
 
-    public async Task<AdSpoof> CreateAsync(AdSpoof entity)
+    public async Task<AdPatch> CreateAsync(AdPatch entity)
     {
-        var record = AdSpoofRecordMapping.ToRecord(entity);
+        var record = OlxAdPatchRecordMapping.ToRecord(entity);
         await _collection.InsertOneAsync(record);
-        return AdSpoofRecordMapping.ToAdSpoof(record);
+        return OlxAdPatchRecordMapping.ToAdPatch(record);
     }
 
-    async Task IRepository<AdSpoof>.CreateAsync(AdSpoof entity) =>
+    async Task IRepository<AdPatch>.CreateAsync(AdPatch entity) =>
         await CreateAsync(entity);
 
-    public Task CreateAsync(IEnumerable<AdSpoof> entities)
+    public Task CreateAsync(IEnumerable<AdPatch> entities)
     {
-        var records = entities.Select(AdSpoofRecordMapping.ToRecord);
+        var records = entities.Select(OlxAdPatchRecordMapping.ToRecord);
         return _collection.InsertManyAsync(records);
     }
 
-    public Task DeleteAsync(AdSpoof entity) =>
+    public Task DeleteAsync(AdPatch entity) =>
         _collection.DeleteOneAsync(r => r.Id == ObjectId.Parse(entity.Id));
 
-    public async Task<long> DeleteAsync(Expression<Func<AdSpoof, bool>> predicate)
+    public async Task<long> DeleteAsync(Expression<Func<AdPatch, bool>> predicate)
     {
         var toDelete = AsQueryable().Where(predicate).ToList();
         if (toDelete.Count == 0)
@@ -69,10 +69,10 @@ public sealed class MongoAdSpoofRepository : IAdSpoofRepository
         return result.DeletedCount;
     }
 
-    public async Task UpdateAsync(AdSpoof entity)
+    public async Task UpdateAsync(AdPatch entity)
     {
         var existing = await _collection.Find(r => r.Id == ObjectId.Parse(entity.Id)).FirstOrDefaultAsync();
-        var record = new AdSpoofRecord
+        var record = new OlxAdPatchRecord
         {
             Id = existing?.Id ?? ObjectId.Parse(entity.Id),
             OperationId = entity.OperationId,
@@ -90,5 +90,5 @@ public sealed class MongoAdSpoofRepository : IAdSpoofRepository
 
     public Task<long> UpdateAsync(Expression expression) =>
         throw new NotSupportedException(
-            "Bulk update by expression is not supported. Load aggregate(s) and call UpdateAsync(AdSpoof) instead.");
+            "Bulk update by expression is not supported. Load aggregate(s) and call UpdateAsync(AdPatch) instead.");
 }

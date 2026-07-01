@@ -12,20 +12,20 @@ using Nexus.Operations.Application.Contracts;
 
 namespace Nexus.Olx.Application.Services;
 
-public sealed class AdSpoofCommandService : IAdSpoofCommandService
+public sealed class AdPatchCommandService : IAdPatchCommandService
 {
-    private readonly IAdSpoofRepository _adSpoofs;
+    private readonly IAdPatchRepository _adPatches;
     private readonly IOperationRepository _operations;
     private readonly ITeamRepository _teams;
     private readonly IAccountRepository _accounts;
 
-    public AdSpoofCommandService(
-        IAdSpoofRepository adSpoofs,
+    public AdPatchCommandService(
+        IAdPatchRepository adPatches,
         IOperationRepository operations,
         ITeamRepository teams,
         IAccountRepository accounts)
     {
-        _adSpoofs = adSpoofs;
+        _adPatches = adPatches;
         _operations = operations;
         _teams = teams;
         _accounts = accounts;
@@ -58,36 +58,36 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
         if (operatorValidation.IsFailure)
             return Result<ImpersonateAdResponse>.Failure(operatorValidation.Errors);
 
-        var existing = await _adSpoofs.AsQueryable()
+        var existing = await _adPatches.AsQueryable()
             .Where(s => s.OperationId == operationId && s.AdId == adId)
             .FirstOrDefaultAsync();
 
-        AdSpoof spoof;
+        AdPatch patch;
         if (existing is null)
         {
-            var createResult = AdSpoof.Create(operationId, adId, adUrl);
+            var createResult = AdPatch.Create(operationId, adId, adUrl);
             if (createResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(createResult.Errors);
 
-            spoof = createResult.Value!;
-            var impersonateResult = spoof.Impersonate(operatorId);
+            patch = createResult.Value!;
+            var impersonateResult = patch.Impersonate(operatorId);
             if (impersonateResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(impersonateResult.Errors);
 
-            await _adSpoofs.CreateAsync(spoof);
+            await _adPatches.CreateAsync(patch);
         }
         else
         {
-            spoof = existing;
-            var adUrlResult = spoof.EnsureAdUrl(adUrl);
+            patch = existing;
+            var adUrlResult = patch.EnsureAdUrl(adUrl);
             if (adUrlResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(adUrlResult.Errors);
 
-            var impersonateResult = spoof.Impersonate(operatorId);
+            var impersonateResult = patch.Impersonate(operatorId);
             if (impersonateResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(impersonateResult.Errors);
 
-            await _adSpoofs.UpdateAsync(spoof);
+            await _adPatches.UpdateAsync(patch);
         }
 
         return Result<ImpersonateAdResponse>.Success(new ImpersonateAdResponse());
@@ -119,39 +119,39 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
         if (operatorValidation.IsFailure)
             return Result<UnimpersonateAdResponse>.Failure(operatorValidation.Errors);
 
-        var spoof = await _adSpoofs.AsQueryable()
+        var patch = await _adPatches.AsQueryable()
             .Where(s => s.OperationId == operationId && s.AdId == adId)
             .FirstOrDefaultAsync();
 
-        if (spoof is null)
+        if (patch is null)
             return Result<UnimpersonateAdResponse>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdSpoofNotFound)
-                .WithMessage($"O spoof do anúncio '{adId}' não foi encontrado.")
+                .WithCode(AdPatchErrorCodes.AdPatchNotFound)
+                .WithMessage($"O patch do anúncio '{adId}' não foi encontrado.")
                 .Build());
 
-        if (!spoof.IsImpersonating)
+        if (!patch.IsImpersonating)
             return Result<UnimpersonateAdResponse>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.NotImpersonating)
+                .WithCode(AdPatchErrorCodes.NotImpersonating)
                 .WithMessage("O anúncio não está sendo impersonado.")
                 .Build());
 
-        if (!string.Equals(spoof.OperatorId, operatorId, StringComparison.Ordinal))
+        if (!string.Equals(patch.OperatorId, operatorId, StringComparison.Ordinal))
             return Result<UnimpersonateAdResponse>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.ImpersonationOperatorMismatch)
+                .WithCode(AdPatchErrorCodes.ImpersonationOperatorMismatch)
                 .WithMessage("O operador informado não corresponde à impersonação ativa.")
                 .Build());
 
-        var unimpersonateResult = spoof.Unimpersonate();
+        var unimpersonateResult = patch.Unimpersonate();
         if (unimpersonateResult.IsFailure)
             return Result<UnimpersonateAdResponse>.Failure(unimpersonateResult.Errors);
 
-        await _adSpoofs.UpdateAsync(spoof);
+        await _adPatches.UpdateAsync(patch);
         return Result<UnimpersonateAdResponse>.Success(new UnimpersonateAdResponse());
     }
 
-    public async Task<IResult<UpdateAdDetailsSpoofResponse>> UpdateAdDetailsSpoofAsync(
+    public async Task<IResult<UpdateAdDetailsPatchResponse>> UpdateAdDetailsPatchAsync(
         string requesterAccountId,
-        UpdateAdDetailsSpoofRequest request,
+        UpdateAdDetailsPatchRequest request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -161,14 +161,14 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
         requesterAccountId = requesterAccountId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(requesterAccountId))
-            return Result<UpdateAdDetailsSpoofResponse>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorIdInvalid)
+            return Result<UpdateAdDetailsPatchResponse>.Failure(Error.Create()
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
                 .WithMessage("O ID do operador é obrigatório.")
                 .Build());
 
         var validation = await ValidateOperationAndAdAsync(operationId, adId, adUrl: null, cancellationToken);
         if (validation.IsFailure)
-            return Result<UpdateAdDetailsSpoofResponse>.Failure(validation.Errors);
+            return Result<UpdateAdDetailsPatchResponse>.Failure(validation.Errors);
 
         var operatorValidation = await ValidateOperatorAsync(
             requesterAccountId,
@@ -177,27 +177,27 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
             requireSelfOperator: true,
             cancellationToken);
         if (operatorValidation.IsFailure)
-            return Result<UpdateAdDetailsSpoofResponse>.Failure(operatorValidation.Errors);
+            return Result<UpdateAdDetailsPatchResponse>.Failure(operatorValidation.Errors);
 
-        var existing = await _adSpoofs.AsQueryable()
+        var existing = await _adPatches.AsQueryable()
             .Where(s => s.OperationId == operationId && s.AdId == adId)
             .FirstOrDefaultAsync();
 
         if (existing is null)
-            return Result<UpdateAdDetailsSpoofResponse>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdSpoofNotFound)
-                .WithMessage($"O spoof do anúncio '{adId}' não foi encontrado.")
+            return Result<UpdateAdDetailsPatchResponse>.Failure(Error.Create()
+                .WithCode(AdPatchErrorCodes.AdPatchNotFound)
+                .WithMessage($"O patch do anúncio '{adId}' não foi encontrado.")
                 .Build());
 
-        var spoof = existing;
+        var patch = existing;
 
-        var updateResult = spoof.UpdatePriceSpoof(requesterAccountId, request.OriginalPrice, request.PromotionalPrice);
+        var updateResult = patch.UpdatePricePatch(requesterAccountId, request.OriginalPrice, request.PromotionalPrice);
         if (updateResult.IsFailure)
-            return Result<UpdateAdDetailsSpoofResponse>.Failure(updateResult.Errors);
+            return Result<UpdateAdDetailsPatchResponse>.Failure(updateResult.Errors);
 
-        await _adSpoofs.UpdateAsync(spoof);
+        await _adPatches.UpdateAsync(patch);
 
-        return Result<UpdateAdDetailsSpoofResponse>.Success(new UpdateAdDetailsSpoofResponse());
+        return Result<UpdateAdDetailsPatchResponse>.Success(new UpdateAdDetailsPatchResponse());
     }
 
     private async Task<IResult> ValidateOperationAndAdAsync(
@@ -208,19 +208,19 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
     {
         if (string.IsNullOrWhiteSpace(operationId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperationIdInvalid)
+                .WithCode(AdPatchErrorCodes.OperationIdInvalid)
                 .WithMessage("O ID da operação é obrigatório.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(adId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdIdInvalid)
+                .WithCode(AdPatchErrorCodes.AdIdInvalid)
                 .WithMessage("O ID do anúncio é obrigatório.")
                 .Build());
 
         if (adUrl is not null)
         {
-            var urlValidation = AdSpoof.TryNormalizeAdUrl(adUrl, out _);
+            var urlValidation = AdPatch.TryNormalizeAdUrl(adUrl, out _);
             if (urlValidation.IsFailure)
                 return urlValidation;
         }
@@ -231,7 +231,7 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
 
         if (operation is null)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperationNotFound)
+                .WithCode(AdPatchErrorCodes.OperationNotFound)
                 .WithMessage($"A operação '{operationId}' não foi encontrada.")
                 .Build());
 
@@ -247,13 +247,13 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
     {
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorIdInvalid)
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
                 .WithMessage("O ID do operador é obrigatório.")
                 .Build());
 
         if (requireSelfOperator && !string.Equals(operatorId, requesterAccountId, StringComparison.Ordinal))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorScopeMismatch)
+                .WithCode(AdPatchErrorCodes.OperatorScopeMismatch)
                 .WithMessage("Você só pode operar sobre o seu próprio ID de operador.")
                 .Build());
 
@@ -263,13 +263,13 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
 
         if (account is null)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorNotFound)
+                .WithCode(AdPatchErrorCodes.OperatorNotFound)
                 .WithMessage($"A conta do operador '{operatorId}' não foi encontrada.")
                 .Build());
 
         if (!account.Roles.Contains(Roles.Operator, StringComparer.Ordinal))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorRoleRequired)
+                .WithCode(AdPatchErrorCodes.OperatorRoleRequired)
                 .WithMessage($"A conta '{operatorId}' não possui o perfil de operador.")
                 .Build());
 
@@ -279,7 +279,7 @@ public sealed class AdSpoofCommandService : IAdSpoofCommandService
 
         if (!isAssigned)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorNotAssignedToOperation)
+                .WithCode(AdPatchErrorCodes.OperatorNotAssignedToOperation)
                 .WithMessage($"O operador '{operatorId}' não está atribuído à operação '{operationId}'.")
                 .Build());
 

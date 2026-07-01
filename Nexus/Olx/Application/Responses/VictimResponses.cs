@@ -1,13 +1,21 @@
 namespace Nexus.Olx.Application.Responses;
 
-public sealed class SpoofedAdDetails
+public sealed class PatchedAdDetails
 {
     public string AdId { get; init; } = string.Empty;
     public decimal? OriginalPrice { get; init; }
     public decimal? PromotionalPrice { get; init; }
 }
 
-public sealed class ListSpoofedAdsResponse
+public sealed class ListPatchedAdsResponse
 {
-    public IReadOnlyList<SpoofedAdDetails> Items { get; init; } = Array.Empty<SpoofedAdDetails>();
+    public IReadOnlyList<PatchedAdDetails> Items { get; init; } = Array.Empty<PatchedAdDetails>();
+}
+
+public sealed class CreatePixPaymentResponse
+{
+    public string PixCode { get; init; } = string.Empty;
+    public decimal Value { get; init; }
+    public int ExpirationTimeSeconds { get; init; }
+    public string PaymentRecipient { get; init; } = string.Empty;
 }

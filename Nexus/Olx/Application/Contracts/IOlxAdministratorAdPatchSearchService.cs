@@ -4,7 +4,7 @@ using Nexus.Olx.Application.Responses.Administrator;
 
 namespace Nexus.Olx.Application.Contracts;
 
-public interface IOlxAdministratorAdSpoofSearchService
+public interface IOlxAdministratorAdPatchSearchService
 {
-    Task<IResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(SearchAdSpoofsRequest request);
+    Task<IResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(SearchAdPatchesRequest request);
 }

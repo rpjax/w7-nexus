@@ -4,7 +4,7 @@ using Nexus.Olx.Application.Responses;
 
 namespace Nexus.Olx.Application.Contracts;
 
-public interface IAdSpoofCommandService
+public interface IAdPatchCommandService
 {
     Task<IResult<ImpersonateAdResponse>> ImpersonateAdAsync(
         string requesterAccountId,
@@ -18,8 +18,8 @@ public interface IAdSpoofCommandService
         bool requireSelfOperator,
         CancellationToken cancellationToken = default);
 
-    Task<IResult<UpdateAdDetailsSpoofResponse>> UpdateAdDetailsSpoofAsync(
+    Task<IResult<UpdateAdDetailsPatchResponse>> UpdateAdDetailsPatchAsync(
         string requesterAccountId,
-        UpdateAdDetailsSpoofRequest request,
+        UpdateAdDetailsPatchRequest request,
         CancellationToken cancellationToken = default);
 }

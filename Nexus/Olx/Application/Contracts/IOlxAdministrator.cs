@@ -9,9 +9,9 @@ namespace Nexus.Olx.Application.Contracts;
 
 public interface IOlxAdministrator
 {
-    Task<IOperationResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    Task<IOperationResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request,
+        SearchAdPatchesRequest request,
         CancellationToken cancellationToken = default);
 
     Task<IOperationResult<UnimpersonateAdResponse>> UnimpersonateAdAsync(

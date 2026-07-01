@@ -6,15 +6,15 @@ export function formatOptionalPrice(value?: number | null): string {
   return formatMoney(value);
 }
 
-export function spoofStatusLabel(isImpersonating: boolean): string {
+export function patchStatusLabel(isImpersonating: boolean): string {
   return isImpersonating ? 'Impersonando' : 'Livre';
 }
 
-export function spoofStatusTone(isImpersonating: boolean): 'success' | 'info' {
+export function patchStatusTone(isImpersonating: boolean): 'success' | 'info' {
   return isImpersonating ? 'success' : 'info';
 }
 
-export function formatAdSpoofTitle(adId: string): string {
+export function formatAdPatchTitle(adId: string): string {
   if (!adId.trim()) return 'Anúncio';
   const trimmed = adId.trim();
   if (/^\d+$/.test(trimmed)) return `#${trimmed}`;

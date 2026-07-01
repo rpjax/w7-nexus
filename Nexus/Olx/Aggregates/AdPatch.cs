@@ -4,7 +4,7 @@ using Nexus.Olx.Errors;
 
 namespace Nexus.Olx.Aggregates;
 
-public sealed class AdSpoof
+public sealed class AdPatch
 {
     public string Id { get; }
     public string OperationId { get; }
@@ -17,7 +17,7 @@ public sealed class AdSpoof
     public DateTime CreatedAt { get; }
     public DateTime UpdatedAt { get; private set; }
 
-    internal AdSpoof(
+    internal AdPatch(
         string id,
         string operationId,
         string adId,
@@ -41,29 +41,29 @@ public sealed class AdSpoof
         UpdatedAt = updatedAt;
     }
 
-    public static IResult<AdSpoof> Create(string operationId, string adId, string adUrl)
+    public static IResult<AdPatch> Create(string operationId, string adId, string adUrl)
     {
         operationId = operationId?.Trim() ?? string.Empty;
         adId = adId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(operationId))
-            return Result<AdSpoof>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperationIdInvalid)
+            return Result<AdPatch>.Failure(Error.Create()
+                .WithCode(AdPatchErrorCodes.OperationIdInvalid)
                 .WithMessage("O ID da operação é obrigatório.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(adId))
-            return Result<AdSpoof>.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdIdInvalid)
+            return Result<AdPatch>.Failure(Error.Create()
+                .WithCode(AdPatchErrorCodes.AdIdInvalid)
                 .WithMessage("O ID do anúncio é obrigatório.")
                 .Build());
 
         var urlValidation = TryNormalizeAdUrl(adUrl, out var normalizedAdUrl);
         if (urlValidation.IsFailure)
-            return Result<AdSpoof>.Failure(urlValidation.Errors);
+            return Result<AdPatch>.Failure(urlValidation.Errors);
 
         var now = DateTime.UtcNow;
-        return Result<AdSpoof>.Success(new AdSpoof(
+        return Result<AdPatch>.Success(new AdPatch(
             string.Empty,
             operationId,
             adId,
@@ -96,7 +96,7 @@ public sealed class AdSpoof
 
         if (string.IsNullOrWhiteSpace(normalizedAdUrl))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdUrlInvalid)
+                .WithCode(AdPatchErrorCodes.AdUrlInvalid)
                 .WithMessage("A URL do anúncio é obrigatória.")
                 .Build());
 
@@ -106,19 +106,19 @@ public sealed class AdSpoof
 
         if (!Uri.TryCreate(candidate, UriKind.Absolute, out var uri))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdUrlInvalid)
+                .WithCode(AdPatchErrorCodes.AdUrlInvalid)
                 .WithMessage("A URL do anúncio é inválida.")
                 .Build());
 
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdUrlInvalid)
+                .WithCode(AdPatchErrorCodes.AdUrlInvalid)
                 .WithMessage("A URL do anúncio deve usar o protocolo HTTP ou HTTPS.")
                 .Build());
 
         if (string.IsNullOrWhiteSpace(uri.Host))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdUrlInvalid)
+                .WithCode(AdPatchErrorCodes.AdUrlInvalid)
                 .WithMessage("A URL do anúncio é inválida.")
                 .Build());
 
@@ -135,14 +135,14 @@ public sealed class AdSpoof
 
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorIdInvalid)
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
                 .WithMessage("O ID do operador é obrigatório.")
                 .Build());
 
         if (!string.IsNullOrEmpty(OperatorId) && !string.Equals(OperatorId, operatorId, StringComparison.Ordinal))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.AdAlreadySpoofed)
-                .WithMessage("Este anúncio já está sendo spoofado por outro operador.")
+                .WithCode(AdPatchErrorCodes.AdAlreadyPatched)
+                .WithMessage("Este anúncio já está sendo patchado por outro operador.")
                 .Build());
 
         return Result.Success();
@@ -154,13 +154,13 @@ public sealed class AdSpoof
 
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorIdInvalid)
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
                 .WithMessage("O ID do operador é obrigatório.")
                 .Build());
 
         if (!IsImpersonating || !string.Equals(OperatorId, operatorId, StringComparison.Ordinal))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.ImpersonationRequired)
+                .WithCode(AdPatchErrorCodes.ImpersonationRequired)
                 .WithMessage("É necessário impersonar o anúncio antes de alterar os preços.")
                 .Build());
 
@@ -173,7 +173,7 @@ public sealed class AdSpoof
 
         if (string.IsNullOrWhiteSpace(operatorId))
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OperatorIdInvalid)
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
                 .WithMessage("O ID do operador é obrigatório.")
                 .Build());
 
@@ -195,7 +195,7 @@ public sealed class AdSpoof
         return Result.Success();
     }
 
-    public IResult UpdatePriceSpoof(string operatorId, decimal? originalPrice, decimal? promotionalPrice)
+    public IResult UpdatePricePatch(string operatorId, decimal? originalPrice, decimal? promotionalPrice)
     {
         var availability = EnsureAvailableForOperator(operatorId);
         if (availability.IsFailure)
@@ -207,19 +207,19 @@ public sealed class AdSpoof
 
         if (originalPrice is null && promotionalPrice is null)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.PriceSpoofRequired)
-                .WithMessage("Informe ao menos um preço para o spoof.")
+                .WithCode(AdPatchErrorCodes.PricePatchRequired)
+                .WithMessage("Informe ao menos um preço para o patch.")
                 .Build());
 
         if (originalPrice is < 0)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.OriginalPriceInvalid)
+                .WithCode(AdPatchErrorCodes.OriginalPriceInvalid)
                 .WithMessage("O preço original não pode ser negativo.")
                 .Build());
 
         if (promotionalPrice is < 0)
             return Result.Failure(Error.Create()
-                .WithCode(AdSpoofErrorCodes.PromotionalPriceInvalid)
+                .WithCode(AdPatchErrorCodes.PromotionalPriceInvalid)
                 .WithMessage("O preço promocional não pode ser negativo.")
                 .Build());
 

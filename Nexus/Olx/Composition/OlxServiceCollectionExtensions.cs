@@ -10,11 +10,11 @@ public static class OlxServiceCollectionExtensions
     {
         services.AddScoped<IOlxOperatorAccessPolicy, OlxOperatorAccessPolicy>();
         services.AddScoped<IOlxAdministratorAccessPolicy, OlxAdministratorAccessPolicy>();
-        services.AddScoped<IAdSpoofRepository, MongoAdSpoofRepository>();
-        services.AddScoped<IAdSpoofCommandService, AdSpoofCommandService>();
-        services.AddScoped<IAdSpoofQueryService, AdSpoofQueryService>();
-        services.AddScoped<IOlxAdministratorAdSpoofSearchService, OlxAdministratorAdSpoofSearchService>();
-        services.AddScoped<IOlxOperatorAdSpoofSearchService, OlxOperatorAdSpoofSearchService>();
+        services.AddScoped<IAdPatchRepository, MongoAdPatchRepository>();
+        services.AddScoped<IAdPatchCommandService, AdPatchCommandService>();
+        services.AddScoped<IAdPatchQueryService, AdPatchQueryService>();
+        services.AddScoped<IOlxAdministratorAdPatchSearchService, OlxAdministratorAdPatchSearchService>();
+        services.AddScoped<IOlxOperatorAdPatchSearchService, OlxOperatorAdPatchSearchService>();
         services.AddScoped<IOlxOperator, OlxOperator>();
         services.AddScoped<IOlxAdministrator, OlxAdministrator>();
         services.AddScoped<IVictim, Victim>();

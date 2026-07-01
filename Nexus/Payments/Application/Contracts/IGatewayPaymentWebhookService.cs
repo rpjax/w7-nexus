@@ -1,4 +1,4 @@
-using Nexus.Payments.Aggregates;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Application.Contracts;
 
 namespace Nexus.Payments.Application.Contracts;

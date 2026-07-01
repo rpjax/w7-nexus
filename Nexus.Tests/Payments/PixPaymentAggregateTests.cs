@@ -1,3 +1,4 @@
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Errors;
 using Xunit;

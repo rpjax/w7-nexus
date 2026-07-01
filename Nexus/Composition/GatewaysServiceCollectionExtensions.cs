@@ -28,19 +28,13 @@ public static class GatewaysServiceCollectionExtensions
         services.AddScoped<IFrendzApiCredentialsRepository, MongoFrendzApiCredentialsRepository>();
         services.AddScoped<ISigiloPayApiCredentialsRepository, MongoSigiloPayApiCredentialsRepository>();
         services.AddScoped<IWintechApiCredentialsRepository, MongoWintechApiCredentialsRepository>();
-        services.AddScoped<IFrendzGatewayPixServiceFactory, FrendzGatewayPixServiceFactory>();
-        services.AddScoped<ISigiloPayGatewayPixServiceFactory, SigiloPayGatewayPixServiceFactory>();
-        services.AddScoped<IWintechGatewayPixServiceFactory, WintechGatewayPixServiceFactory>();
+        services.AddScoped<IFrendzServiceFactory, FrendzServiceFactory>();
+        services.AddScoped<ISigiloPayServiceFactory, SigiloPayServiceFactory>();
+        services.AddScoped<IWintechServiceFactory, WintechServiceFactory>();
         services.AddScoped<IGatewayCredentialsGroupRepository, MongoGatewayCredentialsGroupRepository>();
         services.AddScoped<IGatewayCredentialsGroupService, GatewayCredentialsGroupService>();
         services.AddScoped<IGatewayCredentialsIdValidator, GatewayCredentialsIdValidator>();
-        services.AddScoped<GatewayCredentialProviderResolver>();
-
-        var useMockOrchestrator = configuration.GetValue<bool>($"{GatewaysOptions.SectionName}:UseMockOrchestrator");
-        if (useMockOrchestrator)
-            services.AddScoped<IGatewayOrchestrator, MockGatewayOrchestrator>();
-        else
-            services.AddScoped<IGatewayOrchestrator, GatewayOrchestrator>();
+        services.AddScoped<IGatewayOrchestrator, GatewayOrchestrator>();
 
         services.AddScoped<IFrendzClient, FrendzClient>();
         services.AddHttpClient<FrendzClient>();

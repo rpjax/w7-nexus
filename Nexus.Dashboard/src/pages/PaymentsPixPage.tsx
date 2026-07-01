@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import { searchAdministratorOperationsPicker } from '../api/operationPickerSources';
 import { generatePix } from '../api/payments';
-import type { GatewayPixResult } from '../api/types';
+import type { PixChargeResult } from '../api/types';
 import { AccountPickerModal } from '../components/AccountPickerModal';
 import { PixEntityField } from '../components/finance/PixEntityField';
 import { Icon } from '../components/IconButton';
@@ -25,7 +25,7 @@ export function PaymentsPixPage() {
   const [operatorId, setOperatorId] = useState<string | null>(null);
   const [operatorName, setOperatorName] = useState<string | null>(null);
   const [error, setError] = useState('');
-  const [lastResult, setLastResult] = useState<GatewayPixResult | null>(null);
+  const [lastResult, setLastResult] = useState<PixChargeResult | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
   const [generateBusy, setGenerateBusy] = useState(false);
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
@@ -66,8 +66,8 @@ export function PaymentsPixPage() {
   }
 
   async function copyPixCode() {
-    if (!lastResult?.code) return;
-    await navigator.clipboard.writeText(lastResult.code);
+    if (!lastResult?.pixCode) return;
+    await navigator.clipboard.writeText(lastResult.pixCode);
     setPixCopied(true);
   }
 
@@ -196,7 +196,7 @@ export function PaymentsPixPage() {
         </div>
 
         <footer className="pix-workspace__footer">
-          <span className="pix-workspace__endpoint muted small">POST /api/gateways/pix</span>
+          <span className="pix-workspace__endpoint muted small">POST /api/charges/pix</span>
           <button
             type="button"
             className="btn btn-primary btn-with-icon pix-workspace__submit"
@@ -226,7 +226,7 @@ export function PaymentsPixPage() {
               readOnly
               rows={5}
               className="nexus-input pix-result__code"
-              value={lastResult.code}
+              value={lastResult.pixCode}
               aria-label="Código PIX copia e cola"
             />
             <button

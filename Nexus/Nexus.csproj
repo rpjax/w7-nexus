@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="Charges\" />
+    <Folder Include="Olx\Application\Requests\Victim\" />
     <Folder Include="Transfers\Application\Responses\" />
   </ItemGroup>
 

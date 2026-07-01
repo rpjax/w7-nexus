@@ -1,5 +1,6 @@
 ﻿using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Errors;
 
 namespace Nexus.Payments.Aggregates;
@@ -10,16 +11,6 @@ public enum PaymentStatus
     Paid,
     Refunded,
     Killed,
-}
-
-public enum PaymentGateway
-{
-    None = 0,
-    FusionPay,
-    Frendz,
-    SuitPay,
-    SigiloPay,
-    Wintech,
 }
 
 public enum PaymentSettlementStatus

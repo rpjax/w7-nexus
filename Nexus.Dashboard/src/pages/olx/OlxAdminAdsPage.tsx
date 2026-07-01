@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { searchAdministratorOlxOperatorsPicker } from '../../api/accountPickerSources';
 import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
-import { adminUnimpersonateOlxAd, searchOlxAdminAdSpoofs } from '../../api/olx/admin';
-import type { OlxAdminAdSpoofRow } from '../../api/olx/types';
+import { adminUnimpersonateOlxAd, searchOlxAdminAdPatches } from '../../api/olx/admin';
+import type { OlxAdminAdPatchRow } from '../../api/olx/types';
 import { AccountPickerModal } from '../../components/AccountPickerModal';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { ConfirmDialog } from '../../components/ConfirmDialog';
@@ -10,7 +10,7 @@ import { EmptyState } from '../../components/EmptyState';
 import { OlxFilterPanel, OlxPickerField } from '../../components/olx/OlxFilterPanel';
 import { OperationPickerModal } from '../../components/OperationPickerModal';
 import { PaginationBar } from '../../components/ListControls';
-import { AdSpoofListItem } from '../../features/olx/AdSpoofListItem';
+import { AdPatchListItem } from '../../features/olx/AdPatchListItem';
 import { useOlxOperationLabels, useOlxOperatorLabels } from '../../features/olx/useOlxOperationLabels';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -26,11 +26,11 @@ export function OlxAdminAdsPage() {
   const [operatorLabel, setOperatorLabel] = useState<string | null>(null);
   const [appliedOperationIds, setAppliedOperationIds] = useState<string[]>([]);
   const [appliedOperatorIds, setAppliedOperatorIds] = useState<string[]>([]);
-  const [rows, setRows] = useState<OlxAdminAdSpoofRow[]>([]);
+  const [rows, setRows] = useState<OlxAdminAdPatchRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [busy, setBusy] = useState(false);
-  const [forceRelease, setForceRelease] = useState<OlxAdminAdSpoofRow | null>(null);
+  const [forceRelease, setForceRelease] = useState<OlxAdminAdPatchRow | null>(null);
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
   const extraOperationLabels = useMemo(
@@ -56,7 +56,7 @@ export function OlxAdminAdsPage() {
     operationIds: string[],
     operatorIds: string[],
   ) => {
-    const result = await searchOlxAdminAdSpoofs({
+    const result = await searchOlxAdminAdPatches({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
       keyword: keyword.trim() || null,
@@ -112,7 +112,7 @@ export function OlxAdminAdsPage() {
       : []),
   ];
 
-  async function handleForceRelease(row: OlxAdminAdSpoofRow) {
+  async function handleForceRelease(row: OlxAdminAdPatchRow) {
     if (!row.operatorId) return;
     setBusy(true);
     const result = await adminUnimpersonateOlxAd({
@@ -137,7 +137,7 @@ export function OlxAdminAdsPage() {
         title="Gestão OLX"
         kicker="Administração"
         kickerVariant="admin"
-        lead="Visão global dos spoofs de anúncios. Filtre por operação ou operador OLX e force liberações quando necessário."
+        lead="Visão global dos patches de anúncios. Filtre por operação ou operador OLX e force liberações quando necessário."
         searchId="olx-admin-search"
         searchLabel="Buscar"
         searchPlaceholder="Anúncio, operação ou operador…"
@@ -197,12 +197,12 @@ export function OlxAdminAdsPage() {
         {rows.length === 0 ? (
           <EmptyState
             title="Nenhum registro encontrado"
-            message="Ajuste os filtros ou aguarde operadores OLX iniciarem spoof de anúncios."
+            message="Ajuste os filtros ou aguarde operadores OLX iniciarem patch de anúncios."
           />
         ) : (
           <div className="olx-ad-list">
             {rows.map((row) => (
-              <AdSpoofListItem
+              <AdPatchListItem
                 key={row.id}
                 row={row}
                 scope="admin"

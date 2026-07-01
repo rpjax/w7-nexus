@@ -3,7 +3,7 @@ using MongoDB.Bson.Serialization.Attributes;
 
 namespace Nexus.Database.Models;
 
-public sealed class AdSpoofRecord
+public sealed class OlxAdPatchRecord
 {
     [BsonId]
     public ObjectId Id { get; set; }

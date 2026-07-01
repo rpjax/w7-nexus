@@ -1,4 +1,4 @@
-export type OlxOperatorAdSpoofRow = {
+export type OlxOperatorAdPatchRow = {
   id: string;
   operationId: string;
   adId: string;
@@ -10,7 +10,7 @@ export type OlxOperatorAdSpoofRow = {
   updatedAt: string;
 };
 
-export type OlxAdminAdSpoofRow = OlxOperatorAdSpoofRow & {
+export type OlxAdminAdPatchRow = OlxOperatorAdPatchRow & {
   operatorId?: string | null;
 };
 
@@ -45,7 +45,7 @@ export type UnimpersonateAdPayload = {
   adId: string;
 };
 
-export type UpdateAdSpoofPayload = {
+export type UpdateAdPatchPayload = {
   operationId: string;
   adId: string;
   originalPrice?: number | null;

@@ -1,229 +1,197 @@
 using Aidan.Core.Errors;
-using MongoDB.Bson;
-using Nexus.Gateways.Application.Contracts;
-using Nexus.Payments.Application.Contracts;
-using Nexus.Operations.Application.Contracts;
+using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
-using Nexus.Payments.Application.Models;
-using Nexus.Operations.Aggregates;
+using Microsoft.Extensions.Options;
+using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Models;
-using Nexus.Payments.Aggregates;
+using Nexus.Gateways.Application.Options;
+using Nexus.Gateways.Application.Requests;
+using Nexus.Gateways.Application.Responses;
+using Nexus.Gateways.Frendz.Application.Contracts;
+using Nexus.Gateways.SigiloPay.Application.Contracts;
+using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Payments.Errors;
 
 namespace Nexus.Gateways.Application.Services;
 
 public sealed class GatewayOrchestrator : IGatewayOrchestrator
 {
-    private IOperationRepository _operationRepository { get; }
-    private ITeamRepository _teamRepository { get; }
-    private IPaymentService _paymentService { get; }
-    private IPaymentRepository _paymentRepository { get; }
-    private IPaymentSplitCalculationService _splitCalculation { get; }
-    private GatewayCredentialProviderResolver _credentialProviderResolver { get; }
+    private IFrendzApiCredentialsRepository _frendzCredentialsRepository { get; }
+    private ISigiloPayApiCredentialsRepository _sigiloPayCredentialsRepository { get; }
+    private IWintechApiCredentialsRepository _wintechCredentialsRepository { get; }
+    private IFrendzServiceFactory _frendzServiceFactory { get; }
+    private ISigiloPayServiceFactory _sigiloPayServiceFactory { get; }
+    private IWintechServiceFactory _wintechServiceFactory { get; }
+    private GatewaysOptions _options { get; }
+    private ILogger<GatewayOrchestrator> _logger { get; }
 
     public GatewayOrchestrator(
-        IOperationRepository operationRepository,
-        ITeamRepository teamRepository,
-        IPaymentService paymentService,
-        IPaymentRepository paymentRepository,
-        IPaymentSplitCalculationService splitCalculation,
-        GatewayCredentialProviderResolver credentialProviderResolver)
+        IFrendzApiCredentialsRepository frendzCredentialsRepository,
+        ISigiloPayApiCredentialsRepository sigiloPayCredentialsRepository,
+        IWintechApiCredentialsRepository wintechCredentialsRepository,
+        IFrendzServiceFactory frendzServiceFactory,
+        ISigiloPayServiceFactory sigiloPayServiceFactory,
+        IWintechServiceFactory wintechServiceFactory,
+        IOptions<GatewaysOptions> options,
+        ILogger<GatewayOrchestrator> logger)
     {
-        _operationRepository = operationRepository;
-        _teamRepository = teamRepository;
-        _paymentService = paymentService;
-        _paymentRepository = paymentRepository;
-        _splitCalculation = splitCalculation;
-        _credentialProviderResolver = credentialProviderResolver;
+        _frendzCredentialsRepository = frendzCredentialsRepository;
+        _sigiloPayCredentialsRepository = sigiloPayCredentialsRepository;
+        _wintechCredentialsRepository = wintechCredentialsRepository;
+        _frendzServiceFactory = frendzServiceFactory;
+        _sigiloPayServiceFactory = sigiloPayServiceFactory;
+        _wintechServiceFactory = wintechServiceFactory;
+        _options = options.Value;
+        _logger = logger;
     }
 
-    public async Task<IResult<GatewayPix>> CreateGatewayPixAsync(CreateGatewayPixRequest request)
+    public async Task<IResult<TryCreatePixResponse>> TryCreatePixAsync(TryCreatePixRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
 
-        var operationId = request.OperationId?.Trim();
-        if (string.IsNullOrWhiteSpace(operationId))
-            return Result.Create<GatewayPix>()
+        var paymentId = request.PaymentId?.Trim() ?? string.Empty;
+        if (string.IsNullOrWhiteSpace(paymentId))
+        {
+            return Result.Create<TryCreatePixResponse>()
                 .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.OperationIdInvalid)
-                    .WithMessage("O ID da operação é obrigatório.")
+                    .WithCode(PixPaymentErrorCodes.PaymentIdInvalid)
+                    .WithMessage("O ID do pagamento é obrigatório.")
                     .Build())
                 .Build();
-
-        var operatorId = request.OperatorId?.Trim();
-        if (operatorId is not null && string.IsNullOrWhiteSpace(operatorId))
-            return Result.Create<GatewayPix>()
-                .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.OperatorInvalid)
-                    .WithMessage("O ID do operador não pode estar vazio quando informado.")
-                    .Build())
-                .Build();
+        }
 
         if (request.Amount <= 0m)
-            return Result.Create<GatewayPix>()
+        {
+            return Result.Create<TryCreatePixResponse>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.AmountInvalid)
                     .WithMessage("O valor deve ser maior que zero.")
                     .Build())
                 .Build();
-
-        var operation = _operationRepository.AsQueryable()
-            .FirstOrDefault(x => x.Id == operationId);
-
-        if (operation is null)
-            return Result.Create<GatewayPix>()
-                .WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.OperationNotFound)
-                    .WithMessage($"A operação '{operationId}' não foi encontrada.")
-                    .Build())
-                .Build();
-
-        Team? team = null;
-        if (!string.IsNullOrWhiteSpace(operatorId))
-        {
-            var teams = _teamRepository.AsQueryable()
-                .Where(t =>
-                    t.OperationId == operationId &&
-                    t.OperatorIds.Contains(operatorId))
-                .ToList();
-
-            if (teams.Count == 0)
-            {
-                return Result.Create<GatewayPix>()
-                    .WithError(Error.Create()
-                        .WithCode(PixPaymentErrorCodes.TeamNotFound)
-                        .WithMessage($"Não há equipe na operação '{operationId}' com o operador informado.")
-                        .Build())
-                    .Build();
-            }
-
-            if (teams.Count > 1)
-            {
-                return Result.Create<GatewayPix>()
-                    .WithError(Error.Create()
-                        .WithCode(PixPaymentErrorCodes.TeamAmbiguous)
-                        .WithMessage("Há mais de uma equipe compatível com o operador informado.")
-                        .Build())
-                    .Build();
-            }
-
-            team = teams[0];
         }
 
-        IGatewayCredentialScope scope = (IGatewayCredentialScope?)team ?? operation;
-
-        var providers = await _credentialProviderResolver.ResolveProvidersAsync(scope);
-
-        if (providers.Length == 0)
+        if (request.Credentials.Count == 0)
         {
-            return Result.Create<GatewayPix>()
+            return Result.Create<TryCreatePixResponse>()
                 .WithError(Error.Create()
                     .WithCode(PixPaymentErrorCodes.NoGatewayServicesAvailable)
-                    .WithMessage(team is null
-                        ? "Não há credenciais de gateway disponíveis para esta operação."
-                        : "Não há credenciais de gateway disponíveis para esta equipe.")
+                    .WithMessage("Não há credenciais de gateway disponíveis.")
                     .Build())
                 .Build();
         }
 
-        var paymentId = string.IsNullOrWhiteSpace(request.PaymentId)
-            ? ObjectId.GenerateNewId().ToString()
-            : request.PaymentId.Trim();
+        var credentials = request.Credentials.ToArray();
+        Random.Shared.Shuffle(credentials);
 
-        var createPaymentRequest = new CreatePaymentRequest
+        foreach (var reference in credentials)
         {
-            ExplicitPaymentId = paymentId,
-            OperationId = operationId,
-            OperatorId = operatorId,
-            StrawManId = null,
-            Gateway = PaymentGateway.Frendz,
-            Amount = request.Amount,
-            GatewayPaymentId = paymentId,
-        };
+            if (string.IsNullOrWhiteSpace(reference.CredentialId))
+                continue;
 
-        var createPaymentResult = await _paymentService.CreatePaymentAsync(createPaymentRequest);
-        if (createPaymentResult.IsFailure)
-        {
-            return new ResultBuilder<GatewayPix>()
-                .WithErrors(createPaymentResult.Errors)
-                .Build();
-        }
+            if (_options.UseMockOrchestrator)
+            {
+                _logger.LogWarning(
+                    "GatewayOrchestrator mock generated PIX for payment {PaymentId} (gateway {Gateway}, credential {CredentialId}, amount {Amount}).",
+                    paymentId,
+                    reference.Gateway,
+                    reference.CredentialId,
+                    request.Amount);
 
-        var payment = createPaymentResult.Value
-            ?? throw new InvalidOperationException("Payment creation succeeded without a value.");
+                var transactionId = $"mock-{paymentId}";
+                return Result.Create<TryCreatePixResponse>()
+                    .WithValue(new TryCreatePixResponse
+                    {
+                        TransactionId = transactionId,
+                        PixCode = BuildMockPixCode(paymentId, request.Amount),
+                        Gateway = reference.Gateway,
+                        CredentialId = reference.CredentialId.Trim(),
+                    })
+                    .Build();
+            }
 
-        foreach (var provider in providers)
-        {
             try
             {
-                var gatewayPixRequest = new CreateGatewayPixRequest
+                var service = await CreateServiceAsync(reference);
+                if (service is null)
+                    continue;
+
+                var pix = await service.CreatePixAsync(new CreatePixRequest
                 {
-                    PaymentId = payment.Id,
-                    OperationId = operationId,
-                    OperatorId = operatorId,
-                    StrawManId = provider.StrawManId!,
-                    Amount = request.Amount
-                };
+                    PaymentId = paymentId,
+                    Amount = request.Amount,
+                });
 
-                var gatewayPix = await provider.Service.CreateGatewayPixAsync(gatewayPixRequest);
-
-                var transactionId = gatewayPix.Id;
-                var bindGateway = payment.BindToGateway(provider.Gateway, transactionId);
-                if (bindGateway.IsFailure)
-                {
-                    await _paymentService.DeletePaymentAsync(payment.Id);
-                    return Result.Create<GatewayPix>()
-                        .WithErrors(bindGateway.Errors)
-                        .Build();
-                }
-
-                var bindStrawMan = payment.BindToStrawMan(provider.StrawManId!);
-                if (bindStrawMan.IsFailure)
-                {
-                    await _paymentService.DeletePaymentAsync(payment.Id);
-                    return Result.Create<GatewayPix>()
-                        .WithErrors(bindStrawMan.Errors)
-                        .Build();
-                }
-
-                if (payment.Splits.Count > 0)
-                {
-                    var profitShareSplits = payment.Splits
-                        .Where(s => s.SplitKind == PaymentSplitKind.ProfitShare)
-                        .ToList();
-
-                    var recalculated = await _splitCalculation.ApplyStrawManFeeAsync(
-                        payment.Amount,
-                        profitShareSplits,
-                        provider.StrawManId!);
-
-                    var replaceSplits = payment.ReplaceSplits(recalculated);
-                    if (replaceSplits.IsFailure)
+                return Result.Create<TryCreatePixResponse>()
+                    .WithValue(new TryCreatePixResponse
                     {
-                        await _paymentService.DeletePaymentAsync(payment.Id);
-                        return Result.Create<GatewayPix>()
-                            .WithErrors(replaceSplits.Errors)
-                            .Build();
-                    }
-                }
-
-                await _paymentRepository.UpdateAsync(payment);
-                return Result.Create<GatewayPix>()
-                    .WithValue(gatewayPix)
+                        TransactionId = pix.TransactionId,
+                        PixCode = pix.PixCode,
+                        Gateway = reference.Gateway,
+                        CredentialId = reference.CredentialId.Trim(),
+                    })
                     .Build();
             }
             catch (Exception)
             {
-                // Tenta o próximo gateway disponível.
+                // Tenta a próxima credencial disponível.
             }
         }
 
-        await _paymentService.DeletePaymentAsync(payment.Id);
-        return Result.Create<GatewayPix>()
+        return Result.Create<TryCreatePixResponse>()
             .WithError(Error.Create()
                 .WithCode(PixPaymentErrorCodes.GatewayPixFailed)
                 .WithMessage("Todas as tentativas de processamento pelo gateway falharam. Verifique as credenciais configuradas e tente novamente.")
                 .Build())
             .Build();
+    }
+
+    private async Task<IGatewayService?> CreateServiceAsync(GatewayCredentialReference reference)
+    {
+        return reference.Gateway switch
+        {
+            PaymentGateway.Frendz => await TryCreateFrendzServiceAsync(reference.CredentialId),
+            PaymentGateway.SigiloPay => await TryCreateSigiloPayServiceAsync(reference.CredentialId),
+            PaymentGateway.Wintech => await TryCreateWintechServiceAsync(reference.CredentialId),
+            _ => null,
+        };
+    }
+
+    private async Task<IGatewayService?> TryCreateFrendzServiceAsync(string credentialId)
+    {
+        var credential = await _frendzCredentialsRepository.AsQueryable()
+            .Where(x => x.Id == credentialId)
+            .FirstOrDefaultAsync();
+        if (credential is null || !credential.Enabled)
+            return null;
+
+        return await _frendzServiceFactory.CreateAsync(credential);
+    }
+
+    private async Task<IGatewayService?> TryCreateSigiloPayServiceAsync(string credentialId)
+    {
+        var credential = await _sigiloPayCredentialsRepository.AsQueryable()
+            .Where(x => x.Id == credentialId)
+            .FirstOrDefaultAsync();
+        if (credential is null || !credential.Enabled)
+            return null;
+
+        return await _sigiloPayServiceFactory.CreateAsync(credential);
+    }
+
+    private async Task<IGatewayService?> TryCreateWintechServiceAsync(string credentialId)
+    {
+        var credential = await _wintechCredentialsRepository.AsQueryable()
+            .Where(x => x.Id == credentialId)
+            .FirstOrDefaultAsync();
+        if (credential is null || !credential.Enabled)
+            return null;
+
+        return await _wintechServiceFactory.CreateAsync(credential);
+    }
+
+    private static string BuildMockPixCode(string paymentId, decimal amount)
+    {
+        var amountText = amount.ToString("F2", System.Globalization.CultureInfo.InvariantCulture);
+        return $"00020126580014BR.GOV.BCB.PIX0136MOCK-{paymentId}52040000530398654{amountText.Length:D2}{amountText}5802BR5925NEXUS MOCK GATEWAY6009SAO PAULO62070503***6304MOCK";
     }
 }

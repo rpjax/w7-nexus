@@ -23,14 +23,14 @@ public sealed class OlxAdministratorController : NexusController
         _identityResolver = identityResolver;
     }
 
-    [HttpPost("ad-spoofs/search")]
-    public async Task<ActionResult> SearchAdSpoofsAsync(
-        [FromBody] SearchAdSpoofsRequest request,
+    [HttpPost("ad-patches/search")]
+    public async Task<ActionResult> SearchAdPatchesAsync(
+        [FromBody] SearchAdPatchesRequest request,
         CancellationToken cancellationToken)
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
 
-        return ToOperationResult(await _olxAdministrator.SearchAdSpoofsAsync(
+        return ToOperationResult(await _olxAdministrator.SearchAdPatchesAsync(
             identity,
             request,
             cancellationToken));

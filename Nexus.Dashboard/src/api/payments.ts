@@ -1,12 +1,12 @@
 import { apiClient } from './client';
-import type { GatewayPixResult } from './types';
+import type { PixChargeResult } from './types';
 
 export async function generatePix(payload: {
   operationId: string;
   amount: number;
   operatorId?: string | null;
 }) {
-  return apiClient.post<GatewayPixResult>('/api/gateways/pix', {
+  return apiClient.post<PixChargeResult>('/api/charges/pix', {
     OperationId: payload.operationId,
     Amount: payload.amount,
     OperatorId: payload.operatorId ?? null,

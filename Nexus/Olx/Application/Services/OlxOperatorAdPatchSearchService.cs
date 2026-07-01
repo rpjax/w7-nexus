@@ -10,31 +10,31 @@ using Nexus.Olx.Application.Responses.Operator;
 
 namespace Nexus.Olx.Application.Services;
 
-public sealed class OlxOperatorAdSpoofSearchService : IOlxOperatorAdSpoofSearchService
+public sealed class OlxOperatorAdPatchSearchService : IOlxOperatorAdPatchSearchService
 {
-    private readonly IAdSpoofRepository _adSpoofs;
+    private readonly IAdPatchRepository _adPatches;
 
-    public OlxOperatorAdSpoofSearchService(IAdSpoofRepository adSpoofs)
+    public OlxOperatorAdPatchSearchService(IAdPatchRepository adPatches)
     {
-        _adSpoofs = adSpoofs;
+        _adPatches = adPatches;
     }
 
-    public async Task<IResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    public async Task<IResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request)
+        SearchAdPatchesRequest request)
     {
         if (request is null)
-            return AdSpoofSearchValidator.RequestBodyRequiredResult<SearchAdSpoofsResponse>();
+            return AdPatchSearchValidator.RequestBodyRequiredResult<SearchAdPatchesResponse>();
 
-        var validation = AdSpoofSearchValidator.Validate(request.Limit, request.Offset, request.Keyword);
+        var validation = AdPatchSearchValidator.Validate(request.Limit, request.Offset, request.Keyword);
         if (validation.IsFailure)
-            return Result<SearchAdSpoofsResponse>.Failure(validation.Errors);
+            return Result<SearchAdPatchesResponse>.Failure(validation.Errors);
 
         var (limit, offset, keyword) = validation.Value;
-        var operationIds = AdSpoofSearchValidator.NormalizeFilterIds(request.OperationIds);
+        var operationIds = AdPatchSearchValidator.NormalizeFilterIds(request.OperationIds);
         var operatorAccountId = identity.AccountId.Trim();
 
-        IAsyncQueryable<AdSpoof> query = _adSpoofs.AsQueryable()
+        IAsyncQueryable<AdPatch> query = _adPatches.AsQueryable()
             .Where(s => s.OperatorId == operatorAccountId);
 
         if (operationIds.Length > 0)
@@ -58,12 +58,12 @@ public sealed class OlxOperatorAdSpoofSearchService : IOlxOperatorAdSpoofSearchS
             .Take(limit)
             .ToArrayAsync();
 
-        return Result<SearchAdSpoofsResponse>.Success(new SearchAdSpoofsResponse
+        return Result<SearchAdPatchesResponse>.Success(new SearchAdPatchesResponse
         {
             Offset = offset,
             Limit = limit,
             Total = total,
-            Items = page.Select(AdSpoofDetailsMapper.ToOperatorDetails).ToList(),
+            Items = page.Select(AdPatchDetailsMapper.ToOperatorDetails).ToList(),
         });
     }
 }

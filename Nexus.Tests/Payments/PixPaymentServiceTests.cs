@@ -5,6 +5,7 @@ using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Mongo.Linq;
 using Nexus.Payments.Application.Models;
+using Nexus.Gateways.Application.Models;
 using Xunit;
 using Nexus.Accounts.Aggregates;
 using Nexus.Authorization;

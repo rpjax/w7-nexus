@@ -1,20 +1,20 @@
 import { apiClient } from '../client';
 import type {
   ImpersonateAdPayload,
-  OlxOperatorAdSpoofRow,
+  OlxOperatorAdPatchRow,
   OlxOperatorSearchRequest,
   OlxSearchResponse,
   UnimpersonateAdPayload,
-  UpdateAdSpoofPayload,
+  UpdateAdPatchPayload,
 } from './types';
 
-export async function searchOlxOperatorAdSpoofs(payload: OlxOperatorSearchRequest) {
-  return apiClient.post<OlxSearchResponse<OlxOperatorAdSpoofRow>>('/api/olx/ad-spoofs/search', {
+export async function searchOlxOperatorAdPatches(payload: OlxOperatorSearchRequest) {
+  return apiClient.post<OlxSearchResponse<OlxOperatorAdPatchRow>>('/api/olx/ad-patches/search', {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
     OperationIds: payload.operationIds ?? [],
-  }, { fallbackError: 'Não foi possível carregar seus anúncios spoofados.' });
+  }, { fallbackError: 'Não foi possível carregar seus anúncios patchados.' });
 }
 
 export async function impersonateOlxAd(payload: ImpersonateAdPayload) {
@@ -34,11 +34,11 @@ export async function unimpersonateOlxAd(payload: UnimpersonateAdPayload) {
   }, { fallbackError: 'Não foi possível desimpersonar o anúncio.' });
 }
 
-export async function updateOlxAdSpoof(payload: UpdateAdSpoofPayload) {
-  return apiClient.put<unknown>('/api/olx/ads/spoof', {
+export async function updateOlxAdPatch(payload: UpdateAdPatchPayload) {
+  return apiClient.put<unknown>('/api/olx/ads/patch', {
     OperationId: payload.operationId,
     AdId: payload.adId,
     OriginalPrice: payload.originalPrice ?? null,
     PromotionalPrice: payload.promotionalPrice ?? null,
-  }, { fallbackError: 'Não foi possível atualizar o spoof do anúncio.' });
+  }, { fallbackError: 'Não foi possível atualizar o patch do anúncio.' });
 }

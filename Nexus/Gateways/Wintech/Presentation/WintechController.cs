@@ -1,4 +1,5 @@
 using Aidan.Core.Errors;
+using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Wintech.Application.Contracts;
 using Aidan.Core.Linq.Extensions;
 using Aidan.Core.Patterns;
@@ -9,7 +10,6 @@ using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;
 using Nexus.Gateways.Wintech.Errors;
 using Nexus.Payments.Presentation;
-using Nexus.Payments.Aggregates;
 
 namespace Nexus.Gateways.Wintech.Presentation;
 

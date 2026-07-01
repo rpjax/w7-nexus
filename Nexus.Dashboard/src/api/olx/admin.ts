@@ -1,19 +1,19 @@
 import { apiClient } from '../client';
 import type {
-  OlxAdminAdSpoofRow,
+  OlxAdminAdPatchRow,
   OlxAdminSearchRequest,
   OlxSearchResponse,
   UnimpersonateAdPayload,
 } from './types';
 
-export async function searchOlxAdminAdSpoofs(payload: OlxAdminSearchRequest) {
-  return apiClient.post<OlxSearchResponse<OlxAdminAdSpoofRow>>('/api/olx/admin/ad-spoofs/search', {
+export async function searchOlxAdminAdPatches(payload: OlxAdminSearchRequest) {
+  return apiClient.post<OlxSearchResponse<OlxAdminAdPatchRow>>('/api/olx/admin/ad-patches/search', {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
     OperatorIds: payload.operatorIds ?? [],
     OperationIds: payload.operationIds ?? [],
-  }, { fallbackError: 'Não foi possível carregar os anúncios spoofados.' });
+  }, { fallbackError: 'Não foi possível carregar os anúncios patchados.' });
 }
 
 export async function adminUnimpersonateOlxAd(payload: UnimpersonateAdPayload) {

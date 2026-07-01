@@ -1,16 +1,17 @@
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
+using Nexus.Gateways.Application.Requests;
+using Nexus.Gateways.Application.Responses;
 using Nexus.Gateways.SigiloPay.Application.Contracts;
-using Nexus.Gateways.SigiloPay.Application.Services;
 using Nexus.Gateways.SigiloPay.Application.Models;
 using Xunit;
 
 namespace Nexus.Tests.Gateways;
 
-public sealed class SigiloPayGatewayPixServiceTests
+public sealed class SigiloPayServiceTests
 {
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenClientSucceeds_ReturnsGatewayPix()
+    public async Task CreatePixAsync_WhenClientSucceeds_ReturnsCreatePixResponse()
     {
         var credentials = new SigiloPayApiCredentials
         {
@@ -24,21 +25,20 @@ public sealed class SigiloPayGatewayPixServiceTests
             TransactionId = "trx-1",
             PixCode = "pix-copia-cola"
         });
-        var sut = new SigiloPayGatewayPixService(client, credentials);
+        var sut = new SigiloPayService(client, credentials);
 
-        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        var result = await sut.CreatePixAsync(new CreatePixRequest
         {
             PaymentId = "internal-1",
-            OperationId = "op-1",
             Amount = 10m
         });
 
-        Assert.Equal("trx-1", result.Id);
-        Assert.Equal("pix-copia-cola", result.Code);
+        Assert.Equal("trx-1", result.TransactionId);
+        Assert.Equal("pix-copia-cola", result.PixCode);
     }
 
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenKeysMissing_ThrowsInvalidOperationException()
+    public async Task CreatePixAsync_WhenKeysMissing_ThrowsInvalidOperationException()
     {
         var credentials = new SigiloPayApiCredentials
         {
@@ -48,31 +48,23 @@ public sealed class SigiloPayGatewayPixServiceTests
             SecretKey = "sec"
         };
         var client = new StubSigiloPayClient(new SigiloPayPixPaymentResult());
-        var sut = new SigiloPayGatewayPixService(client, credentials);
+        var sut = new SigiloPayService(client, credentials);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+            sut.CreatePixAsync(new CreatePixRequest
             {
                 PaymentId = "internal-1",
-                OperationId = "op-1",
                 Amount = 10m
             }));
     }
 
-    private sealed class StubSigiloPayClient : ISigiloPayClient
+    private sealed class StubSigiloPayClient(SigiloPayPixPaymentResult result) : ISigiloPayClient
     {
-        private readonly SigiloPayPixPaymentResult _result;
-
-        public StubSigiloPayClient(SigiloPayPixPaymentResult result)
-        {
-            _result = result;
-        }
-
         public Task<SigiloPayPixPaymentResult> CreatePixPaymentAsync(
             string publicKey,
             string secretKey,
             SigiloPayPixPaymentRequest request,
             CancellationToken cancellationToken = default)
-            => Task.FromResult(_result);
+            => Task.FromResult(result);
     }
 }

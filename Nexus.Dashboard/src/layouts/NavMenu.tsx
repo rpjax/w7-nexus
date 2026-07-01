@@ -14,7 +14,6 @@ export function NavMenu() {
   const [accountsOpen, setAccountsOpen] = useState(true);
   const [paymentsOpen, setPaymentsOpen] = useState(true);
   const [strawMenOpen, setStrawMenOpen] = useState(true);
-  const [transfersOpen, setTransfersOpen] = useState(true);
   const [gatewaysOpen, setGatewaysOpen] = useState(true);
   const [olxOpen, setOlxOpen] = useState(true);
 
@@ -178,49 +177,6 @@ export function NavMenu() {
                     Gestão de laranjas
                   </NavLink>
                 ) : null}
-              </div>
-            </div>
-          </div>
-        ) : null}
-
-        {showGlobalAdminItems ? (
-          <div className="nav-group nav-group-gateways">
-            <button
-              type="button"
-              className="nav-dropdown nav-dropdown-full"
-              onClick={() => setTransfersOpen((v) => !v)}
-              aria-expanded={transfersOpen}
-              aria-controls="transfers-submenu"
-            >
-              <span className="nav-dropdown-label">Transferências</span>
-              <span className="nav-caret" aria-hidden="true">{transfersOpen ? '▲' : '▼'}</span>
-            </button>
-            <div id="transfers-submenu" className={`submenu-tree ${transfersOpen ? 'is-open' : 'is-collapsed'}`} aria-hidden={!transfersOpen}>
-              <div className="submenu-tree-inner">
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Registros
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/new" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Novo saque
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/movement" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Movimentação
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/payout" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Repasse
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/bank-accounts" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Contas bancárias
-                </NavLink>
-                <NavLink className={({ isActive }) => `nav-sublink nav-sublink-admin${isActive ? ' active' : ''}`} to="/dashboard/transfers/crypto-wallets" onClick={() => setTransfersOpen(true)}>
-                  <span className="submenu-bullet" aria-hidden="true" />
-                  Carteiras crypto
-                </NavLink>
               </div>
             </div>
           </div>

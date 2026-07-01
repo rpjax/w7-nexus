@@ -5,9 +5,9 @@ using Nexus.Olx.Application.Responses.Operator;
 
 namespace Nexus.Olx.Application.Contracts;
 
-public interface IOlxOperatorAdSpoofSearchService
+public interface IOlxOperatorAdPatchSearchService
 {
-    Task<IResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    Task<IResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request);
+        SearchAdPatchesRequest request);
 }

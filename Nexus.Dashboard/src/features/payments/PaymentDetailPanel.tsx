@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
 import type { PaymentRow } from '../../api/types';
 import { StatusPill } from '../../components/finance/StatusPill';
 import {
@@ -77,13 +76,10 @@ function buildTimeline(payment: PaymentRow): TimelineEvent[] {
   return events;
 }
 
-export function PaymentDetailPanel({ payment, scope, viewerAccountId, actionsSlot }: PaymentDetailPanelProps) {
+export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, actionsSlot }: PaymentDetailPanelProps) {
   const [technicalOpen, setTechnicalOpen] = useState(false);
   const splits = payment.splits ?? [];
   const timeline = buildTimeline(payment);
-  const showWithdrawalCta = scope !== 'global-admin'
-    && payment.status === 'Paid'
-    && payment.settlementStatus === 'Unsettled';
 
   const operationTitle = formatPaymentOperation(payment);
   const operatorTitle = formatPaymentParticipant(payment.operatorUsername, 'Sem operador');
@@ -214,14 +210,6 @@ export function PaymentDetailPanel({ payment, scope, viewerAccountId, actionsSlo
             </div>
           ) : null}
         </section>
-
-        {showWithdrawalCta ? (
-          <div className="payment-detail-panel__cta">
-            <Link className="btn btn-secondary" to="/dashboard/transfers/new">
-              Registrar transferência
-            </Link>
-          </div>
-        ) : null}
       </div>
 
       {actionsSlot ? (

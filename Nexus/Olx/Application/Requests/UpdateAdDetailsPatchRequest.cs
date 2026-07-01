@@ -1,6 +1,6 @@
-﻿namespace Nexus.Olx.Application.Requests;
+namespace Nexus.Olx.Application.Requests;
 
-public class UpdateAdDetailsSpoofRequest
+public class UpdateAdDetailsPatchRequest
 {
     public string OperationId { get; set; } = string.Empty;
     public string AdId { get; set; } = string.Empty;

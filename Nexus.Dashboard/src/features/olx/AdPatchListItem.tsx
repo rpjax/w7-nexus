@@ -1,16 +1,16 @@
-import type { OlxAdminAdSpoofRow, OlxOperatorAdSpoofRow } from '../../api/olx/types';
+import type { OlxAdminAdPatchRow, OlxOperatorAdPatchRow } from '../../api/olx/types';
 import { StatusPill } from '../../components/finance/StatusPill';
 import { formatDateTime } from '../../utils/format';
 import {
-  formatAdSpoofTitle,
+  formatAdPatchTitle,
   formatOptionalPrice,
-  spoofStatusLabel,
-  spoofStatusTone,
-} from './adSpoofDisplay';
+  patchStatusLabel,
+  patchStatusTone,
+} from './adPatchDisplay';
 import { resolveOlxOperationLabel } from './useOlxOperationLabels';
 
-type AdSpoofListItemProps = {
-  row: OlxOperatorAdSpoofRow | OlxAdminAdSpoofRow;
+type AdPatchListItemProps = {
+  row: OlxOperatorAdPatchRow | OlxAdminAdPatchRow;
   scope: 'operator' | 'admin';
   operationLabels?: Record<string, string>;
   operatorLabel?: string | null;
@@ -22,7 +22,7 @@ type AdSpoofListItemProps = {
   onForceUnimpersonate?: () => void;
 };
 
-export function AdSpoofListItem({
+export function AdPatchListItem({
   row,
   scope,
   operationLabels = {},
@@ -33,14 +33,14 @@ export function AdSpoofListItem({
   onUnimpersonate,
   onEditPrices,
   onForceUnimpersonate,
-}: AdSpoofListItemProps) {
+}: AdPatchListItemProps) {
   const operatorId = 'operatorId' in row ? row.operatorId : null;
   const isOwn = scope === 'operator' || (operatorId && currentAccountId && operatorId === currentAccountId);
   const canEditPrices = scope === 'operator' && row.isImpersonating && isOwn;
   const canUnimpersonate = scope === 'operator' && row.isImpersonating && isOwn;
   const canImpersonate = scope === 'operator' && !row.isImpersonating;
   const canForceUnimpersonate = scope === 'admin' && row.isImpersonating && Boolean(operatorId);
-  const hasSpoofedPrices = row.originalPrice != null || row.promotionalPrice != null;
+  const hasPatchedPrices = row.originalPrice != null || row.promotionalPrice != null;
   const operationTitle = resolveOlxOperationLabel(row.operationId, operationLabels);
   const hasActions = canImpersonate || canEditPrices || canUnimpersonate || canForceUnimpersonate;
 
@@ -48,13 +48,13 @@ export function AdSpoofListItem({
     <article className={`olx-ad-card${row.isImpersonating ? ' olx-ad-card--active' : ''}`}>
       <header className="olx-ad-card__head">
         <div className="olx-ad-card__lead">
-          <span className="olx-ad-card__kicker">OLX · Spoof</span>
-          <h3 className="olx-ad-card__title">{formatAdSpoofTitle(row.adId)}</h3>
+          <span className="olx-ad-card__kicker">OLX · Patch</span>
+          <h3 className="olx-ad-card__title">{formatAdPatchTitle(row.adId)}</h3>
           <div className="olx-ad-card__pills">
-            <StatusPill label={spoofStatusLabel(row.isImpersonating)} tone={spoofStatusTone(row.isImpersonating)} />
+            <StatusPill label={patchStatusLabel(row.isImpersonating)} tone={patchStatusTone(row.isImpersonating)} />
             <StatusPill
-              label={hasSpoofedPrices ? 'Preços definidos' : 'Sem preços spoof'}
-              tone={hasSpoofedPrices ? 'warn' : 'info'}
+              label={hasPatchedPrices ? 'Preços definidos' : 'Sem preços patch'}
+              tone={hasPatchedPrices ? 'warn' : 'info'}
             />
           </div>
         </div>

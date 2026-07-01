@@ -4,9 +4,9 @@ using Nexus.Olx.Aggregates;
 
 namespace Nexus.Olx.Infrastructure.Mapping;
 
-internal static class AdSpoofRecordMapping
+internal static class OlxAdPatchRecordMapping
 {
-    public static AdSpoof ToAdSpoof(AdSpoofRecord record) =>
+    public static AdPatch ToAdPatch(OlxAdPatchRecord record) =>
         new(
             record.Id.ToString(),
             record.OperationId,
@@ -19,7 +19,7 @@ internal static class AdSpoofRecordMapping
             record.CreatedAt,
             record.UpdatedAt);
 
-    public static AdSpoofRecord ToRecord(AdSpoof entity) =>
+    public static OlxAdPatchRecord ToRecord(AdPatch entity) =>
         new()
         {
             Id = string.IsNullOrWhiteSpace(entity.Id) ? ObjectId.GenerateNewId() : ObjectId.Parse(entity.Id),

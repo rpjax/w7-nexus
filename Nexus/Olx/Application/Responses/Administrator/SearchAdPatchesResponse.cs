@@ -3,4 +3,4 @@ using Nexus.Shared.Application.Models;
 
 namespace Nexus.Olx.Application.Responses.Administrator;
 
-public class SearchAdSpoofsResponse : SearchResponse<AdSpoofDetails>;
+public class SearchAdPatchesResponse : SearchResponse<AdPatchDetails>;

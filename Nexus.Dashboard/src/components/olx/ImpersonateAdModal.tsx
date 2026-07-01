@@ -9,7 +9,7 @@ import {
   olxAdIdValidationMessage,
   olxAdUrlValidationMessage,
   parseOlxAdIdInput,
-} from '../../features/olx/adSpoofDisplay';
+} from '../../features/olx/adPatchDisplay';
 import { OperationPickerModal } from '../OperationPickerModal';
 import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
 
@@ -142,7 +142,7 @@ export function ImpersonateAdModal({
             <div>
               <h3>Impersonar anúncio</h3>
               <p className="muted small">
-                Reserve o anúncio para spoof. Apenas anúncios livres podem ser assumidos.
+                Reserve o anúncio para patch. Apenas anúncios livres podem ser assumidos.
               </p>
             </div>
             <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">

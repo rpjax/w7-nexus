@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   impersonateOlxAd,
-  searchOlxOperatorAdSpoofs,
+  searchOlxOperatorAdPatches,
   unimpersonateOlxAd,
-  updateOlxAdSpoof,
+  updateOlxAdPatch,
 } from '../../api/olx/operator';
 import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
-import type { OlxOperatorAdSpoofRow } from '../../api/olx/types';
+import type { OlxOperatorAdPatchRow } from '../../api/olx/types';
 import { useAuth } from '../../auth/AuthContext';
 import { isAdministrator } from '../../auth/roles';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
@@ -14,10 +14,10 @@ import { ConfirmDialog } from '../../components/ConfirmDialog';
 import { EmptyState } from '../../components/EmptyState';
 import { ImpersonateAdModal } from '../../components/olx/ImpersonateAdModal';
 import { OlxFilterPanel, OlxPickerField } from '../../components/olx/OlxFilterPanel';
-import { UpdateSpoofModal } from '../../components/olx/UpdateSpoofModal';
+import { UpdatePatchModal } from '../../components/olx/UpdatePatchModal';
 import { OperationPickerModal } from '../../components/OperationPickerModal';
 import { PaginationBar } from '../../components/ListControls';
-import { AdSpoofListItem } from '../../features/olx/AdSpoofListItem';
+import { AdPatchListItem } from '../../features/olx/AdPatchListItem';
 import { useOlxOperationLabels } from '../../features/olx/useOlxOperationLabels';
 import { useNotifications } from '../../notifications/NotificationContext';
 
@@ -32,15 +32,15 @@ export function OlxOperatorAdsPage() {
   const [operationId, setOperationId] = useState('');
   const [operationLabel, setOperationLabel] = useState<string | null>(null);
   const [appliedOperationIds, setAppliedOperationIds] = useState<string[]>([]);
-  const [rows, setRows] = useState<OlxOperatorAdSpoofRow[]>([]);
+  const [rows, setRows] = useState<OlxOperatorAdPatchRow[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalItems, setTotalItems] = useState(0);
   const [busy, setBusy] = useState(false);
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [impersonateSeed, setImpersonateSeed] = useState<{ operationId?: string; adId?: string; adUrl?: string }>({});
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
-  const [editRow, setEditRow] = useState<OlxOperatorAdSpoofRow | null>(null);
-  const [confirmRelease, setConfirmRelease] = useState<OlxOperatorAdSpoofRow | null>(null);
+  const [editRow, setEditRow] = useState<OlxOperatorAdPatchRow | null>(null);
+  const [confirmRelease, setConfirmRelease] = useState<OlxOperatorAdPatchRow | null>(null);
   const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
   const extraOperationLabels = useMemo(
@@ -55,7 +55,7 @@ export function OlxOperatorAdsPage() {
   );
 
   const load = useCallback(async (page: number, keyword: string, operationIds: string[]) => {
-    const result = await searchOlxOperatorAdSpoofs({
+    const result = await searchOlxOperatorAdPatches({
       limit: PAGE_SIZE,
       offset: (page - 1) * PAGE_SIZE,
       keyword: keyword.trim() || null,
@@ -121,7 +121,7 @@ export function OlxOperatorAdsPage() {
     if (ok) setImpersonateOpen(false);
   }
 
-  async function handleRelease(row: OlxOperatorAdSpoofRow) {
+  async function handleRelease(row: OlxOperatorAdPatchRow) {
     if (!user?.accountId) return;
     const ok = await runMutation(
       () => unimpersonateOlxAd({
@@ -137,7 +137,7 @@ export function OlxOperatorAdsPage() {
   async function handleUpdatePrices(originalPrice: number | null, promotionalPrice: number | null) {
     if (!editRow) return;
     const ok = await runMutation(
-      () => updateOlxAdSpoof({
+      () => updateOlxAdPatch({
         operationId: editRow.operationId,
         adId: editRow.adId,
         originalPrice,
@@ -148,7 +148,7 @@ export function OlxOperatorAdsPage() {
     if (ok) setEditRow(null);
   }
 
-  function openImpersonate(row?: OlxOperatorAdSpoofRow) {
+  function openImpersonate(row?: OlxOperatorAdPatchRow) {
     setImpersonateSeed({
       operationId: row?.operationId,
       adId: row?.adId,
@@ -162,7 +162,7 @@ export function OlxOperatorAdsPage() {
       <OpsWorkspace
         title="Meus anúncios"
         kicker="OLX"
-        lead="Assuma anúncios livres, defina preços spoofados e libere slots quando terminar."
+        lead="Assuma anúncios livres, defina preços patchados e libere slots quando terminar."
         searchId="olx-op-search"
         searchLabel="Buscar"
         searchPlaceholder="ID do anúncio ou operação…"
@@ -227,13 +227,13 @@ export function OlxOperatorAdsPage() {
 
         {rows.length === 0 ? (
           <EmptyState
-            title="Nenhum anúncio spoofado"
+            title="Nenhum anúncio patchado"
             message="Assuma um anúncio livre para começar. Apenas registros sob seu controle aparecem aqui."
           />
         ) : (
           <div className="olx-ad-list">
             {rows.map((row) => (
-              <AdSpoofListItem
+              <AdPatchListItem
                 key={row.id}
                 row={row}
                 scope="operator"
@@ -272,7 +272,7 @@ export function OlxOperatorAdsPage() {
         onSubmit={handleImpersonate}
       />
 
-      <UpdateSpoofModal
+      <UpdatePatchModal
         open={editRow !== null}
         busy={busy}
         row={editRow}

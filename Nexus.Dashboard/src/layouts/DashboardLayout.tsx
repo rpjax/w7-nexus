@@ -18,9 +18,6 @@ function resolvePageTitle(pathname: string): string {
   if (isOperationDetailPath(relative)) {
     return 'Detalhe da operação';
   }
-  if (/^\/dashboard\/transfers\/[^/]+$/.test(relative) && relative !== '/dashboard/transfers/new') {
-    return 'Detalhe da transferência';
-  }
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
     '/dashboard/operations': 'Minhas operações',
@@ -34,10 +31,6 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard/straw-man/settings': 'Minhas configurações',
     '/dashboard/admin/straw-men': 'Gestão de laranjas',
     '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',
-    '/dashboard/transfers': 'Transferências',
-    '/dashboard/transfers/new': 'Transferências — Novo saque',
-    '/dashboard/transfers/bank-accounts': 'Transferências — Contas bancárias',
-    '/dashboard/transfers/crypto-wallets': 'Transferências — Carteiras crypto',
     '/dashboard/gateways': 'Gateways',
     '/dashboard/gateways/frendz': 'Frendz',
     '/dashboard/gateways/sigilopay': 'SigiloPay',

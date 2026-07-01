@@ -1,16 +1,17 @@
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
+using Nexus.Gateways.Application.Requests;
+using Nexus.Gateways.Application.Responses;
 using Nexus.Gateways.Wintech.Application.Contracts;
-using Nexus.Gateways.Wintech.Application.Services;
 using Nexus.Gateways.Wintech.Application.Models;
 using Xunit;
 
 namespace Nexus.Tests.Gateways;
 
-public sealed class WintechGatewayPixServiceTests
+public sealed class WintechServiceTests
 {
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenClientSucceeds_ReturnsGatewayPix()
+    public async Task CreatePixAsync_WhenClientSucceeds_ReturnsCreatePixResponse()
     {
         var credentials = new WintechApiCredentials
         {
@@ -24,21 +25,20 @@ public sealed class WintechGatewayPixServiceTests
             TransactionId = "trx-1",
             PixCode = "pix-copia-cola"
         });
-        var sut = new WintechGatewayPixService(client, credentials);
+        var sut = new WintechService(client, credentials);
 
-        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        var result = await sut.CreatePixAsync(new CreatePixRequest
         {
             PaymentId = "internal-1",
-            OperationId = "op-1",
             Amount = 10m
         });
 
-        Assert.Equal("trx-1", result.Id);
-        Assert.Equal("pix-copia-cola", result.Code);
+        Assert.Equal("trx-1", result.TransactionId);
+        Assert.Equal("pix-copia-cola", result.PixCode);
     }
 
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenKeysMissing_ThrowsInvalidOperationException()
+    public async Task CreatePixAsync_WhenKeysMissing_ThrowsInvalidOperationException()
     {
         var credentials = new WintechApiCredentials
         {
@@ -48,31 +48,23 @@ public sealed class WintechGatewayPixServiceTests
             SecretKey = ""
         };
         var client = new StubWintechClient(new WintechPixPaymentResult());
-        var sut = new WintechGatewayPixService(client, credentials);
+        var sut = new WintechService(client, credentials);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+            sut.CreatePixAsync(new CreatePixRequest
             {
                 PaymentId = "internal-1",
-                OperationId = "op-1",
                 Amount = 10m
             }));
     }
 
-    private sealed class StubWintechClient : IWintechClient
+    private sealed class StubWintechClient(WintechPixPaymentResult result) : IWintechClient
     {
-        private readonly WintechPixPaymentResult _result;
-
-        public StubWintechClient(WintechPixPaymentResult result)
-        {
-            _result = result;
-        }
-
         public Task<WintechPixPaymentResult> CreatePixPaymentAsync(
             string publicKey,
             string secretKey,
             WintechPixPaymentRequest request,
             CancellationToken cancellationToken = default)
-            => Task.FromResult(_result);
+            => Task.FromResult(result);
     }
 }

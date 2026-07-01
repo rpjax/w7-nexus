@@ -3,6 +3,7 @@ using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
 using Nexus.Operations.Aggregates;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Models;
 using Nexus.Accounts.Application.Contracts;

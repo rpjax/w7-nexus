@@ -4,4 +4,4 @@ public sealed class ImpersonateAdResponse;
 
 public sealed class UnimpersonateAdResponse;
 
-public sealed class UpdateAdDetailsSpoofResponse;
+public sealed class UpdateAdDetailsPatchResponse;

@@ -11,27 +11,27 @@ namespace Nexus.Olx.Application.Services;
 public sealed class OlxAdministrator : IOlxAdministrator
 {
     private readonly IOlxAdministratorAccessPolicy _policy;
-    private readonly IAdSpoofCommandService _commands;
-    private readonly IOlxAdministratorAdSpoofSearchService _search;
+    private readonly IAdPatchCommandService _commands;
+    private readonly IOlxAdministratorAdPatchSearchService _search;
 
     public OlxAdministrator(
         IOlxAdministratorAccessPolicy policy,
-        IAdSpoofCommandService commands,
-        IOlxAdministratorAdSpoofSearchService search)
+        IAdPatchCommandService commands,
+        IOlxAdministratorAdPatchSearchService search)
     {
         _policy = policy;
         _commands = commands;
         _search = search;
     }
 
-    public Task<IOperationResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    public Task<IOperationResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request,
+        SearchAdPatchesRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
-            () => _search.SearchAdSpoofsAsync(request),
+            () => _search.SearchAdPatchesAsync(request),
             cancellationToken);
     }
 

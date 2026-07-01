@@ -11,27 +11,27 @@ namespace Nexus.Olx.Application.Services;
 public sealed class OlxOperator : IOlxOperator
 {
     private readonly IOlxOperatorAccessPolicy _policy;
-    private readonly IAdSpoofCommandService _commands;
-    private readonly IOlxOperatorAdSpoofSearchService _search;
+    private readonly IAdPatchCommandService _commands;
+    private readonly IOlxOperatorAdPatchSearchService _search;
 
     public OlxOperator(
         IOlxOperatorAccessPolicy policy,
-        IAdSpoofCommandService commands,
-        IOlxOperatorAdSpoofSearchService search)
+        IAdPatchCommandService commands,
+        IOlxOperatorAdPatchSearchService search)
     {
         _policy = policy;
         _commands = commands;
         _search = search;
     }
 
-    public Task<IOperationResult<SearchAdSpoofsResponse>> SearchAdSpoofsAsync(
+    public Task<IOperationResult<SearchAdPatchesResponse>> SearchAdPatchesAsync(
         RequesterIdentity identity,
-        SearchAdSpoofsRequest request,
+        SearchAdPatchesRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
-            () => _search.SearchAdSpoofsAsync(identity, request),
+            () => _search.SearchAdPatchesAsync(identity, request),
             cancellationToken);
     }
 
@@ -57,14 +57,14 @@ public sealed class OlxOperator : IOlxOperator
             cancellationToken);
     }
 
-    public Task<IOperationResult<UpdateAdDetailsSpoofResponse>> UpdateAdDetailsSpoofAsync(
+    public Task<IOperationResult<UpdateAdDetailsPatchResponse>> UpdateAdDetailsPatchAsync(
         RequesterIdentity identity,
-        UpdateAdDetailsSpoofRequest request,
+        UpdateAdDetailsPatchRequest request,
         CancellationToken cancellationToken = default)
     {
         return ExecuteAsync(
             identity,
-            () => _commands.UpdateAdDetailsSpoofAsync(identity.AccountId, request, cancellationToken),
+            () => _commands.UpdateAdDetailsPatchAsync(identity.AccountId, request, cancellationToken),
             cancellationToken);
     }
 

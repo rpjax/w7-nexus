@@ -2,6 +2,8 @@ using Nexus.AppHost;
 using Nexus.AppHost.Contracts;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Models;
+using Nexus.Gateways.Application.Requests;
+using Nexus.Gateways.Application.Responses;
 using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Application.Models;
 using Nexus.Gateways.Frendz.Infrastructure.Http;
@@ -9,10 +11,10 @@ using Xunit;
 
 namespace Nexus.Tests.Gateways;
 
-public sealed class FrendzGatewayPixServiceTests
+public sealed class FrendzServiceTests
 {
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenHttpSucceeds_ReturnsGatewayPix()
+    public async Task CreatePixAsync_WhenHttpSucceeds_ReturnsCreatePixResponse()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "t" };
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK)
@@ -20,21 +22,20 @@ public sealed class FrendzGatewayPixServiceTests
             Content = new StringContent("{\"hash\":\"trx-1\",\"pix\":{\"code\":\"pix-copia-cola\"}}")
         });
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzService(client, new StubAppHostProvider(), credentials);
 
-        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        var result = await sut.CreatePixAsync(new CreatePixRequest
         {
             PaymentId = "internal-1",
-            OperationId = "op-1",
             Amount = 10m
         });
 
-        Assert.Equal("trx-1", result.Id);
-        Assert.Equal("pix-copia-cola", result.Code);
+        Assert.Equal("trx-1", result.TransactionId);
+        Assert.Equal("pix-copia-cola", result.PixCode);
     }
 
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenOfficialPixResponse_UsesDataHashAndPixCode()
+    public async Task CreatePixAsync_WhenOfficialPixResponse_UsesDataHashAndPixCode()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "t" };
         const string body =
@@ -44,32 +45,30 @@ public sealed class FrendzGatewayPixServiceTests
             Content = new StringContent(body)
         });
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzService(client, new StubAppHostProvider(), credentials);
 
-        var result = await sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+        var result = await sut.CreatePixAsync(new CreatePixRequest
         {
             PaymentId = "internal-1",
-            OperationId = "op-1",
             Amount = 150m
         });
 
-        Assert.Equal("trans123abc456", result.Id);
-        Assert.Equal("00020126580014BR.GOV.BCB.PIX", result.Code);
+        Assert.Equal("trans123abc456", result.TransactionId);
+        Assert.Equal("00020126580014BR.GOV.BCB.PIX", result.PixCode);
     }
 
     [Fact]
-    public async Task CreateGatewayPixAsync_WhenTokenMissing_ThrowsInvalidOperationException()
+    public async Task CreatePixAsync_WhenTokenMissing_ThrowsInvalidOperationException()
     {
         var credentials = new FrendzApiCredentials { Id = "1", Name = "c", Token = "" };
         var handler = new StubHttpMessageHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK));
         var client = new FrendzClient(new HttpClient(handler));
-        var sut = new FrendzGatewayPixService(client, new StubAppHostProvider(), credentials);
+        var sut = new FrendzService(client, new StubAppHostProvider(), credentials);
 
         await Assert.ThrowsAsync<InvalidOperationException>(() =>
-            sut.CreateGatewayPixAsync(new CreateGatewayPixRequest
+            sut.CreatePixAsync(new CreatePixRequest
             {
                 PaymentId = "internal-1",
-                OperationId = "op-1",
                 Amount = 10m
             }));
     }

@@ -8,6 +8,7 @@ using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Payments.Aggregates;

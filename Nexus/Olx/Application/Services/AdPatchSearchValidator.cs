@@ -4,7 +4,7 @@ using Nexus.Olx.Errors;
 
 namespace Nexus.Olx.Application.Services;
 
-internal static class AdSpoofSearchValidator
+internal static class AdPatchSearchValidator
 {
     public const int MaxKeywordLength = 200;
 
@@ -21,7 +21,7 @@ internal static class AdSpoofSearchValidator
         if (normalizedLimit < 1 || normalizedLimit >= 1000)
         {
             builder.WithError(Error.Create()
-                .WithCode(AdSpoofErrorCodes.SearchLimitInvalid)
+                .WithCode(AdPatchErrorCodes.SearchLimitInvalid)
                 .WithMessage("O limite deve estar entre 1 e 999.")
                 .Build());
         }
@@ -29,7 +29,7 @@ internal static class AdSpoofSearchValidator
         if (offset < 0)
         {
             builder.WithError(Error.Create()
-                .WithCode(AdSpoofErrorCodes.SearchOffsetInvalid)
+                .WithCode(AdPatchErrorCodes.SearchOffsetInvalid)
                 .WithMessage("O deslocamento não pode ser negativo.")
                 .Build());
         }
@@ -37,7 +37,7 @@ internal static class AdSpoofSearchValidator
         if (!string.IsNullOrWhiteSpace(normalizedKeyword) && normalizedKeyword.Length > MaxKeywordLength)
         {
             builder.WithError(Error.Create()
-                .WithCode(AdSpoofErrorCodes.SearchKeywordTooLong)
+                .WithCode(AdPatchErrorCodes.SearchKeywordTooLong)
                 .WithMessage($"A palavra-chave pode ter no máximo {MaxKeywordLength} caracteres.")
                 .Build());
         }
@@ -52,7 +52,7 @@ internal static class AdSpoofSearchValidator
 
     public static IResult<T> RequestBodyRequiredResult<T>() =>
         Result<T>.Failure(Error.Create()
-            .WithCode(AdSpoofErrorCodes.RequestBodyRequired)
+            .WithCode(AdPatchErrorCodes.RequestBodyRequired)
             .WithMessage("O corpo da requisição é obrigatório.")
             .Build());
 

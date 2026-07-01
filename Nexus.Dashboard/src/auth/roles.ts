@@ -43,7 +43,7 @@ export function canUseStrawManPanel(user: AuthUser | null | undefined): boolean 
   return isStrawMan(user);
 }
 
-/** Operador OLX ou administrador — painel de spoof de anúncios. */
+/** Operador OLX ou administrador — painel de patch de anúncios. */
 export function canUseOlxPanel(user: AuthUser | null | undefined): boolean {
   return isOlxOperator(user) || isAdministrator(user);
 }

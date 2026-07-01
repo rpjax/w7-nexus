@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { searchAdministratorOperations } from '../api/administrator/operations';
-import { searchOlxAdminAdSpoofs } from '../api/olx/admin';
-import { searchOlxOperatorAdSpoofs } from '../api/olx/operator';
+import { searchOlxAdminAdPatches } from '../api/olx/admin';
+import { searchOlxOperatorAdPatches } from '../api/olx/operator';
 import { searchGatewayCredentials } from '../api/gateways';
 import { searchOperatorOperations } from '../api/operator/operations';
 import { useAuth } from '../auth/AuthContext';
@@ -45,7 +45,7 @@ export function HomePage() {
   const [frendz, setFrendz] = useState<CredentialStat>(defaultStat);
   const [sigiloPay, setSigiloPay] = useState<CredentialStat>(defaultStat);
   const [wintech, setWintech] = useState<CredentialStat>(defaultStat);
-  const [olxSpoofsTotal, setOlxSpoofsTotal] = useState<number | null>(null);
+  const [olxPatchesTotal, setOlxPatchesTotal] = useState<number | null>(null);
 
   useEffect(() => {
     void (async () => {
@@ -61,13 +61,13 @@ export function HomePage() {
 
       if (olxPanel) {
         const search = olxOperator
-          ? searchOlxOperatorAdSpoofs
+          ? searchOlxOperatorAdPatches
           : adminView
-            ? searchOlxAdminAdSpoofs
+            ? searchOlxAdminAdPatches
             : null;
         if (search) {
-          const spoofs = await search({ limit: 1, offset: 0, keyword: null, operationIds: [] });
-          if (spoofs.ok) setOlxSpoofsTotal(spoofs.data?.total ?? 0);
+          const patches = await search({ limit: 1, offset: 0, keyword: null, operationIds: [] });
+          if (patches.ok) setOlxPatchesTotal(patches.data?.total ?? 0);
         }
       }
 
@@ -111,7 +111,7 @@ export function HomePage() {
     : adminView
       ? 'Gerencie o catálogo global de operações e contas do sistema.'
       : olxOperator
-        ? 'Impersonação de anúncios OLX, spoof de preços e liberação de slots.'
+        ? 'Impersonação de anúncios OLX, patch de preços e liberação de slots.'
         : operatorPanel
           ? 'Acompanhe suas operações alocadas, pagamentos e credenciais de gateway.'
           : strawManPanel
@@ -154,8 +154,8 @@ export function HomePage() {
         {olxPanel ? (
           <StatCard
             label="Anúncios OLX"
-            value={olxSpoofsTotal?.toString() ?? '—'}
-            caption={olxOperator ? 'Spoofs sob seu controle' : 'Registros globais de spoof'}
+            value={olxPatchesTotal?.toString() ?? '—'}
+            caption={olxOperator ? 'Patches sob seu controle' : 'Registros globais de patch'}
             tone="success"
           />
         ) : null}
@@ -186,8 +186,6 @@ export function HomePage() {
               <Link className="quick-action quick-action-admin" to="/dashboard/admin/payments">Todos os pagamentos</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/accounts">Contas</Link>
               <Link className="quick-action quick-action-admin" to="/dashboard/admin/straw-men">Gestão de laranjas</Link>
-              <Link className="quick-action quick-action-admin" to="/dashboard/transfers">Transferências</Link>
-              <Link className="quick-action quick-action-admin" to="/dashboard/transfers/new">Registrar saque</Link>
             </>
           ) : null}
           {strawManPanel ? (

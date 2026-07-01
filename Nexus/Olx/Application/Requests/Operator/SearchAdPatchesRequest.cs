@@ -1,6 +1,6 @@
 namespace Nexus.Olx.Application.Requests.Operator;
 
-public class SearchAdSpoofsRequest
+public class SearchAdPatchesRequest
 {
     public int Limit { get; set; }
     public int Offset { get; set; }

@@ -5,7 +5,7 @@ public sealed class GatewaysOptions
     public const string SectionName = "Gateways";
 
     /// <summary>
-    /// When true, uses <see cref="Services.MockGatewayOrchestrator"/> instead of calling external gateway APIs.
+    /// When true, <see cref="Services.GatewayOrchestrator"/> bypasses external gateway APIs and returns mock PIX data.
     /// </summary>
     public bool UseMockOrchestrator { get; set; }
 }

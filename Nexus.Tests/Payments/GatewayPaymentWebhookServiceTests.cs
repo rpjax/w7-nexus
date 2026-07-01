@@ -3,6 +3,7 @@ using Nexus.Payments.Application.Contracts;
 using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Microsoft.Extensions.Logging.Abstractions;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Services;
 using Nexus.Payments.Application.Models;

@@ -2,17 +2,8 @@ using Nexus.Administrators.Application.Requests;
 using Nexus.Administrators.Application.Responses;
 using Nexus.Administrators.Application.Responses.Models;
 using Nexus.Authorization.Application.Models;
-using Nexus.BankAccounts.Aggregates;
-using Nexus.BankAccounts.Application.Requests;
-using Nexus.BankAccounts.Application.Responses;
-using Nexus.CryptoWallets.Aggregates;
-using Nexus.CryptoWallets.Application.Requests;
-using Nexus.CryptoWallets.Application.Responses;
 using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
-using Nexus.Transfers.Aggregates;
-using Nexus.Transfers.Application.Models;
-using Nexus.Transfers.Application.Requests;
 
 namespace Nexus.Administrators.Application.Contracts;
 
@@ -206,90 +197,6 @@ public interface IAdministrator
     Task<IOperationResult<SearchOperationsToAssignResponse>> SearchOperationsToAssignAsync(
         RequesterIdentity identity,
         SearchOperationsToAssignRequest request,
-        CancellationToken cancellationToken = default);
-
-    // ==========================================================================
-    // Bank accounts and crypto wallets
-    // ==========================================================================
-
-    Task<IOperationResult<BankAccount>> CreateBankAccountAsync(
-        RequesterIdentity identity,
-        CreateBankAccountRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<CryptoWallet>> CreateCryptoWalletAsync(
-        RequesterIdentity identity,
-        CreateCryptoWalletRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<CryptoWallet>> UpsertCryptoWalletAddressAsync(
-        RequesterIdentity identity,
-        UpsertCryptoWalletAddressRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<BankAccount>> GetBankAccountAsync(
-        RequesterIdentity identity,
-        string bankAccountId,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<CryptoWallet>> GetCryptoWalletAsync(
-        RequesterIdentity identity,
-        string cryptoWalletId,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<SearchBankAccountsResponse>> SearchBankAccountsAsync(
-        RequesterIdentity identity,
-        SearchBankAccountsRequest? request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<BankAccount>> UpdateBankAccountLabelAsync(
-        RequesterIdentity identity,
-        string bankAccountId,
-        string? label,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<SearchCryptoWalletsResponse>> SearchCryptoWalletsAsync(
-        RequesterIdentity identity,
-        SearchCryptoWalletsRequest? request,
-        CancellationToken cancellationToken = default);
-
-    // ==========================================================================
-    // Transfers
-    // ==========================================================================
-
-    Task<IOperationResult<Transfer>> ExecuteWithdrawalTransferAsync(
-        RequesterIdentity identity,
-        WithdrawalTransferRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<Transfer>> ExecuteBankAccountMovementTransferAsync(
-        RequesterIdentity identity,
-        BankAccountMovementRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<Transfer>> ExecuteCryptoWalletMovementTransferAsync(
-        RequesterIdentity identity,
-        CryptoWalletMovementRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<Transfer>> ExecutePayoutTransferAsync(
-        RequesterIdentity identity,
-        PayoutTransferRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<Transfer>> GetTransferAsync(
-        RequesterIdentity identity,
-        string transferId,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<TransferTimelineDetails>> GetTransferTimelineAsync(
-        RequesterIdentity identity,
-        string transferId,
-        CancellationToken cancellationToken = default);
-
-    Task<IOperationResult<SearchTransfersResponse>> SearchTransfersAsync(
-        RequesterIdentity identity,
-        SearchTransfersRequest? request,
         CancellationToken cancellationToken = default);
 
     // ==========================================================================
