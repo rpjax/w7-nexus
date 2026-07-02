@@ -1,4 +1,5 @@
-using Nexus.Administrators.Application.Requests;
+using Nexus.Operations.Application.Requests.Administrator;
+using Nexus.Accounts.Application.Requests.Administrator;
 using Nexus.Operations.Aggregates;
 using Nexus.Operations.Errors;
 using Nexus.Accounts.Errors;
@@ -20,7 +21,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task CreateOperationAsync_WithoutAdministratorRole_ReturnsUnauthorized()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var identity = _ctx.CreateRequesterIdentity("global-admin", isGlobalAdministrator: false);
 
         var result = await sut.CreateOperationAsync(identity, new CreateOperationRequest
@@ -36,7 +37,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_WithoutAdministratorRole_ReturnsUnauthorized()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var identity = _ctx.CreateRequesterIdentity("regular-user");
 
         var result = await sut.SearchOperationsAsync(identity, new SearchOperationsRequest
@@ -52,7 +53,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task CreateOperationAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.CreateOperationAsync(Identity(), default(CreateOperationRequest));
 
@@ -64,7 +65,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task CreateOperationAsync_ValidRequest_ReturnsOperationDetails()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.CreateOperationAsync(Identity(), new CreateOperationRequest
         {
@@ -83,7 +84,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task CreateOperationAsync_NameTooLong_PropagatesServiceError()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var tooLongName = new string('A', Operation.MaxNameLength + 1);
 
         var result = await sut.CreateOperationAsync(Identity(), new CreateOperationRequest
@@ -100,7 +101,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.SearchOperationsAsync(Identity(), default(SearchOperationsRequest));
 
@@ -112,7 +113,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_LimitZero_UsesDefaultLimitOfTwenty()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         for (var i = 0; i < 25; i++)
             await _ctx.SeedOperationAsync($"Operation {i:D2}");
 
@@ -133,7 +134,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_LimitAtOrAboveMaximum_ReturnsSearchLimitInvalid()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
@@ -149,7 +150,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_NegativeOffset_ReturnsSearchOffsetInvalid()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
         {
@@ -165,7 +166,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_KeywordTooLong_ReturnsSearchKeywordTooLong()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var tooLongKeyword = new string('k', Operation.MaxNameLength + 1);
 
         var result = await sut.SearchOperationsAsync(Identity(), new SearchOperationsRequest
@@ -182,7 +183,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_KeywordFilter_MatchesNameDescriptionAndId()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var target = await _ctx.SeedOperationAsync("UniqueAlpha", "beta description");
         await _ctx.SeedOperationAsync("Other Operation", "unrelated");
 
@@ -222,7 +223,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_AdministratorIdsFilter_ReturnsMatchingOperations()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         await _ctx.SeedOperationAsync("Op A", administratorIds: ["admin-1", "admin-2"]);
         await _ctx.SeedOperationAsync("Op B", administratorIds: ["admin-3"]);
         await _ctx.SeedOperationAsync("Op C", administratorIds: ["admin-1"]);
@@ -246,7 +247,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_Pagination_ReturnsCorrectPage()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         for (var i = 0; i < 5; i++)
             await _ctx.SeedOperationAsync($"Paged Op {i}");
 
@@ -268,7 +269,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsAsync_ReturnsEnrichedAdministratorsAndTeams()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var admin = await _ctx.SeedAccountAsync("globaladmin", id: "admin-1", roles: ["administrator"]);
         var leader = await _ctx.SeedAccountAsync("teamleader", id: "leader-1");
         var operatorAccount = await _ctx.SeedAccountAsync("operator1", id: "operator-1");
@@ -311,7 +312,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task DeleteOperationAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.DeleteOperationAsync(Identity(), default(DeleteOperationRequest));
 
@@ -323,7 +324,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task DeleteOperationAsync_ValidRequest_DeletesOperation()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var operation = await _ctx.SeedOperationAsync("To Delete");
         await _ctx.SeedTeamAsync(operation.Id, "Team To Delete");
 
@@ -342,7 +343,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task DeleteOperationAsync_NotFound_PropagatesError()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.DeleteOperationAsync(Identity(), new DeleteOperationRequest
         {
@@ -357,7 +358,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task AssignOperationAdministratorAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.AssignOperationAdministratorAsync(Identity(), default(AssignOperationAdministratorRequest));
 
@@ -369,7 +370,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task AssignOperationAdministratorAsync_ValidRequest_Succeeds()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op");
         _ctx.RegisterAccount("admin-42");
 
@@ -388,7 +389,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task AssignOperationAdministratorAsync_AlreadyAssigned_PropagatesError()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op", administratorIds: ["admin-42"]);
         _ctx.RegisterAccount("admin-42");
 
@@ -406,7 +407,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task UnassignOperationAdministratorAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.UnassignOperationAdministratorAsync(Identity(), default(UnassignOperationAdministratorRequest));
 
@@ -418,7 +419,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task UnassignOperationAdministratorAsync_ValidRequest_Succeeds()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op", administratorIds: ["admin-42"]);
 
         var result = await sut.UnassignOperationAdministratorAsync(Identity(), new UnassignOperationAdministratorRequest
@@ -436,7 +437,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task UnassignOperationAdministratorAsync_NotAssigned_PropagatesError()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var operation = await _ctx.SeedOperationAsync("Managed Op");
 
         var result = await sut.UnassignOperationAdministratorAsync(Identity(), new UnassignOperationAdministratorRequest
@@ -453,7 +454,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
 
         var result = await sut.SearchAccountsAsync(Identity(), default(SearchAccountsRequest));
 
@@ -465,7 +466,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_LimitZero_UsesDefaultLimitOfTwenty()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
         for (var i = 0; i < 25; i++)
             await _ctx.SeedAccountAsync($"user{i:D2}");
 
@@ -486,7 +487,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_LimitAtOrAboveMaximum_ReturnsSearchLimitInvalid()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
 
         var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
@@ -502,7 +503,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_NegativeOffset_ReturnsSearchOffsetInvalid()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
 
         var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
         {
@@ -518,7 +519,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_KeywordTooLong_ReturnsSearchKeywordTooLong()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
         var tooLongKeyword = new string('k', 201);
 
         var result = await sut.SearchAccountsAsync(Identity(), new SearchAccountsRequest
@@ -535,7 +536,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_KeywordFilter_MatchesUsernameAndId()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
         var target = await _ctx.SeedAccountAsync("UniqueAlpha");
         await _ctx.SeedAccountAsync("OtherUser");
 
@@ -564,7 +565,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchAccountsAsync_Pagination_ReturnsCorrectPage()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateAccountsAdministrator();
         for (var i = 0; i < 5; i++)
             await _ctx.SeedAccountAsync($"PagedUser{i}");
 
@@ -586,7 +587,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsToAssignAsync_NullRequest_ReturnsRequestBodyRequired()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
 
         var result = await sut.SearchOperationsToAssignAsync(Identity(), default(SearchOperationsToAssignRequest));
 
@@ -598,7 +599,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsToAssignAsync_LimitZero_UsesDefaultLimitOfTwenty()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         for (var i = 0; i < 25; i++)
             await _ctx.SeedOperationAsync($"Picker Op {i:D2}");
 
@@ -624,7 +625,7 @@ public sealed class AdministratorTests
     [Fact]
     public async Task SearchOperationsToAssignAsync_KeywordFiltersByName()
     {
-        var sut = _ctx.CreateAdministrator();
+        var sut = _ctx.CreateOperationsAdministrator();
         var target = await _ctx.SeedOperationAsync("Alpha Finance");
         await _ctx.SeedOperationAsync("Beta Retail");
 

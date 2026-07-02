@@ -8,14 +8,16 @@ using Nexus.Accounts.Infrastructure.Password;
 using OperationAdministratorRole = Nexus.OperationAdministrators.Application.Services.OperationAdministrator;
 using Nexus.TeamLeaders.Application.Services;
 using TeamLeaderRole = Nexus.TeamLeaders.Application.Services.TeamLeader;
-using AdministratorRole = Nexus.Administrators.Application.Services.Administrator;
+using OperationsAdministratorRole = Nexus.Operations.Application.Services.Administrator;
+using AccountsAdministratorRole = Nexus.Accounts.Application.Services.Administrator;
 using OperatorRole = Nexus.Operators.Application.Services.Operator;
-using Nexus.Administrators.Application.Contracts;
-using AdministratorTeamGatewayDetailsLoader = Nexus.Administrators.Application.Contracts.ITeamGatewayDetailsLoader;
-using AdministratorTeamGatewayLookup = Nexus.Administrators.Application.Models.TeamGatewayLookup;
+using Nexus.Operations.Application.Contracts;
+using OperationsTeamGatewayDetailsLoader = Nexus.Operations.Application.Contracts.ITeamGatewayDetailsLoader;
+using OperationsTeamGatewayLookup = Nexus.Operations.Application.Models.TeamGatewayLookup;
 using Nexus.OperationAdministrators.Application.Contracts;
 using OperationAdministratorTeamGatewayLookup = Nexus.OperationAdministrators.Application.Models.TeamGatewayLookup;
-using Nexus.Administrators.Application.Services;
+using Nexus.StrawMen.Application.Contracts;
+using Nexus.StrawMen.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Contracts;
@@ -339,28 +341,29 @@ internal sealed class ActorTestContext
             new PasswordValidator(),
             new PasswordHasher());
 
-    public AdministratorRole CreateAdministrator()
+    public AccountsAdministratorRole CreateAccountsAdministrator()
+    {
+        return new AccountsAdministratorRole(
+            new Nexus.Accounts.Application.Services.AdministratorAccessPolicy(),
+            new AdministratorAccountSearchService(Accounts),
+            new AdministratorAccountCommandService(CreateAccountUpdater()));
+    }
+
+    public OperationsAdministratorRole CreateOperationsAdministrator()
     {
         var teamGatewayLoader = new EmptyTeamGatewayDetailsLoader();
-        return new AdministratorRole(
-            new AdministratorAccessPolicy(),
+        return new OperationsAdministratorRole(
+            new Nexus.Operations.Application.Services.AdministratorAccessPolicy(),
             new AdministratorOperationSearchService(Operations, Teams, Accounts, teamGatewayLoader),
-            new AdministratorAccountSearchService(Accounts),
-            new AdministratorAccountCommandService(CreateAccountUpdater()),
             new AdministratorOperationCommandService(CreateOperationService()),
             new AdministratorTeamCommandService(CreateTeamService()),
             new AdministratorTeamOperatorCommandService(CreateTeamService()),
             new AdministratorOperatorAssignmentSearchService(Accounts),
             new AdministratorProfitShareAccountSearchService(Accounts),
-            new AdministratorOperationPickerSearchService(Operations),
-            new AdministratorPaymentSearchService(Payments, PaymentTestDoubles.PassthroughEnrichment()),
-            new AdministratorPaymentCommandService(
-                new PaymentService(Accounts, Payments, Operations),
-                PaymentTestDoubles.PassthroughEnrichment(),
-                ChargeTestDoubles.SplitCalculation()),
-            new StubAdministratorStrawManSettingsCommandService(),
-            new StubAdministratorStrawManSettingsQueryService());
+            new AdministratorOperationPickerSearchService(Operations));
     }
+
+    public OperationsAdministratorRole CreateAdministrator() => CreateOperationsAdministrator();
 
     public OperationAdministratorRole CreateOperationAdministrator()
     {
@@ -511,13 +514,13 @@ internal sealed class ActorTestContext
         GatewayCredentialsIdValidator.AddExisting(credentialsId);
 }
 
-internal sealed class EmptyTeamGatewayDetailsLoader : AdministratorTeamGatewayDetailsLoader
+internal sealed class EmptyTeamGatewayDetailsLoader : OperationsTeamGatewayDetailsLoader
 {
-    public Task<AdministratorTeamGatewayLookup> LoadAsync(
+    public Task<OperationsTeamGatewayLookup> LoadAsync(
         IReadOnlyList<Team> teams,
         IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
-        => Task.FromResult(new AdministratorTeamGatewayLookup());
+        => Task.FromResult(new OperationsTeamGatewayLookup());
 }
 
 internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
@@ -529,20 +532,3 @@ internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
         CancellationToken cancellationToken = default)
         => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
 }
-
-internal sealed class StubAdministratorStrawManSettingsCommandService : IAdministratorStrawManSettingsCommandService
-{
-    public Task<IResult<Nexus.StrawMen.Application.Contracts.StrawManSettingsDetails>> UpsertStrawManSettingsAsync(
-        Nexus.Authorization.Application.Models.RequesterIdentity identity,
-        string strawManId,
-        decimal movementFeePercentage) =>
-        throw new NotImplementedException();
-}
-
-internal sealed class StubAdministratorStrawManSettingsQueryService : IAdministratorStrawManSettingsQueryService
-{
-    public Task<IResult<Nexus.StrawMen.Application.Contracts.StrawManSettingsDetails>> GetStrawManSettingsAsync(
-        string strawManId) =>
-        throw new NotImplementedException();
-}
-

@@ -4,7 +4,9 @@ using Nexus.OperationAdministrators.Application.Contracts;
 using Nexus.OperationAdministrators.Application.Models;
 using Nexus.OperationAdministrators.Application.Responses.Models;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Contracts;
+using IOperationRepository = Nexus.Operations.Application.Contracts.IOperationRepository;
+using ITeamRepository = Nexus.Operations.Application.Contracts.ITeamRepository;
+using ITeamGatewayDetailsLoader = Nexus.OperationAdministrators.Application.Contracts.ITeamGatewayDetailsLoader;
 
 namespace Nexus.OperationAdministrators.Application.Mapping;
 

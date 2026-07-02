@@ -2,6 +2,7 @@ using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Application.Services;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Application.Services;
+using Nexus.Payments.Composition;
 using Nexus.Payments.Infrastructure.Notifications;
 using Nexus.Payments.Infrastructure.Persistance;
 using Nexus.Payments.Presentation;
@@ -18,6 +19,7 @@ public static class PaymentsServiceCollectionExtensions
         services.AddScoped<IGatewayPaymentWebhookService, GatewayPaymentWebhookService>();
         services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
         services.AddScoped<IAccountIdValidator, AccountIdValidator>();
+        services.AddNexusPaymentsAdministrator();
 
         return services;
     }

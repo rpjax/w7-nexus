@@ -9,7 +9,7 @@ type AccountSearchRow = {
 
 export async function searchAdministratorOperatorsToAssign(payload: SearchRequest) {
   return apiClient.post<{ total: number; items: AccountSearchRow[] }>(
-    '/api/administrator/teams/operators/search',
+    '/api/operations/administrator/teams/operators/search',
     {
       Limit: payload.limit,
       Offset: payload.offset,
@@ -21,7 +21,7 @@ export async function searchAdministratorOperatorsToAssign(payload: SearchReques
 
 export async function searchAdministratorProfitShareAccounts(payload: SearchRequest) {
   return apiClient.post<{ total: number; items: AccountSearchRow[] }>(
-    '/api/administrator/teams/profit-share-accounts/search',
+    '/api/operations/administrator/teams/profit-share-accounts/search',
     {
       Limit: payload.limit,
       Offset: payload.offset,

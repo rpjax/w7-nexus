@@ -1,7 +1,7 @@
 using Aidan.Core.Linq.Extensions;
-using Nexus.Administrators.Application.Requests;
-using AdminAssignOperatorToTeamRequest = Nexus.Administrators.Application.Requests.AssignOperatorToTeamRequest;
-using AdminSearchOperatorsToAssignRequest = Nexus.Administrators.Application.Requests.SearchOperatorsToAssignRequest;
+using Nexus.Operations.Application.Requests.Administrator;
+using AdminAssignOperatorToTeamRequest = Nexus.Operations.Application.Requests.Administrator.AssignOperatorToTeamRequest;
+using AdminSearchOperatorsToAssignRequest = Nexus.Operations.Application.Requests.Administrator.SearchOperatorsToAssignRequest;
 using TeamLeaderSearchOperatorsToAssignRequest = Nexus.TeamLeaders.Application.Requests.SearchOperatorsToAssignRequest;
 using Nexus.Tests.Support;
 using Xunit;

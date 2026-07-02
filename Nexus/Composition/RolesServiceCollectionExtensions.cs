@@ -1,4 +1,3 @@
-using Nexus.Administrators.Composition;
 using Nexus.Authorization.Composition;
 using Nexus.OperationAdministrators.Composition;
 using Nexus.Operators.Composition;
@@ -17,9 +16,6 @@ public static class RolesServiceCollectionExtensions
 
         // Operation administrator
         services.AddNexusOperationAdministrator();
-
-        // Administrator
-        services.AddNexusAdministrator();
 
         // Team leader
         services.AddNexusTeamLeader();

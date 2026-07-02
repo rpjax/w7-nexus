@@ -1,5 +1,6 @@
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Accounts.Application.Services;
+using Nexus.Accounts.Composition;
 using Nexus.Accounts.Infrastructure.Password;
 using Nexus.Accounts.Infrastructure.Persistance;
 using Nexus.Authentication.Application.Contracts;
@@ -18,6 +19,7 @@ public static class AccountsServiceCollectionExtensions
         services.AddScoped<IPasswordVerifier, PasswordVerifier>();
         services.AddScoped<IAccountCreator, AccountCreator>();
         services.AddScoped<IAccountUpdater, AccountUpdater>();
+        services.AddNexusAccountsAdministrator();
 
         services.AddSingleton<IAdministratorSignUpTokenService, AdministratorSignUpTokenService>();
         services.AddScoped<IJwtTokenService, JwtTokenService>();

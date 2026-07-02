@@ -72,7 +72,7 @@ public sealed class PaymentSearchServiceTests
         var payments = new InMemoryPaymentRepository();
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-a", status: PaymentStatus.Paid, paidAt: DateTime.UtcNow));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+        var sut = new Nexus.Payments.Application.Services.AdministratorPaymentSearchService(
             payments,
             PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(null);
@@ -89,7 +89,7 @@ public sealed class PaymentSearchServiceTests
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-b", operationId: "op-1", status: PaymentStatus.Paid, paidAt: DateTime.UtcNow));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-c", operationId: "op-2", status: PaymentStatus.Pending));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+        var sut = new Nexus.Payments.Application.Services.AdministratorPaymentSearchService(
             payments,
             PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(new SearchPaymentsRequest
@@ -124,7 +124,7 @@ public sealed class PaymentSearchServiceTests
             withdrawnAt: DateTime.UtcNow,
             distributedAt: DateTime.UtcNow));
 
-        var sut = new Nexus.Administrators.Application.Services.AdministratorPaymentSearchService(
+        var sut = new Nexus.Payments.Application.Services.AdministratorPaymentSearchService(
             payments,
             PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(new SearchPaymentsRequest

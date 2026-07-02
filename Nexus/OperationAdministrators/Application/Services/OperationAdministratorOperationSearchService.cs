@@ -8,7 +8,9 @@ using Nexus.OperationAdministrators.Application.Mapping;
 using Nexus.OperationAdministrators.Application.Requests;
 using Nexus.OperationAdministrators.Application.Responses;
 using Nexus.Operations.Aggregates;
-using Nexus.Operations.Application.Contracts;
+using IOperationRepository = Nexus.Operations.Application.Contracts.IOperationRepository;
+using ITeamRepository = Nexus.Operations.Application.Contracts.ITeamRepository;
+using ITeamGatewayDetailsLoader = Nexus.OperationAdministrators.Application.Contracts.ITeamGatewayDetailsLoader;
 using Nexus.Operations.Errors;
 
 namespace Nexus.OperationAdministrators.Application.Services;

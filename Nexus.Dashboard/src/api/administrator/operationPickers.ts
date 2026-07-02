@@ -8,7 +8,7 @@ type OperationSearchRow = {
 
 export async function searchAdministratorOperationsToAssign(payload: SearchRequest) {
   return apiClient.post<{ total: number; items: OperationSearchRow[] }>(
-    '/api/administrator/operations/to-assign/search',
+    '/api/operations/administrator/to-assign/search',
     {
       Limit: payload.limit,
       Offset: payload.offset,

@@ -2,7 +2,7 @@ import { apiClient } from '../client';
 import type { AccountRow, SearchRequest, SearchResponse } from '../types';
 
 export async function searchAdministratorAccounts(payload: SearchRequest) {
-  return apiClient.post<SearchResponse<AccountRow>>('/api/administrator/accounts/search', {
+  return apiClient.post<SearchResponse<AccountRow>>('/api/accounts/administrator/search', {
     Limit: payload.limit,
     Offset: payload.offset,
     Keyword: payload.keyword ?? null,
@@ -10,28 +10,28 @@ export async function searchAdministratorAccounts(payload: SearchRequest) {
 }
 
 export async function grantAdministratorAccountRole(accountId: string, role: string) {
-  return apiClient.post<void>('/api/administrator/accounts/roles', {
+  return apiClient.post<void>('/api/accounts/administrator/roles', {
     AccountId: accountId,
     Role: role,
   }, { fallbackError: 'Não foi possível conceder a função.' });
 }
 
 export async function revokeAdministratorAccountRole(accountId: string, role: string) {
-  return apiClient.deleteWithBody<void>('/api/administrator/accounts/roles', {
+  return apiClient.deleteWithBody<void>('/api/accounts/administrator/roles', {
     AccountId: accountId,
     Role: role,
   }, { fallbackError: 'Não foi possível remover a função.' });
 }
 
 export async function grantAdministratorAccountPermission(accountId: string, permission: string) {
-  return apiClient.post<void>('/api/administrator/accounts/permissions', {
+  return apiClient.post<void>('/api/accounts/administrator/permissions', {
     AccountId: accountId,
     Permission: permission,
   }, { fallbackError: 'Não foi possível conceder a permissão.' });
 }
 
 export async function revokeAdministratorAccountPermission(accountId: string, permission: string) {
-  return apiClient.deleteWithBody<void>('/api/administrator/accounts/permissions', {
+  return apiClient.deleteWithBody<void>('/api/accounts/administrator/permissions', {
     AccountId: accountId,
     Permission: permission,
   }, { fallbackError: 'Não foi possível remover a permissão.' });

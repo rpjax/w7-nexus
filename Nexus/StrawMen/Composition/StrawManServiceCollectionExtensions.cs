@@ -14,6 +14,7 @@ public static class StrawManServiceCollectionExtensions
         services.AddScoped<IStrawManSettingsQueryService, StrawManSettingsQueryService>();
         services.AddScoped<IStrawManSettingsCommandService, StrawManSettingsCommandService>();
         services.AddScoped<IStrawMan, StrawMan>();
+        services.AddNexusStrawMenAdministrator();
 
         return services;
     }

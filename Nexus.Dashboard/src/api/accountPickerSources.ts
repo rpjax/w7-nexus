@@ -18,19 +18,19 @@ import {
   searchTeamLeaderProfitShareAccountsForPicker,
 } from './teamLeader/accountPickers';
 
-/** Busca contas via `POST /api/administrator/accounts/search`. */
+/** Busca contas via `POST /api/accounts/administrator/search`. */
 export const searchAdministratorAccountsPicker = toAccountPickerSearchFn(searchAdministratorAccountsForPicker);
 
-/** Busca laranjas via `POST /api/administrator/accounts/search` (filtro StrawMan). */
+/** Busca laranjas via `POST /api/accounts/administrator/search` (filtro StrawMan). */
 export const searchAdministratorStrawMenPicker = toAccountPickerSearchFn(searchAdministratorStrawMenForPicker);
 
-/** Busca operadores OLX via `POST /api/administrator/accounts/search` (filtro OlxOperator). */
+/** Busca operadores OLX via `POST /api/accounts/administrator/search` (filtro OlxOperator). */
 export const searchAdministratorOlxOperatorsPicker = toAccountPickerSearchFn(searchAdministratorOlxOperatorsForPicker);
 
-/** Busca operadores via `POST /api/administrator/teams/operators/search`. */
+/** Busca operadores via `POST /api/operations/administrator/teams/operators/search`. */
 export const searchAdministratorOperatorsPicker = toAccountPickerSearchFn(searchAdministratorOperatorsForPicker);
 
-/** Busca contas de repasse via `POST /api/administrator/teams/profit-share-accounts/search`. */
+/** Busca contas de repasse via `POST /api/operations/administrator/teams/profit-share-accounts/search`. */
 export const searchAdministratorProfitShareAccountsPicker = toAccountPickerSearchFn(
   searchAdministratorProfitShareAccountsForPicker,
 );

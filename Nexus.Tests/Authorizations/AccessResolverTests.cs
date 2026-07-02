@@ -1,6 +1,5 @@
 using Nexus.Accounts.Aggregates;
 using Nexus.OperationAdministrators.Application.Services;
-using Nexus.Administrators.Application.Services;
 using Nexus.TeamLeaders.Application.Services;
 using Nexus.Operators.Application.Services;
 using Nexus.StrawMen.Application.Services;
@@ -387,7 +386,7 @@ public sealed class AccessResolverTests
     private OperationAdministratorAccessPolicy CreateOperationAdministratorPolicy()
         => new(_ctx.Operations, _ctx.Teams);
 
-    private static AdministratorAccessPolicy CreateAdministratorPolicy()
+    private static Nexus.Accounts.Application.Services.AdministratorAccessPolicy CreateAdministratorPolicy()
         => new();
 
     private TeamLeaderAccessPolicy CreateTeamLeaderPolicy()

@@ -1,4 +1,4 @@
-﻿using Aidan.Core.Errors;
+using Aidan.Core.Errors;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
