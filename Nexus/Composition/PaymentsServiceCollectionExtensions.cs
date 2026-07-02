@@ -20,6 +20,8 @@ public static class PaymentsServiceCollectionExtensions
         services.AddScoped<IPaymentNotifier, SignalRPaymentNotifier>();
         services.AddScoped<IAccountIdValidator, AccountIdValidator>();
         services.AddNexusPaymentsAdministrator();
+        services.AddNexusPaymentsOperator();
+        services.AddNexusPaymentsStrawMan();
 
         return services;
     }

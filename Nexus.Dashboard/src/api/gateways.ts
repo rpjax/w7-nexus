@@ -2,7 +2,7 @@ import { apiClient } from './client';
 import type { GatewayPrefix, KeyPairCredential, SearchRequest, SearchResponse, TokenCredential } from './types';
 
 function apiPath(prefix: GatewayPrefix, segment: string) {
-  return `/api/${prefix}/${segment}`;
+  return `/api/gateways/administrator/${prefix}/${segment}`;
 }
 
 export async function searchGatewayCredentials(prefix: GatewayPrefix, payload: SearchRequest) {

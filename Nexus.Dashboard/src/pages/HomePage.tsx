@@ -4,7 +4,7 @@ import { searchAdministratorOperations } from '../api/administrator/operations';
 import { searchOlxAdminAdPatches } from '../api/olx/admin';
 import { searchOlxOperatorAdPatches } from '../api/olx/operator';
 import { searchGatewayCredentials } from '../api/gateways';
-import { searchOperatorOperations } from '../api/operator/operations';
+import { searchOperatorOperations } from '../api/operations/operator';
 import { useAuth } from '../auth/AuthContext';
 import { canUseOperatorPanel, canUseOlxPanel, canUseStrawManPanel, isAdministrator, isOlxOperator } from '../auth/roles';
 import { StatCard } from '../components/StatCard';

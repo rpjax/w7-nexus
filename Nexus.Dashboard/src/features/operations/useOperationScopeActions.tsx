@@ -28,16 +28,16 @@ import {
   unassignGatewayAccountFromOperation as opAdminUnassignGateway,
   unassignGatewayAccountGroupFromOperation as opAdminUnassignGatewayGroup,
   unassignStrawManFromOperation as opAdminUnassignStrawMan,
-} from '../../api/operationAdministrator/operationGateway';
+} from '../../api/operations/operationAdministrator/operationGateway';
 import {
   createOperationTeam as opAdminCreateTeam,
   deleteOperationTeam as opAdminDeleteTeam,
-} from '../../api/operationAdministrator/teams';
+} from '../../api/operations/operationAdministrator/teams';
 import {
   assignOperatorToTeam as teamLeaderAssignOperator,
   setOperatorProfitShareRule as teamLeaderSetProfitShare,
   unassignOperatorFromTeam as teamLeaderUnassignOperator,
-} from '../../api/teamLeader/teams';
+} from '../../api/operations/teamLeader/teams';
 import type { OperationDetails, OperationWithLedTeamsDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import type { AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';

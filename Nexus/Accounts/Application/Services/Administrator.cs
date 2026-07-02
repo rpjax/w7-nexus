@@ -22,6 +22,14 @@ public sealed class Administrator : IAdministrator
         _accountCommands = accountCommands;
     }
 
+    public Task<IOperationResult<CreateAccountResponse>> CreateAccountAsync(
+        RequesterIdentity identity,
+        CreateAccountRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        return ExecuteAsync(identity, () => _accountCommands.CreateAccountAsync(request), cancellationToken);
+    }
+
     public Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
         RequesterIdentity identity,
         SearchAccountsRequest request,

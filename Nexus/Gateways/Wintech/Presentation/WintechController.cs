@@ -1,34 +1,20 @@
-using Aidan.Core.Errors;
-using Nexus.Gateways.Application.Models;
-using Nexus.Gateways.Wintech.Application.Contracts;
-using Aidan.Core.Linq.Extensions;
-using Aidan.Core.Patterns;
-using Aidan.Web.Controllers;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.DependencyInjection;
-using Nexus.Gateways.Wintech.Application.Services;
-using Nexus.Gateways.Wintech.Application.Models;
-using Nexus.Gateways.Wintech.Errors;
+using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Presentation;
 
 namespace Nexus.Gateways.Wintech.Presentation;
 
 [Route("api/wintech")]
-public class WintechController : WebController
+public class WintechController : ControllerBase
 {
-    private IWintechApiKeysService _credentialsService { get; }
-    private IWintechApiCredentialsRepository _credentialsRepository { get; }
     private IServiceScopeFactory _scopeFactory { get; }
     private ILogger<WintechController> _logger { get; }
 
     public WintechController(
-        IWintechApiKeysService credentialsService,
-        IWintechApiCredentialsRepository credentialsRepository,
         IServiceScopeFactory scopeFactory,
         ILogger<WintechController> logger)
     {
-        _credentialsService = credentialsService;
-        _credentialsRepository = credentialsRepository;
         _scopeFactory = scopeFactory;
         _logger = logger;
     }
@@ -48,135 +34,5 @@ public class WintechController : WebController
             (svc, json, ct) => svc.ProcessStandardGatewayWebhookAsync(PaymentGateway.Wintech, json, ct));
 
         return Ok();
-    }
-
-    [HttpPost("search")]
-    public async Task<ActionResult> SearchCredentialsAsync([FromBody] SearchWintechCredentialsRequest? request)
-    {
-        request ??= new SearchWintechCredentialsRequest();
-
-        var limit = request.Limit <= 0 ? 30 : request.Limit;
-        var offset = request.Offset;
-        var keyword = request.Keyword?.Trim();
-
-        if (limit < 0 || limit >= 1000)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Wintech.SEARCH_LIMIT_INVALID")
-                .WithMessage("O limite deve estar entre 1 e 999.")
-                .Build());
-        }
-
-        if (offset < 0)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Wintech.SEARCH_OFFSET_INVALID")
-                .WithMessage("O deslocamento não pode ser negativo.")
-                .Build());
-        }
-
-        if (!string.IsNullOrWhiteSpace(keyword) && keyword.Length > 200)
-        {
-            return ProblemResponse(422, Error.Create()
-                .WithCode("Wintech.SEARCH_KEYWORD_TOO_LONG")
-                .WithMessage("A palavra-chave pode ter no máximo 200 caracteres.")
-                .Build());
-        }
-
-        var query = _credentialsRepository.AsQueryable();
-
-        if (request.EnabledOnly == true)
-            query = query.Where(c => c.Enabled);
-        else if (request.EnabledOnly == false)
-            query = query.Where(c => !c.Enabled);
-
-        if (!string.IsNullOrWhiteSpace(keyword))
-        {
-            var term = keyword.ToLowerInvariant();
-            query = query.Where(c =>
-                c.Id.ToLower().Contains(term)
-                || c.Name.ToLower().Contains(term)
-                || c.PublicKey.ToLower().Contains(term)
-                || c.SecretKey.ToLower().Contains(term)
-                || (c.StrawManId != null && c.StrawManId.ToLower().Contains(term)));
-        }
-
-        var total = await query.CountAsync();
-
-        var items = await query
-            .OrderBy(c => c.Name)
-            .Skip(offset)
-            .Take(limit)
-            .ToArrayAsync();
-
-        return Ok(new
-        {
-            Total = total,
-            Items = items,
-        });
-    }
-
-    [HttpPost("credentials")]
-    public async Task<ActionResult> AddCredentialsAsync([FromBody] AddWintechCredentialsRequest request)
-    {
-        if (request is null)
-            return BadRequest("O corpo da requisição é obrigatório.");
-
-        var result = await _credentialsService.AddCredentialsAsync(request);
-        if (result.IsFailure)
-            return ProblemResponse(422, result.Errors);
-
-        return Ok(result.Value);
-    }
-
-    [HttpPut("credentials")]
-    public async Task<ActionResult> UpdateCredentialsAsync([FromBody] UpdateWintechCredentialsRequest request)
-    {
-        if (request is null)
-            return BadRequest("O corpo da requisição é obrigatório.");
-
-        var result = await _credentialsService.UpdateCredentialsAsync(request);
-        if (result.IsFailure)
-        {
-            if (result.Errors.Any(e => e.Code == WintechErrorCodes.CredentialNotFound))
-                return ProblemResponse(404, result.Errors);
-            return ProblemResponse(422, result.Errors);
-        }
-
-        return NoContent();
-    }
-
-    [HttpPatch("credentials/enabled")]
-    public async Task<ActionResult> SetCredentialEnabledAsync([FromBody] SetWintechCredentialEnabledRequest request)
-    {
-        if (request is null)
-            return BadRequest("O corpo da requisição é obrigatório.");
-
-        var result = await _credentialsService.SetCredentialEnabledAsync(request);
-        if (result.IsFailure)
-        {
-            if (result.Errors.Any(e => e.Code == WintechErrorCodes.CredentialNotFound))
-                return ProblemResponse(404, result.Errors);
-            return ProblemResponse(422, result.Errors);
-        }
-
-        return NoContent();
-    }
-
-    [HttpDelete("credentials")]
-    public async Task<ActionResult> DeleteCredentialsAsync([FromQuery] string id)
-    {
-        if (string.IsNullOrWhiteSpace(id))
-            return BadRequest("O parâmetro de consulta id é obrigatório.");
-
-        var result = await _credentialsService.DeleteCredentialsAsync(id);
-        if (result.IsFailure)
-        {
-            if (result.Errors.Any(e => e.Code == WintechErrorCodes.CredentialNotFound))
-                return ProblemResponse(404, result.Errors);
-            return ProblemResponse(422, result.Errors);
-        }
-
-        return NoContent();
     }
 }

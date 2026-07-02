@@ -1,6 +1,6 @@
 import { getAdministratorPayment } from '../../api/administrator/payments';
-import { getOperatorPayment } from '../../api/operator/payments';
-import { getStrawManPayment } from '../../api/strawMan/payments';
+import { getOperatorPayment } from '../../api/payments/operator';
+import { getStrawManPayment } from '../../api/payments/strawMan';
 import type { PaymentRow } from '../../api/types';
 import type { PaymentScope } from './paymentPaths';
 

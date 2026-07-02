@@ -7,6 +7,11 @@ namespace Nexus.Accounts.Application.Contracts;
 
 public interface IAdministrator
 {
+    Task<IOperationResult<CreateAccountResponse>> CreateAccountAsync(
+        RequesterIdentity identity,
+        CreateAccountRequest request,
+        CancellationToken cancellationToken = default);
+
     Task<IOperationResult<SearchAccountsResponse>> SearchAccountsAsync(
         RequesterIdentity identity,
         SearchAccountsRequest request,

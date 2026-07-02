@@ -196,7 +196,7 @@ export function PaymentsPixPage() {
         </div>
 
         <footer className="pix-workspace__footer">
-          <span className="pix-workspace__endpoint muted small">POST /api/charges/pix</span>
+          <span className="pix-workspace__endpoint muted small">POST /api/charges/administrator/pix</span>
           <button
             type="button"
             className="btn btn-primary btn-with-icon pix-workspace__submit"

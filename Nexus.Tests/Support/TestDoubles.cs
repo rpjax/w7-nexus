@@ -5,31 +5,26 @@ using Aidan.Mongo.Linq;
 using Nexus.Accounts.Application.Services;
 using Nexus.Accounts.Aggregates;
 using Nexus.Accounts.Infrastructure.Password;
-using OperationAdministratorRole = Nexus.OperationAdministrators.Application.Services.OperationAdministrator;
-using Nexus.TeamLeaders.Application.Services;
-using TeamLeaderRole = Nexus.TeamLeaders.Application.Services.TeamLeader;
+using OperationAdministratorRole = Nexus.Operations.Application.Services.OperationAdministrator;
+using TeamLeaderRole = Nexus.Operations.Application.Services.TeamLeader;
 using OperationsAdministratorRole = Nexus.Operations.Application.Services.Administrator;
 using AccountsAdministratorRole = Nexus.Accounts.Application.Services.Administrator;
-using OperatorRole = Nexus.Operators.Application.Services.Operator;
+using OperationsOperatorRole = Nexus.Operations.Application.Services.Operator;
+using PaymentsOperatorRole = Nexus.Payments.Application.Services.Operator;
 using Nexus.Operations.Application.Contracts;
 using OperationsTeamGatewayDetailsLoader = Nexus.Operations.Application.Contracts.ITeamGatewayDetailsLoader;
 using OperationsTeamGatewayLookup = Nexus.Operations.Application.Models.TeamGatewayLookup;
-using Nexus.OperationAdministrators.Application.Contracts;
-using OperationAdministratorTeamGatewayLookup = Nexus.OperationAdministrators.Application.Models.TeamGatewayLookup;
 using Nexus.StrawMen.Application.Contracts;
 using Nexus.StrawMen.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Application.Services;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Aggregates;
-using Nexus.OperationAdministrators.Application.Services;
-using Nexus.Operators.Application.Services;
-using Nexus.Operations.Aggregates;
 using Nexus.Operations.Application.Services;
-using Nexus.Operations.Application.Contracts;
+using Nexus.Payments.Application.Services;
+using Nexus.Operations.Aggregates;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
-using Nexus.Payments.Application.Services;
 using Nexus.Tests.Charges;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Accounts;
@@ -341,12 +336,19 @@ internal sealed class ActorTestContext
             new PasswordValidator(),
             new PasswordHasher());
 
+    public AccountCreator CreateAccountCreator()
+        => new(
+            Accounts,
+            new UsernameValidator(Accounts),
+            new PasswordValidator(),
+            new PasswordHasher());
+
     public AccountsAdministratorRole CreateAccountsAdministrator()
     {
         return new AccountsAdministratorRole(
             new Nexus.Accounts.Application.Services.AdministratorAccessPolicy(),
             new AdministratorAccountSearchService(Accounts),
-            new AdministratorAccountCommandService(CreateAccountUpdater()));
+            new AdministratorAccountCommandService(CreateAccountCreator(), CreateAccountUpdater()));
     }
 
     public OperationsAdministratorRole CreateOperationsAdministrator()
@@ -367,7 +369,7 @@ internal sealed class ActorTestContext
 
     public OperationAdministratorRole CreateOperationAdministrator()
     {
-        var teamGatewayLoader = new EmptyOperationAdministratorTeamGatewayDetailsLoader();
+        var teamGatewayLoader = new EmptyTeamGatewayDetailsLoader();
         var accountSearch = new OperationAdministratorAccountSearchService(Accounts);
         return new OperationAdministratorRole(
             new OperationAdministratorAccessPolicy(Operations, Teams),
@@ -398,10 +400,14 @@ internal sealed class ActorTestContext
             new TeamLeaderOperatorAssignmentSearchService(Teams, Accounts),
             new TeamLeaderProfitShareAccountSearchService(Teams, Accounts));
 
-    public OperatorRole CreateOperator()
+    public OperationsOperatorRole CreateOperationsOperator()
         => new(
-            new OperatorAccessPolicy(),
-            new OperatorOperationSearchService(Operations, Teams, Accounts),
+            new Nexus.Operations.Application.Services.OperatorAccessPolicy(),
+            new OperatorOperationSearchService(Operations, Teams, Accounts));
+
+    public PaymentsOperatorRole CreatePaymentsOperator()
+        => new(
+            new Nexus.Payments.Application.Services.OperatorAccessPolicy(),
             new OperatorPaymentSearchService(Payments, Teams, PaymentTestDoubles.PassthroughEnrichment()));
 
     public UnauthenticatedUser CreateUnauthenticatedUser(InMemoryAccountRepository? accounts = null)
@@ -521,14 +527,4 @@ internal sealed class EmptyTeamGatewayDetailsLoader : OperationsTeamGatewayDetai
         IReadOnlyList<Operation>? operations = null,
         CancellationToken cancellationToken = default)
         => Task.FromResult(new OperationsTeamGatewayLookup());
-}
-
-internal sealed class EmptyOperationAdministratorTeamGatewayDetailsLoader
-    : Nexus.OperationAdministrators.Application.Contracts.ITeamGatewayDetailsLoader
-{
-    public Task<OperationAdministratorTeamGatewayLookup> LoadAsync(
-        IReadOnlyList<Team> teams,
-        IReadOnlyList<Operation>? operations = null,
-        CancellationToken cancellationToken = default)
-        => Task.FromResult(new OperationAdministratorTeamGatewayLookup());
 }

@@ -1,0 +1,8 @@
+namespace Nexus.Operations.Application.Requests.TeamLeader;
+
+public class SearchLedTeamsRequest
+{
+    public int Limit { get; set; }
+    public int Offset { get; set; }
+    public string? Keyword { get; set; }
+}

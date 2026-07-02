@@ -14,6 +14,9 @@ public static class OperationsServiceCollectionExtensions
         services.AddScoped<ITeamRepository, MongoTeamRepository>();
         services.AddScoped<ITeamService, TeamService>();
         services.AddNexusOperationsAdministrator();
+        services.AddNexusOperationsOperationAdministrator();
+        services.AddNexusOperationsTeamLeader();
+        services.AddNexusOperationsOperator();
 
         return services;
     }

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { createAccount } from '../api/accounts';
+import { createAdministratorAccount } from '../api/administrator/accounts';
 import { searchAdministratorAccounts } from '../api/administrator/accounts';
 import type { AccountRow } from '../api/types';
 import { AccountCard } from '../components/admin/AccountCard';
@@ -58,7 +58,7 @@ export function AccountsPage() {
         notifyError('Usuário e senha são obrigatórios.');
         return;
       }
-      const result = await createAccount(username.trim(), password);
+      const result = await createAdministratorAccount(username.trim(), password);
       if (!result.ok) {
         notifyError(result.error);
         return;

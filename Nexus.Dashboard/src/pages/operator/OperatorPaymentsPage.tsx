@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { searchOperatorPayments } from '../../api/operator/payments';
+import { searchOperatorPayments } from '../../api/payments/operator';
 import type { PaymentRow } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { EmptyState } from '../../components/EmptyState';

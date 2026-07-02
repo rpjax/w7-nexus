@@ -12,6 +12,7 @@ public static class ChargesServiceCollectionExtensions
         services.AddScoped<IChargeProfitShareResolver, ChargeProfitShareResolver>();
         services.AddScoped<IChargeSplitCalculationService, ChargeSplitCalculationService>();
         services.AddScoped<IChargeService, ChargeService>();
+        services.AddNexusChargesAdministrator();
         return services;
     }
 }

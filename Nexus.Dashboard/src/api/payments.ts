@@ -6,7 +6,7 @@ export async function generatePix(payload: {
   amount: number;
   operatorId?: string | null;
 }) {
-  return apiClient.post<PixChargeResult>('/api/charges/pix', {
+  return apiClient.post<PixChargeResult>('/api/charges/administrator/pix', {
     OperationId: payload.operationId,
     Amount: payload.amount,
     OperatorId: payload.operatorId ?? null,

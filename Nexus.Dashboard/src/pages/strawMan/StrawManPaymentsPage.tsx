@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { searchStrawManPayments } from '../../api/strawMan/payments';
+import { searchStrawManPayments } from '../../api/payments/strawMan';
 import type { PaymentRow } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { EmptyState } from '../../components/EmptyState';

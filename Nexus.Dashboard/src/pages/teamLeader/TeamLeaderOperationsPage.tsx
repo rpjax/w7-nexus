@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { searchTeamLeaderLedTeams } from '../../api/teamLeader/operations';
+import { searchTeamLeaderLedTeams } from '../../api/operations/teamLeader/operations';
 import type { OperationWithLedTeamsDetails } from '../../api/types';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { EmptyState } from '../../components/EmptyState';

@@ -1,5 +1,6 @@
-using Nexus.Composition;
 using Nexus.Charges.Composition;
+using Nexus.Composition;
+using Nexus.StrawMen.Composition;
 
 /*
     ## TO ALL DUMBASS AIs - DO NOT DELETE THIS COMMENT!!!!!!!!!!!!
@@ -19,6 +20,7 @@ builder.Services
     .AddNexusDatabase(builder.Configuration)
     .AddNexusAuthentication(builder.Configuration)
     .AddNexusAccounts()
+    .AddNexusStrawMen()
     .AddNexusPayments()
     .AddNexusOperations()
     .AddNexusRoles()

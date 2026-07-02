@@ -32,7 +32,7 @@ import {
   unassignGatewayAccountGroupFromTeam as opAdminUnassignGatewayGroup,
   unassignOperationTeamLeader as opAdminUnassignLeader,
   unassignStrawManFromTeam as opAdminUnassignStrawMan,
-} from '../../api/operationAdministrator/teams';
+} from '../../api/operations/operationAdministrator/teams';
 import type { OperatorDetails, ProfitShareCutInput, TeamDetails } from '../../api/types';
 import type { AdminTeamPanelActions } from '../../components/admin/adminTeamTypes';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';

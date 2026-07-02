@@ -6,6 +6,7 @@ namespace Nexus.Accounts.Application.Contracts;
 
 public interface IAdministratorAccountCommandService
 {
+    Task<IResult<CreateAccountResponse>> CreateAccountAsync(CreateAccountRequest request);
     Task<IResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(GrantAccountRoleRequest request);
     Task<IResult<RevokeAccountRoleResponse>> RevokeAccountRoleAsync(RevokeAccountRoleRequest request);
     Task<IResult<GrantAccountPermissionResponse>> GrantAccountPermissionAsync(GrantAccountPermissionRequest request);

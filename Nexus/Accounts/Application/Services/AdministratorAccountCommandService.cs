@@ -1,6 +1,7 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Accounts.Application.Contracts;
+using Nexus.Accounts.Application.Mapping;
 using Nexus.Accounts.Application.Requests.Administrator;
 using Nexus.Accounts.Application.Responses.Administrator;
 using Nexus.Accounts.Errors;
@@ -9,11 +10,35 @@ namespace Nexus.Accounts.Application.Services;
 
 public sealed class AdministratorAccountCommandService : IAdministratorAccountCommandService
 {
+    private IAccountCreator _accountCreator { get; }
     private IAccountUpdater _accountUpdater { get; }
 
-    public AdministratorAccountCommandService(IAccountUpdater accountUpdater)
+    public AdministratorAccountCommandService(
+        IAccountCreator accountCreator,
+        IAccountUpdater accountUpdater)
     {
+        _accountCreator = accountCreator;
         _accountUpdater = accountUpdater;
+    }
+
+    public async Task<IResult<CreateAccountResponse>> CreateAccountAsync(CreateAccountRequest request)
+    {
+        if (request is null)
+            return RequestBodyRequiredResult<CreateAccountResponse>();
+
+        var createResult = await _accountCreator.CreateAccountAsync(
+            request.Username,
+            request.Password,
+            request.Roles,
+            request.Permissions);
+
+        if (createResult.IsFailure)
+            return Result<CreateAccountResponse>.Failure(createResult.Errors);
+
+        return Result<CreateAccountResponse>.Success(new CreateAccountResponse
+        {
+            Account = createResult.Value!.ToAccountDetails(),
+        });
     }
 
     public async Task<IResult<GrantAccountRoleResponse>> GrantAccountRoleAsync(GrantAccountRoleRequest request)

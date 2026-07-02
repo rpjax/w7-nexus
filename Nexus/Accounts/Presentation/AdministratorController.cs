@@ -22,6 +22,19 @@ public sealed class AdministratorController : NexusController
         _identityResolver = identityResolver;
     }
 
+    [HttpPost]
+    public async Task<ActionResult> CreateAccountAsync(
+        [FromBody] CreateAccountRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+
+        return ToOperationResult(await _administrator.CreateAccountAsync(
+            identity,
+            request,
+            cancellationToken));
+    }
+
     [HttpPost("search")]
     public async Task<ActionResult> SearchAccountsAsync(
         [FromBody] SearchAccountsRequest request,

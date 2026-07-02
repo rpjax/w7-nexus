@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getAdministratorStrawManSettings, upsertStrawManSettings } from '../../api/administrator/strawMen';
+import { getAdministratorStrawManSettings, upsertStrawManSettings } from '../../api/strawMen/administrator';
 import { searchAdministratorStrawMenPicker } from '../../api/accountPickerSources';
 import type { StrawManSettings } from '../../api/types';
 import { AccountPickerModal } from '../../components/AccountPickerModal';

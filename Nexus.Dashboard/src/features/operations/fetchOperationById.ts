@@ -1,7 +1,7 @@
 import { searchAdministratorOperations } from '../../api/administrator/operations';
-import { searchOperationAdministratorOperations } from '../../api/operationAdministrator/operations';
-import { searchOperatorOperations } from '../../api/operator/operations';
-import { searchTeamLeaderLedTeams } from '../../api/teamLeader/operations';
+import { searchOperationAdministratorOperations } from '../../api/operations/operationAdministrator/operations';
+import { searchOperatorOperations } from '../../api/operations/operator';
+import { searchTeamLeaderLedTeams } from '../../api/operations/teamLeader/operations';
 import type { OperationDetails, OperationWithLedTeamsDetails, TeamDetails } from '../../api/types';
 import type { OperationScope } from './operationPaths';
 

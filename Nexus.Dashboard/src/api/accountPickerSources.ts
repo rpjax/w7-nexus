@@ -12,11 +12,11 @@ import {
 import {
   searchOpAdminStrawMenForPicker,
   searchOpAdminTeamLeaderCandidatesForPicker,
-} from './operationAdministrator/accountPickers';
+} from './operations/operationAdministrator/accountPickers';
 import {
   searchTeamLeaderOperatorsForPicker,
   searchTeamLeaderProfitShareAccountsForPicker,
-} from './teamLeader/accountPickers';
+} from './operations/teamLeader/accountPickers';
 
 /** Busca contas via `POST /api/accounts/administrator/search`. */
 export const searchAdministratorAccountsPicker = toAccountPickerSearchFn(searchAdministratorAccountsForPicker);
@@ -35,12 +35,12 @@ export const searchAdministratorProfitShareAccountsPicker = toAccountPickerSearc
   searchAdministratorProfitShareAccountsForPicker,
 );
 
-/** Busca líderes via `POST /api/operation-administrator/accounts/team-leader-candidates/search`. */
+/** Busca líderes via `POST /api/operations/operation-administrator/accounts/team-leader-candidates/search`. */
 export const searchOpAdminTeamLeaderCandidatesPicker = toAccountPickerSearchFn(
   searchOpAdminTeamLeaderCandidatesForPicker,
 );
 
-/** Busca laranjas via `POST /api/operation-administrator/accounts/straw-men/search`. */
+/** Busca laranjas via `POST /api/operations/operation-administrator/accounts/straw-men/search`. */
 export const searchOpAdminStrawMenPicker = toAccountPickerSearchFn(searchOpAdminStrawMenForPicker);
 
 export function createTeamLeaderOperatorsPicker(teamId: string): AccountPickerSearchFn {

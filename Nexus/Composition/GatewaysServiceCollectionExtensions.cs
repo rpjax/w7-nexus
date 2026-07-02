@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Options;
 using Nexus.Gateways.Application.Services;
+using Nexus.Gateways.Composition;
 using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Services;
 using Nexus.Gateways.Frendz.Infrastructure.Http;
@@ -46,6 +47,8 @@ public static class GatewaysServiceCollectionExtensions
         services.AddScoped<IFrendzApiKeysService, FrendzApiKeysService>();
         services.AddScoped<ISigiloPayApiKeysService, SigiloPayApiKeysService>();
         services.AddScoped<IWintechApiKeysService, WintechApiKeysService>();
+
+        services.AddNexusGatewaysAdministrator();
 
         return services;
     }

@@ -1,6 +1,5 @@
 using Aidan.Core.Patterns;
 using Nexus.Authorization.Application.Models;
-using Nexus.Payments.Application.Models;
 using Nexus.StrawMen.Application.Contracts;
 
 namespace Nexus.StrawMen.Application.Services;
@@ -8,39 +7,14 @@ namespace Nexus.StrawMen.Application.Services;
 public sealed class StrawMan : IStrawMan
 {
     private IStrawManAccessPolicy _policy { get; }
-    private IStrawManPaymentSearchService _paymentSearch { get; }
     private IStrawManSettingsQueryService _settingsQuery { get; }
 
     public StrawMan(
         IStrawManAccessPolicy policy,
-        IStrawManPaymentSearchService paymentSearch,
         IStrawManSettingsQueryService settingsQuery)
     {
         _policy = policy;
-        _paymentSearch = paymentSearch;
         _settingsQuery = settingsQuery;
-    }
-
-    public Task<IOperationResult<SearchPaymentsResponse>> SearchPaymentsAsync(
-        RequesterIdentity identity,
-        SearchPaymentsRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        return ExecuteAsync(
-            identity,
-            () => _paymentSearch.SearchPaymentsAsync(identity, request),
-            cancellationToken);
-    }
-
-    public Task<IOperationResult<PaymentDetails>> GetPaymentAsync(
-        RequesterIdentity identity,
-        string paymentId,
-        CancellationToken cancellationToken = default)
-    {
-        return ExecuteAsync(
-            identity,
-            () => _paymentSearch.GetPaymentAsync(identity, paymentId),
-            cancellationToken);
     }
 
     public Task<IOperationResult<StrawManSettingsDetails>> GetSettingsAsync(

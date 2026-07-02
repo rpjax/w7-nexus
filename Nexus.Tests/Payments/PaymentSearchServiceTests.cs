@@ -38,7 +38,7 @@ public sealed class PaymentSearchServiceTests
             splits: new[] { new PaymentSplit("operator-1", 100m, 10m) }));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-other", operatorId: "operator-2"));
 
-        var sut = new Nexus.Operators.Application.Services.OperatorPaymentSearchService(
+        var sut = new Nexus.Payments.Application.Services.OperatorPaymentSearchService(
             payments,
             teams,
             PaymentTestDoubles.PassthroughEnrichment());
@@ -56,7 +56,7 @@ public sealed class PaymentSearchServiceTests
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-mine", strawManId: "straw-1"));
         await payments.CreateAsync(PaymentTestFactory.Create(id: "pay-other", strawManId: "straw-2"));
 
-        var sut = new Nexus.StrawMen.Application.Services.StrawManPaymentSearchService(
+        var sut = new Nexus.Payments.Application.Services.StrawManPaymentSearchService(
             payments,
             PaymentTestDoubles.PassthroughEnrichment());
         var result = await sut.SearchPaymentsAsync(StrawManIdentity(), new SearchPaymentsRequest { Limit = 50 });

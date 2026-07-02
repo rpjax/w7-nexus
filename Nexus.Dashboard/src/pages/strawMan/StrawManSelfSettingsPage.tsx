@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { getStrawManSettings } from '../../api/strawMan/settings';
+import { getStrawManSettings } from '../../api/strawMen/strawMan';
 import type { StrawManSettings } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
 import { PageHeading } from '../../layouts/PageHeading';

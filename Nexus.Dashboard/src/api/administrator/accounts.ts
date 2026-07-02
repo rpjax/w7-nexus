@@ -1,6 +1,13 @@
 import { apiClient } from '../client';
 import type { AccountRow, SearchRequest, SearchResponse } from '../types';
 
+export async function createAdministratorAccount(username: string, password: string) {
+  return apiClient.post<void>('/api/accounts/administrator', {
+    Username: username,
+    Password: password,
+  }, { fallbackError: 'Não foi possível criar a conta. Verifique os dados informados.' });
+}
+
 export async function searchAdministratorAccounts(payload: SearchRequest) {
   return apiClient.post<SearchResponse<AccountRow>>('/api/accounts/administrator/search', {
     Limit: payload.limit,

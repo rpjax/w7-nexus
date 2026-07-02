@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { searchOperatorOperations } from '../../api/operator/operations';
+import { searchOperatorOperations } from '../../api/operations/operator';
 import type { OperationDetails } from '../../api/types';
 import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
 import { EmptyState } from '../../components/EmptyState';
