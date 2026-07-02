@@ -1,0 +1,4318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Nexus API",
+    "description": "API do Nexus. Importe este arquivo no Postman (Import > File). Autentique via POST /api/authentication/sign-in e use o token JWT como Bearer.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://localhost",
+      "description": "Local HTTPS (Kestrel :443)"
+    },
+    {
+      "url": "https://websete.localhost",
+      "description": "Local dev certificate host"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication"
+    },
+    {
+      "name": "Accounts - Administrator"
+    },
+    {
+      "name": "Operations - Administrator"
+    },
+    {
+      "name": "Operations - Operator"
+    },
+    {
+      "name": "Operations - Operation Administrator"
+    },
+    {
+      "name": "Operations - Team Leader"
+    },
+    {
+      "name": "Payments - Administrator"
+    },
+    {
+      "name": "Payments - Operator"
+    },
+    {
+      "name": "Payments - StrawMan"
+    },
+    {
+      "name": "StrawMen - StrawMan"
+    },
+    {
+      "name": "StrawMen - Administrator"
+    },
+    {
+      "name": "Charges - Administrator"
+    },
+    {
+      "name": "Gateways - Administrator"
+    },
+    {
+      "name": "Gateways - Webhooks"
+    },
+    {
+      "name": "Olx - Victim"
+    },
+    {
+      "name": "Olx - Operator"
+    },
+    {
+      "name": "Olx - Administrator"
+    }
+  ],
+  "paths": {
+    "/api/authentication/sign-in": {
+      "post": {
+        "summary": "Sign in",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignInRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authentication/sign-up/operator": {
+      "post": {
+        "summary": "Sign up as operator",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authentication/sign-up/strawman": {
+      "post": {
+        "summary": "Sign up as straw man",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/authentication/sign-up/administrator": {
+      "post": {
+        "summary": "Sign up as administrator (master key)",
+        "tags": [
+          "Authentication"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignUpRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Master signup token"
+          }
+        ]
+      }
+    },
+    "/api/accounts/administrator": {
+      "post": {
+        "summary": "Create account",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAccountRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/administrator/search": {
+      "post": {
+        "summary": "Search accounts",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/administrator/roles": {
+      "post": {
+        "summary": "Grant role",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAccountRoleRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Revoke role",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAccountRoleRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/accounts/administrator/permissions": {
+      "post": {
+        "summary": "Grant permission",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAccountPermissionRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Revoke permission",
+        "tags": [
+          "Accounts - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GrantAccountPermissionRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator": {
+      "post": {
+        "summary": "Create operation",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOperationRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete operation",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteOperationRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/search": {
+      "post": {
+        "summary": "Search operations",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/administrators": {
+      "post": {
+        "summary": "Assign operation administrator",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOperationAdministratorRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign operation administrator",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignOperationAdministratorRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/operations/gateway-selection-strategy": {
+      "put": {
+        "summary": "Set operation gateway strategy",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewaySelectionStrategyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/operations/straw-men": {
+      "post": {
+        "summary": "Assign/unassign straw man to operation (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignStrawManRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign straw man to operation (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignStrawManRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/operations/gateway-account-groups": {
+      "post": {
+        "summary": "Assign/unassign gateway group to operation (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign gateway group to operation (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/operations/gateway-accounts": {
+      "post": {
+        "summary": "Assign/unassign gateway account to operation (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign gateway account to operation (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/to-assign/search": {
+      "post": {
+        "summary": "Search operations to assign",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams": {
+      "post": {
+        "summary": "Create team",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOperationTeamRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete team",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteOperationTeamRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/leaders": {
+      "post": {
+        "summary": "Assign team leader",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTeamLeaderRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign team leader",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignTeamLeaderRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/gateway-selection-strategy": {
+      "put": {
+        "summary": "Set team gateway strategy",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewaySelectionStrategyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/straw-men": {
+      "post": {
+        "summary": "Assign/unassign straw man to team (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignStrawManRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign straw man to team (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignStrawManRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/gateway-account-groups": {
+      "post": {
+        "summary": "Assign/unassign gateway group to team (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign gateway group to team (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/gateway-accounts": {
+      "post": {
+        "summary": "Assign/unassign gateway account to team (assign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Assign/unassign gateway account to team (unassign)",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/operators": {
+      "post": {
+        "summary": "Assign operator to team",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOperatorToTeamRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign operator from team",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignOperatorFromTeamRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/operators/profit-share-rules": {
+      "put": {
+        "summary": "Set operator profit share rule",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOperatorProfitShareRuleRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/operators/search": {
+      "post": {
+        "summary": "Search operators to assign",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/administrator/teams/profit-share-accounts/search": {
+      "post": {
+        "summary": "Search profit share accounts",
+        "tags": [
+          "Operations - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operator/search": {
+      "post": {
+        "summary": "Search operations (operator scope)",
+        "tags": [
+          "Operations - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/operations/search": {
+      "post": {
+        "summary": "Search operations",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/accounts/team-leader-candidates/search": {
+      "post": {
+        "summary": "Search team leader candidates",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/accounts/straw-men/search": {
+      "post": {
+        "summary": "Search straw men to assign",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams": {
+      "post": {
+        "summary": "Create team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOperationTeamRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeleteOperationTeamRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams/leaders": {
+      "post": {
+        "summary": "Assign team leader",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignTeamLeaderRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign team leader",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignTeamLeaderRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams/gateway-selection-strategy": {
+      "put": {
+        "summary": "Set team gateway strategy",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewaySelectionStrategyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams/straw-men": {
+      "post": {
+        "summary": "Assign straw man to team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignStrawManRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign straw man from team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignStrawManRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams/gateway-account-groups": {
+      "post": {
+        "summary": "Assign gateway group to team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign gateway group from team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/teams/gateway-accounts": {
+      "post": {
+        "summary": "Assign gateway account to team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign gateway account from team",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/operations/gateway-selection-strategy": {
+      "put": {
+        "summary": "Set operation gateway strategy",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetGatewaySelectionStrategyRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/operations/straw-men": {
+      "post": {
+        "summary": "Assign straw man to operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignStrawManRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign straw man from operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignStrawManRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/operations/gateway-account-groups": {
+      "post": {
+        "summary": "Assign gateway group to operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign gateway group from operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/operation-administrator/operations/gateway-accounts": {
+      "post": {
+        "summary": "Assign gateway account to operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign gateway account from operation",
+        "tags": [
+          "Operations - Operation Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignGatewayCredentialsRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/team-leader/operations/search": {
+      "post": {
+        "summary": "Search led teams",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/team-leader/teams/operators/search": {
+      "post": {
+        "summary": "Search operators to assign",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/team-leader/teams/profit-share-accounts/search": {
+      "post": {
+        "summary": "Search profit share accounts",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/team-leader/teams/operators": {
+      "post": {
+        "summary": "Assign operator",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssignOperatorToTeamRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Unassign operator",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnassignOperatorFromTeamRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/operations/team-leader/teams/operators/profit-share-rules": {
+      "put": {
+        "summary": "Set profit share rule",
+        "tags": [
+          "Operations - Team Leader"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetOperatorProfitShareRuleRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/administrator/search": {
+      "post": {
+        "summary": "Search payments",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/administrator/{paymentId}": {
+      "get": {
+        "summary": "Get payment",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete payment",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/pay": {
+      "post": {
+        "summary": "Mark payment as paid",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/refund": {
+      "post": {
+        "summary": "Refund payment",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/mark-distributed": {
+      "post": {
+        "summary": "Mark as distributed",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/kill": {
+      "post": {
+        "summary": "Kill payment",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/KillPaymentRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/bind-operator": {
+      "post": {
+        "summary": "Bind operator",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindPaymentOperatorRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/administrator/{paymentId}/bind-straw-man": {
+      "post": {
+        "summary": "Bind straw man",
+        "tags": [
+          "Payments - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BindPaymentStrawManRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/operator/search": {
+      "post": {
+        "summary": "Search payments",
+        "tags": [
+          "Payments - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/operator/{paymentId}": {
+      "get": {
+        "summary": "Get payment",
+        "tags": [
+          "Payments - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/payments/straw-man/search": {
+      "post": {
+        "summary": "Search payments",
+        "tags": [
+          "Payments - StrawMan"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/payments/straw-man/{paymentId}": {
+      "get": {
+        "summary": "Get payment",
+        "tags": [
+          "Payments - StrawMan"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "paymentId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Payment ID"
+          }
+        ]
+      }
+    },
+    "/api/straw-men/straw-man/settings": {
+      "get": {
+        "summary": "Get own settings",
+        "tags": [
+          "StrawMen - StrawMan"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ]
+      }
+    },
+    "/api/straw-men/administrator/{strawManId}/settings": {
+      "get": {
+        "summary": "Get straw man settings (admin)",
+        "tags": [
+          "StrawMen - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "strawManId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Straw man account ID"
+          }
+        ]
+      },
+      "put": {
+        "summary": "Upsert straw man settings",
+        "tags": [
+          "StrawMen - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStrawManSettingsRequest"
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "strawManId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Straw man account ID"
+          }
+        ]
+      }
+    },
+    "/api/charges/administrator/pix": {
+      "post": {
+        "summary": "Create PIX charge",
+        "tags": [
+          "Charges - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePixChargeRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/frendz/search": {
+      "post": {
+        "summary": "Search frendz credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestEnabledOnly"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/frendz/credentials": {
+      "post": {
+        "summary": "Add frendz credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrendzAddCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update frendz credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FrendzUpdateCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete frendz credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Credential ID"
+          }
+        ]
+      }
+    },
+    "/api/gateways/administrator/frendz/credentials/enabled": {
+      "patch": {
+        "summary": "Set frendz credential enabled",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialEnabledRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/wintech/search": {
+      "post": {
+        "summary": "Search wintech credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestEnabledOnly"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/wintech/credentials": {
+      "post": {
+        "summary": "Add wintech credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WintechAddCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update wintech credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WintechUpdateCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete wintech credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Credential ID"
+          }
+        ]
+      }
+    },
+    "/api/gateways/administrator/wintech/credentials/enabled": {
+      "patch": {
+        "summary": "Set wintech credential enabled",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialEnabledRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/sigilopay/search": {
+      "post": {
+        "summary": "Search sigilopay credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequestEnabledOnly"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/gateways/administrator/sigilopay/credentials": {
+      "post": {
+        "summary": "Add sigilopay credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SigiloPayAddCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "summary": "Update sigilopay credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SigiloPayUpdateCredentialsRequest"
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete sigilopay credentials",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Credential ID"
+          }
+        ]
+      }
+    },
+    "/api/gateways/administrator/sigilopay/credentials/enabled": {
+      "patch": {
+        "summary": "Set sigilopay credential enabled",
+        "tags": [
+          "Gateways - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SetCredentialEnabledRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/frendz/webhook/callback": {
+      "post": {
+        "summary": "frendz webhook callback",
+        "tags": [
+          "Gateways - Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/wintech/webhook/callback": {
+      "post": {
+        "summary": "wintech webhook callback",
+        "tags": [
+          "Gateways - Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sigilopay/webhook/callback": {
+      "post": {
+        "summary": "sigilopay webhook callback",
+        "tags": [
+          "Gateways - Webhooks"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/victim/ad-patches": {
+      "get": {
+        "summary": "List ad patches (victim)",
+        "tags": [
+          "Olx - Victim"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        }
+      }
+    },
+    "/api/olx/victim/pix-payment": {
+      "post": {
+        "summary": "Create PIX payment (victim)",
+        "tags": [
+          "Olx - Victim"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePixPaymentRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/ad-patches/search": {
+      "post": {
+        "summary": "Search ad patches (operator)",
+        "tags": [
+          "Olx - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/ads/impersonate": {
+      "post": {
+        "summary": "Impersonate ad",
+        "tags": [
+          "Olx - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImpersonateAdRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/ads/unimpersonate": {
+      "post": {
+        "summary": "Unimpersonate ad",
+        "tags": [
+          "Olx - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnimpersonateAdRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/ads/patch": {
+      "put": {
+        "summary": "Update ad patch",
+        "tags": [
+          "Olx - Operator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/admin/ad-patches/search": {
+      "post": {
+        "summary": "Search ad patches (admin)",
+        "tags": [
+          "Olx - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SearchRequest"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/olx/admin/ads/unimpersonate": {
+      "post": {
+        "summary": "Unimpersonate ad (admin)",
+        "tags": [
+          "Olx - Administrator"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "422": {
+            "description": "Validation error"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnimpersonateAdRequest"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": "Token retornado por POST /api/authentication/sign-in"
+      }
+    },
+    "schemas": {
+      "SearchRequest": {
+        "required": [],
+        "type": "object",
+        "properties": {
+          "Limit": {
+            "type": "integer",
+            "default": 20
+          },
+          "Offset": {
+            "type": "integer",
+            "default": 0
+          },
+          "Keyword": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "SearchRequestEnabledOnly": {
+        "required": [],
+        "type": "object",
+        "properties": {
+          "Limit": {
+            "type": "integer",
+            "default": 20
+          },
+          "Offset": {
+            "type": "integer",
+            "default": 0
+          },
+          "Keyword": {
+            "type": "string",
+            "nullable": true
+          },
+          "EnabledOnly": {
+            "type": "boolean",
+            "nullable": true
+          }
+        }
+      },
+      "SignInRequest": {
+        "type": "object",
+        "required": [
+          "Username",
+          "Password"
+        ],
+        "properties": {
+          "Username": {
+            "type": "string"
+          },
+          "Password": {
+            "type": "string",
+            "format": "password"
+          }
+        }
+      },
+      "SignUpRequest": {
+        "$ref": "#/components/schemas/SignInRequest"
+      },
+      "CreateAccountRequest": {
+        "type": "object",
+        "required": [
+          "Username",
+          "Password"
+        ],
+        "properties": {
+          "Username": {
+            "type": "string"
+          },
+          "Password": {
+            "type": "string"
+          },
+          "Roles": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "Permissions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "GrantAccountRoleRequest": {
+        "type": "object",
+        "required": [
+          "AccountId",
+          "Role"
+        ],
+        "properties": {
+          "AccountId": {
+            "type": "string"
+          },
+          "Role": {
+            "type": "string"
+          }
+        }
+      },
+      "GrantAccountPermissionRequest": {
+        "type": "object",
+        "required": [
+          "AccountId",
+          "Permission"
+        ],
+        "properties": {
+          "AccountId": {
+            "type": "string"
+          },
+          "Permission": {
+            "type": "string"
+          }
+        }
+      },
+      "CreateOperationRequest": {
+        "type": "object",
+        "required": [
+          "Name"
+        ],
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Description": {
+            "type": "string",
+            "nullable": true
+          }
+        }
+      },
+      "DeleteOperationRequest": {
+        "type": "object",
+        "required": [
+          "OperationId"
+        ],
+        "properties": {
+          "OperationId": {
+            "type": "string"
+          }
+        }
+      },
+      "AssignOperationAdministratorRequest": {
+        "type": "object",
+        "required": [
+          "OperationId",
+          "AdministratorId"
+        ],
+        "properties": {
+          "OperationId": {
+            "type": "string"
+          },
+          "AdministratorId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnassignOperationAdministratorRequest": {
+        "$ref": "#/components/schemas/AssignOperationAdministratorRequest"
+      },
+      "SetGatewaySelectionStrategyRequest": {
+        "type": "object",
+        "required": [
+          "Strategy"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperationId": {
+            "type": "string"
+          },
+          "Strategy": {
+            "type": "string",
+            "enum": [
+              "PerAccount",
+              "PerGroup",
+              "RoundRobin"
+            ]
+          }
+        }
+      },
+      "CreateOperationTeamRequest": {
+        "type": "object",
+        "required": [
+          "OperationId",
+          "Name"
+        ],
+        "properties": {
+          "OperationId": {
+            "type": "string"
+          },
+          "Name": {
+            "type": "string"
+          }
+        }
+      },
+      "DeleteOperationTeamRequest": {
+        "type": "object",
+        "required": [
+          "TeamId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          }
+        }
+      },
+      "AssignTeamLeaderRequest": {
+        "type": "object",
+        "required": [
+          "TeamId",
+          "TeamLeaderId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "TeamLeaderId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnassignTeamLeaderRequest": {
+        "type": "object",
+        "required": [
+          "TeamId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          }
+        }
+      },
+      "AssignStrawManRequest": {
+        "type": "object",
+        "required": [
+          "StrawManId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperationId": {
+            "type": "string"
+          },
+          "StrawManId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnassignStrawManRequest": {
+        "type": "object",
+        "required": [
+          "StrawManId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperationId": {
+            "type": "string"
+          },
+          "StrawManId": {
+            "type": "string"
+          }
+        }
+      },
+      "AssignGatewayCredentialsRequest": {
+        "type": "object",
+        "required": [
+          "GatewayCredentialsId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperationId": {
+            "type": "string"
+          },
+          "GatewayCredentialsId": {
+            "type": "string"
+          },
+          "GatewayCredentialsGroupId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnassignGatewayCredentialsRequest": {
+        "$ref": "#/components/schemas/AssignGatewayCredentialsRequest"
+      },
+      "AssignOperatorToTeamRequest": {
+        "type": "object",
+        "required": [
+          "TeamId",
+          "OperatorId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperatorId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnassignOperatorFromTeamRequest": {
+        "type": "object",
+        "required": [
+          "TeamId",
+          "OperatorId"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperatorId": {
+            "type": "string"
+          }
+        }
+      },
+      "SetOperatorProfitShareRuleRequest": {
+        "type": "object",
+        "required": [
+          "TeamId",
+          "OperatorId",
+          "Cuts"
+        ],
+        "properties": {
+          "TeamId": {
+            "type": "string"
+          },
+          "OperatorId": {
+            "type": "string"
+          },
+          "Cuts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "AccountId": {
+                  "type": "string"
+                },
+                "Percentage": {
+                  "type": "number"
+                }
+              }
+            }
+          }
+        }
+      },
+      "CreatePixChargeRequest": {
+        "type": "object",
+        "required": [
+          "OperationId",
+          "Amount"
+        ],
+        "properties": {
+          "OperationId": {
+            "type": "string"
+          },
+          "OperatorId": {
+            "type": "string",
+            "nullable": true
+          },
+          "Amount": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "BindPaymentOperatorRequest": {
+        "type": "object",
+        "required": [
+          "OperatorId"
+        ],
+        "properties": {
+          "OperatorId": {
+            "type": "string"
+          }
+        }
+      },
+      "BindPaymentStrawManRequest": {
+        "type": "object",
+        "required": [
+          "StrawManId"
+        ],
+        "properties": {
+          "StrawManId": {
+            "type": "string"
+          }
+        }
+      },
+      "KillPaymentRequest": {
+        "type": "object",
+        "required": [
+          "Reason"
+        ],
+        "properties": {
+          "Reason": {
+            "type": "string"
+          }
+        }
+      },
+      "UpdateStrawManSettingsRequest": {
+        "type": "object",
+        "required": [
+          "MovementFeePercentage"
+        ],
+        "properties": {
+          "MovementFeePercentage": {
+            "type": "number",
+            "format": "decimal"
+          }
+        }
+      },
+      "FrendzAddCredentialsRequest": {
+        "type": "object",
+        "required": [
+          "Name",
+          "Token",
+          "Enabled"
+        ],
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "Token": {
+            "type": "string"
+          },
+          "StrawManId": {
+            "type": "string",
+            "nullable": true
+          },
+          "Enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "FrendzUpdateCredentialsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/FrendzAddCredentialsRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "Id"
+            ],
+            "properties": {
+              "Id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "SetCredentialEnabledRequest": {
+        "type": "object",
+        "required": [
+          "Id",
+          "Enabled"
+        ],
+        "properties": {
+          "Id": {
+            "type": "string"
+          },
+          "Enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WintechAddCredentialsRequest": {
+        "type": "object",
+        "required": [
+          "Name",
+          "PublicKey",
+          "SecretKey",
+          "Enabled"
+        ],
+        "properties": {
+          "Name": {
+            "type": "string"
+          },
+          "PublicKey": {
+            "type": "string"
+          },
+          "SecretKey": {
+            "type": "string"
+          },
+          "StrawManId": {
+            "type": "string",
+            "nullable": true
+          },
+          "Enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WintechUpdateCredentialsRequest": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/WintechAddCredentialsRequest"
+          },
+          {
+            "type": "object",
+            "required": [
+              "Id"
+            ],
+            "properties": {
+              "Id": {
+                "type": "string"
+              }
+            }
+          }
+        ]
+      },
+      "SigiloPayAddCredentialsRequest": {
+        "$ref": "#/components/schemas/WintechAddCredentialsRequest"
+      },
+      "SigiloPayUpdateCredentialsRequest": {
+        "$ref": "#/components/schemas/WintechUpdateCredentialsRequest"
+      },
+      "CreatePixPaymentRequest": {
+        "type": "object",
+        "required": [
+          "AdPatchId",
+          "Amount"
+        ],
+        "properties": {
+          "AdPatchId": {
+            "type": "string"
+          },
+          "Amount": {
+            "type": "number"
+          }
+        }
+      },
+      "ImpersonateAdRequest": {
+        "type": "object",
+        "required": [
+          "AdPatchId"
+        ],
+        "properties": {
+          "AdPatchId": {
+            "type": "string"
+          }
+        }
+      },
+      "UnimpersonateAdRequest": {
+        "$ref": "#/components/schemas/ImpersonateAdRequest"
+      }
+    }
+  }
+}
