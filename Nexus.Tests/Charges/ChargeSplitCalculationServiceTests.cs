@@ -1,15 +1,14 @@
 using Nexus.Payments.Aggregates;
-using Nexus.Tests.Payments;
 using Xunit;
 
-namespace Nexus.Tests.Payments;
+namespace Nexus.Tests.Charges;
 
-public sealed class PaymentSplitCalculationServiceTests
+public sealed class ChargeSplitCalculationServiceTests
 {
     [Fact]
     public async Task ApplyStrawManFeeAsync_DilutesProfitShareAndAddsStrawManSplit()
     {
-        var sut = PaymentTestDoubles.SplitCalculation(new Dictionary<string, decimal> { ["straw-1"] = 10m });
+        var sut = ChargeTestDoubles.SplitCalculation(new Dictionary<string, decimal> { ["straw-1"] = 10m });
         var profitShare = new[]
         {
             new PaymentSplit("operator-1", 50m, 50m),
@@ -34,7 +33,7 @@ public sealed class PaymentSplitCalculationServiceTests
     [Fact]
     public async Task ApplyStrawManFeeAsync_WhenFeeAlreadyPresent_IsIdempotent()
     {
-        var sut = PaymentTestDoubles.SplitCalculation(new Dictionary<string, decimal> { ["straw-1"] = 10m });
+        var sut = ChargeTestDoubles.SplitCalculation(new Dictionary<string, decimal> { ["straw-1"] = 10m });
         var existing = new[]
         {
             new PaymentSplit("operator-1", 90m, 90m),
@@ -49,7 +48,7 @@ public sealed class PaymentSplitCalculationServiceTests
     [Fact]
     public async Task ApplyStrawManFeeAsync_WithoutConfiguredFee_KeepsOriginalSplits()
     {
-        var sut = PaymentTestDoubles.SplitCalculation();
+        var sut = ChargeTestDoubles.SplitCalculation();
         var profitShare = new[] { new PaymentSplit("operator-1", 100m, 100m) };
 
         var result = await sut.ApplyStrawManFeeAsync(100m, profitShare, "straw-1");

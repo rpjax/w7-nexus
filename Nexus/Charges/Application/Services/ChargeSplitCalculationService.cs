@@ -1,14 +1,14 @@
+using Nexus.Charges.Application.Contracts;
 using Nexus.Payments.Aggregates;
-using Nexus.Payments.Application.Contracts;
 using Nexus.StrawMen.Application.Contracts;
 
-namespace Nexus.Payments.Application.Services;
+namespace Nexus.Charges.Application.Services;
 
-public sealed class PaymentSplitCalculationService : IPaymentSplitCalculationService
+public sealed class ChargeSplitCalculationService : IChargeSplitCalculationService
 {
     private readonly IStrawManSettingsQueryService _strawManSettings;
 
-    public PaymentSplitCalculationService(IStrawManSettingsQueryService strawManSettings)
+    public ChargeSplitCalculationService(IStrawManSettingsQueryService strawManSettings)
     {
         _strawManSettings = strawManSettings;
     }

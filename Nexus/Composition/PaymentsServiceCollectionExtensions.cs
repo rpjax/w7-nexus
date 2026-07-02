@@ -13,7 +13,6 @@ public static class PaymentsServiceCollectionExtensions
     public static IServiceCollection AddNexusPayments(this IServiceCollection services)
     {
         services.AddScoped<IPaymentService, PaymentService>();
-        services.AddScoped<IPaymentSplitCalculationService, PaymentSplitCalculationService>();
         services.AddScoped<IPaymentRepository, MongoPaymentRepository>();
         services.AddScoped<IPaymentDetailsEnrichmentService, PaymentDetailsEnrichmentService>();
         services.AddScoped<IGatewayPaymentWebhookService, GatewayPaymentWebhookService>();

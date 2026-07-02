@@ -3,6 +3,7 @@ using Nexus.Gateways.Wintech.Application.Contracts;
 using Nexus.Gateways.SigiloPay.Application.Contracts;
 using Nexus.Gateways.Frendz.Application.Contracts;
 using Nexus.Gateways.Application.Contracts;
+using Nexus.Charges.Application.Contracts;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Linq;
@@ -20,6 +21,7 @@ using Nexus.Gateways.SigiloPay.Application.Models;
 using Nexus.Gateways.Wintech.Application.Models;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Models;
+using Nexus.Payments.Application.Services;
 using Nexus.Payments.Errors;
 using Nexus.Tests.Payments;
 using Nexus.Charges.Application;
@@ -218,7 +220,8 @@ public sealed class ChargeServiceTests
         IFrendzApiCredentialsRepository? frendz = null,
         ISigiloPayApiCredentialsRepository? sigiloPay = null,
         IWintechApiCredentialsRepository? wintech = null,
-        IGatewayCredentialsGroupRepository? groups = null)
+        IGatewayCredentialsGroupRepository? groups = null,
+        IChargeProfitShareResolver? profitShareResolver = null)
     {
         gatewayOrchestrator ??= new StubGatewayOrchestrator();
         frendz ??= new EmptyFrendzCredentialsRepository();
@@ -238,8 +241,20 @@ public sealed class ChargeServiceTests
             credentialsResolver,
             paymentService,
             paymentRepo,
-            PaymentTestDoubles.SplitCalculation(),
+            profitShareResolver ?? new StubProfitShareResolver(),
+            ChargeTestDoubles.SplitCalculation(),
             gatewayOrchestrator);
+    }
+
+    private sealed class StubProfitShareResolver : IChargeProfitShareResolver
+    {
+        public Task<IResult<IReadOnlyList<PaymentSplit>>> ResolveSplitsAsync(
+            string operationId,
+            string? operatorId,
+            decimal amount,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IResult<IReadOnlyList<PaymentSplit>>>(
+                Result<IReadOnlyList<PaymentSplit>>.Success(Array.Empty<PaymentSplit>()));
     }
 
     private sealed class StubPaymentService : IPaymentService
@@ -291,10 +306,10 @@ public sealed class ChargeServiceTests
             return Task.FromResult(ok);
         }
 
-        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, string StrawManId)
+        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, BindPaymentStrawManRequest request)
         {
             IResult<Payment> ok = Result.Create<Payment>()
-                .WithValue(PaymentTestFactory.Create(id: paymentId, strawManId: StrawManId))
+                .WithValue(PaymentTestFactory.Create(id: paymentId, strawManId: request.StrawManId))
                 .Build();
             return Task.FromResult(ok);
         }

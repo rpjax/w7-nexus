@@ -1,15 +1,13 @@
 using Aidan.Core.Errors;
-using Nexus.Payments.Application.Contracts;
 using Nexus.Operations.Application.Contracts;
 using Aidan.Core.Patterns;
-using Nexus.Operations.Aggregates;
 using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Aggregates;
+using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Application.Models;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Authorization;
 using Nexus.Payments.Errors;
-using Nexus.Database.Models;
 
 namespace Nexus.Payments.Application.Services;
 
@@ -18,21 +16,15 @@ public sealed class PaymentService : IPaymentService
     private IAccountRepository _accountRepository { get; }
     private IPaymentRepository _paymentRepository { get; }
     private IOperationRepository _operationRepository { get; }
-    private ITeamRepository _teamRepository { get; }
-    private IPaymentSplitCalculationService _splitCalculation { get; }
 
     public PaymentService(
         IAccountRepository accountRepository,
         IPaymentRepository pixPaymentRepository,
-        IOperationRepository operationRepository,
-        ITeamRepository teamRepository,
-        IPaymentSplitCalculationService splitCalculation)
+        IOperationRepository operationRepository)
     {
         _accountRepository = accountRepository;
         _paymentRepository = pixPaymentRepository;
         _operationRepository = operationRepository;
-        _teamRepository = teamRepository;
-        _splitCalculation = splitCalculation;
     }
 
     public async Task<IResult<Payment>> CreatePaymentAsync(CreatePaymentRequest request)
@@ -45,6 +37,7 @@ public sealed class PaymentService : IPaymentService
         var gatewayPaymentId = request.GatewayPaymentId?.Trim();
         var operatorId = request.OperatorId?.Trim();
         var strawManId = request.StrawManId?.Trim();
+        var splits = request.Splits ?? Array.Empty<PaymentSplit>();
 
         var builder = Result.Create<Payment>();
 
@@ -132,88 +125,8 @@ public sealed class PaymentService : IPaymentService
                     .Build());
         }
 
-        IReadOnlyList<PaymentSplit> splits = Array.Empty<PaymentSplit>();
-
-        if (operatorId is not null)
-        {
-            var matchingTeams = _teamRepository.AsQueryable()
-                .Where(t =>
-                    t.OperationId == operationId &&
-                    t.OperatorIds.Contains(operatorId))
-                .ToList();
-
-            if (matchingTeams.Count == 0)
-            {
-                builder.WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.TeamNotFound)
-                    .WithMessage($"Não há equipe na operação '{operationId}' com o operador informado.")
-                    .Build());
-            }
-            else if (matchingTeams.Count > 1)
-            {
-                builder.WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.TeamAmbiguous)
-                    .WithMessage("Há mais de uma equipe compatível com o operador informado.")
-                    .Build());
-            }
-            else
-            {
-                var team = matchingTeams[0];
-                var rule = team.OperatorProfitShareRules
-                    .FirstOrDefault(r => string.Equals(r.OperatorId, operatorId, StringComparison.Ordinal));
-
-                if (rule is null || rule.Cuts.Count == 0)
-                {
-                    builder.WithError(Error.Create()
-                        .WithCode(PixPaymentErrorCodes.ProfitShareRuleNotFound)
-                        .WithMessage($"Não há regra de repasse configurada para o operador '{operatorId}'.")
-                        .Build());
-                }
-                else
-                {
-                    var normalizedCuts = ProfitSharePercentageRules.NormalizeCuts(rule.Cuts);
-                    splits = PaymentSplit.AllocateFromCuts(
-                        amount,
-                        normalizedCuts
-                            .Select(cut => (cut.AccountId, cut.Percentage))
-                            .ToList());
-                }
-            }
-        }
-        else if (operation is not null)
-        {
-            var recipientIds = operation.AdministratorIds.ToArray();
-            if (recipientIds.Length == 0)
-            {
-                recipientIds = _accountRepository.AsQueryable()
-                    .Where(a => a.Roles.Contains(Roles.Administrator))
-                    .Select(a => a.Id)
-                    .ToArray();
-            }
-
-            if (recipientIds.Length == 0)
-            {
-                builder.WithError(Error.Create()
-                    .WithCode(PixPaymentErrorCodes.ProfitShareRecipientsNotFound)
-                    .WithMessage("Não há administradores da operação nem administradores de sistema para definir o repasse.")
-                    .Build());
-            }
-            else
-            {
-                splits = BuildEqualSplits(amount, recipientIds);
-            }
-        }
-
         if (builder.ContainsError)
             return builder.Build();
-
-        if (!string.IsNullOrWhiteSpace(strawManId) && splits.Count > 0)
-        {
-            splits = await _splitCalculation.ApplyStrawManFeeAsync(
-                amount,
-                splits,
-                strawManId);
-        }
 
         var validatedGatewayPaymentId = gatewayPaymentId!;
         var id = string.IsNullOrWhiteSpace(explicitPaymentId) ? string.Empty : explicitPaymentId!;
@@ -284,29 +197,22 @@ public sealed class PaymentService : IPaymentService
         return Result<Payment>.Success(payment);
     }
 
-    public async Task<IResult<Payment>> BindStrawManAsync(string paymentId, string strawManId)
+    public async Task<IResult<Payment>> BindStrawManAsync(string paymentId, BindPaymentStrawManRequest request)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         var paymentResult = await GetByIdAsync(paymentId);
         if (paymentResult.IsFailure)
             return paymentResult;
 
         var payment = paymentResult.Value!;
-        var bindResult = payment.BindToStrawMan(strawManId);
+        var bindResult = payment.BindToStrawMan(request.StrawManId);
         if (bindResult.IsFailure)
             return Result<Payment>.Failure(bindResult.Errors);
 
-        if (payment.Splits.Count > 0)
+        if (request.Splits is { Count: > 0 })
         {
-            var profitShareSplits = payment.Splits
-                .Where(s => s.SplitKind == PaymentSplitKind.ProfitShare)
-                .ToList();
-
-            var recalculated = await _splitCalculation.ApplyStrawManFeeAsync(
-                payment.Amount,
-                profitShareSplits,
-                strawManId);
-
-            var replaceResult = payment.ReplaceSplits(recalculated);
+            var replaceResult = payment.ReplaceSplits(request.Splits);
             if (replaceResult.IsFailure)
                 return Result<Payment>.Failure(replaceResult.Errors);
         }
@@ -445,25 +351,5 @@ public sealed class PaymentService : IPaymentService
 
         await _paymentRepository.DeleteAsync(payment);
         return Result.Success();
-    }
-
-    private static IReadOnlyList<PaymentSplit> BuildEqualSplits(decimal amount, IReadOnlyList<string> accountIds)
-    {
-        if (accountIds.Count == 0)
-            return Array.Empty<PaymentSplit>();
-
-        var basePercentage = ProfitSharePercentageRules.Round(100m / accountIds.Count);
-        var cuts = accountIds
-            .Select(id => new ProfitSplitRecord
-            {
-                AccountId = id,
-                Percentage = basePercentage,
-            })
-            .ToList();
-
-        var normalized = ProfitSharePercentageRules.NormalizeCuts(cuts);
-        return PaymentSplit.AllocateFromCuts(
-            amount,
-            normalized.Select(cut => (cut.AccountId, cut.Percentage)).ToList());
     }
 }

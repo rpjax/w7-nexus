@@ -19,19 +19,22 @@ public sealed class ChargeService : IChargeService
     private IGatewayCredentialsResolver _credentialsResolver { get; }
     private IPaymentService _paymentService { get; }
     private IPaymentRepository _paymentRepository { get; }
-    private IPaymentSplitCalculationService _splitCalculation { get; }
+    private IChargeProfitShareResolver _profitShareResolver { get; }
+    private IChargeSplitCalculationService _splitCalculation { get; }
     private IGatewayOrchestrator _gatewayOrchestrator { get; }
 
     public ChargeService(
         IGatewayCredentialsResolver credentialsResolver,
         IPaymentService paymentService,
         IPaymentRepository paymentRepository,
-        IPaymentSplitCalculationService splitCalculation,
+        IChargeProfitShareResolver profitShareResolver,
+        IChargeSplitCalculationService splitCalculation,
         IGatewayOrchestrator gatewayOrchestrator)
     {
         _credentialsResolver = credentialsResolver;
         _paymentService = paymentService;
         _paymentRepository = paymentRepository;
+        _profitShareResolver = profitShareResolver;
         _splitCalculation = splitCalculation;
         _gatewayOrchestrator = gatewayOrchestrator;
     }
@@ -70,6 +73,18 @@ public sealed class ChargeService : IChargeService
         var operatorId = request.OperatorId?.Trim();
         var paymentId = ObjectId.GenerateNewId().ToString();
 
+        var splitsResult = await _profitShareResolver.ResolveSplitsAsync(
+            operationId,
+            operatorId,
+            request.Amount);
+
+        if (splitsResult.IsFailure)
+        {
+            return new ResultBuilder<CreatePixChargeResponse>()
+                .WithErrors(splitsResult.Errors)
+                .Build();
+        }
+
         var createPaymentResult = await _paymentService.CreatePaymentAsync(new CreatePaymentRequest
         {
             ExplicitPaymentId = paymentId,
@@ -79,6 +94,7 @@ public sealed class ChargeService : IChargeService
             Gateway = PaymentGateway.Frendz,
             Amount = request.Amount,
             GatewayPaymentId = paymentId,
+            Splits = splitsResult.Value ?? Array.Empty<PaymentSplit>(),
         });
 
         if (createPaymentResult.IsFailure)

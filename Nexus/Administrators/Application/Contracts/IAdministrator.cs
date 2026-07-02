@@ -38,36 +38,43 @@ public interface IAdministrator
         UnassignOperationAdministratorRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<SetOperationGatewaySelectionStrategyResponse>> SetOperationGatewaySelectionStrategyAsync(
         RequesterIdentity identity,
         SetOperationGatewaySelectionStrategyRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<AssignStrawManToOperationResponse>> AssignStrawManToOperationAsync(
         RequesterIdentity identity,
         AssignStrawManToOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<UnassignStrawManFromOperationResponse>> UnassignStrawManFromOperationAsync(
         RequesterIdentity identity,
         UnassignStrawManFromOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<AssignGatewayAccountGroupToOperationResponse>> AssignGatewayAccountGroupToOperationAsync(
         RequesterIdentity identity,
         AssignGatewayAccountGroupToOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<UnassignGatewayAccountGroupFromOperationResponse>> UnassignGatewayAccountGroupFromOperationAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountGroupFromOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<AssignGatewayAccountToOperationResponse>> AssignGatewayAccountToOperationAsync(
         RequesterIdentity identity,
         AssignGatewayAccountToOperationRequest request,
         CancellationToken cancellationToken = default);
 
+    // remove
     Task<IOperationResult<UnassignGatewayAccountFromOperationResponse>> UnassignGatewayAccountFromOperationAsync(
         RequesterIdentity identity,
         UnassignGatewayAccountFromOperationRequest request,

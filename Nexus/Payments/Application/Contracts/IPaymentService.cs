@@ -15,5 +15,5 @@ public interface IPaymentService
     Task<IResult> KillAsync(string paymentId, string reason);
     Task<IResult> MarkAsDistributedAsync(string paymentId);
     Task<IResult<Payment>> BindOperatorAsync(string paymentId, string operatorAccountId);
-    Task<IResult<Payment>> BindStrawManAsync(string paymentId, string strawManAccountId);
+    Task<IResult<Payment>> BindStrawManAsync(string paymentId, BindPaymentStrawManRequest request);
 }

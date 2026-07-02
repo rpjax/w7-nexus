@@ -156,9 +156,7 @@ public sealed class PaymentSearchServiceTests
         var sut = new PaymentService(
             new InMemoryAccountRepository(),
             payments,
-            new InMemoryOperationRepository(),
-            new InMemoryTeamRepository(),
-            PaymentTestDoubles.SplitCalculation());
+            new InMemoryOperationRepository());
 
         var result = await sut.MarkAsDistributedAsync("pay-ready");
 
@@ -180,9 +178,7 @@ public sealed class PaymentSearchServiceTests
         var sut = new PaymentService(
             new InMemoryAccountRepository(),
             payments,
-            new InMemoryOperationRepository(),
-            new InMemoryTeamRepository(),
-            PaymentTestDoubles.SplitCalculation());
+            new InMemoryOperationRepository());
 
         var result = await sut.PayAsync("pay-pending");
 
@@ -219,9 +215,7 @@ public sealed class PaymentSearchServiceTests
         var sut = new PaymentService(
             ctx.Accounts,
             ctx.Payments,
-            ctx.Operations,
-            ctx.Teams,
-            PaymentTestDoubles.SplitCalculation());
+            ctx.Operations);
 
         var result = await sut.PayAsync("pay-ready");
 

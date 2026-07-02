@@ -1,5 +1,7 @@
 using Aidan.Core.Patterns;
 using Nexus.Administrators.Application.Contracts;
+using Nexus.Charges.Application.Contracts;
+using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Application.Mapping;
 using Nexus.Payments.Application.Models;
@@ -10,13 +12,16 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
 {
     private IPaymentService _payments { get; }
     private IPaymentDetailsEnrichmentService _enrichment { get; }
+    private IChargeSplitCalculationService _splitCalculation { get; }
 
     public AdministratorPaymentCommandService(
         IPaymentService payments,
-        IPaymentDetailsEnrichmentService enrichment)
+        IPaymentDetailsEnrichmentService enrichment,
+        IChargeSplitCalculationService splitCalculation)
     {
         _payments = payments;
         _enrichment = enrichment;
+        _splitCalculation = splitCalculation;
     }
 
     public async Task<IResult<PaymentDetails>> PayAndGetAsync(string paymentId)
@@ -70,7 +75,31 @@ public sealed class AdministratorPaymentCommandService : IAdministratorPaymentCo
 
     public async Task<IResult<PaymentDetails>> BindStrawManAsync(string paymentId, string strawManAccountId)
     {
-        var result = await _payments.BindStrawManAsync(paymentId, strawManAccountId);
+        var paymentResult = await _payments.GetByIdAsync(paymentId);
+        if (paymentResult.IsFailure)
+            return Result<PaymentDetails>.Failure(paymentResult.Errors);
+
+        var payment = paymentResult.Value!;
+        IReadOnlyList<PaymentSplit>? splits = null;
+
+        if (payment.Splits.Count > 0)
+        {
+            var profitShareSplits = payment.Splits
+                .Where(s => s.SplitKind == PaymentSplitKind.ProfitShare)
+                .ToList();
+
+            splits = await _splitCalculation.ApplyStrawManFeeAsync(
+                payment.Amount,
+                profitShareSplits,
+                strawManAccountId);
+        }
+
+        var result = await _payments.BindStrawManAsync(paymentId, new BindPaymentStrawManRequest
+        {
+            StrawManId = strawManAccountId,
+            Splits = splits,
+        });
+
         if (result.IsFailure)
             return Result<PaymentDetails>.Failure(result.Errors);
 

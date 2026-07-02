@@ -1,8 +1,8 @@
 using Nexus.Payments.Aggregates;
 
-namespace Nexus.Payments.Application.Contracts;
+namespace Nexus.Charges.Application.Contracts;
 
-public interface IPaymentSplitCalculationService
+public interface IChargeSplitCalculationService
 {
     Task<IReadOnlyList<PaymentSplit>> ApplyStrawManFeeAsync(
         decimal amount,

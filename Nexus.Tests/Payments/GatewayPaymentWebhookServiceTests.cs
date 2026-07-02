@@ -99,7 +99,7 @@ public sealed class GatewayPaymentWebhookServiceTests
         public Task<IResult<Payment>> BindOperatorAsync(string paymentId, string OperatorId) =>
             throw new NotSupportedException();
 
-        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, string StrawManId) =>
+        public Task<IResult<Payment>> BindStrawManAsync(string paymentId, BindPaymentStrawManRequest request) =>
             throw new NotSupportedException();
     }
 

@@ -28,6 +28,7 @@ using Nexus.Operations.Application.Contracts;
 using Nexus.Payments.Aggregates;
 using Nexus.Payments.Application.Contracts;
 using Nexus.Payments.Application.Services;
+using Nexus.Tests.Charges;
 using Nexus.Tests.Payments;
 using Nexus.Tests.Accounts;
 using Nexus.Authentication.Application.Services;
@@ -353,13 +354,10 @@ internal sealed class ActorTestContext
             new AdministratorProfitShareAccountSearchService(Accounts),
             new AdministratorOperationPickerSearchService(Operations),
             new AdministratorPaymentSearchService(Payments, PaymentTestDoubles.PassthroughEnrichment()),
-            new AdministratorPaymentCommandService(new PaymentService(
-                Accounts,
-                Payments,
-                Operations,
-                Teams,
-                PaymentTestDoubles.SplitCalculation()),
-                PaymentTestDoubles.PassthroughEnrichment()),
+            new AdministratorPaymentCommandService(
+                new PaymentService(Accounts, Payments, Operations),
+                PaymentTestDoubles.PassthroughEnrichment(),
+                ChargeTestDoubles.SplitCalculation()),
             new StubAdministratorStrawManSettingsCommandService(),
             new StubAdministratorStrawManSettingsQueryService());
     }

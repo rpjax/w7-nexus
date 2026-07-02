@@ -30,8 +30,8 @@ public sealed class GatewayCredentialsGroup
         this.Id = Id.Trim();
         this.Name = Name.Trim();
         _gatewayCredentialsIds = NormalizeIds(GatewayCredentialsIds);
-        CreatedAt = CreatedAt;
-        UpdatedAt = UpdatedAt;
+        this.CreatedAt = CreatedAt;
+        this.UpdatedAt = UpdatedAt;
     }
 
     public IResult AssignGatewayCredentials(string credentialsId)

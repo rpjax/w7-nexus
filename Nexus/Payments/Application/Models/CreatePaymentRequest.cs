@@ -14,4 +14,5 @@ public class CreatePaymentRequest
     public PaymentGateway Gateway { get; set; }
     public decimal Amount { get; set; }
     public string? GatewayPaymentId { get; set; }
+    public IReadOnlyList<PaymentSplit> Splits { get; set; } = Array.Empty<PaymentSplit>();
 }

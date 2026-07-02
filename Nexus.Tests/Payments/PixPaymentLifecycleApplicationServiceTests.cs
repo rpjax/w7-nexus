@@ -12,6 +12,7 @@ using Nexus.Gateways.Application.Models;
 using Nexus.Payments.Application.Models;
 using Xunit;
 using Nexus.Payments.Aggregates;
+using Nexus.Charges.Application.Services;
 using Nexus.Payments.Application.Services;
 using Nexus.Accounts.Application.Contracts;
 using Nexus.Payments.Errors;
@@ -272,7 +273,11 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var team = TeamTestFactory.WithOperatorProfitShare("team-1", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
-        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
+        var resolver = new ChargeProfitShareResolver(accounts, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations);
+
+        var splitsResult = await resolver.ResolveSplitsAsync(operation.Id, operatorAccount.Id, 150m);
+        Assert.True(splitsResult.IsSuccess);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
@@ -281,7 +286,8 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.Frendz,
             Amount = 150m,
-            GatewayPaymentId = "gw-777"
+            GatewayPaymentId = "gw-777",
+            Splits = splitsResult.Value!,
         });
 
         Assert.True(created.IsSuccess);
@@ -330,7 +336,11 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var team = TeamTestFactory.WithOperatorProfitShare("team-3", operation.Id, operatorAccount.Id, strawAccount.Id, (operatorAccount.Id, 100m));
         await teams.CreateAsync(team);
 
-        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
+        var resolver = new ChargeProfitShareResolver(accounts, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations);
+
+        var splitsResult = await resolver.ResolveSplitsAsync(operation.Id, operatorAccount.Id, 80m);
+        Assert.True(splitsResult.IsSuccess);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
@@ -339,7 +349,8 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.Frendz,
             Amount = 80m,
-            GatewayPaymentId = "gw-880"
+            GatewayPaymentId = "gw-880",
+            Splits = splitsResult.Value!,
         });
 
         Assert.True(created.IsSuccess);
@@ -384,7 +395,11 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
         var strawAccount = new Account("straw-2", "straw2", "hash", new[] { Roles.StrawMan }, Array.Empty<string>(), DateTime.UtcNow, DateTime.UtcNow);
         await accounts.CreateAsync(new[] { adminAccount, strawAccount });
 
-        var sut = new PaymentService(accounts, payments, operations, teams, PaymentTestDoubles.SplitCalculation());
+        var resolver = new ChargeProfitShareResolver(accounts, operations, teams);
+        var sut = new PaymentService(accounts, payments, operations);
+
+        var splitsResult = await resolver.ResolveSplitsAsync(operation.Id, null, 40m);
+        Assert.True(splitsResult.IsSuccess);
 
         var created = await sut.CreatePaymentAsync(new CreatePaymentRequest
         {
@@ -392,7 +407,8 @@ public sealed class PixPaymentLifecycleApplicationServiceTests
             StrawManId = strawAccount.Id,
             Gateway = PaymentGateway.FusionPay,
             Amount = 40m,
-            GatewayPaymentId = "gw-778"
+            GatewayPaymentId = "gw-778",
+            Splits = splitsResult.Value!,
         });
 
         Assert.True(created.IsSuccess);
