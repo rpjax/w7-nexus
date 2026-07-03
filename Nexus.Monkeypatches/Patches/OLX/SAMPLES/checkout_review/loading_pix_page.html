@@ -1,0 +1,761 @@
+<html>
+
+<head>
+    <style>
+        body {
+            transition: opacity ease-in 0.2s;
+        }
+
+        body[unresolved] {
+            opacity: 0;
+            display: block;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+    <meta charset="utf-8" data-next-head="">
+    <title data-next-head="">Compra Segura | OLX </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" data-next-head="">
+    <meta name="theme-color" content="#fff">
+    <link rel="icon" sizes="192x192" href="/images/android-chrome-192x192.png">
+    <link rel="icon" sizes="any" href="/images/favicon.ico">
+    <link rel="icon" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/images/safari-pinned-tab.svg">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&amp;display=swap"
+        rel="stylesheet">
+    <script type="text/javascript" async=""
+        src="https://analytics.tiktok.com/i18n/pixel/static/identify_b8133453.js"></script>
+    <script type="text/javascript" async="" src="https://analytics.tiktok.com/i18n/pixel/static/main.MTA1OGYzZDE5MQ.js"
+        data-id="CFL4LE3C77UEUGLEBCA0"></script>
+    <script type="text/javascript" async=""
+        src="https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=CFL4LE3C77UEUGLEBCA0&amp;lib=ttq"></script>
+    <script id="spdt-capture" async="" src="https://pixel.byspotify.com/ping.min.js"></script>
+    <script
+        src="https://connect.facebook.net/signals/config/823257647881358?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C190%2C194%2C195%2C193%2C188%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C191%2C192%2C218%2C189%2C187%2C238%2C209%2C181%2C182%2C177%2C183%2C180%2C178%2C179%2C176%2C174%2C185%2C186%2C184%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306%2C330"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/592658194155317?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C190%2C194%2C195%2C193%2C188%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C191%2C192%2C218%2C189%2C187%2C238%2C209%2C181%2C182%2C177%2C183%2C180%2C178%2C179%2C176%2C174%2C185%2C186%2C184%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/824100678149653?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173"
+        async=""></script>
+    <script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script>
+    <script async="" src="https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/destination?id=DC-14127847&amp;cx=c&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC&amp;cx=c&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtm.js?id=GTM-TNX8FDS&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-546N2JV"></script>
+    <script id="google-tag-manager">
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-546N2JV');
+    </script>
+    <script type="text/javascript" src="https://cdn.track.olx.com.br/assets/tracker.min.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals-tracker.js" defer=""></script>
+    <script id="datalayer" defer="">window.dataLayer = window.dataLayer || [];
+        if (window.dataLayer.length === 0) {
+            dataLayer.push({ "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "seller_id": "153351955", "list_id": 1508604170 } } });
+        } else {
+            dataLayer[0] = { "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "seller_id": "153351955", "list_id": 1508604170 } } };
+        }</script>
+    <script type="text/javascript" src="https://static.olx.com.br/olx/js/lurker.min.js" defer=""></script>
+    <link rel="preload" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/f85b2814942370c0.css"
+        as="style">
+    <link rel="stylesheet" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/f85b2814942370c0.css"
+        data-n-g=""><noscript data-n-css=""></noscript>
+    <script defer="" nomodule=""
+        src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/polyfills-42372ed130431b0a.js"></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/webpack-e0c2008c053b827c.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/framework-230ab801765908a9.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/main-f3a00e2d0022af4e.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/_app-5d3d7ce66706c3c9.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/956-3186e8cc2d1c6641.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/682-2a4c66f1d2395b71.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/765-52eca357ebbfa9ae.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/120-6576f5543a955a82.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/896-947c7efb04e3779e.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/588-3e53b3d69d283e54.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/785-4a7659b7e125fc0f.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/499-626bf0775ee18133.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/43-3e6f827371d3eabc.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/index-c77b2d869679ccac.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/hxpu9yxzLjqhgspREQtcI/_buildManifest.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/hxpu9yxzLjqhgspREQtcI/_ssgManifest.js"
+        defer=""></script>
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC"></script>
+    <script async="" src="https://static.olx.com.br/olx/js/tachometer.min.js"></script>
+    <script id="shield-wsdk"
+        src="https://dm7lr0s4n6vk6.webdevicejs.com/8f675f1c38002c22c695bf44c56e463f96b3e14e/wsdk.js" async=""></script>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style><iframe srcdoc="/**/" style="display: none;"></iframe>
+</head>
+
+<body class="bg-neutral-70 text-neutral-130 overflow-x-hidden scroll-smooth " style="padding-right: 0px;">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-546N2JV" height="0" width="0"
+            style="display:none;visibility:hidden" title="gtm"></iframe></noscript>
+    <script id="__NEXT_DATA__"
+        type="application/json">{"props":{"pageProps":{"testAbGroups":"bcnExitInt_enabled.bcnNewCard_enabled.cht-report_enabled.dpd-aiout_enabled.dpd-sv-od_enabled.had-ch28c3_enabled.ln-redchat_A.ne-pdf2_control.ne-pdf3_control.ne-pdf4_control.ne-pdf5_control.ne-pdf6_control.ne-video3_control.ne-video4_control.ne-video5_A.ne-video6_A.nutps_b.sanity50_enabled.stempesp_enabled","userPlatform":"web","initialState":{"checkoutStore":{"checkoutId":"40efd501-5823-45da-9825-f5736f364d8b","seller":{"name":"Sophia V","accountId":153351955,"taxDocumentNumber":"*** *** *** **"},"state":"loaded","ad":{"adId":"1782606589","title":"iPhone 17 pro max 256gb LACRADO","imageId":"805634175630527","imageUrl":"https://img.olx.com.br/thumbs/80/805634175630527.webp","price":9300,"priceInCents":930000,"region":11,"formattedPrice":"R$ 9.300,00","deliveryOptin":true,"categoryId":"3060","hasSellerAcceptedToPayForShipping":false,"hasSellerAcceptedToPayForInstallments":false},"error":null,"buyer":{"name":"RODRIGO JACQUES","taxDocumentNumber":"11548128988","fee":56399},"featureToggles":{},"offer":null,"publicZoopKey":"enBrX3Byb2RfeVdhNVBsTmpQb2sxYmZzSmdmalZmbXo2Og==","campaignDiscounts":[]},"paymentStore":{"paymentsDiscounts":[],"payments":[{"id":"pix-option","title":"Pix","caption":"A confirmação do seu pagamento é mais rápida","flag":"pix","disabled":false,"method":"PIX","isDefault":true,"isRecent":true},{"id":"nu-pay","title":"NuPay","caption":"Pague com saldo, crédito ou limite adicional no Nubank","flag":"nu_pay","disabled":false,"tag":"Parcelamento até 24x","method":"NUPAY","isDefault":false}],"twoPaymentsEnabled":true,"state":"loaded"},"deliveryStore":{"delivery":{"quotationId":"21f5038f-d402-4453-8673-67ce10392c31","options":[{"optionId":"0","method":"IN_HANDS","methodName":"Retirar com vendedor","rawPrice":0,"estimatedDays":0,"formattedPrice":"R$ 0,00","isDefault":false,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"1","method":"STANDARD","methodName":"Padrão","rawPrice":0,"estimatedDays":9,"formattedPrice":"Frete grátis","isDefault":true,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"2","method":"EXPRESS","methodName":"Expressa","rawPrice":2490,"estimatedDays":5,"formattedPrice":"R$ 24,90","isDefault":false,"originalRawPrice":3127,"originalFormattedPrice":"R$ 31,27"}],"receipts":[{"id":"IN_HANDS","metadata":{"isDifferentCity":true}}]},"address":{"id":"0f1d36d4-4273-4683-a830-5478742d9689","zipcode":"82410370","street":"Rua Edson Campos Matesich","number":65,"complement":null,"neighbourhood":"Santa Felicidade","city":"Curitiba","state":"PR","reference":null,"main":true},"adAddress":{"zipcode":"05017000","neighbourhood":"Perdizes","city":"São Paulo","state":"SP","street":"Rua Apinajés - até 1309/1310"},"selectedDelivery":"1","selectedReceiptType":"SHIPMENT","state":"loaded"},"extraDataStore":{"errorInstance":{"name":"TypeError","message":"RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal.","stack":"TypeError: RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal."},"state":"error"},"pixQRCodeStore":{"state":"creating","hasUnexpectedError":false},"nuPayStore":{"state":"idle"},"isMobile":false,"state":"loaded"},"useLocalStorage":false,"testAbGroupsFromOlxApp":null,"appVersion":null,"transactionSessionId":"911c6464-2e72-4b5d-a958-d466f0c594fd","isWebView":false,"isLookFeelEnabled":false},"__N_SSP":true},"page":"/","query":{"listId":"1508604170","source":"ADVIEW"},"buildId":"hxpu9yxzLjqhgspREQtcI","assetPrefix":"https://static.olx.com.br/p2p/txp/txp-client","isFallback":false,"isExperimentalCompile":false,"gssp":true,"scriptLoader":[]}</script>
+    <div id="__next"><!--$--><!--/$-->
+        <div class="sticky top-0 z-1">
+            <header data-ds-component="DS-FocusHeader" class="olx-focus-header">
+                <nav class="olx-focus-header__content"><span data-ds-component="DS-FocusHeaderLogo"
+                        class="olx-focus-header__logo ds-primary-link"><span class="olx-focus-header__logo-container"
+                            aria-hidden="true"><svg data-ds-component="DS-LogoOLX" viewBox="0 0 40 40"
+                                class="olx-logo-olx olx-logo-olx--default" aria-hidden="true">
+                                <g fill="none" fill-rule="evenodd">
+                                    <path class="olx-logo-olx--o"
+                                        d="M7.579 26.294c-2.282 0-3.855-1.89-3.855-4.683 0-2.82 1.573-4.709 3.855-4.709 2.28 0 3.855 1.889 3.855 4.682 0 2.82-1.574 4.71-3.855 4.71m0 3.538c4.222 0 7.578-3.512 7.578-8.248 0-4.682-3.173-8.22-7.578-8.22C3.357 13.363 0 16.874 0 21.61c0 4.763 3.173 8.221 7.579 8.221">
+                                    </path>
+                                    <path class="olx-logo-olx--l"
+                                        d="M18.278 23.553h7.237c.499 0 .787-.292.787-.798V20.44c0-.505-.288-.798-.787-.798h-4.851V9.798c0-.505-.288-.798-.787-.798h-2.386c-.498 0-.787.293-.787.798v12.159c0 1.038.551 1.596 1.574 1.596">
+                                    </path>
+                                    <path class="olx-logo-olx--x"
+                                        d="M28.112 29.593l4.353-5.082 4.222 5.082c.367.452.839.452 1.258.08l1.705-1.517c.42-.373.472-.851.079-1.277l-4.694-5.321 4.274-4.869c.367-.426.34-.878-.078-1.277l-1.6-1.463c-.42-.4-.892-.373-1.259.08l-3.907 4.602-3.986-4.603c-.367-.425-.84-.479-1.259-.08l-1.652 1.49c-.42.4-.446.825-.053 1.278l4.354 4.868-4.747 5.348c-.393.452-.34.905.079 1.277l1.652 1.464c.42.372.891.345 1.259-.08">
+                                    </path>
+                                </g>
+                            </svg></span></span>
+                    <div class="flex flex-1 justify-end"><a href="https://conta.olx.com.br/chats"
+                            class="olx-core-button olx-core-button--secondary olx-core-button--small">Ir para o chat</a>
+                    </div>
+                </nav>
+            </header>
+            <div data-testid="exit-intent-modal" data-show="false"></div>
+        </div>
+        <main id="main" class="bg-neutral-70 h-full">
+            <div class="flex h-full flex-col items-center gap-2 justify-center pt-0 pb-10" data-testid="PixLoader">
+                <div class="flex w-full max-w-xl flex-col items-center justify-center gap-2 px-4">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="rounded-5 flex"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                                stroke-width="2" viewBox="0 0 24 24" class="olx-core-spinner olx-core-spinner--huge"
+                                role="status" aria-label="Loading">
+                                <path d="M21 12a9 9 0 11-6.219-8.56"></path>
+                            </svg></div>
+                        <div class="mt-2 flex flex-col text-center"><span
+                                class="typo-title-large mb-1 text-center">Estamos gerando seu código PIX.
+                                Aguarde...</span></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+    <div id="modal-root"></div>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'a14372a90e87a139',t:'MTc4Mjg4ODMyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+    <iframe height="1" width="1"
+        style="position: absolute; top: 0px; left: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; visibility: hidden;"></iframe>
+    <script defer=""
+        src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496"
+        integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ=="
+        data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;c4806215cfd543b1a835c3ddfe1302aa&quot;,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}"
+        crossorigin="anonymous"></script>
+    <next-route-announcer>
+        <p aria-live="assertive" id="__next-route-announcer__" role="alert"
+            style="border: 0px; clip: rect(0px, 0px, 0px, 0px); height: 1px; margin: -1px; overflow: hidden; padding: 0px; position: absolute; top: 0px; width: 1px; white-space: nowrap; overflow-wrap: normal;">
+            Compra Segura | OLX</p>
+    </next-route-announcer>
+    <script type="text/javascript" id=""
+        charset="">var data_user, chave = "user_olx", api_user = new XMLHttpRequest; api_user.withCredentials = !0; api_user.open("GET", "https://apigw.olx.com.br/v3/me");
+            api_user.onload = function () {
+                if (api_user.status === 200) {
+                    data_user = JSON.parse(api_user.responseText); var b = data_user.googleId, e = data_user.facebookId, f; b != null && (f = "google"); e != null && (f = "facebook"); e == null && b == null && (f = "email"); e = data_user.phoneVerified; var r = data_user.emailVerified; b = data_user.documento; var g = 1; r && g++; e && g++; b && (b = !0, g++); e = data_user.activeProfile; var m = e ? "profissional" : "privado"; b = {
+                        gtm_user_71: data_user.publicAccountId, gtm_user_78: f, gtm_user_76: google_tag_manager["rm"]["89061261"](15), gtm_user_75: google_tag_manager["rm"]["89061261"](16),
+                        gtm_user_73: google_tag_manager["rm"]["89061261"](17), gtm_user_74: google_tag_manager["rm"]["89061261"](18), gtm_user_77: g, gtm_user_72: m, active_profile: data_user.activeProfile, email_verified: data_user.emailVerified, phone_verified: data_user.phoneVerified, wallet_actived: b, sha256_email: google_tag_manager["rm"]["89061261"](19), sha256_phone: google_tag_manager["rm"]["89061261"](20)
+                    }; window.insider_object = window.insider_object || {}; window.insider_object.user = {
+                        uuid: data_user.publicAccountId, gender: data_user.gender, birthday: "", has_transacted: !1, transaction_count: 0, gdpr_optin: !0, name: "",
+                        surname: "", username: data_user.nickname, email: data_user.email, email_optin: !0, phone_number: data_user.phone, sms_optin: !1, whatsapp_optin: !1, language: "pt-br", returning: !1, list_id: []
+                    }; (function () {
+                        function p(a) {
+                            a = a || 1; if (typeof window.braze === "undefined" || typeof window.braze.getUser !== "function") a === 1 && setTimeout(function () { p(2) }, 2E3); else if (a = window.braze.getUser()) l && a.setFirstName(l), n && a.setLastName(n), h && a.setEmail(h), c && a.setPhoneNumber(c), q == "female" && a.setGender(braze.User.Genders.FEMALE), q == "male" &&
+                                a.setGender(braze.User.Genders.MALE), m && a.setCustomUserAttribute("user_account_type", m), f && a.setCustomUserAttribute("user_login_type", f), g && a.setCustomUserAttribute("user_account_level", g)
+                        } var d = data_user.fullName || "", h = data_user.email || "", c = data_user.phone || "", q = data_user.gender || "", l = "", n = ""; if (d) { d = d.trim(); d = d.toLowerCase().replace(/\b\w/g, function (a) { return a.toUpperCase() }); var k = d.split(" ").filter(function (a) { return a.length > 0 }); k.length === 1 ? l = k[0] : k.length > 1 && (l = k[0], n = k[k.length - 1]) } h &&
+                            (h = h.toLowerCase().trim()); c && (c = c.trim(), c.startsWith("+") || (c = "+55" + c)); (d || h || c) && p()
+                    })(); b = JSON.stringify(b); localStorage.setItem(chave, b); data_user = null
+                } else console.error("Erro na solicita\u00e7\u00e3o da API user")
+            }; api_user.send();</script>
+    <script type="text/javascript" id=""
+        charset="">var ua = navigator.userAgent, isAppWebView = !1, olxSource = void 0, olxVersion = void 0, olxMatch = ua.match(/\[OLX-Source\/([^;]+);OLX-Source-?Version\/([^;]+);?\]/i); olxMatch && (isAppWebView = !0, olxSource = olxMatch[1], olxVersion = olxMatch[2]); dataLayer.push({ event: "userAgentReader", isAppWebView: isAppWebView, webViewSource: olxSource, webViewVersion: olxVersion });</script>
+    <iframe srcdoc="__" style="display: none;"></iframe><span
+        style="white-space: nowrap; position: absolute; left: 10.5555px; top: 28.4444px; font-size: 24.5555px; transform: scale(1.31123) matrix3d(0.373513, -0.0440105, 0, -0.000202461, -0.0851682, 0.616234, 0, -0.00123197, 2.17, 0.21, 1, 0.02, 13.81, 2.11, 0, 0.98); padding: 1.3333px;"></span>
+    <script type="text/javascript" id="" charset="">function showHiringMessage() {
+            try {
+                window.console.log("\n%c \ud83d\udc40 \n%c Oi! Al\u00e9m de dar uma olhadinha no nosso console, que tal dar uma passadinha pra ver nossas vagas em aberto? \n%c Linkedin: https://www.linkedin.com/company/olx-brasil/jobs/ \n%c Gupy: https://vemsergrupoolx.gupy.io/ \n", "font-family: sans-serif;font-weight: bold; font-size: 50px; text-shadow: 3px 3px 0 red; text-shadow: 3px 3px 0 #f28000, 6px 6px 0 #8ce563", "font-size: 16px;color: #f28000;", "font-size: 14px;color: #00c8ff;",
+                    "font-size: 14px;color: #ac63ff;")
+            } catch (a) { }
+        } showHiringMessage();</script>
+    <script type="module">
+        function meliuzCookie() {
+            if (!document.cookie.includes('gtm-web-vitals_enabled')) return;
+
+            var cookieName = "meliuzCookie";
+            var cookieValue = location.search.match(/xtra=([^&]+)/)[0].split('=')[1];
+            var utm_source = location.search.match(/utm_source=(meliuz*)/)[0].split('=')[1];
+            var expirationTime = 2592000;
+            expirationTime = expirationTime * 1000;
+            var date = new Date();
+            var dateTimeNow = date.getTime();
+
+            date.setTime(dateTimeNow + expirationTime);
+            var date = date.toUTCString();
+
+            if (utm_source == "meliuz") {
+                document.cookie = cookieName + "=" + cookieValue + "; expires=" + date + "; path=/; Secure;SameSite=None;"
+            }
+        }
+
+        meliuzCookie()
+    </script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b, c, d) { a[c] = a[c] || []; a[c].push({ eventType: "init", value: d, dc: "us" }); a = b.getElementsByTagName("script")[0]; b = b.createElement("script"); b.async = !0; b.src = "https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"; a.parentNode.insertBefore(b, a) })(window, document, "rtbhEvents", "ksNueAhJvrDj7158OcT4");</script>
+
+    <script type="text/javascript" id=""
+        charset="">!function (b, e, f, g, a, c, d) { b.fbq || (a = b.fbq = function () { a.callMethod ? a.callMethod.apply(a, arguments) : a.queue.push(arguments) }, b._fbq || (b._fbq = a), a.push = a, a.loaded = !0, a.version = "2.0", a.queue = [], c = e.createElement(f), c.async = !0, c.src = g, d = e.getElementsByTagName(f)[0], d.parentNode.insertBefore(c, d)) }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js"); fbq("init", "824100678149653"); fbq("init", "592658194155317"); fbq("init", "823257647881358"); fbq("track", "PageView");</script>
+    <script type="text/javascript" id=""
+        charset="">var search = new URL(document.location.href), searchLocal = search.searchParams.get("local") || void 0; search && searchLocal && ("calhau" == searchLocal || -1 !== searchLocal.indexOf("_app")) && window.dataLayer.push({ event: "virtual_select_promotion", vEcommerce: { items: [{ promotion_id: search.searchParams.get("ic"), promotion_name: search.searchParams.get("campaign"), creative_name: search.searchParams.get("message"), creative_slot: search.searchParams.get("local") }] } });</script>
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=47286"></script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b) { var d = "spdt-capture", e = "script"; if (!b.getElementById(d)) { a.spdt = a.spdt || function () { (a.spdt.q = a.spdt.q || []).push(arguments) }; var c = b.createElement(e); c.id = d; c.async = 1; c.src = "https://pixel.byspotify.com/ping.min.js"; b = b.getElementsByTagName(e)[0]; b.parentNode.insertBefore(c, b) } a.spdt("conf", { key: "001e62f96b5542ea945b4b7d5c0947d8" }); a.spdt("view") })(window, document);</script>
+    <script type="text/javascript" id=""
+        charset="">!function (d, g, e) {
+                d.TiktokAnalyticsObject = e; var a = d[e] = d[e] || []; a.methods = "page track identify instances debug on off once ready alias group enableCookie disableCookie".split(" "); a.setAndDefer = function (b, c) { b[c] = function () { b.push([c].concat(Array.prototype.slice.call(arguments, 0))) } }; for (d = 0; d < a.methods.length; d++)a.setAndDefer(a, a.methods[d]); a.instance = function (b) { b = a._i[b] || []; for (var c = 0; c < a.methods.length; c++)a.setAndDefer(b, a.methods[c]); return b }; a.load = function (b, c) {
+                    var f = "https://analytics.tiktok.com/i18n/pixel/events.js";
+                    a._i = a._i || {}; a._i[b] = []; a._i[b]._u = f; a._t = a._t || {}; a._t[b] = +new Date; a._o = a._o || {}; a._o[b] = c || {}; c = document.createElement("script"); c.type = "text/javascript"; c.async = !0; c.src = f + "?sdkid\x3d" + b + "\x26lib\x3d" + e; b = document.getElementsByTagName("script")[0]; b.parentNode.insertBefore(c, b)
+                }; a.load("CFL4LE3C77UEUGLEBCA0"); a.page()
+            }(window, document, "ttq");</script>
+    <script type="text/javascript" id=""
+        charset="">(rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "wBiML0Lv0cEh18cEd5DU" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "wBiML0Lv0cEh18cEd5DU" }); (rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "ksNueAhJvrDj7158OcT4" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "ksNueAhJvrDj7158OcT4" });</script>
+    <iframe height="0" width="0"
+        src="https://14127847.fls.doubleclick.net/activityi;src=14127847;type=pagev0;cat=pagev0;rcb=11;ord=761029830301;npa=0;auiddc=1818833057.1782459827;u2=undefined;u3=undefined;u4=undefined;u5=undefined;uaa=x86;uab=64;uafvl=Microsoft%2520Edge%3B149.0.4022.80%7CChromium%3B149.0.7827.156%7CNot)A%253BBrand%3B24.0.0.0;uamb=0;uam=;uap=Windows;uapv=19.0.0;uaw=0;pscdl=noapi;frm=0;_tu=KFA;gtm=45fe66t1h1v9190767087z8892095748za20gzb892095748zd889061261xea;gcd=13l3l3l3l1l1;dma=0;dc_fmt=2;tag_exp=115938465~115938468~118395334~119027224~119317811~119576881~119576885~119576891~119576895;epver=2;dc_random=1782888331_RcpbEir5trG6MdMV_GWQKA5QK1CZsYKcNw;_dc_test=1;~oref=https%3A%2F%2Fcomprasegura.olx.com.br%2F%3FlistId%3D1508604170%26source%3DADVIEW?"
+        style="display: none; visibility: hidden;"></iframe><veepn-lock-screen>
+        <style>
+            @font-face {
+                font-family: FigtreeVF;
+                src: url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2 supports variations"), url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2-variations");
+                font-weight: 100 1000;
+                font-display: swap
+            }
+        </style>
+    </veepn-lock-screen><img
+        src="https://ib.adnxs.com/getuid?https://us.creativecdn.com/external-identifier?id=$UID&amp;p=appnexus&amp;ti=wBiML0Lv0cEh18cEd5DU&amp;consent=1"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none"><img
+        src="https://sync.inmobi.com/setuid?bidderID=16&amp;dspUserId=LDkit5t5OIyMcdlFtr6dvfZMncQ9UfQ8DGNJKVgH10M"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none">
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=3959"></script>
+    <div id="criteo-tags-div" style="display: none;"><iframe
+            src="https://gum.criteo.com/syncframe?topUrl=comprasegura.olx.com.br&amp;origin=onetag#{%22bundle%22:{%22identifierExtractor%22:{%22origin%22:3},%22value%22:%22YOXXFl9JdEN2dW0lMkJkaEhrVEtOM2N4TVJFQ1lmdVdNUVh1ejN1TE8xTiUyRkRjNzZ2cEZvdTJrZUdRSmJPODBBalB1dzZKQ1RxaFAxV2V6JTJGdGFPSGxiUUp3WHpKTmp6SGRwTWFFV2J6JTJCRU13QUk0cmNlcmtMQXd0NEtpTjZPNm9ZcW9YUVBLSEJOeFlwZlBPbVRkVmgweHVSRmdBUSUzRCUzRA%22},%22cw%22:true,%22optout%22:{%22identifierExtractor%22:{%22origin%22:0},%22value%22:null},%22origin%22:%22onetag%22,%22tld%22:%22olx.com.br%22,%22topUrl%22:%22comprasegura.olx.com.br%22,%22version%22:%225_46_0%22,%22ifa%22:{%22identifierExtractor%22:{%22origin%22:0},%22value%22:null},%22lsw%22:true,%22pm%22:0,%22requestId%22:%22552990c9-3960-49f0-88ed-a827d19d7774%22}"
+            id="criteo-syncframe-onetag" hidden="" sandbox="allow-scripts allow-same-origin" aria-hidden="true"
+            tabindex="-1" title="Criteo GUM iframe"></iframe>
+        <script async="true" type="text/javascript"
+            src="https://sslwidget.criteo.com/event?a=%5B47286%5D&amp;v=5.46.0&amp;p0=e%3Dvpg&amp;p1=e%3Dexd%26ref%3Dhttps%253A%252F%252Fsp.olx.com.br&amp;bundle=_UhoxF9JdEN2dW0lMkJkaEhrVEtOM2N4TVJFQ2ZJZmtCVERESUtyUFpNVUNRd2tuMmFDZHJIcGVnTkJhVjhYd2pJTGUyR21vVUJ6R29JZzVZSjhaM29raDNUQVYlMkZoalFVVzg3b3gxQ05MYUt0M0FBaU9QVDNCRzUzYlk0UktCM2QwTG1WVGFrbHkzT2R5blk1JTJGUEFOek9uWFAxZGclM0QlM0Q&amp;sc=%7B%22fbp%22%3A%22fb.2.1765834075386.343699892252642480%22%2C%22ttp%22%3A%2201KCHYKA04WFBPFZF5H5Q6PE9X_.tt.2%22%7D&amp;tld=olx.com.br&amp;dy=1&amp;fu=https%253A%252F%252Fcomprasegura.olx.com.br%252F%253FlistId%253D1508604170%2526source%253DADVIEW&amp;pu=https%253A%252F%252Fsp.olx.com.br%252F&amp;ceid=77224709-ac0b-4567-8e9e-89266a78723c"></script>
+    </div>
+
+    <iframe src="about:blank" id="tmx_tags_iframe" title="empty" tabindex="-1" aria-disabled="true" aria-hidden="true"
+        data-time="1782888333022"
+        style="width: 0px; height: 0px; border: 0px; position: absolute; top: -5000px;"></iframe>
+    <script type="text/javascript" id=""
+        charset="">var cookieName = "userID", cookieValue = google_tag_manager["rm"]["92095748"](343), expirationTime = 5184E3; expirationTime *= 1E3; var date = new Date, dateTimeNow = date.getTime(); date.setTime(dateTimeNow + expirationTime); date = date.toUTCString(); cookieValue && (document.cookie = cookieName + "\x3d" + cookieValue + "; SameSite\x3dNone; Secure; expires\x3d" + date + "; path\x3d/; domain\x3d." + location.hostname.replace(/^www\./i, ""));</script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/133-d3d30fec8d04a3ec.js"></script>
+    <script
+        src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/pedidos/%5BtransactionId%5D/pix-9cd4e9ecc25bfbac.js"></script>
+</body>
+
+</html>

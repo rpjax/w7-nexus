@@ -62,23 +62,17 @@ public sealed class AdPatchCommandService : IAdPatchCommandService
             .Where(s => s.OperationId == operationId && s.AdId == adId)
             .FirstOrDefaultAsync();
 
-        AdPatch patch;
         if (existing is null)
         {
-            var createResult = AdPatch.Create(operationId, adId, adUrl);
+            var createResult = AdPatch.Create(operationId, adId, adUrl, operatorId);
             if (createResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(createResult.Errors);
 
-            patch = createResult.Value!;
-            var impersonateResult = patch.Impersonate(operatorId);
-            if (impersonateResult.IsFailure)
-                return Result<ImpersonateAdResponse>.Failure(impersonateResult.Errors);
-
-            await _adPatches.CreateAsync(patch);
+            await _adPatches.CreateAsync(createResult.Value!);
         }
         else
         {
-            patch = existing;
+            var patch = existing;
             var adUrlResult = patch.EnsureAdUrl(adUrl);
             if (adUrlResult.IsFailure)
                 return Result<ImpersonateAdResponse>.Failure(adUrlResult.Errors);
@@ -129,23 +123,13 @@ public sealed class AdPatchCommandService : IAdPatchCommandService
                 .WithMessage($"O patch do anúncio '{adId}' não foi encontrado.")
                 .Build());
 
-        if (!patch.IsImpersonating)
-            return Result<UnimpersonateAdResponse>.Failure(Error.Create()
-                .WithCode(AdPatchErrorCodes.NotImpersonating)
-                .WithMessage("O anúncio não está sendo impersonado.")
-                .Build());
-
         if (!string.Equals(patch.OperatorId, operatorId, StringComparison.Ordinal))
             return Result<UnimpersonateAdResponse>.Failure(Error.Create()
                 .WithCode(AdPatchErrorCodes.ImpersonationOperatorMismatch)
                 .WithMessage("O operador informado não corresponde à impersonação ativa.")
                 .Build());
 
-        var unimpersonateResult = patch.Unimpersonate();
-        if (unimpersonateResult.IsFailure)
-            return Result<UnimpersonateAdResponse>.Failure(unimpersonateResult.Errors);
-
-        await _adPatches.UpdateAsync(patch);
+        await _adPatches.DeleteAsync(patch);
         return Result<UnimpersonateAdResponse>.Success(new UnimpersonateAdResponse());
     }
 

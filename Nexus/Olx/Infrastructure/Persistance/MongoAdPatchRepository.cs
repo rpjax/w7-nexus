@@ -21,7 +21,7 @@ public sealed class MongoAdPatchRepository : IAdPatchRepository
             r.OperationId,
             r.AdId,
             r.AdUrl,
-            r.OperatorId,
+            r.OperatorId ?? string.Empty,
             r.IsImpersonating,
             r.OriginalPrice,
             r.PromotionalPrice,

@@ -10,19 +10,28 @@ public sealed class AdPatchTests
   [Fact]
   public void Create_ValidIds_Succeeds()
   {
-    var result = AdPatch.Create("op-1", "ad-1", ValidAdUrl);
+    var result = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1");
 
     Assert.True(result.IsSuccess);
     Assert.Equal("op-1", result.Value!.OperationId);
     Assert.Equal("ad-1", result.Value.AdId);
     Assert.Equal(ValidAdUrl, result.Value.AdUrl);
-    Assert.False(result.Value.IsImpersonating);
+    Assert.True(result.Value.IsImpersonating);
+    Assert.Equal("operator-1", result.Value.OperatorId);
+  }
+
+  [Fact]
+  public void Create_WithoutOperatorId_Fails()
+  {
+    var result = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "");
+
+    Assert.True(result.IsFailure);
   }
 
   [Fact]
   public void Create_WithoutAdUrl_Fails()
   {
-    var result = AdPatch.Create("op-1", "ad-1", "");
+    var result = AdPatch.Create("op-1", "ad-1", "", "operator-1");
 
     Assert.True(result.IsFailure);
   }
@@ -30,7 +39,7 @@ public sealed class AdPatchTests
   [Fact]
   public void Create_WithInvalidAdUrl_Fails()
   {
-    var result = AdPatch.Create("op-1", "ad-1", "http://");
+    var result = AdPatch.Create("op-1", "ad-1", "http://", "operator-1");
 
     Assert.True(result.IsFailure);
   }
@@ -56,7 +65,7 @@ public sealed class AdPatchTests
   [Fact]
   public void Impersonate_SetsOperatorAndFlag()
   {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
     var result = patch.Impersonate("operator-1");
 
@@ -66,23 +75,9 @@ public sealed class AdPatchTests
   }
 
   [Fact]
-  public void Unimpersonate_ClearsOperatorAndFlag()
-  {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    patch.Impersonate("operator-1");
-
-    var result = patch.Unimpersonate();
-
-    Assert.True(result.IsSuccess);
-    Assert.False(patch.IsImpersonating);
-    Assert.Null(patch.OperatorId);
-  }
-
-  [Fact]
   public void Impersonate_WhenAlreadyPatchedByAnotherOperator_Fails()
   {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    patch.Impersonate("operator-1");
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
     var result = patch.Impersonate("operator-2");
 
@@ -94,8 +89,7 @@ public sealed class AdPatchTests
   [Fact]
   public void UpdatePricePatch_WhenAlreadyPatchedByAnotherOperator_Fails()
   {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    patch.Impersonate("operator-1");
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
     var result = patch.UpdatePricePatch("operator-2", 100m, 80m);
 
@@ -105,7 +99,7 @@ public sealed class AdPatchTests
   [Fact]
   public void UpdatePricePatch_RequiresAtLeastOnePrice()
   {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
     var result = patch.UpdatePricePatch("operator-1", null, null);
 
@@ -113,20 +107,9 @@ public sealed class AdPatchTests
   }
 
   [Fact]
-  public void UpdatePricePatch_RequiresActiveImpersonation()
-  {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-
-    var result = patch.UpdatePricePatch("operator-1", 100m, 80m);
-
-    Assert.True(result.IsFailure);
-  }
-
-  [Fact]
   public void UpdatePricePatch_PersistsPrices_WhenImpersonating()
   {
-    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-    patch.Impersonate("operator-1");
+    var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
     var result = patch.UpdatePricePatch("operator-1", 100m, 80m);
 

@@ -10,7 +10,7 @@ public sealed class AdPatch
     public string OperationId { get; }
     public string AdId { get; }
     public string AdUrl { get; private set; }
-    public string? OperatorId { get; private set; }
+    public string OperatorId { get; private set; }
     public bool IsImpersonating { get; private set; }
     public decimal? OriginalPrice { get; private set; }
     public decimal? PromotionalPrice { get; private set; }
@@ -22,7 +22,7 @@ public sealed class AdPatch
         string operationId,
         string adId,
         string adUrl,
-        string? operatorId,
+        string operatorId,
         bool isImpersonating,
         decimal? originalPrice,
         decimal? promotionalPrice,
@@ -41,10 +41,11 @@ public sealed class AdPatch
         UpdatedAt = updatedAt;
     }
 
-    public static IResult<AdPatch> Create(string operationId, string adId, string adUrl)
+    public static IResult<AdPatch> Create(string operationId, string adId, string adUrl, string operatorId)
     {
         operationId = operationId?.Trim() ?? string.Empty;
         adId = adId?.Trim() ?? string.Empty;
+        operatorId = operatorId?.Trim() ?? string.Empty;
 
         if (string.IsNullOrWhiteSpace(operationId))
             return Result<AdPatch>.Failure(Error.Create()
@@ -58,6 +59,12 @@ public sealed class AdPatch
                 .WithMessage("O ID do anúncio é obrigatório.")
                 .Build());
 
+        if (string.IsNullOrWhiteSpace(operatorId))
+            return Result<AdPatch>.Failure(Error.Create()
+                .WithCode(AdPatchErrorCodes.OperatorIdInvalid)
+                .WithMessage("O ID do operador é obrigatório.")
+                .Build());
+
         var urlValidation = TryNormalizeAdUrl(adUrl, out var normalizedAdUrl);
         if (urlValidation.IsFailure)
             return Result<AdPatch>.Failure(urlValidation.Errors);
@@ -68,8 +75,8 @@ public sealed class AdPatch
             operationId,
             adId,
             normalizedAdUrl,
-            operatorId: null,
-            isImpersonating: false,
+            operatorId,
+            isImpersonating: true,
             originalPrice: null,
             promotionalPrice: null,
             createdAt: now,
@@ -183,14 +190,6 @@ public sealed class AdPatch
 
         OperatorId = operatorId;
         IsImpersonating = true;
-        UpdatedAt = DateTime.UtcNow;
-        return Result.Success();
-    }
-
-    public IResult Unimpersonate()
-    {
-        OperatorId = null;
-        IsImpersonating = false;
         UpdatedAt = DateTime.UtcNow;
         return Result.Success();
     }

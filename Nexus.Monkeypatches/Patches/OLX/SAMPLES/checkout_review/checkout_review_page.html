@@ -1,0 +1,1406 @@
+<html>
+
+<head>
+    <style>
+        body {
+            transition: opacity ease-in 0.2s;
+        }
+
+        body[unresolved] {
+            opacity: 0;
+            display: block;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+    <meta charset="utf-8" data-next-head="">
+    <title data-next-head="">Compra Segura | OLX </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" data-next-head="">
+    <meta name="theme-color" content="#fff">
+    <link rel="icon" sizes="192x192" href="/images/android-chrome-192x192.png">
+    <link rel="icon" sizes="any" href="/images/favicon.ico">
+    <link rel="icon" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/images/safari-pinned-tab.svg">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&amp;display=swap"
+        rel="stylesheet">
+    <script id="spdt-capture" async="" src="https://pixel.byspotify.com/ping.min.js"></script>
+    <script
+        src="https://connect.facebook.net/signals/config/823257647881358?v=2.9.345&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=319b24ce7b9254a3f841b0e945e5985d85ddfae2329b4423159b7af5bd4224f0&amp;ex_m=105%2C208%2C156%2C22%2C73%2C74%2C147%2C69%2C68%2C11%2C165%2C91%2C16%2C139%2C128%2C39%2C76%2C79%2C135%2C161%2C167%2C8%2C4%2C5%2C7%2C6%2C3%2C92%2C102%2C168%2C173%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C104%2C61%2C10%2C64%2C98%2C99%2C100%2C106%2C131%2C31%2C29%2C133%2C134%2C130%2C129%2C157%2C77%2C160%2C158%2C159%2C50%2C60%2C124%2C15%2C164%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C148%2C78%2C113%2C18%2C20%2C44%2C40%2C42%2C41%2C84%2C93%2C97%2C111%2C146%2C149%2C46%2C112%2C24%2C21%2C120%2C70%2C36%2C151%2C150%2C152%2C143%2C141%2C25%2C35%2C59%2C110%2C163%2C71%2C17%2C154%2C115%2C82%2C67%2C19%2C86%2C87%2C117%2C85%2C137%2C136%2C140%2C162%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C108%2C132%2C81%2C122%2C54%2C47%2C49%2C114%2C121%2C127%2C126%2C58%2C65%2C63%2C153%2C116%2C37%2C32%2C53%2C56%2C101%2C166%2C1%2C125%2C14%2C123%2C12%2C2%2C57%2C94%2C66%2C119%2C90%2C89%2C169%2C170%2C95%2C96%2C9%2C103%2C51%2C144%2C88%2C80%2C72%2C118%2C107%2C43%2C145%2C0%2C83%2C138%2C142%2C155%2C38%2C109%2C13%2C171%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C193%2C194%2C188%2C192%2C195%2C191%2C186%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C189%2C190%2C218%2C187%2C185%2C238%2C209%2C179%2C180%2C175%2C181%2C178%2C176%2C177%2C174%2C172%2C183%2C184%2C182%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306%2C330"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/592658194155317?v=2.9.345&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=319b24ce7b9254a3f841b0e945e5985d85ddfae2329b4423159b7af5bd4224f0&amp;ex_m=105%2C208%2C156%2C22%2C73%2C74%2C147%2C69%2C68%2C11%2C165%2C91%2C16%2C139%2C128%2C39%2C76%2C79%2C135%2C161%2C167%2C8%2C4%2C5%2C7%2C6%2C3%2C92%2C102%2C168%2C173%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C104%2C61%2C10%2C64%2C98%2C99%2C100%2C106%2C131%2C31%2C29%2C133%2C134%2C130%2C129%2C157%2C77%2C160%2C158%2C159%2C50%2C60%2C124%2C15%2C164%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C148%2C78%2C113%2C18%2C20%2C44%2C40%2C42%2C41%2C84%2C93%2C97%2C111%2C146%2C149%2C46%2C112%2C24%2C21%2C120%2C70%2C36%2C151%2C150%2C152%2C143%2C141%2C25%2C35%2C59%2C110%2C163%2C71%2C17%2C154%2C115%2C82%2C67%2C19%2C86%2C87%2C117%2C85%2C137%2C136%2C140%2C162%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C108%2C132%2C81%2C122%2C54%2C47%2C49%2C114%2C121%2C127%2C126%2C58%2C65%2C63%2C153%2C116%2C37%2C32%2C53%2C56%2C101%2C166%2C1%2C125%2C14%2C123%2C12%2C2%2C57%2C94%2C66%2C119%2C90%2C89%2C169%2C170%2C95%2C96%2C9%2C103%2C51%2C144%2C88%2C80%2C72%2C118%2C107%2C43%2C145%2C0%2C83%2C138%2C142%2C155%2C38%2C109%2C13%2C171%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C193%2C194%2C188%2C192%2C195%2C191%2C186%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C189%2C190%2C218%2C187%2C185%2C238%2C209%2C179%2C180%2C175%2C181%2C178%2C176%2C177%2C174%2C172%2C183%2C184%2C182%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/824100678149653?v=2.9.345&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=319b24ce7b9254a3f841b0e945e5985d85ddfae2329b4423159b7af5bd4224f0&amp;ex_m=105%2C208%2C156%2C22%2C73%2C74%2C147%2C69%2C68%2C11%2C165%2C91%2C16%2C139%2C128%2C39%2C76%2C79%2C135%2C161%2C167%2C8%2C4%2C5%2C7%2C6%2C3%2C92%2C102%2C168%2C173%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C104%2C61%2C10%2C64%2C98%2C99%2C100%2C106%2C131%2C31%2C29%2C133%2C134%2C130%2C129%2C157%2C77%2C160%2C158%2C159%2C50%2C60%2C124%2C15%2C164%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C148%2C78%2C113%2C18%2C20%2C44%2C40%2C42%2C41%2C84%2C93%2C97%2C111%2C146%2C149%2C46%2C112%2C24%2C21%2C120%2C70%2C36%2C151%2C150%2C152%2C143%2C141%2C25%2C35%2C59%2C110%2C163%2C71%2C17%2C154%2C115%2C82%2C67%2C19%2C86%2C87%2C117%2C85%2C137%2C136%2C140%2C162%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C108%2C132%2C81%2C122%2C54%2C47%2C49%2C114%2C121%2C127%2C126%2C58%2C65%2C63%2C153%2C116%2C37%2C32%2C53%2C56%2C101%2C166%2C1%2C125%2C14%2C123%2C12%2C2%2C57%2C94%2C66%2C119%2C90%2C89%2C169%2C170%2C95%2C96%2C9%2C103%2C51%2C144%2C88%2C80%2C72%2C118%2C107%2C43%2C145%2C0%2C83%2C138%2C142%2C155%2C38%2C109%2C13%2C171"
+        async=""></script>
+    <script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script>
+    <script async="" src="https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/destination?id=DC-14127847&amp;cx=c&amp;gtm=4e66o1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC&amp;cx=c&amp;gtm=4e66o1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtm.js?id=GTM-546N2JV&amp;is_td=1&amp;v=3&amp;t=t&amp;pid=1147536844&amp;gtm=45He66o1v889061261za200zd889061261&amp;seq=1&amp;exp=0~115938465~115938469~119027224&amp;dl=comprasegura.olx.com.br%2F&amp;tdp=GTM-546N2JV;89061261;0;0;0&amp;frm=0&amp;rtg=89061261&amp;slo=21&amp;hlo=3&amp;lst=1&amp;bt=0&amp;ct=3&amp;jsp=1&amp;mde=GTM-TNX8FDS;0_1&amp;z=0"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtm.js?id=GTM-TNX8FDS&amp;gtm=4e66o1"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-546N2JV"></script>
+    <script id="google-tag-manager">
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-546N2JV');
+    </script>
+    <script type="text/javascript" src="https://cdn.track.olx.com.br/assets/tracker.min.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals-tracker.js" defer=""></script>
+    <script id="datalayer" defer="">window.dataLayer = window.dataLayer || [];
+        if (window.dataLayer.length === 0) {
+            dataLayer.push({ "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "list_id": 1508604170, "seller_id": "153351955" } } });
+        } else {
+            dataLayer[0] = { "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "list_id": 1508604170, "seller_id": "153351955" } } };
+        }</script>
+    <script type="text/javascript" src="https://static.olx.com.br/olx/js/lurker.min.js" defer=""></script>
+    <link rel="preload" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/1628126da9ee761b.css"
+        as="style">
+    <link rel="stylesheet" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/1628126da9ee761b.css"
+        data-n-g=""><noscript data-n-css=""></noscript>
+    <script defer="" nomodule=""
+        src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/polyfills-42372ed130431b0a.js"></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/webpack-a32d2cd037b2698d.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/framework-230ab801765908a9.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/main-f3a00e2d0022af4e.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/_app-ee9ff73713036dbc.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/956-3186e8cc2d1c6641.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/123-3ea68e9656b8c016.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/479-74e29893c4e52d42.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/261-451bc97bd8d8b12d.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/588-3e53b3d69d283e54.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/316-0c165fe4bbd1a670.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/425-93b82553e70113a4.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/996-d63f720bcfe40e0c.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/43-82b32f067f4d78f0.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/index-6080eea97be19689.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/twlnsC6lCgK5qVoyWIylU/_buildManifest.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/twlnsC6lCgK5qVoyWIylU/_ssgManifest.js"
+        defer=""></script>
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC"></script>
+    <script async="" src="https://static.olx.com.br/olx/js/tachometer.min.js"></script>
+    <script id="shield-wsdk"
+        src="https://dm7lr0s4n6vk6.webdevicejs.com/8f675f1c38002c22c695bf44c56e463f96b3e14e/wsdk.js" async=""></script>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style><iframe srcdoc="/**/" style="display: none;"></iframe>
+</head>
+
+<body class="bg-neutral-70 text-neutral-130 overflow-x-hidden scroll-smooth" style="padding-right: 0px;">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-546N2JV" height="0" width="0"
+            style="display:none;visibility:hidden" title="gtm"></iframe></noscript>
+    <script id="__NEXT_DATA__"
+        type="application/json">{"props":{"pageProps":{"testAbGroups":"bcnExitInt_enabled.bcnNewCard_enabled.cht-report_enabled.dpd-aiout_enabled.dpd-sv-od_control.had-ch28c3_enabled.ln-redchat_A.ne-pdf2_control.ne-pdf3_control.ne-pdf4_control.ne-pdf5_control.ne-pdf6_control.ne-video3_control.ne-video4_control.ne-video5_A.ne-video6_control.nutps_b.sanity50_enabled.stempesp_enabled","userPlatform":"web","initialState":{"checkoutStore":{"checkoutId":"4a475420-e4a9-49dc-9e30-8bd073a7e382","seller":{"name":"Sophia V","accountId":153351955,"taxDocumentNumber":"*** *** *** **"},"state":"loaded","ad":{"adId":"1782606589","title":"iPhone 17 pro max 256gb LACRADO","imageId":"805634175630527","imageUrl":"https://img.olx.com.br/thumbs/80/805634175630527.webp","price":9300,"priceInCents":930000,"region":11,"formattedPrice":"R$ 9.300,00","deliveryOptin":true,"categoryId":"3060","hasSellerAcceptedToPayForShipping":false,"hasSellerAcceptedToPayForInstallments":false},"error":null,"buyer":{"name":"RODRIGO JACQUES","taxDocumentNumber":"11548128988","fee":56399},"featureToggles":{},"offer":null,"publicZoopKey":"enBrX3Byb2RfeVdhNVBsTmpQb2sxYmZzSmdmalZmbXo2Og==","campaignDiscounts":[]},"paymentStore":{"paymentsDiscounts":[],"payments":[{"id":"pix-option","title":"Pix","caption":"A confirmação do seu pagamento é mais rápida","flag":"pix","disabled":false,"method":"PIX","isDefault":true,"isRecent":true},{"id":"nu-pay","title":"NuPay","caption":"Pague com saldo, crédito ou limite adicional no Nubank","flag":"nu_pay","disabled":false,"tag":"Parcelamento até 24x","method":"NUPAY","isDefault":false}],"twoPaymentsEnabled":true,"state":"loaded"},"deliveryStore":{"delivery":{"quotationId":"62ea4c66-041f-4dac-ab56-bff1d5cbb980","options":[{"optionId":"0","method":"IN_HANDS","methodName":"Retirar com vendedor","rawPrice":0,"estimatedDays":0,"formattedPrice":"R$ 0,00","isDefault":false,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"1","method":"STANDARD","methodName":"Padrão","rawPrice":0,"estimatedDays":9,"formattedPrice":"Frete grátis","isDefault":true,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"2","method":"EXPRESS","methodName":"Expressa","rawPrice":2490,"estimatedDays":5,"formattedPrice":"R$ 24,90","isDefault":false,"originalRawPrice":3127,"originalFormattedPrice":"R$ 31,27"}],"receipts":[{"id":"IN_HANDS","metadata":{"isDifferentCity":true}}]},"address":{"id":"0f1d36d4-4273-4683-a830-5478742d9689","zipcode":"82410370","street":"Rua Edson Campos Matesich","number":65,"complement":null,"neighbourhood":"Santa Felicidade","city":"Curitiba","state":"PR","reference":null,"main":true},"adAddress":{"zipcode":"05017000","neighbourhood":"Perdizes","city":"São Paulo","state":"SP","street":"Rua Apinajés - até 1309/1310"},"selectedDelivery":"1","selectedReceiptType":"SHIPMENT","state":"loaded"},"extraDataStore":{"errorInstance":{"name":"TypeError","message":"RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal.","stack":"TypeError: RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal."},"state":"error"},"pixQRCodeStore":{"state":"creating","hasUnexpectedError":false},"nuPayStore":{"state":"idle"},"isMobile":false,"state":"loaded"},"useLocalStorage":false,"testAbGroupsFromOlxApp":null,"appVersion":null,"transactionSessionId":"0b383f12-c03a-4a97-9a7b-43d77f882f68","isWebView":false},"__N_SSP":true},"page":"/","query":{"listId":"1508604170","source":"ADVIEW"},"buildId":"twlnsC6lCgK5qVoyWIylU","assetPrefix":"https://static.olx.com.br/p2p/txp/txp-client","isFallback":false,"isExperimentalCompile":false,"gssp":true,"scriptLoader":[]}</script>
+    <div id="__next"><noscript><iframe
+                src="https://8f675f1c38002c22c695bf44c56e463f96b3e14e.csftr.com/shield-fp/v1/api/web/noscript?site_id=8f675f1c38002c22c695bf44c56e463f96b3e14e"
+                width="0" height="0" style="display:none" title="device intelligence"></iframe></noscript>
+        <div class="sticky top-0 z-1">
+            <header data-ds-component="DS-FocusHeader" class="olx-focus-header">
+                <nav class="olx-focus-header__content"><span data-ds-component="DS-FocusHeaderLogo"
+                        class="olx-focus-header__logo ds-primary-link"><span class="olx-focus-header__logo-container"
+                            aria-hidden="true"><svg data-ds-component="DS-LogoOLX" viewBox="0 0 40 40"
+                                class="olx-logo-olx olx-logo-olx--default" aria-hidden="true">
+                                <g fill="none" fill-rule="evenodd">
+                                    <path class="olx-logo-olx--o"
+                                        d="M7.579 26.294c-2.282 0-3.855-1.89-3.855-4.683 0-2.82 1.573-4.709 3.855-4.709 2.28 0 3.855 1.889 3.855 4.682 0 2.82-1.574 4.71-3.855 4.71m0 3.538c4.222 0 7.578-3.512 7.578-8.248 0-4.682-3.173-8.22-7.578-8.22C3.357 13.363 0 16.874 0 21.61c0 4.763 3.173 8.221 7.579 8.221">
+                                    </path>
+                                    <path class="olx-logo-olx--l"
+                                        d="M18.278 23.553h7.237c.499 0 .787-.292.787-.798V20.44c0-.505-.288-.798-.787-.798h-4.851V9.798c0-.505-.288-.798-.787-.798h-2.386c-.498 0-.787.293-.787.798v12.159c0 1.038.551 1.596 1.574 1.596">
+                                    </path>
+                                    <path class="olx-logo-olx--x"
+                                        d="M28.112 29.593l4.353-5.082 4.222 5.082c.367.452.839.452 1.258.08l1.705-1.517c.42-.373.472-.851.079-1.277l-4.694-5.321 4.274-4.869c.367-.426.34-.878-.078-1.277l-1.6-1.463c-.42-.4-.892-.373-1.259.08l-3.907 4.602-3.986-4.603c-.367-.425-.84-.479-1.259-.08l-1.652 1.49c-.42.4-.446.825-.053 1.278l4.354 4.868-4.747 5.348c-.393.452-.34.905.079 1.277l1.652 1.464c.42.372.891.345 1.259-.08">
+                                    </path>
+                                </g>
+                            </svg></span></span>
+                    <div class="flex flex-1 justify-end"></div>
+                </nav>
+            </header>
+            <div data-testid="exit-intent-modal" data-show="false"></div>
+        </div>
+        <main id="main" class="bg-neutral-70 mx-auto w-full max-w-[1650px] px-4 py-5"><span
+                class="typo-title-large">Confirme sua compra</span>
+            <div class="grid w-full grid-cols-1 pt-4 md:grid-cols-12 md:gap-4">
+                <div class="flex w-full flex-col gap-4 pb-2 md:col-span-7 lg:col-span-8">
+                    <div class="relative"><span class="typo-title-medium mb-1">Entrega</span>
+                        <div>
+                            <div class="grid gap-2 pt-2 lg:grid-cols-2">
+                                <div
+                                    class="hover:bg-neutral-80 rounded-1 relative grid items-center overflow-visible border-1 border-solid border-secondary-100 grid-cols-1">
+                                    <span data-ds-component="DS-Badge"
+                                        class="olx-badge olx-badge--secondary olx-badge--small olx-badge--rectangle absolute top-0 left-2 -translate-y-1/2">Recomendado</span><label
+                                        for=":R2j5l4m:"
+                                        class="flex h-fit w-full cursor-pointer items-center gap-1 p-2 pb-0">
+                                        <div
+                                            class="grid w-full cursor-pointer grid-cols-[auto_1fr_auto] items-center gap-2">
+                                            <img src="/images/van-delivery.webp" alt="Delivery" width="80" height="80">
+                                            <div class="space-y-0-5 flex w-full flex-col justify-center"><span
+                                                    class="typo-body-medium font-bold">Entrega pela OLX</span><span
+                                                    class="typo-body-small text-neutral-130 line-clamp-2">Rua Edson
+                                                    Campos Matesich, 65</span><span
+                                                    class="typo-body-small text-neutral-110 line-clamp-1">Santa
+                                                    Felicidade, Curitiba, PR</span></div>
+                                            <div class="self-start"><label data-ds-component="DS-Radio"
+                                                    aria-disabled="false"
+                                                    class="olx-radio olx-radio--checked olx-radio--checked"><span
+                                                        class="olx-radio__content-wrapper"><span
+                                                            class="olx-radio__content"><span
+                                                                class="olx-radio__input-wrapper"><input
+                                                                    aria-label="deliveryReceiptType" type="radio"
+                                                                    class="olx-radio__native" id=":R2j5l4m:" checked=""
+                                                                    value="SHIPMENT"><span
+                                                                    class="olx-radio__stylized"></span></span></span></span></label>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <div class="px-2 pb-2">
+                                        <hr class="olx-divider olx-mb-1-5 olx-mt-1-5" data-ds-component="DS-Divider">
+                                        <div class="flex space-x-1"><a
+                                                class="olx-core-link olx-core-link--main olx-core-link--small">Mudar
+                                                endereço</a></div>
+                                    </div><span
+                                        class="typo-body-small text-feedback-success-100 absolute right-2 bottom-2 font-bold">Frete
+                                        grátis</span>
+                                </div>
+                                <div
+                                    class="hover:bg-neutral-80 rounded-1 relative grid items-center overflow-visible border-1 border-solid border-[var(--container-border-color-outlined)] grid-cols-1">
+                                    <label for=":R135l4m:"
+                                        class="flex w-full cursor-pointer items-center gap-1 p-2 pb-0 h-full">
+                                        <div
+                                            class="grid h-full w-full cursor-pointer grid-cols-[auto_1fr_auto] items-center gap-2">
+                                            <img src="/images/shake-hands.webp" alt="Delivery" width="80" height="80">
+                                            <div class="flex h-full w-full flex-col justify-center"><span
+                                                    class="typo-body-medium font-bold">Retirar com vendedor</span><span
+                                                    class="typo-body-small text-neutral-110">Combine diretamente com ele
+                                                    através do chat da OLX.</span></div>
+                                            <div class="self-start"><label data-ds-component="DS-Radio"
+                                                    class="olx-radio"><span class="olx-radio__content-wrapper"><span
+                                                            class="olx-radio__content"><span
+                                                                class="olx-radio__input-wrapper"><input
+                                                                    aria-label="deliveryReceiptType" type="radio"
+                                                                    class="olx-radio__native" id=":R135l4m:"
+                                                                    value="PERSONAL"><span
+                                                                    class="olx-radio__stylized"></span></span></span></span></label>
+                                            </div>
+                                        </div>
+                                    </label>
+                                    <div class="px-2 pb-2">
+                                        <hr class="olx-divider olx-mb-1-5 olx-mt-1-5" data-ds-component="DS-Divider">
+                                        <div class="py-0-5 flex w-full flex-row gap-1"><svg width="18" height="18"
+                                                viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"
+                                                aria-hidden="true">
+                                                <path
+                                                    d="M5.55 4.55a8.7 8.7 0 0 1 12.31 12.31l-1.18 1.18-3.4 3.31c-.88.84-2.26.84-3.14 0l-3.49-3.4-1.1-1.09a8.7 8.7 0 0 1 0-12.31ZM16.8 5.61a7.2 7.2 0 1 0-10.19 10.2l1.49 1.46 3.09 3c.29.28.75.28 1.04 0l3.4-3.3 1.17-1.17a7.2 7.2 0 0 0 0-10.19Zm-5.1 2.37a3 3 0 1 1 0 6 3 3 0 0 1 0-6Zm0 1.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z"
+                                                    fill="currentColor"></path>
+                                            </svg><span
+                                                class="typo-caption gap-0-5 inline-flex items-center font-semibold"><span>Perdizes<!-- -->,
+                                                    <!-- -->São Paulo<!-- --> - <!-- -->SP</span></span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid" style="grid-template-rows: 1fr;">
+                                <div class="overflow-hidden">
+                                    <div class="mt-3 flex flex-col gap-2"><span
+                                            class="typo-body-large font-semibold">Prazo de entrega</span>
+                                        <div class="grid gap-2 lg:has-[&gt;:last-child:nth-child(2)]:grid-cols-2">
+                                            <div
+                                                class="hover:bg-neutral-80 rounded-1 relative grid grid-cols-[1fr_auto] items-center overflow-visible border-1 border-solid border-secondary-100">
+                                                <label for=":rb:"
+                                                    class="flex h-fit w-full cursor-pointer items-center gap-1 p-2"><label
+                                                        data-ds-component="DS-Radio"
+                                                        class="olx-radio olx-radio--checked olx-radio--checked"><span
+                                                            class="olx-radio__content-wrapper"><span
+                                                                class="olx-radio__content"><span
+                                                                    class="olx-radio__input-wrapper"><input
+                                                                        aria-label="deliveryOptionId" type="radio"
+                                                                        class="olx-radio__native" id=":rb:" value="1"
+                                                                        checked=""><span
+                                                                        class="olx-radio__stylized"></span></span></span></span></label>
+                                                    <div
+                                                        class="grid w-full cursor-pointer grid-cols-[1fr_auto] flex-col gap-2">
+                                                        <div class="flex h-full w-full flex-col justify-center"><span
+                                                                class="typo-body-medium text-neutral-130 font-semibold">Padrão</span><span
+                                                                class="typo-body-small text-neutral-110">Até 9 dias
+                                                                úteis</span></div>
+                                                        <div class="flex flex-col"><span
+                                                                class="typo-body-small font-bold text-feedback-success-100">Grátis</span>
+                                                        </div>
+                                                    </div>
+                                                </label></div>
+                                            <div
+                                                class="hover:bg-neutral-80 rounded-1 relative grid grid-cols-[1fr_auto] items-center overflow-visible border-1 border-solid border-[var(--container-border-color-outlined)]">
+                                                <label for=":re:"
+                                                    class="flex h-fit w-full cursor-pointer items-center gap-1 p-2"><label
+                                                        data-ds-component="DS-Radio" class="olx-radio"><span
+                                                            class="olx-radio__content-wrapper"><span
+                                                                class="olx-radio__content"><span
+                                                                    class="olx-radio__input-wrapper"><input
+                                                                        aria-label="deliveryOptionId" type="radio"
+                                                                        class="olx-radio__native" id=":re:"
+                                                                        value="2"><span
+                                                                        class="olx-radio__stylized"></span></span></span></span></label>
+                                                    <div
+                                                        class="grid w-full cursor-pointer grid-cols-[1fr_auto] flex-col gap-2">
+                                                        <div class="flex h-full w-full flex-col justify-center"><span
+                                                                class="typo-body-medium text-neutral-130 font-semibold">Expressa</span><span
+                                                                class="typo-body-small text-neutral-110">Até 5 dias
+                                                                úteis</span></div>
+                                                        <div class="flex flex-col"><span
+                                                                class="typo-body-small line-through">R$
+                                                                31,27</span><span
+                                                                class="typo-body-small font-bold text-feedback-success-100">R$
+                                                                24,90</span></div>
+                                                    </div>
+                                                </label></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="grid" style="grid-template-rows: 1fr;">
+                                <div class="overflow-hidden">
+                                    <div class="mt-3">
+                                        <div data-ds-componet="DS-Alertbox"
+                                            class="olx-alertbox olx-alertbox--information" role="alert" title="">
+                                            <div class="olx-alertbox__content-wrapper"><span
+                                                    class="olx-alertbox__icon-wrapper" aria-hidden="true"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" width="22" height="22"
+                                                        viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path fill="currentColor" fill-rule="evenodd"
+                                                            d="M12,22.75 C6.06293894,22.75 1.25,17.9370611 1.25,12 C1.25,6.06293894 6.06293894,1.25 12,1.25 C17.9370611,1.25 22.75,6.06293894 22.75,12 C22.75,17.9370611 17.9370611,22.75 12,22.75 Z M12,21.25 C17.1086339,21.25 21.25,17.1086339 21.25,12 C21.25,6.89136606 17.1086339,2.75 12,2.75 C6.89136606,2.75 2.75,6.89136606 2.75,12 C2.75,17.1086339 6.89136606,21.25 12,21.25 Z M12.75,16 C12.75,16.4142136 12.4142136,16.75 12,16.75 C11.5857864,16.75 11.25,16.4142136 11.25,16 L11.25,12 C11.25,11.5857864 11.5857864,11.25 12,11.25 C12.4142136,11.25 12.75,11.5857864 12.75,12 L12.75,16 Z M12,10 C11.4477153,10 11,9.55228475 11,9 C11,8.44771525 11.4477153,8 12,8 C12.5522847,8 13,8.44771525 13,9 C13,9.55228475 12.5522847,10 12,10 Z">
+                                                        </path>
+                                                    </svg></span>
+                                                <div class="olx-alertbox__content"><span class="olx-alertbox__title"
+                                                        title=""></span>
+                                                    <div class="olx-alertbox__description">O vendedor tem um período
+                                                        mínimo de 5 dias para a postagem do produto após a confirmação
+                                                        de pagamento. Se esse prazo não for cumprido, você pode cancelar
+                                                        a compra e o valor será estornado automaticamente.</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="relative"><span class="typo-title-medium mb-1">Forma de pagamento</span>
+                        <div class="md:pb-3">
+                            <div class="rounded-2 flex gap-2 p-2 bg-neutral-80"><svg xmlns="http://www.w3.org/2000/svg"
+                                    width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">
+                                    <path fill="currentColor" fill-rule="evenodd"
+                                        d="M22.1219055,14.93875 L14.950625,22.110035 C14.4348123,22.6264219 13.7348754,22.9165733 13.005,22.9165733 C12.2751246,22.9165733 11.5751877,22.6264219 11.0599789,22.1106389 L2.46997887,13.5306389 C2.3291376,13.3899616 2.25,13.1990637 2.25,13 L2.25,3 C2.25,2.58578644 2.58578644,2.25 3,2.25 L13,2.25 C13.1989124,2.25 13.3896778,2.32901763 13.5303301,2.46966991 L22.1219055,11.06125 C23.1881454,12.133853 23.1881454,13.866147 22.1219055,14.93875 Z M3.75,12.6890839 L12.120625,21.049965 C12.3550853,21.2846863 12.6732384,21.4165733 13.005,21.4165733 C13.3367616,21.4165733 13.6549147,21.2846863 13.8896699,21.0496699 L21.0596699,13.8796699 C21.542749,13.3937032 21.542749,12.6062968 21.0596699,12.1203301 L12.6893398,3.75 L3.75,3.75 L3.75,12.6890839 Z M8,9 C7.44771525,9 7,8.55228475 7,8 C7,7.44771525 7.44771525,7 8,7 C8.55228475,7 9,7.44771525 9,8 C9,8.55228475 8.55228475,9 8,9 Z">
+                                    </path>
+                                </svg>
+                                <div class="flex-1"><span
+                                        class="typo-body-medium block font-semibold text-current">Cupom de
+                                        desconto</span><button data-ds-component="DS-Link"
+                                        class="olx-link olx-link--medium olx-link--main olx-link--button mt-0-5 cursor-pointer underline">Adicionar</button>
+                                </div>
+                            </div>
+                            <div class="my-3">
+                                <div class="flex flex-col gap-3">
+                                    <div class="flex flex-col gap-2"><span
+                                            class="typo-body-small text-neutral-110">PAGAMENTOS DIGITAIS</span>
+                                        <div>
+                                            <div
+                                                class="hover:bg-neutral-80 rounded-1 relative grid max-h-[192px] grid-cols-[1fr_auto] items-center overflow-visible border-1 border-solid border-secondary-100">
+                                                <label for=":R2pd9l4m:"
+                                                    class="flex h-fit w-full cursor-pointer items-center gap-1 p-2"><label
+                                                        class="olx-core-checkbox-radio__root olx-core-checkbox-radio__root--classic olx-core-radio__root"><input
+                                                            class="olx-core-checkbox-radio__input olx-core-radio__input"
+                                                            id=":R2pd9l4m:" type="radio" checked=""></label><svg
+                                                        width="32" height="32" viewBox="0 0 32 32" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+                                                        data-origin="svg-preserve-color">
+                                                        <path
+                                                            d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z"
+                                                            fill="#32BCAD"></path>
+                                                        <path fill-rule="evenodd" clip-rule="evenodd"
+                                                            d="M11.7193 11.751C12.347 11.751 12.9372 11.9955 13.3811 12.4391L15.7896 14.8481C15.9631 15.0215 16.2462 15.0222 16.4202 14.8478L18.8199 12.4479C19.2638 12.0043 19.8541 11.7598 20.4819 11.7598H20.7709L17.7229 8.71192C16.7737 7.76269 15.2348 7.76269 14.2856 8.71192L11.2465 11.751H11.7193ZM20.482 20.2402C19.8542 20.2402 19.2639 19.9957 18.82 19.552L16.4204 17.1524C16.2519 16.9834 15.9583 16.9839 15.7898 17.1524L13.3813 19.5608C12.9374 20.0045 12.3471 20.2488 11.7194 20.2488H11.2465L14.2857 23.2882C15.2349 24.2373 16.7739 24.2373 17.723 23.2882L20.771 20.2402H20.482ZM21.4453 12.4403L23.2871 14.2822C24.2364 15.2313 24.2364 16.7703 23.2871 17.7195L21.4453 19.5613C21.4047 19.5451 21.3609 19.535 21.3145 19.535H20.4771C20.0441 19.535 19.6203 19.3595 19.3144 19.0532L16.9148 16.6538C16.4798 16.2184 15.7211 16.2185 15.2857 16.6535L12.8772 19.0621C12.5712 19.3681 12.1474 19.5437 11.7145 19.5437H10.6847C10.6409 19.5437 10.5997 19.5541 10.561 19.5687L8.7118 17.7195C7.76257 16.7703 7.76257 15.2313 8.7118 14.2822L10.5611 12.4329C10.5998 12.4475 10.6409 12.458 10.6847 12.458H11.7145C12.1474 12.458 12.5712 12.6335 12.8772 12.9396L15.2859 15.3483C15.5104 15.5726 15.8052 15.685 16.1003 15.685C16.3951 15.685 16.6902 15.5726 16.9146 15.3481L19.3144 12.9484C19.6203 12.6422 20.0441 12.4666 20.4771 12.4666H21.3145C21.3608 12.4666 21.4047 12.4566 21.4453 12.4403Z"
+                                                            fill="white"></path>
+                                                    </svg>
+                                                    <div class="w-full"><span
+                                                            class="typo-body-small block font-semibold">Pix</span><span
+                                                            class="typo-caption text-neutral-110 block">A confirmação do
+                                                            seu pagamento é mais rápida</span>
+                                                        <div class="mt-0-5 flex gap-1"></div>
+                                                    </div>
+                                                </label></div>
+                                        </div>
+                                        <div>
+                                            <div
+                                                class="hover:bg-neutral-80 rounded-1 relative grid max-h-[192px] grid-cols-[1fr_auto] items-center overflow-visible border-1 border-solid border-[var(--container-border-color-outlined)]">
+                                                <label for=":R39d9l4m:"
+                                                    class="flex h-fit w-full cursor-pointer items-center gap-1 p-2"><label
+                                                        class="olx-core-checkbox-radio__root olx-core-checkbox-radio__root--classic olx-core-radio__root"><input
+                                                            class="olx-core-checkbox-radio__input olx-core-radio__input"
+                                                            id=":R39d9l4m:" type="radio"></label><svg width="32"
+                                                        height="32" viewBox="0 0 32 32" fill="none"
+                                                        xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+                                                        data-origin="svg-preserve-color">
+                                                        <path
+                                                            d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z"
+                                                            fill="#820AD1"></path>
+                                                        <path
+                                                            d="M9.61238 11.9532C10.2444 11.3516 11.0804 11 12.0684 11C13.9884 11 15.2604 12.2686 15.5044 14.1714C15.5844 14.7912 15.5844 15.6611 15.5804 16.6687V20.7644H12.9404V17.9699C12.9404 17.9699 12.9364 15.5777 12.9204 15.1283C12.8484 13.182 11.5764 11.9569 9.61238 11.9532C9.01638 12.5259 8.70038 13.2182 8.65238 14.2802C8.64438 14.4288 8.64838 14.9543 8.64838 15.643C8.64838 16.0018 8.65238 16.4041 8.65238 16.8246V20.768H6.01238V16.4657C6.01238 16.3171 6.00838 16.1685 6.00838 16.0199C6.00438 15.7191 5.99638 15.4183 6.01238 15.1174C6.04038 14.6173 6.13638 14.1243 6.39638 13.6676C6.98438 12.6238 8.19238 11.9496 9.47638 11.9496C9.52038 11.9496 9.56438 11.9532 9.61238 11.9532Z"
+                                                            fill="white"></path>
+                                                        <path
+                                                            d="M25.988 16.8826C26.004 16.5817 26 16.2809 25.992 15.9801C25.988 15.8314 25.988 15.6828 25.988 15.5342V11.232H23.348V15.1754C23.348 15.5959 23.348 15.9982 23.352 16.357C23.356 17.0493 23.356 17.5748 23.348 17.7198C23.3 18.7818 22.984 19.4741 22.392 20.0431C20.428 20.0431 19.152 18.818 19.084 16.8717C19.068 16.4259 19.06 15.3131 19.06 14.0301V11.2283L16.42 11.232V15.3276C16.42 16.3353 16.42 17.2088 16.496 17.8249C16.74 19.7278 18.012 20.9964 19.932 20.9964C20.916 20.9964 21.756 20.6448 22.388 20.0431C22.432 20.0431 22.476 20.0467 22.524 20.0467C23.812 20.0467 25.016 19.3726 25.604 18.3287C25.864 17.872 25.96 17.3827 25.988 16.8826Z"
+                                                            fill="white"></path>
+                                                    </svg>
+                                                    <div class="w-full"><span
+                                                            class="typo-body-small block font-semibold">NuPay</span><span
+                                                            class="typo-caption text-neutral-110 block">Pague com saldo,
+                                                            crédito ou limite adicional no Nubank</span>
+                                                        <div class="mt-0-5 flex gap-1">
+                                                            <div
+                                                                class="olx-core-badge olx-core-badge--secondary olx-core-badge--medium olx-core-badge--rectangle">
+                                                                Parcelamento até 24x</div>
+                                                        </div>
+                                                    </div>
+                                                </label></div>
+                                        </div>
+                                    </div>
+                                    <div class="flex flex-col gap-2"><span
+                                            class="typo-body-small text-neutral-110">CARTÃO DE CRÉDITO</span>
+                                        <div class="flex items-center gap-1">
+                                            <div class="flex items-center justify-between gap-1"><label for=":R1ad9l4m:"
+                                                    class="olx-core-form-label"></label><input
+                                                    class="olx-core-toggle-switch" id=":R1ad9l4m:" type="checkbox">
+                                            </div><span class="typo-body-medium">Pagar com dois cartões</span>
+                                            <div
+                                                class="olx-core-badge olx-core-badge--gradient olx-core-badge--medium olx-core-badge--rectangle">
+                                                Novidade</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div data-ds-component="DS-Container"
+                                        class="mt-2 flex cursor-pointer items-center justify-between gap-1 olx-container olx-container--outlined olx-d-flex">
+                                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M21.5957 9.61702V6.57447C21.5957 5.92818 21.0718 5.40426 20.4255 5.40426H3.57447C2.92818 5.40426 2.40426 5.92818 2.40426 6.57447V9.61702H21.5957ZM21.5957 11.0213H2.40426V17.8085C2.40426 18.4548 2.92818 18.9787 3.57447 18.9787H20.4255C21.0718 18.9787 21.5957 18.4548 21.5957 17.8085V11.0213ZM3.57447 4H20.4255C21.8474 4 23 5.15263 23 6.57447V17.8085C23 19.2304 21.8474 20.383 20.4255 20.383H3.57447C2.15263 20.383 1 19.2304 1 17.8085V6.57447C1 5.15263 2.15263 4 3.57447 4Z"
+                                                fill="currentColor"></path>
+                                        </svg><span class="typo-body-small flex-1">Adicionar cartão de
+                                            crédito</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                            viewBox="0 0 24 24" aria-hidden="true" class="mr-1">
+                                            <path fill="currentColor" fill-rule="evenodd"
+                                                d="M12.75,11.25 L19,11.25 C19.4142136,11.25 19.75,11.5857864 19.75,12 C19.75,12.4142136 19.4142136,12.75 19,12.75 L12.75,12.75 L12.75,19 C12.75,19.4142136 12.4142136,19.75 12,19.75 C11.5857864,19.75 11.25,19.4142136 11.25,19 L11.25,12.75 L5,12.75 C4.58578644,12.75 4.25,12.4142136 4.25,12 C4.25,11.5857864 4.58578644,11.25 5,11.25 L11.25,11.25 L11.25,5 C11.25,4.58578644 11.5857864,4.25 12,4.25 C12.4142136,4.25 12.75,4.58578644 12.75,5 L12.75,11.25 Z">
+                                            </path>
+                                        </svg></div>
+                                </div>
+                            </div>
+                            <div class="grid gap-2 md:has-[&gt;:last-child:nth-child(2)]:grid-cols-2"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="h-full md:col-span-5 lg:col-span-4">
+                    <div class="relative h-full"><span class="typo-title-medium mb-1">Resumo</span>
+                        <div class="h-full w-full pt-2">
+                            <article
+                                class="border-neutral-90 rounded-1 sticky top-11 flex flex-col gap-2 md:border md:p-3"
+                                data-testid="summary">
+                                <figure class="grid h-[72px] grid-cols-[72px_1fr] items-center gap-2">
+                                    <div class="bg-neutral-90 rounded-1 h-full overflow-hidden"><img
+                                            class="h-full w-full object-cover"
+                                            src="https://img.olx.com.br/thumbs/80/805634175630527.webp"
+                                            alt="Imagem principal do iPhone 17 pro max 256gb LACRADO"></div>
+                                    <figcaption
+                                        class="typo-body-medium max-h-[72px] overflow-hidden font-semibold text-balance">
+                                        iPhone 17 pro max 256gb LACRADO</figcaption>
+                                </figure>
+                                <hr class="olx-divider" data-ds-component="DS-Divider">
+                                <div class="flex w-full items-center gap-1">
+                                    <div class="flex-1"><span
+                                            class="typo-body-small text-neutral-110 line-clamp-1 block">Vendedor:
+                                            <!-- -->Sophia V</span><span
+                                            class="typo-body-small text-neutral-110 block">CPF: <!-- -->*** *** ***
+                                            **</span></div><img data-ds-component="DS-Avatar"
+                                        src="data:image/svg+xml,%3Csvg width='32' height='33' viewBox='0 0 32 33' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cmask id='mask0_1222_28212' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='0' y='0' width='32' height='33'%3E%3Ccircle cx='16' cy='16.4512' r='16' fill='white'/%3E%3C/mask%3E%3Cg mask='url(%23mask0_1222_28212)'%3E%3Cg clip-path='url(%23clip0_1222_28212)'%3E%3Crect width='32' height='32' transform='translate(0 0.451172)' fill='%23F5F6F7'/%3E%3Cpath d='M17.9499 21.251H14.4499C11.9437 21.251 9.54003 22.2466 7.76782 24.0188C5.99562 25.791 5 28.1946 5 30.7009V30.7009C5 31.165 5.18437 31.6102 5.51256 31.9383C5.84075 32.2665 6.28586 32.4509 6.74999 32.4509H25.6499C26.114 32.4509 26.5591 32.2665 26.8873 31.9383C27.2155 31.6102 27.3999 31.165 27.3999 30.7009C27.3999 28.1946 26.4042 25.791 24.632 24.0188C22.8598 22.2466 20.4562 21.251 17.9499 21.251V21.251Z' fill='%23CAD8DD'/%3E%3Cpath d='M23.2006 11.4511V13.5511C23.2008 14.78 22.8774 15.9874 22.263 17.0517C21.6487 18.116 20.7649 18.9998 19.7006 19.6143V22.6511L16.2006 24.7511L12.7007 22.6511V19.6143C11.6364 18.9998 10.7526 18.116 10.1382 17.0517C9.52386 15.9874 9.2005 14.78 9.20068 13.5511V11.4511C9.20068 9.59463 9.93818 7.81416 11.2509 6.50141C12.5637 5.18867 14.3441 4.45117 16.2006 4.45117C18.0571 4.45117 19.8376 5.18867 21.1504 6.50141C22.4631 7.81416 23.2006 9.59463 23.2006 11.4511V11.4511Z' fill='%23DDE5E8'/%3E%3Cg opacity='0.06'%3E%3Cpath d='M16.2021 4.45117C15.6114 4.45349 15.0234 4.53066 14.4521 4.68086C15.9538 5.06791 17.2844 5.94293 18.2346 7.16841C19.1849 8.39389 19.7011 9.90037 19.7021 11.4511V13.5511C19.701 15.1019 19.1848 16.6083 18.2345 17.8337C17.2843 19.0592 15.9538 19.9342 14.4521 20.3214C15.4863 20.5934 16.5691 20.6241 17.617 20.411C18.6648 20.1979 19.6497 19.7467 20.4954 19.0923C21.3411 18.438 22.025 17.5979 22.4944 16.6371C22.9637 15.6763 23.2058 14.6204 23.2021 13.5511V11.4511C23.2021 9.59462 22.4646 7.81416 21.1519 6.50141C19.8391 5.18867 18.0586 4.45117 16.2021 4.45117V4.45117Z' fill='%2317292D'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_1222_28212'%3E%3Crect width='32' height='32' fill='white' transform='translate(0 0.451172)'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E%0A"
+                                        alt="" style="width:32px;height:32px" class="olx-avatar">
+                                </div>
+                                <hr class="olx-divider" data-ds-component="DS-Divider">
+                                <div class="flex flex-col"><span class="text-2-25 font-bold">Método de pagamento</span>
+                                    <div role="listitem"
+                                        class="gap-1-5 grid grid-cols-[auto_1fr_auto] place-items-center mt-3"><svg
+                                            width="32" height="32" viewBox="0 0 32 32" fill="none"
+                                            xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+                                            data-origin="svg-preserve-color">
+                                            <path
+                                                d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z"
+                                                fill="#32BCAD"></path>
+                                            <path fill-rule="evenodd" clip-rule="evenodd"
+                                                d="M11.7193 11.751C12.347 11.751 12.9372 11.9955 13.3811 12.4391L15.7896 14.8481C15.9631 15.0215 16.2462 15.0222 16.4202 14.8478L18.8199 12.4479C19.2638 12.0043 19.8541 11.7598 20.4819 11.7598H20.7709L17.7229 8.71192C16.7737 7.76269 15.2348 7.76269 14.2856 8.71192L11.2465 11.751H11.7193ZM20.482 20.2402C19.8542 20.2402 19.2639 19.9957 18.82 19.552L16.4204 17.1524C16.2519 16.9834 15.9583 16.9839 15.7898 17.1524L13.3813 19.5608C12.9374 20.0045 12.3471 20.2488 11.7194 20.2488H11.2465L14.2857 23.2882C15.2349 24.2373 16.7739 24.2373 17.723 23.2882L20.771 20.2402H20.482ZM21.4453 12.4403L23.2871 14.2822C24.2364 15.2313 24.2364 16.7703 23.2871 17.7195L21.4453 19.5613C21.4047 19.5451 21.3609 19.535 21.3145 19.535H20.4771C20.0441 19.535 19.6203 19.3595 19.3144 19.0532L16.9148 16.6538C16.4798 16.2184 15.7211 16.2185 15.2857 16.6535L12.8772 19.0621C12.5712 19.3681 12.1474 19.5437 11.7145 19.5437H10.6847C10.6409 19.5437 10.5997 19.5541 10.561 19.5687L8.7118 17.7195C7.76257 16.7703 7.76257 15.2313 8.7118 14.2822L10.5611 12.4329C10.5998 12.4475 10.6409 12.458 10.6847 12.458H11.7145C12.1474 12.458 12.5712 12.6335 12.8772 12.9396L15.2859 15.3483C15.5104 15.5726 15.8052 15.685 16.1003 15.685C16.3951 15.685 16.6902 15.5726 16.9146 15.3481L19.3144 12.9484C19.6203 12.6422 20.0441 12.4666 20.4771 12.4666H21.3145C21.3608 12.4666 21.4047 12.4566 21.4453 12.4403Z"
+                                                fill="white"></path>
+                                        </svg>
+                                        <div class="w-full"><span
+                                                class="typo-body-small block font-semibold">Pix</span><span
+                                                class="typo-caption text-neutral-110 block">A confirmação do seu
+                                                pagamento é mais rápida</span></div><span
+                                            class="typo-body-medium font-bold">R$ 9.863,99</span>
+                                    </div>
+                                </div>
+                                <hr class="olx-divider" data-ds-component="DS-Divider">
+                                <div class="">
+                                    <div class="grid" style="grid-template-rows:1fr">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Valor do
+                                                        Produto</span></div>
+                                                <div class="flex"><span class="typo-body-small font-bold">R$
+                                                        9.300,00</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid" style="grid-template-rows:1fr">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Garantia da
+                                                        OLX</span></div>
+                                                <div class="flex"><span class="typo-body-small font-bold">R$
+                                                        563,99</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid" style="grid-template-rows: 1fr;">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Entrega</span>
+                                                </div>
+                                                <div class="flex"><span
+                                                        class="typo-body-small font-bold text-feedback-success-100">Grátis</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="mt-0-5 flex w-full gap-1">
+                                    <div class="flex flex-1"><span class="typo-body-large font-bold">Total a
+                                            pagar</span></div>
+                                    <div class="flex"><span class="typo-body-large font-bold">R$ 9.863,99</span></div>
+                                </div>
+                                <div data-ds-componet="DS-Alertbox" class="olx-alertbox olx-alertbox--default"
+                                    role="status" title="">
+                                    <div class="olx-alertbox__content-wrapper"><span class="olx-alertbox__icon-wrapper"
+                                            aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="24"
+                                                height="24" viewBox="0 0 24 24" aria-hidden="true">
+                                                <path fill="currentColor" fill-rule="evenodd"
+                                                    d="M12,22.75 C6.06293894,22.75 1.25,17.9370611 1.25,12 C1.25,6.06293894 6.06293894,1.25 12,1.25 C17.9370611,1.25 22.75,6.06293894 22.75,12 C22.75,17.9370611 17.9370611,22.75 12,22.75 Z M12,21.25 C17.1086339,21.25 21.25,17.1086339 21.25,12 C21.25,6.89136606 17.1086339,2.75 12,2.75 C6.89136606,2.75 2.75,6.89136606 2.75,12 C2.75,17.1086339 6.89136606,21.25 12,21.25 Z M12.75,16 C12.75,16.4142136 12.4142136,16.75 12,16.75 C11.5857864,16.75 11.25,16.4142136 11.25,16 L11.25,12 C11.25,11.5857864 11.5857864,11.25 12,11.25 C12.4142136,11.25 12.75,11.5857864 12.75,12 L12.75,16 Z M12,10 C11.4477153,10 11,9.55228475 11,9 C11,8.44771525 11.4477153,8 12,8 C12.5522847,8 13,8.44771525 13,9 C13,9.55228475 12.5522847,10 12,10 Z">
+                                                </path>
+                                            </svg></span>
+                                        <div class="olx-alertbox__content"><span class="olx-alertbox__title"
+                                                title=""></span>
+                                            <div class="olx-alertbox__description">A garantia da OLX é cobrada para
+                                                garantir seu reembolso em caso de problemas.</div>
+                                        </div>
+                                    </div>
+                                </div><button
+                                    class="olx-core-button olx-core-button--primary olx-core-button--large olx-core-loading-button w-full"
+                                    type="button"><span class="">Confirmar pagamento</span></button><span
+                                    class="typo-caption text-neutral-110">Ao confirmar o pagamento, você declara que
+                                    está concordando com os<!-- --> <a data-ds-component="DS-Link"
+                                        class="olx-link olx-link--caption olx-link--main"
+                                        href="https://olx.com.br/terms_olxpay.htm" target="_blank">Termos e
+                                        Condições</a> <!-- -->de uso da Garantia da OLX.</span>
+                            </article>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div data-ds-component="DS-Modal" aria-hidden="true" class="olx-modal olx-modal--default" data-show="false">
+                <div role="dialog" aria-modal="true" aria-labelledby="ds-modal-body-4" data-show="false"
+                    class="olx-modal__dialog olx-modal__dialog--default olx-modal__dialog--default--left"
+                    style="--modal-max-height: 98vh; --modal-max-width: 500px;"><button
+                        data-ds-component="DS-Modal-Button" type="button" class="olx-modal__close-button"><span
+                            data-ds-component="DS-VisuallyHidden" class="olx-visually-hidden">Fechar janela de
+                            diálogo</span><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                            viewBox="0 0 24 24" aria-hidden="true">
+                            <path fill="currentColor" fill-rule="evenodd"
+                                d="M13.0606602,12 L18.5303301,17.4696699 C18.8232233,17.7625631 18.8232233,18.2374369 18.5303301,18.5303301 C18.2374369,18.8232233 17.7625631,18.8232233 17.4696699,18.5303301 L12,13.0606602 L6.53033009,18.5303301 C6.23743687,18.8232233 5.76256313,18.8232233 5.46966991,18.5303301 C5.1767767,18.2374369 5.1767767,17.7625631 5.46966991,17.4696699 L10.9393398,12 L5.46966991,6.53033009 C5.1767767,6.23743687 5.1767767,5.76256313 5.46966991,5.46966991 C5.76256313,5.1767767 6.23743687,5.1767767 6.53033009,5.46966991 L12,10.9393398 L17.4696699,5.46966991 C17.7625631,5.1767767 18.2374369,5.1767767 18.5303301,5.46966991 C18.8232233,5.76256313 18.8232233,6.23743687 18.5303301,6.53033009 L13.0606602,12 L13.0606602,12 Z">
+                            </path>
+                        </svg></button>
+                    <div class="olx-modal__content olx-modal__content--default" id="ds-modal-body-4">
+                        <div class="overflow-y-auto">
+                            <div class="flex flex-col gap-y-3 p-1 pb-3">
+                                <div class="space-y-1"><span class="typo-title-large block font-semibold">Finalize a
+                                        compra</span><span class="typo-body-medium block">Revise e preencha os dados a
+                                        seguir para finalizar a compra com segurança.</span></div>
+                                <div class="space-y-2">
+                                    <div class="border-neutral-90 rounded-1 border p-2">
+                                        <figure class="grid h-[72px] grid-cols-[72px_1fr] items-center gap-2">
+                                            <div class="bg-neutral-90 rounded-1 h-full overflow-hidden"><img
+                                                    class="h-full w-full object-cover"
+                                                    src="https://img.olx.com.br/thumbs/80/805634175630527.webp"
+                                                    alt="Imagem principal do iPhone 17 pro max 256gb LACRADO"></div>
+                                            <figcaption
+                                                class="typo-body-medium max-h-[72px] overflow-hidden font-semibold text-balance">
+                                                iPhone 17 pro max 256gb LACRADO</figcaption>
+                                        </figure>
+                                    </div>
+                                    <div class="border-neutral-90 rounded-1 border p-2">
+                                        <div class="flex w-full items-center gap-1 flex-row-reverse">
+                                            <div class="flex-1"><span
+                                                    class="typo-body-small text-neutral-110 line-clamp-1 block">Vendedor:
+                                                    Sophia V</span><span
+                                                    class="typo-body-small text-neutral-110 block">CPF: *** *** ***
+                                                    **</span></div><img data-ds-component="DS-Avatar"
+                                                src="data:image/svg+xml,%3Csvg width='32' height='33' viewBox='0 0 32 33' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cmask id='mask0_1222_28212' style='mask-type:alpha' maskUnits='userSpaceOnUse' x='0' y='0' width='32' height='33'%3E%3Ccircle cx='16' cy='16.4512' r='16' fill='white'/%3E%3C/mask%3E%3Cg mask='url(%23mask0_1222_28212)'%3E%3Cg clip-path='url(%23clip0_1222_28212)'%3E%3Crect width='32' height='32' transform='translate(0 0.451172)' fill='%23F5F6F7'/%3E%3Cpath d='M17.9499 21.251H14.4499C11.9437 21.251 9.54003 22.2466 7.76782 24.0188C5.99562 25.791 5 28.1946 5 30.7009V30.7009C5 31.165 5.18437 31.6102 5.51256 31.9383C5.84075 32.2665 6.28586 32.4509 6.74999 32.4509H25.6499C26.114 32.4509 26.5591 32.2665 26.8873 31.9383C27.2155 31.6102 27.3999 31.165 27.3999 30.7009C27.3999 28.1946 26.4042 25.791 24.632 24.0188C22.8598 22.2466 20.4562 21.251 17.9499 21.251V21.251Z' fill='%23CAD8DD'/%3E%3Cpath d='M23.2006 11.4511V13.5511C23.2008 14.78 22.8774 15.9874 22.263 17.0517C21.6487 18.116 20.7649 18.9998 19.7006 19.6143V22.6511L16.2006 24.7511L12.7007 22.6511V19.6143C11.6364 18.9998 10.7526 18.116 10.1382 17.0517C9.52386 15.9874 9.2005 14.78 9.20068 13.5511V11.4511C9.20068 9.59463 9.93818 7.81416 11.2509 6.50141C12.5637 5.18867 14.3441 4.45117 16.2006 4.45117C18.0571 4.45117 19.8376 5.18867 21.1504 6.50141C22.4631 7.81416 23.2006 9.59463 23.2006 11.4511V11.4511Z' fill='%23DDE5E8'/%3E%3Cg opacity='0.06'%3E%3Cpath d='M16.2021 4.45117C15.6114 4.45349 15.0234 4.53066 14.4521 4.68086C15.9538 5.06791 17.2844 5.94293 18.2346 7.16841C19.1849 8.39389 19.7011 9.90037 19.7021 11.4511V13.5511C19.701 15.1019 19.1848 16.6083 18.2345 17.8337C17.2843 19.0592 15.9538 19.9342 14.4521 20.3214C15.4863 20.5934 16.5691 20.6241 17.617 20.411C18.6648 20.1979 19.6497 19.7467 20.4954 19.0923C21.3411 18.438 22.025 17.5979 22.4944 16.6371C22.9637 15.6763 23.2058 14.6204 23.2021 13.5511V11.4511C23.2021 9.59462 22.4646 7.81416 21.1519 6.50141C19.8391 5.18867 18.0586 4.45117 16.2021 4.45117V4.45117Z' fill='%2317292D'/%3E%3C/g%3E%3C/g%3E%3C/g%3E%3Cdefs%3E%3CclipPath id='clip0_1222_28212'%3E%3Crect width='32' height='32' fill='white' transform='translate(0 0.451172)'/%3E%3C/clipPath%3E%3C/defs%3E%3C/svg%3E%0A"
+                                                alt="" class="olx-avatar" style="width: 32px; height: 32px;">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col gap-3"><span class="text-2-25 font-semibold">Método de
+                                        pagamento</span>
+                                    <div
+                                        class="bg-neutral-70 rounded-1 border-[1px] border-solid border-[var(--container-border-color-outlined)] p-2 gap-1-5 flex flex-col">
+                                        <div role="listitem"
+                                            class="gap-1-5 grid grid-cols-[auto_1fr_auto] place-items-center"><svg
+                                                width="32" height="32" viewBox="0 0 32 32" fill="none"
+                                                xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
+                                                data-origin="svg-preserve-color">
+                                                <path
+                                                    d="M16 32C24.8366 32 32 24.8366 32 16C32 7.16344 24.8366 0 16 0C7.16344 0 0 7.16344 0 16C0 24.8366 7.16344 32 16 32Z"
+                                                    fill="#32BCAD"></path>
+                                                <path fill-rule="evenodd" clip-rule="evenodd"
+                                                    d="M11.7193 11.751C12.347 11.751 12.9372 11.9955 13.3811 12.4391L15.7896 14.8481C15.9631 15.0215 16.2462 15.0222 16.4202 14.8478L18.8199 12.4479C19.2638 12.0043 19.8541 11.7598 20.4819 11.7598H20.7709L17.7229 8.71192C16.7737 7.76269 15.2348 7.76269 14.2856 8.71192L11.2465 11.751H11.7193ZM20.482 20.2402C19.8542 20.2402 19.2639 19.9957 18.82 19.552L16.4204 17.1524C16.2519 16.9834 15.9583 16.9839 15.7898 17.1524L13.3813 19.5608C12.9374 20.0045 12.3471 20.2488 11.7194 20.2488H11.2465L14.2857 23.2882C15.2349 24.2373 16.7739 24.2373 17.723 23.2882L20.771 20.2402H20.482ZM21.4453 12.4403L23.2871 14.2822C24.2364 15.2313 24.2364 16.7703 23.2871 17.7195L21.4453 19.5613C21.4047 19.5451 21.3609 19.535 21.3145 19.535H20.4771C20.0441 19.535 19.6203 19.3595 19.3144 19.0532L16.9148 16.6538C16.4798 16.2184 15.7211 16.2185 15.2857 16.6535L12.8772 19.0621C12.5712 19.3681 12.1474 19.5437 11.7145 19.5437H10.6847C10.6409 19.5437 10.5997 19.5541 10.561 19.5687L8.7118 17.7195C7.76257 16.7703 7.76257 15.2313 8.7118 14.2822L10.5611 12.4329C10.5998 12.4475 10.6409 12.458 10.6847 12.458H11.7145C12.1474 12.458 12.5712 12.6335 12.8772 12.9396L15.2859 15.3483C15.5104 15.5726 15.8052 15.685 16.1003 15.685C16.3951 15.685 16.6902 15.5726 16.9146 15.3481L19.3144 12.9484C19.6203 12.6422 20.0441 12.4666 20.4771 12.4666H21.3145C21.3608 12.4666 21.4047 12.4566 21.4453 12.4403Z"
+                                                    fill="white"></path>
+                                            </svg>
+                                            <div class="w-full"><span
+                                                    class="typo-body-small block font-semibold">Pix</span><span
+                                                    class="typo-caption text-neutral-110 block">A confirmação do seu
+                                                    pagamento é mais rápida</span></div><span
+                                                class="typo-body-medium font-bold">R$ 9.863,99</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="">
+                                    <div class="grid" style="grid-template-rows: 1fr;">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Valor do
+                                                        Produto</span></div>
+                                                <div class="flex"><span class="typo-body-small font-bold">R$
+                                                        9.300,00</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid" style="grid-template-rows: 1fr;">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Garantia da
+                                                        OLX</span></div>
+                                                <div class="flex"><span class="typo-body-small font-bold">R$
+                                                        563,99</span></div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid" style="grid-template-rows: 1fr;">
+                                        <div class="overflow-hidden">
+                                            <div class="mt-0-5 flex w-full gap-1">
+                                                <div class="flex flex-1"><span class="typo-body-small">Entrega</span>
+                                                </div>
+                                                <div class="flex"><span
+                                                        class="typo-body-small font-bold text-feedback-success-100">Grátis</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <hr class="olx-divider" data-ds-component="DS-Divider">
+                                <div class="mt-0-5 flex w-full gap-1">
+                                    <div class="flex flex-1"><span class="typo-body-large font-bold">Total a
+                                            pagar</span></div>
+                                    <div class="flex"><span class="typo-body-large font-bold">R$ 9.863,99</span></div>
+                                </div>
+                                <hr class="olx-divider" data-ds-component="DS-Divider">
+                                <div class="olx-core-form-root">
+                                    <div class="flex justify-between"><label for=":r5:" class="olx-core-form-label">Nome
+                                            completo*</label></div>
+                                    <div class="olx-core-input-textarea-root"><input
+                                            class="olx-core-input-textarea-element olx-core-input-textarea-element--filled olx-core-input-textarea-element--default"
+                                            id=":r5:" placeholder="Preencha o nome conforme seu RG" name="buyerName"
+                                            aria-label="Nome completo*" aria-describedby=":r5:-description"
+                                            value="RODRIGO JACQUES"></div>
+                                    <div></div>
+                                </div>
+                                <div class="olx-core-form-root">
+                                    <div class="flex justify-between"><label for=":r6:"
+                                            class="olx-core-form-label">CPF*</label></div>
+                                    <div class="olx-core-input-textarea-root"><input
+                                            class="olx-core-input-textarea-element olx-core-input-textarea-element--filled olx-core-input-textarea-element--default"
+                                            id=":r6:" placeholder="000.000.000-00" name="buyerTaxDocumentNumber"
+                                            aria-label="CPF*" aria-describedby=":r6:-description"
+                                            value="115.481.289-88"></div>
+                                    <div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="height: 64.1px;"></div>
+                        <div class="bg-neutral-70 rounded-b-2 absolute right-0 bottom-0 left-0 z-2">
+                            <hr class="olx-divider" data-ds-component="DS-Divider">
+                            <div class="p-2"><button
+                                    class="olx-core-button olx-core-button--primary olx-core-button--large olx-core-loading-button w-full"><span
+                                        class="">Finalizar compra</span></button></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <script
+            src="https://h.online-metrix.net/fp/tags.js?org_id=k8vif92e&amp;session_id=0b383f12-c03a-4a97-9a7b-43d77f882f68"
+            defer=""></script><!--$--><!--/$-->
+    </div>
+    <div id="modal-root">
+        <div data-ds-component="DS-Modal" aria-hidden="true" class="olx-modal olx-modal--side-sheet" data-show="false">
+            <div role="dialog" aria-modal="true" aria-labelledby="ds-modal-body-1" data-show="false"
+                class="olx-modal__dialog olx-modal__dialog--side-sheet olx-modal__dialog--side-sheet--left"
+                style="--modal-max-height: 464px;">
+                <div class="olx-modal__topbar">
+                    <div data-ds-component="DS-Flex" class="olx-d-flex olx-ai-center"><span data-ds-component="DS-Text"
+                            class="olx-text olx-text--title-small olx-text--block olx-color-neutral-130">Endereços</span>
+                    </div><button data-ds-component="DS-Modal-Button" type="button"
+                        class="olx-modal__topbar-button"><span data-ds-component="DS-VisuallyHidden"
+                            class="olx-visually-hidden">Fechar janela de diálogo</span><svg
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            aria-hidden="true" color="var(--color-neutral-130)">
+                            <path fill="var(--color-neutral-130)" fill-rule="evenodd"
+                                d="M13.0606602,12 L18.5303301,17.4696699 C18.8232233,17.7625631 18.8232233,18.2374369 18.5303301,18.5303301 C18.2374369,18.8232233 17.7625631,18.8232233 17.4696699,18.5303301 L12,13.0606602 L6.53033009,18.5303301 C6.23743687,18.8232233 5.76256313,18.8232233 5.46966991,18.5303301 C5.1767767,18.2374369 5.1767767,17.7625631 5.46966991,17.4696699 L10.9393398,12 L5.46966991,6.53033009 C5.1767767,6.23743687 5.1767767,5.76256313 5.46966991,5.46966991 C5.76256313,5.1767767 6.23743687,5.1767767 6.53033009,5.46966991 L12,10.9393398 L17.4696699,5.46966991 C17.7625631,5.1767767 18.2374369,5.1767767 18.5303301,5.46966991 C18.8232233,5.76256313 18.8232233,6.23743687 18.5303301,6.53033009 L13.0606602,12 L13.0606602,12 Z">
+                            </path>
+                        </svg></button>
+                </div>
+                <div class="olx-modal__content olx-modal__content--side-sheet" id="ds-modal-body-1">
+                    <main class="relative h-full overflow-hidden">
+                        <section class="bg-neutral-70 absolute inset-0 z-1 flex flex-col"
+                            style="--animation-duration-ms: 200ms;">
+                            <div class="overflow-y-auto p-0 h-full">
+                                <div class="w-full px-1 px-0-5 h-full">
+                                    <form class="text-neutral-120 flex min-h-full flex-col overflow-y-auto">
+                                        <div class="flex min-h-full flex-col gap-2 py-1">
+                                            <div
+                                                class="hover:bg-neutral-80 rounded-1 relative grid grid-cols-[1fr_auto] items-center overflow-visible border-1 border-solid border-secondary-100">
+                                                <label for=":r7:"
+                                                    class="flex h-fit w-full cursor-pointer items-center gap-1 p-2"><label
+                                                        data-ds-component="DS-Radio"
+                                                        class="olx-radio olx-radio--checked olx-radio--checked"><span
+                                                            class="olx-radio__content-wrapper"><span
+                                                                class="olx-radio__content"><span
+                                                                    class="olx-radio__input-wrapper"><input
+                                                                        aria-label="selected" type="radio"
+                                                                        class="olx-radio__native" id=":r7:"
+                                                                        value="0f1d36d4-4273-4683-a830-5478742d9689"
+                                                                        checked=""><span
+                                                                        class="olx-radio__stylized"></span></span></span></span></label>
+                                                    <div><span class="typo-body-small block font-semibold">Rua Edson
+                                                            Campos Matesich, 65</span><span
+                                                            class="typo-body-small text-neutral-110 block">Santa
+                                                            Felicidade, Curitiba, PR</span><span
+                                                            data-ds-component="DS-Badge"
+                                                            class="olx-badge olx-badge--neutral olx-badge--small olx-badge--rectangle mt-0-5">Principal</span>
+                                                    </div>
+                                                </label><button data-ds-component="DS-IconAction"
+                                                    class="olx-icon-action olx-icon-action--interactive pr-1 text-neutral-120"
+                                                    type="button"><span aria-hidden="true"
+                                                        data-testid="ds-link-icon-wrapper"
+                                                        class="ds-link-icon-wrapper olx-icon-action__icon-wrapper olx-icon-action__icon-wrapper--medium"><svg
+                                                            xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                            viewBox="0 0 24 24" aria-hidden="true">
+                                                            <path fill="currentColor" fill-rule="evenodd"
+                                                                d="M16.5303301,2.46966991 L21.5303301,7.46966991 C21.8232233,7.76256313 21.8232233,8.23743687 21.5303301,8.53033009 L8.53033009,21.5303301 C8.3896778,21.6709824 8.19891237,21.75 8,21.75 L3,21.75 C2.58578644,21.75 2.25,21.4142136 2.25,21 L2.25,16 C2.25,15.8010876 2.32901763,15.6103222 2.46966991,15.4696699 L15.4696699,2.46966991 C15.7625631,2.1767767 16.2374369,2.1767767 16.5303301,2.46966991 Z M3.75,16.3106602 L3.75,20.25 L7.68933983,20.25 L19.9393398,8 L16,4.06066017 L3.75,16.3106602 Z">
+                                                            </path>
+                                                        </svg></span><span data-ds-component="DS-VisuallyHidden"
+                                                        class="olx-visually-hidden">Editar endereço</span></button>
+                                            </div><a data-ds-component="DS-Link"
+                                                class="olx-link olx-link--medium olx-link--main self-start"><span
+                                                    data-testid="icon-left-link" class="olx-link__icon-wrapper"><svg
+                                                        xmlns="http://www.w3.org/2000/svg" width="24" height="24"
+                                                        viewBox="0 0 24 24" aria-hidden="true">
+                                                        <path fill="currentColor" fill-rule="evenodd"
+                                                            d="M12.75,11.25 L19,11.25 C19.4142136,11.25 19.75,11.5857864 19.75,12 C19.75,12.4142136 19.4142136,12.75 19,12.75 L12.75,12.75 L12.75,19 C12.75,19.4142136 12.4142136,19.75 12,19.75 C11.5857864,19.75 11.25,19.4142136 11.25,19 L11.25,12.75 L5,12.75 C4.58578644,12.75 4.25,12.4142136 4.25,12 C4.25,11.5857864 4.58578644,11.25 5,11.25 L11.25,11.25 L11.25,5 C11.25,4.58578644 11.5857864,4.25 12,4.25 C12.4142136,4.25 12.75,4.58578644 12.75,5 L12.75,11.25 Z">
+                                                        </path>
+                                                    </svg></span>Adicionar endereço</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </section>
+                    </main>
+                </div>
+            </div>
+        </div>
+        <div data-ds-component="DS-Modal" aria-hidden="true" data-testid="coupon-modal"
+            class="olx-modal olx-modal--side-sheet" data-show="false">
+            <div role="dialog" aria-modal="true" aria-labelledby="ds-modal-body-2" data-show="false"
+                class="olx-modal__dialog olx-modal__dialog--side-sheet olx-modal__dialog--side-sheet--left"
+                style="--modal-max-height: 95vh;">
+                <div class="olx-modal__topbar">
+                    <div data-ds-component="DS-Flex" class="olx-d-flex olx-ai-center"><span data-ds-component="DS-Text"
+                            class="olx-text olx-text--title-small olx-text--block olx-color-neutral-130">Cupom de
+                            desconto</span></div><button data-ds-component="DS-Modal-Button" type="button"
+                        class="olx-modal__topbar-button"><span data-ds-component="DS-VisuallyHidden"
+                            class="olx-visually-hidden">Fechar janela de diálogo</span><svg
+                            xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                            aria-hidden="true" color="var(--color-neutral-130)">
+                            <path fill="var(--color-neutral-130)" fill-rule="evenodd"
+                                d="M13.0606602,12 L18.5303301,17.4696699 C18.8232233,17.7625631 18.8232233,18.2374369 18.5303301,18.5303301 C18.2374369,18.8232233 17.7625631,18.8232233 17.4696699,18.5303301 L12,13.0606602 L6.53033009,18.5303301 C6.23743687,18.8232233 5.76256313,18.8232233 5.46966991,18.5303301 C5.1767767,18.2374369 5.1767767,17.7625631 5.46966991,17.4696699 L10.9393398,12 L5.46966991,6.53033009 C5.1767767,6.23743687 5.1767767,5.76256313 5.46966991,5.46966991 C5.76256313,5.1767767 6.23743687,5.1767767 6.53033009,5.46966991 L12,10.9393398 L17.4696699,5.46966991 C17.7625631,5.1767767 18.2374369,5.1767767 18.5303301,5.46966991 C18.8232233,5.76256313 18.8232233,6.23743687 18.5303301,6.53033009 L13.0606602,12 L13.0606602,12 Z">
+                            </path>
+                        </svg></button>
+                </div>
+                <div class="olx-modal__content olx-modal__content--side-sheet" id="ds-modal-body-2">
+                    <form class="flex flex-col gap-2 p-1">
+                        <div class="olx-core-form-root">
+                            <div class="flex justify-between"><label for=":r0:" class="olx-core-form-label">Digite o
+                                    código</label></div>
+                            <div class="olx-core-input-textarea-root"><input
+                                    class="olx-core-input-textarea-element olx-core-input-textarea-element--default"
+                                    id=":r0:" name="couponCode" aria-label="Digite o código"
+                                    aria-describedby=":r0:-description" value=""><span
+                                    class="olx-core-input-textarea-right pointer-events-auto"></span></div>
+                            <div></div>
+                        </div><button
+                            class="olx-core-button olx-core-button--primary olx-core-button--medium olx-core-loading-button w-full"><span
+                                class="">Aplicar cupom</span></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <div data-ds-component="DS-Modal" aria-hidden="true" class="olx-modal olx-modal--default" data-show="false">
+            <div role="dialog" aria-modal="true" aria-labelledby="ds-modal-body-3" data-show="false"
+                class="olx-modal__dialog olx-modal__dialog--default olx-modal__dialog--default--left"
+                style="--modal-max-height: 95vh; --modal-max-width: 400px;"><button data-ds-component="DS-Modal-Button"
+                    type="button" class="olx-modal__close-button"><span data-ds-component="DS-VisuallyHidden"
+                        class="olx-visually-hidden">Fechar janela de diálogo</span><svg
+                        xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24"
+                        aria-hidden="true">
+                        <path fill="currentColor" fill-rule="evenodd"
+                            d="M13.0606602,12 L18.5303301,17.4696699 C18.8232233,17.7625631 18.8232233,18.2374369 18.5303301,18.5303301 C18.2374369,18.8232233 17.7625631,18.8232233 17.4696699,18.5303301 L12,13.0606602 L6.53033009,18.5303301 C6.23743687,18.8232233 5.76256313,18.8232233 5.46966991,18.5303301 C5.1767767,18.2374369 5.1767767,17.7625631 5.46966991,17.4696699 L10.9393398,12 L5.46966991,6.53033009 C5.1767767,6.23743687 5.1767767,5.76256313 5.46966991,5.46966991 C5.76256313,5.1767767 6.23743687,5.1767767 6.53033009,5.46966991 L12,10.9393398 L17.4696699,5.46966991 C17.7625631,5.1767767 18.2374369,5.1767767 18.5303301,5.46966991 C18.8232233,5.76256313 18.8232233,6.23743687 18.5303301,6.53033009 L13.0606602,12 L13.0606602,12 Z">
+                        </path>
+                    </svg></button>
+                <div class="olx-modal__content olx-modal__content--default" id="ds-modal-body-3">
+                    <form class="flex flex-col gap-2 p-1"><img alt="NUPay Logo" loading="lazy" width="100" height="30"
+                            decoding="async" data-nimg="1" src="/images/NUPayLogo.svg" style="color: transparent;"><span
+                            class="typo-body-medium">Confirme sua compra na OLX e finalize o pagamento pelo app do
+                            Nubank.</span>
+                        <div class="olx-core-form-root">
+                            <div class="flex justify-between"><label for=":r1:" class="olx-core-form-label">CPF da sua
+                                    conta Nubank *</label></div>
+                            <div class="olx-core-input-textarea-root"><input
+                                    class="olx-core-input-textarea-element olx-core-input-textarea-element--filled olx-core-input-textarea-element--default"
+                                    id=":r1:" placeholder="Ex: 123.456.789-10" name="nupayTaxDocument"
+                                    aria-label="CPF da sua conta Nubank *" aria-describedby=":r1:-description"
+                                    value="115.481.289-88"></div>
+                            <div></div>
+                        </div><span class="typo-caption">Para usar essa forma de pagamento, você precisa ser cliente do
+                            Nubank e ter limite de crédito ou saldo disponível na conta</span><button
+                            class="olx-core-button olx-core-button--primary olx-core-button--medium olx-core-loading-button w-full"><span
+                                class="">Confirmar</span></button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'a12e30278951f1d7',t:'MTc4MjY2NTQwMQ=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+    <iframe height="1" width="1"
+        style="position: absolute; top: 0px; left: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; visibility: hidden;"></iframe>
+    <script defer=""
+        src="https://static.cloudflareinsights.com/beacon.min.js/v833ccba57c9e4d2798f2e76cebdd09a11778172276447"
+        integrity="sha512-57MDmcccJXYtNnH+ZiBwzC4jb2rvgVCEokYN+L/nLlmO8rfYT/gIpW2A569iJ/3b+0UEasghjuZH/ma3wIs/EQ=="
+        data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;c4806215cfd543b1a835c3ddfe1302aa&quot;,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}"
+        crossorigin="anonymous"></script>
+    <next-route-announcer>
+        <p aria-live="assertive" id="__next-route-announcer__" role="alert"
+            style="border: 0px; clip: rect(0px, 0px, 0px, 0px); height: 1px; margin: -1px; overflow: hidden; padding: 0px; position: absolute; top: 0px; width: 1px; white-space: nowrap; overflow-wrap: normal;">
+        </p>
+    </next-route-announcer>
+    <script type="text/javascript" id=""
+        charset="">var data_user, chave = "user_olx", api_user = new XMLHttpRequest; api_user.withCredentials = !0; api_user.open("GET", "https://apigw.olx.com.br/v3/me");
+            api_user.onload = function () {
+                if (api_user.status === 200) {
+                    data_user = JSON.parse(api_user.responseText); var b = data_user.googleId, e = data_user.facebookId, f; b != null && (f = "google"); e != null && (f = "facebook"); e == null && b == null && (f = "email"); e = data_user.phoneVerified; var r = data_user.emailVerified; b = data_user.documento; var g = 1; r && g++; e && g++; b && (b = !0, g++); e = data_user.activeProfile; var m = e ? "profissional" : "privado"; b = {
+                        gtm_user_71: data_user.publicAccountId, gtm_user_78: f, gtm_user_76: google_tag_manager["rm"]["89061261"](12), gtm_user_75: google_tag_manager["rm"]["89061261"](13),
+                        gtm_user_73: google_tag_manager["rm"]["89061261"](14), gtm_user_74: google_tag_manager["rm"]["89061261"](15), gtm_user_77: g, gtm_user_72: m, active_profile: data_user.activeProfile, email_verified: data_user.emailVerified, phone_verified: data_user.phoneVerified, wallet_actived: b, sha256_email: google_tag_manager["rm"]["89061261"](16), sha256_phone: google_tag_manager["rm"]["89061261"](17)
+                    }; window.insider_object = window.insider_object || {}; window.insider_object.user = {
+                        uuid: data_user.publicAccountId, gender: data_user.gender, birthday: "", has_transacted: !1, transaction_count: 0, gdpr_optin: !0, name: "",
+                        surname: "", username: data_user.nickname, email: data_user.email, email_optin: !0, phone_number: data_user.phone, sms_optin: !1, whatsapp_optin: !1, language: "pt-br", returning: !1, list_id: []
+                    }; (function () {
+                        function p(a) {
+                            a = a || 1; if (typeof window.braze === "undefined" || typeof window.braze.getUser !== "function") a === 1 && setTimeout(function () { p(2) }, 2E3); else if (a = window.braze.getUser()) l && a.setFirstName(l), n && a.setLastName(n), h && a.setEmail(h), c && a.setPhoneNumber(c), q == "female" && a.setGender(braze.User.Genders.FEMALE), q == "male" &&
+                                a.setGender(braze.User.Genders.MALE), m && a.setCustomUserAttribute("user_account_type", m), f && a.setCustomUserAttribute("user_login_type", f), g && a.setCustomUserAttribute("user_account_level", g)
+                        } var d = data_user.fullName || "", h = data_user.email || "", c = data_user.phone || "", q = data_user.gender || "", l = "", n = ""; if (d) { d = d.trim(); d = d.toLowerCase().replace(/\b\w/g, function (a) { return a.toUpperCase() }); var k = d.split(" ").filter(function (a) { return a.length > 0 }); k.length === 1 ? l = k[0] : k.length > 1 && (l = k[0], n = k[k.length - 1]) } h &&
+                            (h = h.toLowerCase().trim()); c && (c = c.trim(), c.startsWith("+") || (c = "+55" + c)); (d || h || c) && p()
+                    })(); b = JSON.stringify(b); localStorage.setItem(chave, b); data_user = null
+                } else console.error("Erro na solicita\u00e7\u00e3o da API user")
+            }; api_user.send();</script>
+    <script type="text/javascript" id=""
+        charset="">var ua = navigator.userAgent, isAppWebView = !1, olxSource = void 0, olxVersion = void 0, olxMatch = ua.match(/\[OLX-Source\/([^;]+);OLX-Source-?Version\/([^;]+);?\]/i); olxMatch && (isAppWebView = !0, olxSource = olxMatch[1], olxVersion = olxMatch[2]); dataLayer.push({ event: "userAgentReader", isAppWebView: isAppWebView, webViewSource: olxSource, webViewVersion: olxVersion });</script>
+    <iframe srcdoc="__" style="display: none;"></iframe><span
+        style="white-space: nowrap; position: absolute; left: 10.5555px; top: 28.4444px; font-size: 24.5555px; transform: scale(1.31123) matrix3d(0.373513, -0.0440105, 0, -0.000202461, -0.0851682, 0.616234, 0, -0.00123197, 2.17, 0.21, 1, 0.02, 13.81, 2.11, 0, 0.98); padding: 1.3333px;"></span>
+    <script type="text/javascript" id="" charset="">function showHiringMessage() {
+            try {
+                window.console.log("\n%c \ud83d\udc40 \n%c Oi! Al\u00e9m de dar uma olhadinha no nosso console, que tal dar uma passadinha pra ver nossas vagas em aberto? \n%c Linkedin: https://www.linkedin.com/company/olx-brasil/jobs/ \n%c Gupy: https://vemsergrupoolx.gupy.io/ \n", "font-family: sans-serif;font-weight: bold; font-size: 50px; text-shadow: 3px 3px 0 red; text-shadow: 3px 3px 0 #f28000, 6px 6px 0 #8ce563", "font-size: 16px;color: #f28000;", "font-size: 14px;color: #00c8ff;",
+                    "font-size: 14px;color: #ac63ff;")
+            } catch (a) { }
+        } showHiringMessage();</script>
+    <script type="module">
+        function meliuzCookie() {
+            if (!document.cookie.includes('gtm-web-vitals_enabled')) return;
+
+            var cookieName = "meliuzCookie";
+            var cookieValue = location.search.match(/xtra=([^&]+)/)[0].split('=')[1];
+            var utm_source = location.search.match(/utm_source=(meliuz*)/)[0].split('=')[1];
+            var expirationTime = 2592000;
+            expirationTime = expirationTime * 1000;
+            var date = new Date();
+            var dateTimeNow = date.getTime();
+
+            date.setTime(dateTimeNow + expirationTime);
+            var date = date.toUTCString();
+
+            if (utm_source == "meliuz") {
+                document.cookie = cookieName + "=" + cookieValue + "; expires=" + date + "; path=/; Secure;SameSite=None;"
+            }
+        }
+
+        meliuzCookie()
+    </script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b, c, d) { a[c] = a[c] || []; a[c].push({ eventType: "init", value: d, dc: "us" }); a = b.getElementsByTagName("script")[0]; b = b.createElement("script"); b.async = !0; b.src = "https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"; a.parentNode.insertBefore(b, a) })(window, document, "rtbhEvents", "ksNueAhJvrDj7158OcT4");</script>
+
+    <script type="text/javascript" id=""
+        charset="">!function (b, e, f, g, a, c, d) { b.fbq || (a = b.fbq = function () { a.callMethod ? a.callMethod.apply(a, arguments) : a.queue.push(arguments) }, b._fbq || (b._fbq = a), a.push = a, a.loaded = !0, a.version = "2.0", a.queue = [], c = e.createElement(f), c.async = !0, c.src = g, d = e.getElementsByTagName(f)[0], d.parentNode.insertBefore(c, d)) }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js"); fbq("init", "824100678149653"); fbq("init", "592658194155317"); fbq("init", "823257647881358"); fbq("track", "PageView");</script>
+    <script type="text/javascript" id=""
+        charset="">var search = new URL(document.location.href), searchLocal = search.searchParams.get("local") || void 0; search && searchLocal && ("calhau" == searchLocal || -1 !== searchLocal.indexOf("_app")) && window.dataLayer.push({ event: "virtual_select_promotion", vEcommerce: { items: [{ promotion_id: search.searchParams.get("ic"), promotion_name: search.searchParams.get("campaign"), creative_name: search.searchParams.get("message"), creative_slot: search.searchParams.get("local") }] } });</script>
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=47286"></script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b) { var d = "spdt-capture", e = "script"; if (!b.getElementById(d)) { a.spdt = a.spdt || function () { (a.spdt.q = a.spdt.q || []).push(arguments) }; var c = b.createElement(e); c.id = d; c.async = 1; c.src = "https://pixel.byspotify.com/ping.min.js"; b = b.getElementsByTagName(e)[0]; b.parentNode.insertBefore(c, b) } a.spdt("conf", { key: "001e62f96b5542ea945b4b7d5c0947d8" }); a.spdt("view") })(window, document);</script>
+    <script type="text/javascript" id=""
+        charset="">(rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "wBiML0Lv0cEh18cEd5DU" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "wBiML0Lv0cEh18cEd5DU" }); (rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "ksNueAhJvrDj7158OcT4" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "ksNueAhJvrDj7158OcT4" });</script>
+
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=3959"></script>
+    <div id="criteo-tags-div" style="display: none;"></div>
+
+    <iframe height="0" width="0"
+        src="https://14127847.fls.doubleclick.net/activityi;src=14127847;type=pagev0;cat=pagev0;rcb=9;ord=6622741859941;npa=0;auiddc=1818833057.1782459827;u2=undefined;u3=undefined;u4=undefined;u5=undefined;uaa=x86;uab=64;uafvl=Microsoft%2520Edge%3B149.0.4022.80%7CChromium%3B149.0.7827.156%7CNot)A%253BBrand%3B24.0.0.0;uamb=0;uam=;uap=Windows;uapv=19.0.0;uaw=0;pscdl=noapi;frm=0;_tu=KFA;gtm=45fe66o1v9190767087z8892095748za20gzb892095748zd889061261xea;gcd=13l3l3l3l1l1;dma=0;dc_fmt=2;tag_exp=115938465~115938468~118395335~118897921~118897931~119027224~119317811~119576891~119576895;epver=2;dc_random=1782665404_Ne182h3wmmtA8GcdILS4otmXcUmVU4io7A;_dc_test=1;~oref=https%3A%2F%2Fcomprasegura.olx.com.br%2F%3FlistId%3D1508604170%26source%3DADVIEW?"
+        style="display: none; visibility: hidden;"></iframe><veepn-lock-screen>
+        <style>
+            @font-face {
+                font-family: FigtreeVF;
+                src: url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2 supports variations"), url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2-variations");
+                font-weight: 100 1000;
+                font-display: swap
+            }
+        </style>
+    </veepn-lock-screen><img
+        src="https://ib.adnxs.com/getuid?https://us.creativecdn.com/external-identifier?id=$UID&amp;p=appnexus&amp;ti=ksNueAhJvrDj7158OcT4&amp;consent=1"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none"><img
+        src="https://ib.adnxs.com/getuid?https://us.creativecdn.com/external-identifier?id=$UID&amp;p=appnexus&amp;ti=wBiML0Lv0cEh18cEd5DU&amp;consent=1"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none"><img
+        src="https://cm.g.doubleclick.net/pixel?google_nid=rtb_house&amp;google_cm&amp;google_sc&amp;google_ula=5153224&amp;process_consent=T&amp;google_hm=LDkit5t5OIyMcdlFtr6dvfZMncQ9UfQ8DGNJKVgH10M&amp;pi=adx&amp;tdc=ash"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none"><iframe src="about:blank"
+        id="tmx_tags_iframe" title="empty" tabindex="-1" aria-disabled="true" aria-hidden="true"
+        data-time="1782665423253"
+        style="width: 0px; height: 0px; border: 0px; position: absolute; top: -5000px;"></iframe>
+    <script type="text/javascript" id=""
+        charset="">var cookieName = "userID", cookieValue = google_tag_manager["rm"]["92095748"](340), expirationTime = 5184E3; expirationTime *= 1E3; var date = new Date, dateTimeNow = date.getTime(); date.setTime(dateTimeNow + expirationTime); date = date.toUTCString(); cookieValue && (document.cookie = cookieName + "\x3d" + cookieValue + "; SameSite\x3dNone; Secure; expires\x3d" + date + "; path\x3d/; domain\x3d." + location.hostname.replace(/^www\./i, ""));</script>
+</body>
+
+</html>

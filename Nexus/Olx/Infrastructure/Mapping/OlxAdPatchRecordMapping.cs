@@ -12,7 +12,7 @@ internal static class OlxAdPatchRecordMapping
             record.OperationId,
             record.AdId,
             record.AdUrl,
-            record.OperatorId,
+            record.OperatorId ?? string.Empty,
             record.IsImpersonating,
             record.OriginalPrice,
             record.PromotionalPrice,

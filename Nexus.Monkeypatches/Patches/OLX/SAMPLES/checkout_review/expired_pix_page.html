@@ -1,0 +1,854 @@
+<html>
+
+<head>
+    <style>
+        body {
+            transition: opacity ease-in 0.2s;
+        }
+
+        body[unresolved] {
+            opacity: 0;
+            display: block;
+            overflow: hidden;
+            position: relative;
+        }
+    </style>
+    <meta charset="utf-8" data-next-head="">
+    <title data-next-head="">Compra Segura | OLX </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1" data-next-head="">
+    <meta name="theme-color" content="#fff">
+    <link rel="icon" sizes="192x192" href="/images/android-chrome-192x192.png">
+    <link rel="icon" sizes="any" href="/images/favicon.ico">
+    <link rel="icon" sizes="16x16" href="/images/favicon-16x16.png">
+    <link rel="icon" sizes="32x32" href="/images/favicon-32x32.png">
+    <link rel="apple-touch-icon" href="/images/safari-pinned-tab.svg">
+    <link rel="apple-touch-icon" href="/images/apple-touch-icon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@300;400;600;700&amp;display=swap"
+        rel="stylesheet">
+    <script type="text/javascript" async=""
+        src="https://analytics.tiktok.com/i18n/pixel/static/identify_b8133453.js"></script>
+    <script type="text/javascript" async="" src="https://analytics.tiktok.com/i18n/pixel/static/main.MTA1OGYzZDE5MQ.js"
+        data-id="CFL4LE3C77UEUGLEBCA0"></script>
+    <script type="text/javascript" async=""
+        src="https://analytics.tiktok.com/i18n/pixel/events.js?sdkid=CFL4LE3C77UEUGLEBCA0&amp;lib=ttq"></script>
+    <script id="spdt-capture" async="" src="https://pixel.byspotify.com/ping.min.js"></script>
+    <script
+        src="https://connect.facebook.net/signals/config/823257647881358?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C190%2C194%2C195%2C193%2C188%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C191%2C192%2C218%2C189%2C187%2C238%2C209%2C181%2C182%2C177%2C183%2C180%2C178%2C179%2C176%2C174%2C185%2C186%2C184%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306%2C330"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/592658194155317?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173%2C231%2C230%2C225%2C227%2C228%2C229%2C226%2C214%2C224%2C196%2C190%2C194%2C195%2C193%2C188%2C333%2C262%2C269%2C270%2C271%2C268%2C272%2C263%2C266%2C260%2C273%2C274%2C265%2C275%2C267%2C276%2C261%2C207%2C264%2C259%2C199%2C191%2C192%2C218%2C189%2C187%2C238%2C209%2C181%2C182%2C177%2C183%2C180%2C178%2C179%2C176%2C174%2C185%2C186%2C184%2C281%2C332%2C302%2C300%2C301%2C299%2C197%2C241%2C248%2C242%2C244%2C247%2C245%2C246%2C243%2C240%2C257%2C252%2C254%2C251%2C258%2C255%2C250%2C256%2C253%2C249%2C295%2C306"
+        async=""></script>
+    <script
+        src="https://connect.facebook.net/signals/config/824100678149653?v=2.9.347&amp;r=stable&amp;domain=comprasegura.olx.com.br&amp;hme=f29d86973612db0f0627890a64bdc8c47b471189050b33f2680b7d76997afc9a&amp;ex_m=107%2C208%2C158%2C22%2C73%2C74%2C149%2C69%2C68%2C11%2C167%2C93%2C16%2C141%2C130%2C39%2C76%2C81%2C137%2C163%2C169%2C8%2C4%2C5%2C7%2C6%2C3%2C94%2C104%2C170%2C175%2C222%2C30%2C75%2C234%2C233%2C232%2C23%2C33%2C55%2C106%2C61%2C10%2C64%2C100%2C101%2C102%2C108%2C133%2C31%2C29%2C135%2C136%2C132%2C131%2C159%2C77%2C162%2C160%2C161%2C50%2C60%2C126%2C15%2C166%2C45%2C279%2C280%2C278%2C26%2C27%2C28%2C48%2C150%2C78%2C115%2C18%2C20%2C44%2C40%2C42%2C41%2C86%2C95%2C99%2C113%2C148%2C151%2C46%2C114%2C24%2C21%2C122%2C70%2C36%2C153%2C152%2C154%2C145%2C143%2C25%2C35%2C59%2C112%2C165%2C71%2C17%2C156%2C117%2C84%2C67%2C19%2C88%2C89%2C119%2C87%2C139%2C138%2C142%2C164%2C34%2C293%2C309%2C215%2C204%2C62%2C205%2C203%2C312%2C303%2C52%2C216%2C110%2C134%2C83%2C124%2C54%2C47%2C49%2C116%2C123%2C129%2C128%2C58%2C65%2C63%2C155%2C79%2C80%2C118%2C37%2C32%2C53%2C56%2C103%2C168%2C1%2C127%2C14%2C125%2C12%2C2%2C57%2C96%2C66%2C121%2C92%2C91%2C171%2C172%2C97%2C98%2C9%2C105%2C51%2C146%2C90%2C82%2C72%2C120%2C109%2C43%2C147%2C0%2C85%2C140%2C144%2C157%2C38%2C111%2C13%2C173"
+        async=""></script>
+    <script async="" src="https://connect.facebook.net/en_US/fbevents.js"></script>
+    <script async="" src="https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/destination?id=DC-14127847&amp;cx=c&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC&amp;cx=c&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async=""
+        src="https://www.googletagmanager.com/gtm.js?id=GTM-TNX8FDS&amp;gtm=4e66t1h1"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script type="text/javascript" async="" src="https://static.olx.com.br/cookie-notice/cookie-notice.js"></script>
+    <script async="" src="https://www.googletagmanager.com/gtm.js?id=GTM-546N2JV"></script>
+    <script id="google-tag-manager">
+        (function (w, d, s, l, i) {
+            w[l] = w[l] || []; w[l].push({
+                'gtm.start':
+                    new Date().getTime(), event: 'gtm.js'
+            }); var f = d.getElementsByTagName(s)[0],
+                j = d.createElement(s), dl = l != 'dataLayer' ? '&l=' + l : ''; j.async = true; j.src =
+                    'https://www.googletagmanager.com/gtm.js?id=' + i + dl; f.parentNode.insertBefore(j, f);
+        })(window, document, 'script', 'dataLayer', 'GTM-546N2JV');
+    </script>
+    <script type="text/javascript" src="https://cdn.track.olx.com.br/assets/tracker.min.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals.js" defer=""></script>
+    <script type="text/javascript" src="https://static.olx.com.br/web-vitals/web-vitals-tracker.js" defer=""></script>
+    <script id="datalayer" defer="">window.dataLayer = window.dataLayer || [];
+        if (window.dataLayer.length === 0) {
+            dataLayer.push({ "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "seller_id": "153351955", "list_id": 1508604170 } } });
+        } else {
+            dataLayer[0] = { "site": { "source": "web" }, "page": { "isWebView": false, "pageType": "olx_pay_summary", "details": { "seller_id": "153351955", "list_id": 1508604170 } } };
+        }</script>
+    <script type="text/javascript" src="https://static.olx.com.br/olx/js/lurker.min.js" defer=""></script>
+    <link rel="preload" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/f85b2814942370c0.css"
+        as="style">
+    <link rel="stylesheet" href="https://static.olx.com.br/p2p/txp/txp-client/_next/static/css/f85b2814942370c0.css"
+        data-n-g=""><noscript data-n-css=""></noscript>
+    <script defer="" nomodule=""
+        src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/polyfills-42372ed130431b0a.js"></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/webpack-e0c2008c053b827c.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/framework-230ab801765908a9.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/main-f3a00e2d0022af4e.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/_app-5d3d7ce66706c3c9.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/956-3186e8cc2d1c6641.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/682-2a4c66f1d2395b71.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/765-52eca357ebbfa9ae.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/120-6576f5543a955a82.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/896-947c7efb04e3779e.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/588-3e53b3d69d283e54.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/785-4a7659b7e125fc0f.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/499-626bf0775ee18133.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/43-3e6f827371d3eabc.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/index-c77b2d869679ccac.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/hxpu9yxzLjqhgspREQtcI/_buildManifest.js"
+        defer=""></script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/hxpu9yxzLjqhgspREQtcI/_ssgManifest.js"
+        defer=""></script>
+    <script async="" src="https://www.googletagmanager.com/gtag/js?id=G-50C013M2CC"></script>
+    <script async="" src="https://static.olx.com.br/olx/js/tachometer.min.js"></script>
+    <script id="shield-wsdk"
+        src="https://dm7lr0s4n6vk6.webdevicejs.com/8f675f1c38002c22c695bf44c56e463f96b3e14e/wsdk.js" async=""></script>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style>
+    <style>
+        .cookie-notice-container {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            -webkit-font-smoothing: antialiased;
+            justify-content: center;
+            left: 0;
+        }
+
+        @keyframes cookie-notice-fade-up {
+            0% {
+                opacity: 0;
+                transform: translate(0, 100%);
+            }
+
+            100% {
+                opacity: 1;
+                transform: none;
+            }
+        }
+
+        .cookie-notice-box {
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            z-index: 10000000;
+
+            position: fixed;
+            align-items: center;
+
+            opacity: 1;
+            border-radius: 8px;
+
+            font-size: 14px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-weight: 400;
+
+            animation-name: cookie-notice-fade-up;
+            animation-duration: 0.5s;
+
+            flex-direction: row;
+
+            bottom: 24px;
+            height: 64px;
+            width: 85vw;
+
+            padding: 0 24px 0 24px;
+        }
+
+        .cookie-notice-box-olx {
+            background-color: #4A4A4A;
+        }
+
+        .cookie-notice-disclaimer {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+
+            vertical-align: middle;
+            color: #ffffff;
+        }
+
+
+        .cookie-notice-parag {
+            margin: 0;
+
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 400;
+            font-size: 14px;
+            line-height: 20px;
+        }
+
+        .cookie-notice-link {
+            color: #ffffff;
+        }
+
+        .cookie-notice-link:hover {
+            color: #ffffff;
+        }
+
+        .cookie-notice-ok-button {
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            justify-content: center;
+
+            height: 32px;
+            min-width: 100px;
+
+            color: #ffffff;
+
+            border-radius: 100px;
+            font-family: 'Nunito Sans', 'lato', 'sans-serif', 'Arial', 'Helvetica Neue', 'HelveticaNeue', 'Helvetica';
+            font-style: normal;
+            font-weight: 600;
+            font-size: 14px;
+            line-height: 20px;
+            border: 1px solid transparent;
+
+            flex: none;
+            order: 0;
+            align-self: center;
+            flex-grow: 0;
+
+            cursor: pointer;
+        }
+
+        .cookie-notice-ok-button-olx {
+            background-color: #F28000;
+        }
+
+        .cookie-notice-ok-button-olx:hover {
+            background-color: #F99D21;
+        }
+
+        @media all and (max-width: 768px) {
+            .cookie-notice-box {
+                flex-direction: column;
+                height: auto;
+
+                bottom: 76px;
+
+                margin: 0 auto;
+                padding: 16px 24px 16px 24px;
+
+                -webkit-backface-visibility: hidden;
+                backface-visibility: hidden;
+            }
+
+            .cookie-notice-ok-button {
+                flex: 1;
+                width: -moz-available;
+                width: -webkit-fill-available;
+                width: fill-available;
+                margin: 16px 0 0 0;
+            }
+
+            .cookie-notice-disclaimer {
+                margin-right: 0px;
+            }
+        }
+
+        button#adopt-reject-all-button {
+            display: none;
+        }
+
+        #adopt-controller-button {
+            bottom: calc(60px + 1em) !important;
+        }
+
+        #adopt-controller-button,
+        #adopt-controller-button+div {
+            z-index: 20 !important;
+        }
+
+        #adopt-controller-button+div button {
+            color: #fff !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div a,
+        #adopt-controller-button+div h3 {
+            color: #fff !important;
+        }
+
+        #adopt-controller-button+div h3 {
+            font-size: 16px !important;
+            font-weight: 600 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div h3+br+div svg {
+            height: 12px !important;
+            width: 12px !important;
+        }
+
+        #adopt-controller-button+div {
+            font-size: 14px !important;
+        }
+
+        #adopt-controller-button+div span#adopt-divisor {
+            opacity: 0 !important;
+        }
+
+        #adopt-controller-button+div svg {
+            fill: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div {
+            background: #1a1d23 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div div,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div div {
+            background: #f5f6f7 !important;
+        }
+
+        #adopt-controller-button+div div[id='cat$1'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$2'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$3'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$4'] div:nth-child(2) div svg,
+        #adopt-controller-button+div div[id='cat$5'] div:nth-child(2) div svg {
+            fill: #1a1d23 !important;
+        }
+
+        [class*=adjust-sb_banner_] {
+            z-index: 2147483648 !important;
+        }
+
+        [class*=adjust-sb_banner-body_] {
+            max-width: none !important;
+            width: 100% !important;
+        }
+
+        [class*=adjust-sb_app-icon] img {
+            border-radius: var(--border-radius-2);
+        }
+
+        [class*=adjust-sb_action] {
+            border-radius: var(--border-radius-3) !important;
+        }
+    </style><iframe srcdoc="/**/" style="display: none;"></iframe>
+</head>
+
+<body class="bg-neutral-70 text-neutral-130 overflow-x-hidden scroll-smooth " style="padding-right: 0px;">
+    <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-546N2JV" height="0" width="0"
+            style="display:none;visibility:hidden" title="gtm"></iframe></noscript>
+    <script id="__NEXT_DATA__"
+        type="application/json">{"props":{"pageProps":{"testAbGroups":"bcnExitInt_enabled.bcnNewCard_enabled.cht-report_enabled.dpd-aiout_enabled.dpd-sv-od_enabled.had-ch28c3_enabled.ln-redchat_A.ne-pdf2_control.ne-pdf3_control.ne-pdf4_control.ne-pdf5_control.ne-pdf6_control.ne-video3_control.ne-video4_control.ne-video5_A.ne-video6_A.nutps_b.sanity50_enabled.stempesp_enabled","userPlatform":"web","initialState":{"checkoutStore":{"checkoutId":"40efd501-5823-45da-9825-f5736f364d8b","seller":{"name":"Sophia V","accountId":153351955,"taxDocumentNumber":"*** *** *** **"},"state":"loaded","ad":{"adId":"1782606589","title":"iPhone 17 pro max 256gb LACRADO","imageId":"805634175630527","imageUrl":"https://img.olx.com.br/thumbs/80/805634175630527.webp","price":9300,"priceInCents":930000,"region":11,"formattedPrice":"R$ 9.300,00","deliveryOptin":true,"categoryId":"3060","hasSellerAcceptedToPayForShipping":false,"hasSellerAcceptedToPayForInstallments":false},"error":null,"buyer":{"name":"RODRIGO JACQUES","taxDocumentNumber":"11548128988","fee":56399},"featureToggles":{},"offer":null,"publicZoopKey":"enBrX3Byb2RfeVdhNVBsTmpQb2sxYmZzSmdmalZmbXo2Og==","campaignDiscounts":[]},"paymentStore":{"paymentsDiscounts":[],"payments":[{"id":"pix-option","title":"Pix","caption":"A confirmação do seu pagamento é mais rápida","flag":"pix","disabled":false,"method":"PIX","isDefault":true,"isRecent":true},{"id":"nu-pay","title":"NuPay","caption":"Pague com saldo, crédito ou limite adicional no Nubank","flag":"nu_pay","disabled":false,"tag":"Parcelamento até 24x","method":"NUPAY","isDefault":false}],"twoPaymentsEnabled":true,"state":"loaded"},"deliveryStore":{"delivery":{"quotationId":"21f5038f-d402-4453-8673-67ce10392c31","options":[{"optionId":"0","method":"IN_HANDS","methodName":"Retirar com vendedor","rawPrice":0,"estimatedDays":0,"formattedPrice":"R$ 0,00","isDefault":false,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"1","method":"STANDARD","methodName":"Padrão","rawPrice":0,"estimatedDays":9,"formattedPrice":"Frete grátis","isDefault":true,"originalRawPrice":null,"originalFormattedPrice":null},{"optionId":"2","method":"EXPRESS","methodName":"Expressa","rawPrice":2490,"estimatedDays":5,"formattedPrice":"R$ 24,90","isDefault":false,"originalRawPrice":3127,"originalFormattedPrice":"R$ 31,27"}],"receipts":[{"id":"IN_HANDS","metadata":{"isDifferentCity":true}}]},"address":{"id":"0f1d36d4-4273-4683-a830-5478742d9689","zipcode":"82410370","street":"Rua Edson Campos Matesich","number":65,"complement":null,"neighbourhood":"Santa Felicidade","city":"Curitiba","state":"PR","reference":null,"main":true},"adAddress":{"zipcode":"05017000","neighbourhood":"Perdizes","city":"São Paulo","state":"SP","street":"Rua Apinajés - até 1309/1310"},"selectedDelivery":"1","selectedReceiptType":"SHIPMENT","state":"loaded"},"extraDataStore":{"errorInstance":{"name":"TypeError","message":"RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal.","stack":"TypeError: RequestInit: Expected signal (\"AbortSignal {\n  eventEmitter: EventEmitter {\n    _events: [Object: null prototype] {},\n    _eventsCount: 0,\n    _maxListeners: undefined,\n    Symbol(shapeMode): false,\n    Symbol(kCapture): false\n  },\n  onabort: null,\n  aborted: false,\n  reason: undefined\n}\") to be an instance of AbortSignal."},"state":"error"},"pixQRCodeStore":{"state":"creating","hasUnexpectedError":false},"nuPayStore":{"state":"idle"},"isMobile":false,"state":"loaded"},"useLocalStorage":false,"testAbGroupsFromOlxApp":null,"appVersion":null,"transactionSessionId":"911c6464-2e72-4b5d-a958-d466f0c594fd","isWebView":false,"isLookFeelEnabled":false},"__N_SSP":true},"page":"/","query":{"listId":"1508604170","source":"ADVIEW"},"buildId":"hxpu9yxzLjqhgspREQtcI","assetPrefix":"https://static.olx.com.br/p2p/txp/txp-client","isFallback":false,"isExperimentalCompile":false,"gssp":true,"scriptLoader":[]}</script>
+    <div id="__next"><!--$--><!--/$-->
+        <div class="sticky top-0 z-1">
+            <header data-ds-component="DS-FocusHeader" class="olx-focus-header">
+                <nav class="olx-focus-header__content"><span data-ds-component="DS-FocusHeaderLogo"
+                        class="olx-focus-header__logo ds-primary-link"><span class="olx-focus-header__logo-container"
+                            aria-hidden="true"><svg data-ds-component="DS-LogoOLX" viewBox="0 0 40 40"
+                                class="olx-logo-olx olx-logo-olx--default" aria-hidden="true">
+                                <g fill="none" fill-rule="evenodd">
+                                    <path class="olx-logo-olx--o"
+                                        d="M7.579 26.294c-2.282 0-3.855-1.89-3.855-4.683 0-2.82 1.573-4.709 3.855-4.709 2.28 0 3.855 1.889 3.855 4.682 0 2.82-1.574 4.71-3.855 4.71m0 3.538c4.222 0 7.578-3.512 7.578-8.248 0-4.682-3.173-8.22-7.578-8.22C3.357 13.363 0 16.874 0 21.61c0 4.763 3.173 8.221 7.579 8.221">
+                                    </path>
+                                    <path class="olx-logo-olx--l"
+                                        d="M18.278 23.553h7.237c.499 0 .787-.292.787-.798V20.44c0-.505-.288-.798-.787-.798h-4.851V9.798c0-.505-.288-.798-.787-.798h-2.386c-.498 0-.787.293-.787.798v12.159c0 1.038.551 1.596 1.574 1.596">
+                                    </path>
+                                    <path class="olx-logo-olx--x"
+                                        d="M28.112 29.593l4.353-5.082 4.222 5.082c.367.452.839.452 1.258.08l1.705-1.517c.42-.373.472-.851.079-1.277l-4.694-5.321 4.274-4.869c.367-.426.34-.878-.078-1.277l-1.6-1.463c-.42-.4-.892-.373-1.259.08l-3.907 4.602-3.986-4.603c-.367-.425-.84-.479-1.259-.08l-1.652 1.49c-.42.4-.446.825-.053 1.278l4.354 4.868-4.747 5.348c-.393.452-.34.905.079 1.277l1.652 1.464c.42.372.891.345 1.259-.08">
+                                    </path>
+                                </g>
+                            </svg></span></span>
+                    <div class="flex flex-1 justify-end"><a href="https://conta.olx.com.br/chats"
+                            class="olx-core-button olx-core-button--secondary olx-core-button--small">Ir para o chat</a>
+                    </div>
+                </nav>
+            </header>
+            <div data-testid="exit-intent-modal" data-show="false"></div>
+        </div>
+        <main id="main" class="bg-neutral-70 h-full">
+            <div class="flex h-full flex-col items-center gap-2 pt-6">
+                <div class="flex w-full max-w-xl flex-col items-center justify-center gap-2 px-4">
+                    <div class="flex flex-col items-center justify-center">
+                        <div class="rounded-5 flex"><svg width="96" height="96" viewBox="0 0 96 96" fill="none"
+                                xmlns="http://www.w3.org/2000/svg">
+                                <g clip-path="url(#clip0_11748:65809)">
+                                    <rect width="96" height="96" fill="white"></rect>
+                                    <path opacity="0.2"
+                                        d="M75.9089 92.2399L7.03821 81.004C3.85467 80.474 1.73231 77.506 2.2629 74.3261L13.4053 5.53276C13.9359 2.35279 16.9072 0.232811 20.0907 0.762806L88.9614 11.9987C92.145 12.5287 94.2673 15.4967 93.7368 18.6766L82.5943 87.3639C82.1699 90.5439 79.0924 92.7699 75.9089 92.2399Z"
+                                        fill="#F28000"></path>
+                                    <path
+                                        d="M65.1019 52.9627L58.2257 35.3735C57.4189 33.3192 57.702 30.418 59.7116 29.3552C60.3532 29.0049 60.9221 28.7516 61.6115 28.7414L58.2296 4.67822C57.9189 2.46747 55.793 0.858674 53.5065 1.18002L26.1534 5.02424C23.867 5.34559 22.2549 7.39303 22.5775 9.68881L30.5362 66.318C30.8469 68.5288 32.9729 70.1376 35.2594 69.8162L60.2413 66.3052C62.0071 59.2071 65.1019 52.9627 65.1019 52.9627Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M51.8699 22.1179C52.5918 27.2549 49.0239 32.0031 43.9007 32.7231C38.7774 33.4431 34.039 29.8624 33.317 24.7253C32.595 19.5882 36.163 14.8401 41.2862 14.1201C46.4094 13.4001 51.1479 16.9808 51.8699 22.1179Z"
+                                        fill="#E1E1E1"></path>
+                                    <path
+                                        d="M46.7158 26.3314C46.2125 26.4022 45.7116 26.2722 45.3057 25.9655L43.1106 24.3069C42.9565 24.19 42.7211 24.2236 42.6051 24.3779L40.9463 26.5854C40.6406 26.992 40.1949 27.255 39.6916 27.3258L39.3125 27.379L42.0925 29.4798C42.9607 30.1359 44.1945 29.9625 44.8483 29.0925L46.9476 26.2989L46.7158 26.3314Z"
+                                        fill="#F28000"></path>
+                                    <path
+                                        d="M38.7332 20.4949C39.2364 20.4242 39.7374 20.5542 40.1433 20.8608L42.3464 22.5259C42.505 22.6458 42.7322 22.6145 42.8519 22.4547L44.5046 20.2551C44.8104 19.8484 45.256 19.5854 45.7593 19.5147L45.991 19.4821L43.2031 17.3753C42.3349 16.7192 41.1011 16.8926 40.4473 17.7626L38.3541 20.5482L38.7332 20.4949Z"
+                                        fill="#F28000"></path>
+                                    <path
+                                        d="M48.2113 21.4302L46.5723 20.3719C46.5417 20.3876 46.5079 20.3995 46.4711 20.4046L45.8067 20.498C45.4631 20.5463 45.1438 20.714 44.9306 20.9581L43.258 22.8721C43.1015 23.0512 42.8783 23.1612 42.6444 23.1941C42.4102 23.227 42.1655 23.1827 41.9657 23.0539L39.8223 21.6699C39.5501 21.4941 39.1969 21.4209 38.8534 21.4691L38.0364 21.584C38.0016 21.5889 37.968 21.5863 37.9358 21.5806L36.6469 23.0555C35.9853 23.8125 36.1337 24.8683 36.9783 25.4137L38.6238 26.4761C38.6531 26.4618 38.6848 26.4501 38.7196 26.4452L39.5366 26.3304C39.8801 26.2821 40.1994 26.1144 40.4127 25.8703L42.0914 23.9494C42.3948 23.6024 42.9969 23.5176 43.3839 23.7679L45.5192 25.1464C45.7915 25.3224 46.1447 25.3956 46.4882 25.3473L47.1526 25.2539C47.1894 25.2487 47.2252 25.2508 47.259 25.2574L48.5427 23.7885C49.2043 23.0313 49.0559 21.9755 48.2113 21.4302Z"
+                                        fill="#F28000"></path>
+                                    <path
+                                        d="M78.122 49.7446C74.5278 43.8333 70.9455 38.0071 67.3513 32.0958C66.664 30.8918 65.9886 29.7728 64.6107 29.186C61.4078 27.902 58.0402 30.9765 58.8569 34.3301C59.5173 37.1854 61.0364 40.0067 62.0236 42.7293C63.3603 46.0965 64.6244 49.5606 65.9612 52.9277C63.535 57.1706 61.8699 61.9134 60.8943 66.6461L39.0457 69.7167C40.434 78.3658 51.8218 88.7311 51.8218 88.7311C54.4668 90.9606 57.2759 96.2019 57.2759 96.2019L84.2903 92.4052C82.4724 87.4582 81.6047 85.5859 80.9485 80.3022C80.1489 73.9982 80.6076 67.4306 80.8481 61.1538C80.8912 57.1592 80.2568 53.2597 78.122 49.7446Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M57.2869 96.2879C57.2869 96.2879 54.5385 90.8647 51.8327 88.8172C48.2573 86.1114 40.4449 78.4519 39.0566 69.8027"
+                                        fill="white"></path>
+                                    <path
+                                        d="M57.3834 96.9674C57.1293 97.0031 56.8514 96.8688 56.7308 96.6256C56.7189 96.5405 54.0791 91.2755 51.4819 89.3861C47.3147 86.1566 39.853 78.5344 38.4647 69.8853C38.4169 69.5452 38.6232 69.1694 38.9619 69.1218C39.3007 69.0742 39.6753 69.2816 39.7231 69.6218C41.0396 77.7607 48.2114 85.1635 52.27 88.2348C55.0724 90.3555 57.8089 95.6937 57.9294 95.9369C58.0619 96.2651 57.9403 96.629 57.6255 96.8467C57.5527 96.9436 57.4681 96.9555 57.3834 96.9674Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M59.9547 77.8971C57.399 65.857 65.1021 52.4619 65.1021 52.4619L58.1422 34.2775C57.3354 32.2232 58.2222 29.9308 60.1471 28.8799C62.1567 27.8171 64.6712 28.5042 65.8049 30.4259L77.2629 49.2787C79.06 52.2344 79.9614 55.576 80.016 59.0367C80.016 59.0367 79.4083 74.9897 80.1492 80.2615C80.675 84.0028 83.5278 92.0125 83.5278 92.0125"
+                                        fill="white"></path>
+                                    <path
+                                        d="M83.5405 92.7047C83.2864 92.7404 82.9238 92.6179 82.876 92.2778C82.7435 91.9496 80.0112 84.183 79.4735 80.3567C78.7325 75.0849 79.3273 59.654 79.413 59.035C79.3823 55.7444 78.4929 52.4877 76.7077 49.6171L65.2617 30.8493C64.2485 29.1708 62.0966 28.6062 60.4138 29.5364C58.8038 30.3696 58.0505 32.383 58.7249 34.1091L65.6847 52.2935C65.7933 52.4517 65.7445 52.7187 65.6717 52.8156C65.599 52.9125 58.0414 66.1138 60.5493 77.8138C60.5971 78.1539 60.3909 78.5298 60.0521 78.5774C59.7134 78.625 59.3388 78.4175 59.291 78.0774C56.8309 66.7175 63.3105 54.4481 64.4145 52.4721L57.5871 34.6159C56.6597 32.3184 57.6681 29.6621 59.9198 28.4786C62.2561 27.2832 65.1214 28.0077 66.4722 30.2457L77.9063 48.9284C79.7153 51.9691 80.7253 55.4689 80.7919 59.0146C80.8158 59.1847 80.1961 75.0527 80.9131 80.1544C81.4269 83.8106 84.1831 91.7473 84.1951 91.8323C84.3276 92.1605 84.1213 92.5363 83.7945 92.669C83.6252 92.6928 83.5405 92.7047 83.5405 92.7047Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M27.146 40.3479C26.8073 40.3955 26.4327 40.188 26.373 39.7628L22.1068 9.40755C21.7961 7.19681 23.3116 5.07624 25.5981 4.75489L53.6286 0.815456C55.8304 0.506014 57.9444 2.02978 58.2671 4.32556L61.6609 28.4737C61.7087 28.8139 61.5024 29.1897 61.079 29.2492C60.6556 29.3087 60.3657 29.0893 60.3059 28.6642L56.9121 4.51599C56.697 2.98547 55.2475 1.88856 53.7232 2.10279L25.862 6.01842C24.3377 6.23265 23.2467 7.68661 23.4618 9.21713L27.7399 39.6574C27.7877 39.9976 27.4848 40.3003 27.146 40.3479Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M59.9591 67.4687L36.4893 70.7672C36.1645 70.8129 35.8038 70.6034 35.744 70.1783C35.6843 69.7531 35.8921 69.4638 36.2981 69.4067L59.7679 66.1083C60.0927 66.0626 60.4534 66.272 60.5132 66.6972C60.5729 67.1223 60.2839 67.4231 59.9591 67.4687Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M26.0581 32.6069C26.0581 32.6069 17.5491 29.2072 17.7745 24.6667C18 20.1262 24.5882 22.1483 24.5882 22.1483L26.0581 32.6069Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M26.1422 33.2036C26.0576 33.2155 25.8882 33.2393 25.7916 33.1662C25.4289 33.0437 16.8113 29.4859 17.0737 24.5934C17.1604 23.3672 17.6337 22.4337 18.4935 21.7926C20.6974 20.2689 24.5659 21.3727 24.7472 21.4339C25.0132 21.4832 25.1337 21.7264 25.1696 21.9815L26.6394 32.44C26.6753 32.6951 26.6145 32.8771 26.3724 32.9978C26.3963 33.1679 26.3116 33.1798 26.1422 33.2036ZM20.7301 22.3453C20.222 22.4167 19.6412 22.5851 19.2536 22.8997C18.7086 23.3231 18.4416 23.8809 18.3798 24.6699C18.266 27.5473 22.6156 30.2309 25.2138 31.5132L23.9591 22.5852C23.2457 22.4253 21.831 22.1906 20.7301 22.3453Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M30.6341 60.2323C30.6341 60.2323 28.2998 60.2135 26.8581 61.6301C25.4164 63.0466 24.5774 65.679 26.9792 68.6364C28.0292 69.9629 34.2756 73.854 35.8171 70.6892C37.504 67.3307 30.6539 62.8308 30.6539 62.8308L30.6341 60.2323Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M34.2511 72.4696L34.1664 72.4815C31.4446 72.7773 27.4457 70.1311 26.5043 68.9628C23.9819 65.7622 24.7731 62.7896 26.433 61.0823C28.0202 59.4719 30.5239 59.4669 30.6086 59.455C30.9592 59.4924 31.2491 59.7118 31.2123 60.0638L31.1842 62.3222C32.5252 63.2609 38.0214 67.3441 36.2617 70.7996C35.9817 71.8795 35.1827 72.3386 34.2511 72.4696ZM29.9529 60.9345C29.2754 61.0297 28.1018 61.2813 27.3506 62.0806C26.5993 62.8798 25.0111 65.0973 27.5215 68.2128C28.2577 69.1499 31.9548 71.4917 33.9872 71.206C34.58 71.1227 34.9795 70.8931 35.2585 70.4204C36.3994 68.0923 32.0997 64.5346 30.2995 63.4003C30.1062 63.2541 29.9976 63.0959 30.0464 62.8289L29.9529 60.9345Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M28.5598 50.38C28.5598 50.38 26.1408 50.3731 24.711 51.8747C23.1966 53.3881 22.7192 56.7501 24.4924 59.5357C25.4816 61.0442 32.26 65.0339 33.8383 61.5172C35.4167 58.0004 28.8346 52.3356 28.8346 52.3356L28.5598 50.38Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M32.0429 63.5032C31.9582 63.5151 31.8735 63.527 31.7889 63.5389C28.9704 63.7616 24.8141 61.2242 23.9334 59.8739C21.955 56.8571 22.554 53.1311 24.2139 51.4238C25.8738 49.7165 28.4741 49.7846 28.5588 49.7727C28.9095 49.8101 29.1147 50.0414 29.1505 50.2965L29.3776 51.912C30.5731 53.0446 35.9467 58.0989 34.2956 61.7126C34.0036 62.7074 33.1438 63.3485 32.0429 63.5032ZM27.8792 51.0821C27.1171 51.1892 25.9554 51.5259 25.2042 52.3251C23.9199 53.6328 23.4793 56.6429 25.0473 59.1972C25.6988 60.1461 29.3959 62.4879 31.7062 62.3366C32.4684 62.2295 33.0373 61.9761 33.2924 61.3333C34.3974 58.7502 30.2442 54.3915 28.4809 52.9051C28.3842 52.832 28.2757 52.6738 28.2518 52.5038L28.0725 51.2284C27.9639 51.0702 27.9639 51.0702 27.8792 51.0821Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M27.1369 40.2611C27.1369 40.2611 24.7179 40.2543 23.2882 41.7558C21.8584 43.2574 21.6829 46.9238 23.0695 49.4169C23.9013 51.0342 30.606 55.7279 32.3178 51.9323C34.1144 48.1248 27.4118 42.2168 27.4118 42.2168L27.1369 40.2611Z"
+                                        fill="white"></path>
+                                    <path
+                                        d="M30.5224 53.9177C30.353 53.9415 30.2683 53.9534 30.0989 53.9772C27.1719 54.0417 23.1979 50.9585 22.4986 49.6694C21.0033 47.0182 21.2158 42.9998 22.791 41.3043C24.4509 39.597 27.0512 39.6651 27.1359 39.6532C27.4866 39.6906 27.6918 39.9219 27.7277 40.177L27.9547 41.7925C29.0535 42.852 34.6443 48.2226 32.8597 52.1152C32.3984 53.1338 31.6233 53.763 30.5224 53.9177ZM26.4564 40.9626C25.6942 41.0697 24.5325 41.4064 23.7813 42.2057C22.497 43.5134 22.4549 46.9009 23.6244 49.0777C24.0946 49.9654 27.682 52.7561 30.0891 52.678C30.8632 52.6559 31.4201 52.3175 31.7479 51.5777C32.9984 48.8007 28.7247 44.1989 27.0341 42.6156C26.9375 42.5425 26.8289 42.3843 26.805 42.2143L26.6257 40.9388C26.541 40.9507 26.541 40.9507 26.4564 40.9626Z"
+                                        fill="#4A4A4A"></path>
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M37.3887 7.20464C37.3394 6.85895 37.5797 6.53875 37.9254 6.48946L42.8665 5.78504C43.2122 5.73575 43.5324 5.97604 43.5817 6.32174C43.6309 6.66744 43.3906 6.98764 43.045 7.03692L38.1039 7.74135C37.7582 7.79063 37.438 7.55034 37.3887 7.20464Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M36.7468 45.6408L35.5039 36.7969L38.9177 36.3171C39.8477 36.1864 40.5897 36.3166 41.1438 36.7078C41.706 37.0979 42.0471 37.7194 42.1669 38.5724C42.2856 39.4171 42.1291 40.1086 41.6973 40.6468C41.2725 41.1756 40.5952 41.5053 39.6653 41.636L37.2548 41.9748L37.7502 45.4998L36.7468 45.6408ZM37.1331 41.1092L39.4212 40.7876C40.759 40.5996 41.3439 39.9076 41.1758 38.7117C41.0066 37.5074 40.2531 36.9993 38.9153 37.1873L36.6271 37.5089L37.1331 41.1092Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M44.4899 44.5526L43.247 35.7087L44.2503 35.5676L45.4932 44.4116L44.4899 44.5526Z"
+                                        fill="#4A4A4A"></path>
+                                    <path
+                                        d="M46.6784 44.245L49.3229 39.2681L45.5945 35.3787L46.7692 35.2136L49.801 38.4078L51.8104 34.5051L52.9973 34.3383L50.4731 39.1064L54.387 43.1616L53.2002 43.3284L50.0073 39.965L47.8775 44.0765L46.6784 44.245Z"
+                                        fill="#4A4A4A"></path>
+                                    <rect x="36.0215" y="54.873" width="23.7514" height="5.9539" rx="2.97695"
+                                        transform="rotate(-8 36.0215 54.873)" fill="#F28000"></rect>
+                                    <path
+                                        d="M90.5536 1.50586H68.0658C65.4404 1.50586 63.2715 3.56929 63.2715 6.06713V22.0316C63.2715 24.5294 65.4404 26.5928 68.0658 26.5928H71.1479C71.4904 26.5928 71.7187 26.81 71.7187 27.1358V33.1089C71.7187 33.6519 72.4036 33.8691 72.746 33.5433L79.8234 26.81C79.9375 26.7014 80.0517 26.7014 80.28 26.7014H90.6677C93.2932 26.7014 95.462 24.638 95.462 22.1402V6.06713C95.3479 3.56929 93.179 1.50586 90.5536 1.50586Z"
+                                        fill="#F28000"></path>
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M73.2439 8.18377C73.8476 7.56114 74.8266 7.56114 75.4303 8.18377L85.0503 18.104C85.6541 18.7266 85.6541 19.7361 85.0503 20.3587C84.4465 20.9814 83.4676 20.9814 82.8638 20.3587L73.2439 10.4385C72.6401 9.81588 72.6401 8.8064 73.2439 8.18377Z"
+                                        fill="white"></path>
+                                    <path fill-rule="evenodd" clip-rule="evenodd"
+                                        d="M73.6821 20.3594C73.0784 19.7367 73.0784 18.7272 73.6821 18.1046L83.3021 8.1844C83.9059 7.56177 84.8848 7.56177 85.4886 8.1844C86.0924 8.80702 86.0924 9.81651 85.4886 10.4391L75.8686 20.3594C75.2648 20.982 74.2859 20.982 73.6821 20.3594Z"
+                                        fill="white"></path>
+                                </g>
+                                <defs>
+                                    <clipPath id="clip0_11748:65809">
+                                        <rect width="96" height="96" fill="white"></rect>
+                                    </clipPath>
+                                </defs>
+                            </svg></div>
+                        <div class="mt-2 flex flex-col text-center"><span class="typo-title-large mb-1 text-center">O
+                                código Pix expirou</span><span class="typo-body-medium">O prazo para pagamento do seu
+                                pedido expirou, volte ao anúncio e realize a compra novamente.</span><span
+                                class="typo-body-medium">Se você já pagou, aguarde a confirmação em detalhes da
+                                compra.</span></div>
+                    </div>
+                </div>
+                <div
+                    class="bg-neutral-70 border-neutral-90 space-y-0-5 sticky bottom-0 mt-auto w-full border-t p-2 md:mt-0 md:max-w-lg md:border-t-0 md:pt-0 lg:relative">
+                    <button class="olx-core-button olx-core-button--primary olx-core-button--medium w-full">Ver
+                        anúncio</button><button
+                        class="olx-core-button olx-core-button--link olx-core-button--medium w-full">Detalhes da
+                        compra</button></div>
+            </div>
+        </main>
+    </div>
+    <div id="modal-root"></div>
+    <script>(function () { function c() { var b = a.contentDocument || a.contentWindow.document; if (b) { var d = b.createElement('script'); d.innerHTML = "window.__CF$cv$params={r:'a14372a90e87a139',t:'MTc4Mjg4ODMyNg=='};var a=document.createElement('script');a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);"; b.getElementsByTagName('head')[0].appendChild(d) } } if (document.body) { var a = document.createElement('iframe'); a.height = 1; a.width = 1; a.style.position = 'absolute'; a.style.top = 0; a.style.left = 0; a.style.border = 'none'; a.style.visibility = 'hidden'; document.body.appendChild(a); if ('loading' !== document.readyState) c(); else if (window.addEventListener) document.addEventListener('DOMContentLoaded', c); else { var e = document.onreadystatechange || function () { }; document.onreadystatechange = function (b) { e(b); 'loading' !== document.readyState && (document.onreadystatechange = e, c()) } } } })();</script>
+    <iframe height="1" width="1"
+        style="position: absolute; top: 0px; left: 0px; border-width: medium; border-style: none; border-color: currentcolor; border-image: initial; visibility: hidden;"></iframe>
+    <script defer=""
+        src="https://static.cloudflareinsights.com/beacon.min.js/v4513226cdae34746b4dedf0b4dfa099e1781791509496"
+        integrity="sha512-ZE9pZaUXND66v380QUtch/5sE9tPFh2zg45pR2PB0CVkCtOREv2AJKkSidISWkysEuQ0EH8faUU5du78bx87UQ=="
+        data-cf-beacon="{&quot;version&quot;:&quot;2024.11.0&quot;,&quot;token&quot;:&quot;c4806215cfd543b1a835c3ddfe1302aa&quot;,&quot;server_timing&quot;:{&quot;name&quot;:{&quot;cfCacheStatus&quot;:true,&quot;cfEdge&quot;:true,&quot;cfExtPri&quot;:true,&quot;cfL4&quot;:true,&quot;cfOrigin&quot;:true,&quot;cfSpeedBrain&quot;:true},&quot;location_startswith&quot;:null}}"
+        crossorigin="anonymous"></script>
+    <next-route-announcer>
+        <p aria-live="assertive" id="__next-route-announcer__" role="alert"
+            style="border: 0px; clip: rect(0px, 0px, 0px, 0px); height: 1px; margin: -1px; overflow: hidden; padding: 0px; position: absolute; top: 0px; width: 1px; white-space: nowrap; overflow-wrap: normal;">
+            Compra Segura | OLX</p>
+    </next-route-announcer>
+    <script type="text/javascript" id=""
+        charset="">var data_user, chave = "user_olx", api_user = new XMLHttpRequest; api_user.withCredentials = !0; api_user.open("GET", "https://apigw.olx.com.br/v3/me");
+            api_user.onload = function () {
+                if (api_user.status === 200) {
+                    data_user = JSON.parse(api_user.responseText); var b = data_user.googleId, e = data_user.facebookId, f; b != null && (f = "google"); e != null && (f = "facebook"); e == null && b == null && (f = "email"); e = data_user.phoneVerified; var r = data_user.emailVerified; b = data_user.documento; var g = 1; r && g++; e && g++; b && (b = !0, g++); e = data_user.activeProfile; var m = e ? "profissional" : "privado"; b = {
+                        gtm_user_71: data_user.publicAccountId, gtm_user_78: f, gtm_user_76: google_tag_manager["rm"]["89061261"](15), gtm_user_75: google_tag_manager["rm"]["89061261"](16),
+                        gtm_user_73: google_tag_manager["rm"]["89061261"](17), gtm_user_74: google_tag_manager["rm"]["89061261"](18), gtm_user_77: g, gtm_user_72: m, active_profile: data_user.activeProfile, email_verified: data_user.emailVerified, phone_verified: data_user.phoneVerified, wallet_actived: b, sha256_email: google_tag_manager["rm"]["89061261"](19), sha256_phone: google_tag_manager["rm"]["89061261"](20)
+                    }; window.insider_object = window.insider_object || {}; window.insider_object.user = {
+                        uuid: data_user.publicAccountId, gender: data_user.gender, birthday: "", has_transacted: !1, transaction_count: 0, gdpr_optin: !0, name: "",
+                        surname: "", username: data_user.nickname, email: data_user.email, email_optin: !0, phone_number: data_user.phone, sms_optin: !1, whatsapp_optin: !1, language: "pt-br", returning: !1, list_id: []
+                    }; (function () {
+                        function p(a) {
+                            a = a || 1; if (typeof window.braze === "undefined" || typeof window.braze.getUser !== "function") a === 1 && setTimeout(function () { p(2) }, 2E3); else if (a = window.braze.getUser()) l && a.setFirstName(l), n && a.setLastName(n), h && a.setEmail(h), c && a.setPhoneNumber(c), q == "female" && a.setGender(braze.User.Genders.FEMALE), q == "male" &&
+                                a.setGender(braze.User.Genders.MALE), m && a.setCustomUserAttribute("user_account_type", m), f && a.setCustomUserAttribute("user_login_type", f), g && a.setCustomUserAttribute("user_account_level", g)
+                        } var d = data_user.fullName || "", h = data_user.email || "", c = data_user.phone || "", q = data_user.gender || "", l = "", n = ""; if (d) { d = d.trim(); d = d.toLowerCase().replace(/\b\w/g, function (a) { return a.toUpperCase() }); var k = d.split(" ").filter(function (a) { return a.length > 0 }); k.length === 1 ? l = k[0] : k.length > 1 && (l = k[0], n = k[k.length - 1]) } h &&
+                            (h = h.toLowerCase().trim()); c && (c = c.trim(), c.startsWith("+") || (c = "+55" + c)); (d || h || c) && p()
+                    })(); b = JSON.stringify(b); localStorage.setItem(chave, b); data_user = null
+                } else console.error("Erro na solicita\u00e7\u00e3o da API user")
+            }; api_user.send();</script>
+    <script type="text/javascript" id=""
+        charset="">var ua = navigator.userAgent, isAppWebView = !1, olxSource = void 0, olxVersion = void 0, olxMatch = ua.match(/\[OLX-Source\/([^;]+);OLX-Source-?Version\/([^;]+);?\]/i); olxMatch && (isAppWebView = !0, olxSource = olxMatch[1], olxVersion = olxMatch[2]); dataLayer.push({ event: "userAgentReader", isAppWebView: isAppWebView, webViewSource: olxSource, webViewVersion: olxVersion });</script>
+    <iframe srcdoc="__" style="display: none;"></iframe><span
+        style="white-space: nowrap; position: absolute; left: 10.5555px; top: 28.4444px; font-size: 24.5555px; transform: scale(1.31123) matrix3d(0.373513, -0.0440105, 0, -0.000202461, -0.0851682, 0.616234, 0, -0.00123197, 2.17, 0.21, 1, 0.02, 13.81, 2.11, 0, 0.98); padding: 1.3333px;"></span>
+    <script type="text/javascript" id="" charset="">function showHiringMessage() {
+            try {
+                window.console.log("\n%c \ud83d\udc40 \n%c Oi! Al\u00e9m de dar uma olhadinha no nosso console, que tal dar uma passadinha pra ver nossas vagas em aberto? \n%c Linkedin: https://www.linkedin.com/company/olx-brasil/jobs/ \n%c Gupy: https://vemsergrupoolx.gupy.io/ \n", "font-family: sans-serif;font-weight: bold; font-size: 50px; text-shadow: 3px 3px 0 red; text-shadow: 3px 3px 0 #f28000, 6px 6px 0 #8ce563", "font-size: 16px;color: #f28000;", "font-size: 14px;color: #00c8ff;",
+                    "font-size: 14px;color: #ac63ff;")
+            } catch (a) { }
+        } showHiringMessage();</script>
+    <script type="module">
+        function meliuzCookie() {
+            if (!document.cookie.includes('gtm-web-vitals_enabled')) return;
+
+            var cookieName = "meliuzCookie";
+            var cookieValue = location.search.match(/xtra=([^&]+)/)[0].split('=')[1];
+            var utm_source = location.search.match(/utm_source=(meliuz*)/)[0].split('=')[1];
+            var expirationTime = 2592000;
+            expirationTime = expirationTime * 1000;
+            var date = new Date();
+            var dateTimeNow = date.getTime();
+
+            date.setTime(dateTimeNow + expirationTime);
+            var date = date.toUTCString();
+
+            if (utm_source == "meliuz") {
+                document.cookie = cookieName + "=" + cookieValue + "; expires=" + date + "; path=/; Secure;SameSite=None;"
+            }
+        }
+
+        meliuzCookie()
+    </script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b, c, d) { a[c] = a[c] || []; a[c].push({ eventType: "init", value: d, dc: "us" }); a = b.getElementsByTagName("script")[0]; b = b.createElement("script"); b.async = !0; b.src = "https://tags.creativecdn.com/ksNueAhJvrDj7158OcT4.js"; a.parentNode.insertBefore(b, a) })(window, document, "rtbhEvents", "ksNueAhJvrDj7158OcT4");</script>
+
+    <script type="text/javascript" id=""
+        charset="">!function (b, e, f, g, a, c, d) { b.fbq || (a = b.fbq = function () { a.callMethod ? a.callMethod.apply(a, arguments) : a.queue.push(arguments) }, b._fbq || (b._fbq = a), a.push = a, a.loaded = !0, a.version = "2.0", a.queue = [], c = e.createElement(f), c.async = !0, c.src = g, d = e.getElementsByTagName(f)[0], d.parentNode.insertBefore(c, d)) }(window, document, "script", "https://connect.facebook.net/en_US/fbevents.js"); fbq("init", "824100678149653"); fbq("init", "592658194155317"); fbq("init", "823257647881358"); fbq("track", "PageView");</script>
+    <script type="text/javascript" id=""
+        charset="">var search = new URL(document.location.href), searchLocal = search.searchParams.get("local") || void 0; search && searchLocal && ("calhau" == searchLocal || -1 !== searchLocal.indexOf("_app")) && window.dataLayer.push({ event: "virtual_select_promotion", vEcommerce: { items: [{ promotion_id: search.searchParams.get("ic"), promotion_name: search.searchParams.get("campaign"), creative_name: search.searchParams.get("message"), creative_slot: search.searchParams.get("local") }] } });</script>
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=47286"></script>
+    <script type="text/javascript" id=""
+        charset="">(function (a, b) { var d = "spdt-capture", e = "script"; if (!b.getElementById(d)) { a.spdt = a.spdt || function () { (a.spdt.q = a.spdt.q || []).push(arguments) }; var c = b.createElement(e); c.id = d; c.async = 1; c.src = "https://pixel.byspotify.com/ping.min.js"; b = b.getElementsByTagName(e)[0]; b.parentNode.insertBefore(c, b) } a.spdt("conf", { key: "001e62f96b5542ea945b4b7d5c0947d8" }); a.spdt("view") })(window, document);</script>
+    <script type="text/javascript" id=""
+        charset="">!function (d, g, e) {
+                d.TiktokAnalyticsObject = e; var a = d[e] = d[e] || []; a.methods = "page track identify instances debug on off once ready alias group enableCookie disableCookie".split(" "); a.setAndDefer = function (b, c) { b[c] = function () { b.push([c].concat(Array.prototype.slice.call(arguments, 0))) } }; for (d = 0; d < a.methods.length; d++)a.setAndDefer(a, a.methods[d]); a.instance = function (b) { b = a._i[b] || []; for (var c = 0; c < a.methods.length; c++)a.setAndDefer(b, a.methods[c]); return b }; a.load = function (b, c) {
+                    var f = "https://analytics.tiktok.com/i18n/pixel/events.js";
+                    a._i = a._i || {}; a._i[b] = []; a._i[b]._u = f; a._t = a._t || {}; a._t[b] = +new Date; a._o = a._o || {}; a._o[b] = c || {}; c = document.createElement("script"); c.type = "text/javascript"; c.async = !0; c.src = f + "?sdkid\x3d" + b + "\x26lib\x3d" + e; b = document.getElementsByTagName("script")[0]; b.parentNode.insertBefore(c, b)
+                }; a.load("CFL4LE3C77UEUGLEBCA0"); a.page()
+            }(window, document, "ttq");</script>
+    <script type="text/javascript" id=""
+        charset="">(rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "wBiML0Lv0cEh18cEd5DU" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "wBiML0Lv0cEh18cEd5DU" }); (rtbhEvents = window.rtbhEvents || []).push({ eventType: "placebo", hash: "ksNueAhJvrDj7158OcT4" }, { eventType: "uid", id: "c214f6ca-a995-4a9e-b70b-32d8516c41f7", hash: "ksNueAhJvrDj7158OcT4" });</script>
+    <iframe height="0" width="0"
+        src="https://14127847.fls.doubleclick.net/activityi;src=14127847;type=pagev0;cat=pagev0;rcb=11;ord=761029830301;npa=0;auiddc=1818833057.1782459827;u2=undefined;u3=undefined;u4=undefined;u5=undefined;uaa=x86;uab=64;uafvl=Microsoft%2520Edge%3B149.0.4022.80%7CChromium%3B149.0.7827.156%7CNot)A%253BBrand%3B24.0.0.0;uamb=0;uam=;uap=Windows;uapv=19.0.0;uaw=0;pscdl=noapi;frm=0;_tu=KFA;gtm=45fe66t1h1v9190767087z8892095748za20gzb892095748zd889061261xea;gcd=13l3l3l3l1l1;dma=0;dc_fmt=2;tag_exp=115938465~115938468~118395334~119027224~119317811~119576881~119576885~119576891~119576895;epver=2;dc_random=1782888331_RcpbEir5trG6MdMV_GWQKA5QK1CZsYKcNw;_dc_test=1;~oref=https%3A%2F%2Fcomprasegura.olx.com.br%2F%3FlistId%3D1508604170%26source%3DADVIEW?"
+        style="display: none; visibility: hidden;"></iframe><veepn-lock-screen>
+        <style>
+            @font-face {
+                font-family: FigtreeVF;
+                src: url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2 supports variations"), url(chrome-extension://majdfhpaihoncoakbjgbdhglocklcgno/fonts/FigtreeVF.woff2)format("woff2-variations");
+                font-weight: 100 1000;
+                font-display: swap
+            }
+        </style>
+    </veepn-lock-screen><img
+        src="https://ib.adnxs.com/getuid?https://us.creativecdn.com/external-identifier?id=$UID&amp;p=appnexus&amp;ti=wBiML0Lv0cEh18cEd5DU&amp;consent=1"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none"><img
+        src="https://sync.inmobi.com/setuid?bidderID=16&amp;dspUserId=LDkit5t5OIyMcdlFtr6dvfZMncQ9UfQ8DGNJKVgH10M"
+        width="1" height="1" scrolling="no" frameborder="0" style="display:none">
+    <script id="" text="" charset="" type="text/javascript" src="//dynamic.criteo.com/js/ld/ld.js?a=3959"></script>
+    <div id="criteo-tags-div" style="display: none;"></div>
+
+    <iframe src="about:blank" id="tmx_tags_iframe" title="empty" tabindex="-1" aria-disabled="true" aria-hidden="true"
+        data-time="1782888333022"
+        style="width: 0px; height: 0px; border: 0px; position: absolute; top: -5000px;"></iframe>
+    <script type="text/javascript" id=""
+        charset="">var cookieName = "userID", cookieValue = google_tag_manager["rm"]["92095748"](343), expirationTime = 5184E3; expirationTime *= 1E3; var date = new Date, dateTimeNow = date.getTime(); date.setTime(dateTimeNow + expirationTime); date = date.toUTCString(); cookieValue && (document.cookie = cookieName + "\x3d" + cookieValue + "; SameSite\x3dNone; Secure; expires\x3d" + date + "; path\x3d/; domain\x3d." + location.hostname.replace(/^www\./i, ""));</script>
+    <script src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/133-d3d30fec8d04a3ec.js"></script>
+    <script
+        src="https://static.olx.com.br/p2p/txp/txp-client/_next/static/chunks/pages/pedidos/%5BtransactionId%5D/pix-9cd4e9ecc25bfbac.js"></script>
+</body>
+
+</html>

@@ -64,8 +64,7 @@ public sealed class VictimTests
     [Fact]
     public async Task CreatePixPaymentAsync_WhenAdIdProvided_InfersOperatorIdFromAdPatch()
     {
-        var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-        patch.Impersonate("operator-1");
+        var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl, "operator-1").Value!;
 
         var chargeService = new StubChargeService
         {
@@ -105,23 +104,6 @@ public sealed class VictimTests
 
         Assert.True(result.IsFailure);
         Assert.Contains(result.Errors, e => e.Code == AdPatchErrorCodes.AdPatchNotFound);
-    }
-
-    [Fact]
-    public async Task CreatePixPaymentAsync_WhenAdPatchHasNoOperator_ReturnsFailure()
-    {
-        var patch = AdPatch.Create("op-1", "ad-1", ValidAdUrl).Value!;
-        var sut = CreateSut(new StubChargeService(), patch: patch);
-
-        var result = await sut.CreatePixPaymentAsync(new CreatePixPaymentRequest
-        {
-            OperationId = "op-1",
-            AdId = "ad-1",
-            Value = 10m,
-        });
-
-        Assert.True(result.IsFailure);
-        Assert.Contains(result.Errors, e => e.Code == AdPatchErrorCodes.OperatorNotFound);
     }
 
     private static Victim CreateSut(

@@ -30,18 +30,6 @@ public static class InfrastructureServiceCollectionExtensions
         services.Configure<AuthenticationOptions>(builder.Configuration.GetSection(AuthenticationOptions.SectionName));
         services.AddSingleton<IAppHostProvider, AppHostProvider>();
 
-        services.AddCors(options =>
-        {
-            options.AddDefaultPolicy(policy =>
-            {
-                policy.SetIsOriginAllowed(_ => true)
-                      .AllowAnyHeader()
-                      .AllowAnyMethod()
-                      .AllowCredentials()
-                      .WithExposedHeaders("*");
-            });
-        });
-
         return services;
     }
 }

@@ -12,10 +12,27 @@ public static class WebApplicationExtensions
             app.MapOpenApi();
         }
 
-        app.UseCors();
+        var networkAccessName =
+            app.Configuration["Monkeypatches:NetworkAccessName"] ?? CrossOriginHeaders.DefaultNetworkAccessName;
+        var networkAccessId =
+            app.Configuration["Monkeypatches:NetworkAccessId"] ?? CrossOriginHeaders.DefaultNetworkAccessId;
+
+        app.UseOpenNetworkAccess();
+        app.UseHttpsRedirection();
+        app.UseStaticFiles(new StaticFileOptions
+        {
+            OnPrepareResponse = ctx =>
+            {
+                CrossOriginHeaders.Apply(ctx.Context, networkAccessName, networkAccessId);
+
+                if (ctx.File.Name.Equals("service-worker.min.js", StringComparison.OrdinalIgnoreCase))
+                {
+                    ctx.Context.Response.Headers["Service-Worker-Allowed"] = "/";
+                }
+            },
+        });
         app.UseAuthentication();
         app.UseAuthorization();
-        app.UseHttpsRedirection();
         app.MapGet("/", () => Results.Ok("Nexus API is running"));
         app.MapHub<PaymentStatusHub>("/hubs/payment-status");
         app.MapControllers();

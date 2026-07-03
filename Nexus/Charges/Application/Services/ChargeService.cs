@@ -91,10 +91,10 @@ public sealed class ChargeService : IChargeService
             OperationId = operationId,
             OperatorId = operatorId,
             StrawManId = null,
-            Gateway = PaymentGateway.Frendz,
+            Gateway = PaymentGateway.None,
             Amount = request.Amount,
-            GatewayPaymentId = paymentId,
-            Splits = splitsResult.Value ?? Array.Empty<PaymentSplit>(),
+            GatewayPaymentId = null,
+            Splits = splitsResult.Value,
         });
 
         if (createPaymentResult.IsFailure)
