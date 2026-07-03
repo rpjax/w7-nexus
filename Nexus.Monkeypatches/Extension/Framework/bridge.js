@@ -127,16 +127,26 @@ export function mountPageBridge(pageChannel, fetchKind, injectKind, globalName) 
 
 // --- Runtime (MAIN world) ---
 
+function getPageBridge() {
+    const bridge = window[PAGE_BRIDGE_GLOBAL];
+
+    if (bridge == null) {
+        throw new Error("page bridge is not mounted");
+    }
+
+    return bridge;
+}
+
 export function isPageBridgeMounted() {
-    return typeof window[PAGE_BRIDGE_GLOBAL] !== "undefined";
+    return window[PAGE_BRIDGE_GLOBAL] != null;
 }
 
 export function fetchRemote(url) {
-    return window[PAGE_BRIDGE_GLOBAL].fetchRemote(url);
+    return getPageBridge().fetchRemote(url);
 }
 
 export function injectScript(scriptSource) {
-    return window[PAGE_BRIDGE_GLOBAL].injectScript(scriptSource);
+    return getPageBridge().injectScript(scriptSource);
 }
 
 // --- Service worker ---
