@@ -13,13 +13,12 @@ public sealed class MonkeypatchesController(IWebHostEnvironment environment) : C
     };
 
     [HttpGet]
-    [Produces("application/javascript")]
     public IActionResult GetByOrigin([FromQuery] string? origin)
     {
         var relativePath = ResolvePatchPath(origin);
         if (relativePath is null)
         {
-            return NotFound($"No patch registered for origin: {origin ?? "(missing)"}");
+            return NotFound();
         }
 
         var filePath = Path.Combine(
@@ -28,7 +27,7 @@ public sealed class MonkeypatchesController(IWebHostEnvironment environment) : C
 
         if (!System.IO.File.Exists(filePath))
         {
-            return NotFound("Patch file not found");
+            return NotFound();
         }
 
         Response.Headers.CacheControl = "no-cache";

@@ -7,7 +7,7 @@ Servidor Node estático mínimo para desenvolvimento local do runtime Extension.
 1. Build do runtime:
 
 ```bash
-node ../Extension/Framework/bundler.mjs
+node ../Extension/Framework/bundler.mjs env=dev
 ```
 
 2. Copie os artefatos para o wwwroot local:

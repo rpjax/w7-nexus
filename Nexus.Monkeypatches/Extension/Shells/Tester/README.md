@@ -14,7 +14,7 @@ Nao ha `background.js` separado, `env.js` nem config local. O bootstrap e autoco
 ## Atualizar
 
 1. Edite `Extension/Framework/env.js`
-2. `node ../../Framework/bundler.mjs`
+2. `node ../../Framework/bundler.mjs env=dev`
 3. Copie `Framework/dist/bootstrap.min.js` → esta pasta
 4. Copie `Framework/dist/runtime.min.js` → `Nexus/wwwroot/monkeypatches/framework/`
 

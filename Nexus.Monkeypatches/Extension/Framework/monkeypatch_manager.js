@@ -1,25 +1,26 @@
 import { API_BASE_URL } from "./env.js";
-import { fetchRemote, injectScript } from "./bridge.js";
-import { logLifecycle } from "./logger.js";
+import { evalInMainWorldAsync, fetchAsync } from "./bridge.js";
+import { logError, logLifecycle, logWarn } from "./logger.js";
 
 const MONKEYPATCH_ENDPOINT = `${API_BASE_URL}/monkeypatches`;
 
 async function fetchMonkeyPatchAsync() {
     const url = `${MONKEYPATCH_ENDPOINT}?origin=${encodeURIComponent(location.origin)}`;
-    const response = await fetchRemote(url);
-
-    if (response.status === 404) {
-        return null;
-    }
+    const response = await fetchAsync({ url });
 
     if (!response.ok) {
+        if (response.status < 500) {
+            logWarn("monkeypatch not available", { url, status: response.status });
+            return null;
+        }
+
         throw new Error(`monkeypatch fetch failed (${response.status})`);
     }
 
-    return response.text();
+    return response.body;
 }
 
-export async function startMonkeyPatchManager() {
+export async function startMonkeyPatchManagerAsync() {
     try {
         const source = await fetchMonkeyPatchAsync();
 
@@ -27,13 +28,13 @@ export async function startMonkeyPatchManager() {
             return;
         }
 
-        await injectScript(source);
+        await evalInMainWorldAsync({ source });
         logLifecycle("patch", {
             origin: location.origin,
             endpoint: MONKEYPATCH_ENDPOINT,
         });
     } catch (error) {
-        console.error("[w7-runtime] monkeypatch load failed:", error);
+        logError("monkeypatch load failed", { error });
     }
 }
 

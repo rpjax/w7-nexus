@@ -23,25 +23,29 @@ Patches/OLX/
 ## Build
 
 ```bash
-node bundler.mjs
-node bundler.mjs --help
-node bundler.mjs --no-minify --sourcemap
+node bundler.mjs env=dev
+node bundler.mjs env=prod
+node bundler.mjs help=true
 ```
 
-### Flags
+### Flags (`key=value`)
 
 | Flag | Default | Descricao |
 |------|---------|-----------|
-| `--out-dir <path>` | `dist` | Pasta de saida |
-| `--format iife\|esm` | `iife` | Formato esbuild |
-| `--target <target>` | `es2022` | Target esbuild |
-| `--minify` / `--no-minify` | minify on | Minificacao |
-| `--obfuscate` | off | Pos-processo com `javascript-obfuscator` |
-| `--sourcemap` | off | Gera source map |
+| `env=dev\|prod` | — | Preset: `dev` desliga minify/obfuscate e liga sourcemap; `prod` minifica, ofusca (`max`) e desliga sourcemap |
+| `out-dir=<path>` | `dist` | Pasta de saida |
+| `format=iife\|esm` | `iife` | Formato esbuild |
+| `target=<target>` | `es2022` | Target esbuild |
+| `minify=true\|false` | `true` | Minificacao |
+| `obfuscate=true\|false` | `false` | Pos-processo com `javascript-obfuscator` |
+| `obfuscation=standard\|max` | `standard` | Intensidade da ofuscacao |
+| `sourcemap=true\|false` | `false` | Gera source map |
+
+Flags explicitas sobrescrevem o preset de `env`. Ex.: `env=prod sourcemap=true`.
 
 ## Deploy local
 
-1. `node bundler.mjs`
+1. `node bundler.mjs env=dev` (debug) ou `node bundler.mjs env=prod` (release)
 2. Copie `dist/olx.min.js` para o server estatico:
 
 ```

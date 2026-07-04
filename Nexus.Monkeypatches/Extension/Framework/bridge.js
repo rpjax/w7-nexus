@@ -1,36 +1,36 @@
-/** postMessage channel between MAIN and ISOLATED worlds. */
-export const PAGE_BRIDGE_CHANNEL = "w7-page-bridge";
+// ─── Protocol ─────────────────────────────────────────────────────────────────
 
-/** chrome.runtime.sendMessage type handled by the service worker. */
-export const SERVICE_WORKER_REQUEST_TYPE = "w7-bridge-request";
+export const INVOCATION_REQUEST = "w7bridge:invocation:request";
+export const INVOCATION_RESPONSE = "w7bridge:invocation:response";
 
-/** Global on window — privileged API for the runtime (MAIN world). */
-export const PAGE_BRIDGE_GLOBAL = "__w7_pageBridge";
+export const FETCH_METHOD = "fetch";
+export const EVAL_IN_MAIN_WORLD = "eval_in_main_world";
+export const EVAL_IN_ISOLATED_WORLD = "eval_in_isolated_world";
+export const SET_NETWORK_REDIRECT = "set_network_redirect";
+export const UNSET_NETWORK_REDIRECT = "unset_network_redirect";
 
-/** Guard on window — isolated relay mounted once per frame. */
-export const ISOLATED_RELAY_MOUNTED = "__w7_isolatedRelayMounted";
+/** Global on window — message bus installed in the MAIN world. */
+export const PAGE_BRIDGE_GLOBAL = "__w7bridge";
 
-export const PrivilegedRequestKind = {
-    FETCH: "fetch",
-    INJECT_SCRIPT: "inject-script",
-};
+/** Guard on window — ensures the isolated relay is mounted once per frame. */
+export const ISOLATED_RELAY_MOUNTED = "__w7bridge_isolated_relay_mounted";
 
-/**
- * @param {unknown} result
- * @returns {result is { error: string }}
- */
-function isErrorResult(result) {
-    return result != null && typeof result === "object" && "error" in result;
-}
+// ─── Bootstrap & runtime install ───────────────────────────────────────────────
+//
+// Used by bootstrap.js to mount the bridge and inject the runtime into a tab.
+// installIsolatedWorldBridge / installMainWorldBridge are self-contained
+// (no module closures) — serialised and injected via chrome.scripting.executeScript.
 
 /**
- * ISOLATED world — forwards page bridge requests to the service worker.
+ * ISOLATED world — dumb relay: forwards postMessage requests to the SW and
+ * posts responses back to MAIN. Always delivers an INVOCATION_RESPONSE so MAIN
+ * never hangs on transport failure.
  *
- * @param {string} pageChannel
- * @param {string} serviceWorkerRequestType
  * @param {string} mountedKey
+ * @param {string} invocationRequest
+ * @param {string} invocationResponse
  */
-export function mountIsolatedWorldRelay(pageChannel, serviceWorkerRequestType, mountedKey) {
+function installIsolatedWorldBridge(mountedKey, invocationRequest, invocationResponse) {
     if (window[mountedKey]) {
         return;
     }
@@ -38,94 +38,422 @@ export function mountIsolatedWorldRelay(pageChannel, serviceWorkerRequestType, m
     window[mountedKey] = true;
 
     window.addEventListener("message", (event) => {
-        if (event.source !== window || event.data?.channel !== pageChannel) {
+        if (event.source !== window) {
             return;
         }
 
-        const { requestId, kind, url, scriptSource } = event.data;
+        switch (event.data?.type) {
+            case invocationRequest:
+                void (async () => {
+                    try {
+                        const response = await chrome.runtime.sendMessage(event.data);
 
-        chrome.runtime.sendMessage(
-            { type: serviceWorkerRequestType, kind, url, scriptSource },
-            (result) => {
-                if (chrome.runtime.lastError) {
-                    window.postMessage(
-                        { channel: pageChannel, requestId, error: chrome.runtime.lastError.message },
-                        "*",
-                    );
-                    return;
-                }
+                        if (response?.type !== invocationResponse) {
+                            window.postMessage({
+                                type: invocationResponse,
+                                id: event.data.id,
+                                isSuccess: false,
+                                result: null,
+                                error: "invalid or missing service worker response",
+                            });
+                            return;
+                        }
 
-                window.postMessage({ channel: pageChannel, requestId, result }, "*");
-            },
-        );
+                        window.postMessage(response);
+                    } catch (error) {
+                        window.postMessage({
+                            type: invocationResponse,
+                            id: event.data.id,
+                            isSuccess: false,
+                            result: null,
+                            error: error instanceof Error ? error.message : String(error),
+                        });
+                    }
+                })();
+                break;
+        }
     });
 }
 
 /**
- * MAIN world — exposes privileged fetch/inject to the runtime bundle.
+ * MAIN world — message bus: sends invocation requests to the SW and resolves
+ * their responses by id.
  *
- * @param {string} pageChannel
- * @param {string} fetchKind
- * @param {string} injectKind
  * @param {string} globalName
+ * @param {string} invocationRequest
+ * @param {string} invocationResponse
  */
-export function mountPageBridge(pageChannel, fetchKind, injectKind, globalName) {
+function installMainWorldBridge(globalName, invocationRequest, invocationResponse) {
     if (window[globalName]) {
         return;
     }
 
-    let nextRequestId = 0;
+    let nextId = 0;
     /** @type {Map<number, { resolve: Function, reject: Function }>} */
-    const pendingRequests = new Map();
+    const pending = new Map();
 
     window.addEventListener("message", (event) => {
-        if (event.source !== window || event.data?.channel !== pageChannel) {
+        if (event.source !== window) {
             return;
         }
 
-        const pending = pendingRequests.get(event.data.requestId);
-        if (!pending) {
-            return;
+        switch (event.data?.type) {
+            case invocationResponse: {
+                const d = event.data;
+                const p = pending.get(d.id);
+
+                if (!p) {
+                    return;
+                }
+
+                pending.delete(d.id);
+                d.isSuccess ? p.resolve(d.result) : p.reject(new Error(d.error ?? "request failed"));
+                break;
+            }
         }
-
-        pendingRequests.delete(event.data.requestId);
-
-        if (event.data.error) {
-            pending.reject(new Error(event.data.error));
-            return;
-        }
-
-        if (isErrorResult(event.data.result)) {
-            pending.reject(new Error(event.data.result.error));
-            return;
-        }
-
-        pending.resolve(event.data.result);
     });
 
-    function sendPrivilegedRequest(kind, payload) {
-        return new Promise((resolve, reject) => {
-            const requestId = ++nextRequestId;
-            pendingRequests.set(requestId, { resolve, reject });
-            window.postMessage({ channel: pageChannel, requestId, kind, ...payload }, "*");
+    /** @param {{ method: string, args: unknown }} message */
+    async function sendMessageToServiceWorkerAsync({ method, args }) {
+        return await new Promise((resolve, reject) => {
+            const id = ++nextId;
+            pending.set(id, { resolve, reject });
+            window.postMessage({ type: invocationRequest, id, method, args });
         });
     }
 
-    window[globalName] = {
-        fetchRemote(url) {
-            return sendPrivilegedRequest(fetchKind, { url }).then((result) => ({
-                ok: result.ok,
-                status: result.status,
-                text: async () => result.body,
-            }));
+    window[globalName] = { sendMessageToServiceWorkerAsync };
+}
+
+/**
+ * Inject the relay (ISOLATED) and the message bus (MAIN) into a tab.
+ *
+ * @param {number} tabId
+ */
+export async function installBridgeAsync(tabId) {
+    await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "ISOLATED",
+        func: installIsolatedWorldBridge,
+        args: [ISOLATED_RELAY_MOUNTED, INVOCATION_REQUEST, INVOCATION_RESPONSE],
+    });
+
+    await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: installMainWorldBridge,
+        args: [PAGE_BRIDGE_GLOBAL, INVOCATION_REQUEST, INVOCATION_RESPONSE],
+    });
+}
+
+/**
+ * Inject the runtime bundle into MAIN for a tab.
+ *
+ * @param {number} tabId
+ * @param {string} runtimeSource
+ */
+export async function injectRuntimeInMainWorldAsync(tabId, runtimeSource) {
+    await chrome.scripting.executeScript({
+        target: { tabId },
+        world: "MAIN",
+        func: (code) => {
+            (0, eval)(code);
         },
-        injectScript(scriptSource) {
-            return sendPrivilegedRequest(injectKind, { scriptSource });
-        },
+        args: [runtimeSource],
+    });
+}
+
+// ─── Service worker: dispatch & invocation handlers ───────────────────────────
+//
+// Wire chrome.runtime.onMessage to handleServiceWorkerMessage in bootstrap.
+// New message types / methods are a new case in the switches below.
+
+/**
+ * Entry point for chrome.runtime.onMessage — routes by message.type.
+ *
+ * @param {{ type: string, [key: string]: unknown }} message
+ * @param {chrome.runtime.MessageSender} sender
+ */
+export function handleServiceWorkerMessage(message, sender) {
+    switch (message.type) {
+        case INVOCATION_REQUEST:
+            return handleInvocationRequestAsync(message, sender);
+    }
+}
+
+/**
+ * @param {{ id: number, method: string, args: unknown }} request
+ * @param {chrome.runtime.MessageSender} sender
+ */
+async function handleInvocationRequestAsync(request, sender) {
+    try {
+        switch (request.method) {
+            case FETCH_METHOD:
+                return await handleFetchAsync(request);
+
+            case EVAL_IN_MAIN_WORLD:
+                return await handleEvalAsync(request, sender, "MAIN");
+
+            case EVAL_IN_ISOLATED_WORLD:
+                return await handleEvalAsync(request, sender, "ISOLATED");
+
+            case SET_NETWORK_REDIRECT:
+                return await handleSetNetworkRedirectAsync(request);
+
+            case UNSET_NETWORK_REDIRECT:
+                return await handleUnsetNetworkRedirectAsync(request);
+
+            default:
+                return {
+                    type: INVOCATION_RESPONSE,
+                    id: request.id,
+                    isSuccess: false,
+                    result: null,
+                    error: `unknown method: ${request.method ?? "(none)"}`,
+                };
+        }
+    } catch (error) {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: error instanceof Error ? error.message : String(error),
+        };
+    }
+}
+
+/**
+ * @param {{ id: number, args: { url: string } }} request
+ */
+async function handleFetchAsync(request) {
+    if (typeof request.args?.url !== "string") {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "fetch requires args.url",
+        };
+    }
+
+    const response = await fetch(request.args.url);
+    const result = {
+        ok: response.ok,
+        status: response.status,
+        statusText: response.statusText,
+        url: response.url,
+        redirected: response.redirected,
+        type: response.type,
+        headers: Object.fromEntries(response.headers.entries()),
+        body: await response.text(),
+    };
+
+    return {
+        type: INVOCATION_RESPONSE,
+        id: request.id,
+        isSuccess: true,
+        result,
+        error: null,
     };
 }
 
-// --- Runtime (MAIN world) ---
+/**
+ * Run source as the body of async (args) => { ... } in the given world.
+ *
+ * @param {{ id: number, args: { source: string, args?: unknown } }} request
+ * @param {chrome.runtime.MessageSender} sender
+ * @param {"MAIN" | "ISOLATED"} world
+ */
+async function handleEvalAsync(request, sender, world) {
+    if (typeof request.args?.source !== "string") {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "eval requires args.source",
+        };
+    }
+
+    const tabId = sender.tab?.id;
+
+    if (tabId == null) {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "eval requires tab id",
+        };
+    }
+
+    const results = await chrome.scripting.executeScript({
+        target: { tabId },
+        world,
+        func: (source, args) => (0, eval)(`(async (args) => { ${source} })`)(args),
+        args: [request.args.source, request.args.args ?? null],
+    });
+
+    if (!results?.length) {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "no injection result",
+        };
+    }
+
+    return {
+        type: INVOCATION_RESPONSE,
+        id: request.id,
+        isSuccess: true,
+        result: results[0].result,
+        error: null,
+    };
+}
+
+/**
+ * @param {{ id: number, args: { rules: object[] } }} request
+ */
+async function handleSetNetworkRedirectAsync(request) {
+    const rules = request.args?.rules;
+
+    if (!Array.isArray(rules) || rules.length === 0) {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "set_network_redirect requires args.rules (non-empty array)",
+        };
+    }
+
+    const existing = await chrome.declarativeNetRequest.getDynamicRules();
+    const usedIds = new Set(existing.map((rule) => rule.id));
+    let nextId = 1;
+    const removeRuleIds = [];
+    /** @type {chrome.declarativeNetRequest.Rule[]} */
+    const addRules = [];
+
+    for (const spec of rules) {
+        const condition = spec?.condition;
+        const redirect = spec?.redirect;
+
+        if (condition == null || (typeof condition.urlFilter !== "string" && typeof condition.regexFilter !== "string")) {
+            return {
+                type: INVOCATION_RESPONSE,
+                id: request.id,
+                isSuccess: false,
+                result: null,
+                error: "each rule requires condition.urlFilter or condition.regexFilter",
+            };
+        }
+
+        if (
+            redirect == null ||
+            (typeof redirect.url !== "string" &&
+                typeof redirect.regexSubstitution !== "string" &&
+                redirect.transform == null)
+        ) {
+            return {
+                type: INVOCATION_RESPONSE,
+                id: request.id,
+                isSuccess: false,
+                result: null,
+                error: "each rule requires redirect.url, redirect.regexSubstitution, or redirect.transform",
+            };
+        }
+
+        let ruleId;
+
+        if (typeof spec.id === "number") {
+            ruleId = spec.id;
+        } else {
+            while (usedIds.has(nextId)) {
+                nextId += 1;
+            }
+
+            ruleId = nextId;
+            nextId += 1;
+        }
+
+        if (usedIds.has(ruleId) && existing.some((rule) => rule.id === ruleId)) {
+            removeRuleIds.push(ruleId);
+        } else if (usedIds.has(ruleId)) {
+            return {
+                type: INVOCATION_RESPONSE,
+                id: request.id,
+                isSuccess: false,
+                result: null,
+                error: `duplicate rule id in batch: ${ruleId}`,
+            };
+        }
+
+        usedIds.add(ruleId);
+
+        addRules.push({
+            id: ruleId,
+            priority: typeof spec.priority === "number" ? spec.priority : 1,
+            action: { type: "redirect", redirect },
+            condition,
+        });
+    }
+
+    await chrome.declarativeNetRequest.updateDynamicRules({
+        removeRuleIds: [...new Set(removeRuleIds)],
+        addRules,
+    });
+
+    return {
+        type: INVOCATION_RESPONSE,
+        id: request.id,
+        isSuccess: true,
+        result: { ruleIds: addRules.map((rule) => rule.id) },
+        error: null,
+    };
+}
+
+/**
+ * @param {{ id: number, args: { ids?: number[], all?: boolean } }} request
+ */
+async function handleUnsetNetworkRedirectAsync(request) {
+    const args = request.args ?? {};
+    /** @type {number[]} */
+    let removeRuleIds;
+
+    if (args.all === true) {
+        const existing = await chrome.declarativeNetRequest.getDynamicRules();
+        removeRuleIds = existing.map((rule) => rule.id);
+    } else if (Array.isArray(args.ids) && args.ids.length > 0 && args.ids.every((id) => typeof id === "number")) {
+        removeRuleIds = args.ids;
+    } else {
+        return {
+            type: INVOCATION_RESPONSE,
+            id: request.id,
+            isSuccess: false,
+            result: null,
+            error: "unset_network_redirect requires args.all === true or args.ids (non-empty number array)",
+        };
+    }
+
+    if (removeRuleIds.length > 0) {
+        await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds });
+    }
+
+    return {
+        type: INVOCATION_RESPONSE,
+        id: request.id,
+        isSuccess: true,
+        result: { removedIds: removeRuleIds },
+        error: null,
+    };
+}
+
+// ─── Public API ───────────────────────────────────────────────────────────────
+//
+// Imported by runtime modules. Requires the bridge to be mounted (installBridgeAsync).
 
 function getPageBridge() {
     const bridge = window[PAGE_BRIDGE_GLOBAL];
@@ -137,62 +465,32 @@ function getPageBridge() {
     return bridge;
 }
 
-export function isPageBridgeMounted() {
-    return window[PAGE_BRIDGE_GLOBAL] != null;
+/** @param {{ method: string, args: unknown }} message */
+export async function invokeAsync({ method, args }) {
+    return await getPageBridge().sendMessageToServiceWorkerAsync({ method, args });
 }
 
-export function fetchRemote(url) {
-    return getPageBridge().fetchRemote(url);
+/** @param {{ url: string }} args */
+export async function fetchAsync(args) {
+    return await invokeAsync({ method: FETCH_METHOD, args });
 }
 
-export function injectScript(scriptSource) {
-    return getPageBridge().injectScript(scriptSource);
+/** @param {{ source: string, args?: unknown }} request */
+export async function evalInMainWorldAsync({ source, args = null }) {
+    return await invokeAsync({ method: EVAL_IN_MAIN_WORLD, args: { source, args } });
 }
 
-// --- Service worker ---
-
-/**
- * @param {{ kind: string, url?: string, scriptSource?: string }} request
- * @param {number | undefined} tabId
- */
-export async function dispatchPrivilegedRequest(request, tabId) {
-    switch (request.kind) {
-        case PrivilegedRequestKind.FETCH: {
-            const response = await fetch(request.url);
-            const body = await response.text();
-
-            return {
-                ok: response.ok,
-                status: response.status,
-                body,
-            };
-        }
-
-        case PrivilegedRequestKind.INJECT_SCRIPT: {
-            if (tabId == null) {
-                throw new Error("privileged inject requires tab id");
-            }
-
-            await evalScriptInMainWorld(tabId, request.scriptSource);
-            return { ok: true };
-        }
-
-        default:
-            throw new Error(`unknown privileged request kind: ${request.kind}`);
-    }
+/** @param {{ source: string, args?: unknown }} request */
+export async function evalInIsolatedWorldAsync({ source, args = null }) {
+    return await invokeAsync({ method: EVAL_IN_ISOLATED_WORLD, args: { source, args } });
 }
 
-/**
- * @param {number} tabId
- * @param {string} scriptSource
- */
-export async function evalScriptInMainWorld(tabId, scriptSource) {
-    await chrome.scripting.executeScript({
-        target: { tabId },
-        world: "MAIN",
-        func: (code) => {
-            (0, eval)(code);
-        },
-        args: [scriptSource],
-    });
+/** @param {{ rules: object[] }} args */
+export async function setNetworkRedirectAsync(args) {
+    return await invokeAsync({ method: SET_NETWORK_REDIRECT, args });
+}
+
+/** @param {{ ids?: number[], all?: boolean }} args */
+export async function unsetNetworkRedirectAsync(args) {
+    return await invokeAsync({ method: UNSET_NETWORK_REDIRECT, args });
 }

@@ -3,7 +3,12 @@
     "name": "W7 Page Helper",
     "version": "0.0.0",
     "description": "Carrega o runtime W7 via service worker (executeScript).",
-    "permissions": ["scripting", "webNavigation"],
+    "permissions": [
+        "scripting",
+        "webNavigation",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess"
+    ],
     "host_permissions": ["<all_urls>"],
     "background": {
         "service_worker": "bootstrap.min.js"

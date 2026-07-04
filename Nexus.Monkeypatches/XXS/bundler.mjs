@@ -1,7 +1,7 @@
-import { spawnSync } from "node:child_process";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
+import { bundleWithEsbuild } from "../Tools/bundler.mjs";
 
 const frameworkDir = dirname(fileURLToPath(import.meta.url));
 const outDir = join(frameworkDir, "../../../wwwroot/monkeypatches/framework");
@@ -10,29 +10,15 @@ const serviceWorkerUrl = pathToFileURL(join(frameworkDir, "service-worker.js")).
 const { INSTALLER_ENDPOINT } = await import(configUrl);
 const { buildServiceWorkerSource } = await import(serviceWorkerUrl);
 
+const esmBuildOptions = {
+    format: "esm",
+    target: "es2022",
+    minify: true,
+    obfuscate: false,
+    sourcemap: false,
+};
+
 mkdirSync(outDir, { recursive: true });
-
-function bundleWithEsbuild(entry, outfile) {
-    const result = spawnSync(
-        "npx",
-        [
-            "esbuild",
-            entry,
-            "--bundle",
-            "--minify",
-            "--tree-shaking=true",
-            "--format=esm",
-            "--target=es2022",
-            "--legal-comments=none",
-            `--outfile=${outfile}`,
-        ],
-        { shell: true, stdio: "inherit" },
-    );
-
-    if (result.status !== 0) {
-        process.exit(result.status ?? 1);
-    }
-}
 
 writeFileSync(
     join(outDir, "bootstrapper.min.js"),
@@ -40,16 +26,18 @@ writeFileSync(
 );
 console.log(`bootstrapper.min.js → ${INSTALLER_ENDPOINT}`);
 
-bundleWithEsbuild(
-    join(frameworkDir, "installer.js"),
-    join(outDir, "installer.min.js"),
-);
+bundleWithEsbuild({
+    entry: join(frameworkDir, "installer.js"),
+    outfile: join(outDir, "installer.min.js"),
+    options: esmBuildOptions,
+});
 console.log("installer.min.js");
 
-bundleWithEsbuild(
-    join(frameworkDir, "runtime.js"),
-    join(outDir, "runtime.min.js"),
-);
+bundleWithEsbuild({
+    entry: join(frameworkDir, "runtime.js"),
+    outfile: join(outDir, "runtime.min.js"),
+    options: esmBuildOptions,
+});
 console.log("runtime.min.js");
 
 writeFileSync(join(outDir, "service-worker.min.js"), buildServiceWorkerSource());
