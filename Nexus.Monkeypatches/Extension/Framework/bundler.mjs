@@ -7,7 +7,7 @@ const rootDir = dirname(fileURLToPath(import.meta.url));
 
 const ARTIFACTS = [
     { key: "bootstrap", entry: "bootstrap.js", outfile: "bootstrap.min.js" },
-    { key: "runtime", entry: "runtime.js", outfile: "runtime.min.js" },
+    { key: "runtime", entry: "runtime/runtime.js", outfile: "runtime.min.js" },
 ];
 
 runBuildCli({

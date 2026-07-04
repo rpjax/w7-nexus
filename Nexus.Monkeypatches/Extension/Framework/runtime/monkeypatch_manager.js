@@ -1,6 +1,6 @@
-import { API_BASE_URL } from "./env.js";
-import { evalInMainWorldAsync, fetchAsync } from "./bridge.js";
-import { logError, logLifecycle, logWarn } from "./logger.js";
+import { API_BASE_URL } from "../env.js";
+import { evalInMainWorldAsync, fetchAsync } from "../bridge/main_world.js";
+import { logError, logLifecycle, logWarn } from "../logger.js";
 
 const MONKEYPATCH_ENDPOINT = `${API_BASE_URL}/monkeypatches`;
 

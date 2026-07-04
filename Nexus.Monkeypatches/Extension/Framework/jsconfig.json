@@ -3,6 +3,6 @@
         "forceConsistentCasingInFileNames": true,
         "noEmit": true
     },
-    "include": ["./*.js"],
+    "include": ["./*.js", "./bridge/**/*.js", "./helpers/**/*.js", "./runtime/**/*.js"],
     "exclude": ["./dist"]
 }

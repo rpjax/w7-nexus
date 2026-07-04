@@ -1,36 +1,42 @@
 import "./config.js";
-import { RUNTIME_VERSION } from "./env.js";
+import { RUNTIME_VERSION } from "../env.js";
 import { startMonkeyPatchManagerAsync, stopMonkeyPatchManager } from "./monkeypatch_manager.js";
 import { getState } from "./state.js";
-import { logLifecycle } from "./logger.js";
-import { evalInMainWorldAsync } from "./bridge.js";
+import { logLifecycle } from "../logger.js";
+import { installMainWorldBridge } from "../bridge/main_world.js";
+import { watchExtension, unwatchExtension } from "./extension_watcher.js";
 
-export function alert(message) {
-    window.alert(message);
-}
+const RUNTIME_GLOBAL_NAME = "w7runtime";
 
 let running = false;
 
-function installRuntimeApi() {
-    window.w7runtime = {
+function buildRuntimeApi() {
+    return {
         version: RUNTIME_VERSION,
-        start,
-        stop,
-        getState: (key) => getState(key),
+        start: start,
+        stop: stop,
+        getState: getState,
+        watchExtension: watchExtension,
+        unwatchExtension: unwatchExtension,
     };
 }
 
+function installRuntimeApi() {
+    window[RUNTIME_GLOBAL_NAME] = buildRuntimeApi();
+}
+
 function init() {
+    installMainWorldBridge();
     installRuntimeApi();
     logLifecycle("init", {
         version: RUNTIME_VERSION,
         host: location.hostname,
         origin: location.origin,
-        surface: "window.w7runtime",
+        surface: `window.${RUNTIME_GLOBAL_NAME}`,
     });
 }
 
-export async function start() {
+async function start() {
     if (running) {
         return;
     }
@@ -41,11 +47,9 @@ export async function start() {
         host: location.hostname,
         origin: location.origin,
     });
-    // alert "Hello, world!"
-    await evalInMainWorldAsync({ source: "alert('Hello, world!');" });
 }
 
-export function stop() {
+function stop() {
     if (!running) {
         return;
     }

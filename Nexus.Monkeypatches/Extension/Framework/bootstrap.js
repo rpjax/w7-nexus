@@ -2,9 +2,10 @@ import { RUNTIME_ENDPOINT } from "./env.js";
 import {
     handleServiceWorkerMessage,
     injectRuntimeInMainWorldAsync,
-    installBridgeAsync,
-} from "./bridge.js";
+    installIsolatedBridgeAsync,
+} from "./bridge/service_worker.js";
 
+/** Per-tab generation counter — cancels stale bootstrap when navigation races. */
 const tabBootstrapGeneration = new Map();
 
 chrome.runtime.onMessage.addListener(handleServiceWorkerMessage);
@@ -49,7 +50,8 @@ async function fetchRuntimeSourceAsync() {
 }
 
 async function installRuntimeAsync(tabId, generation) {
-    await installBridgeAsync(tabId);
+    // Relay must exist before runtime posts invocation requests.
+    await installIsolatedBridgeAsync(tabId);
 
     if (isStaleBootstrap(tabId, generation)) {
         return;
