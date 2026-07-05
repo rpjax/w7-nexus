@@ -1,18 +1,42 @@
-import { evalInMainWorldAsync } from "../bridge/main_world";
+import { startNetworkObserveAsync, stopNetworkObserveAsync } from "../bridge/main_world.js";
 
-export function watchExtension(extensionId) {
-    // alert "watching extension ${extensionId}"
-    evalInMainWorldAsync({
-        source: `
-        alert("watching extension ${extensionId}");
-    ` });
-    //...watch extension...
+/** @type {Set<string>} */
+const activeWatches = new Set();
+
+export async function watchExtension(extensionId) {
+    if (typeof extensionId !== "string" || extensionId.length === 0) {
+        throw new Error("watchExtension requires extensionId");
+    }
+
+    const result = await startNetworkObserveAsync({ extensionId });
+    activeWatches.add(result.extensionId);
 }
 
-export function unwatchExtension(extensionId) {
-    //...unwatch extension...
-    evalInMainWorldAsync({
-        source: `
-        alert("unwatching extension ${extensionId}");
-    ` });
+export async function unwatchExtension(extensionId) {
+    if (typeof extensionId !== "string" || extensionId.length === 0) {
+        throw new Error("unwatchExtension requires extensionId");
+    }
+
+    const normalizedExtensionId = extensionId.trim().toLowerCase();
+
+    if (!activeWatches.has(normalizedExtensionId)) {
+        return;
+    }
+
+    await stopNetworkObserveAsync({ extensionId: normalizedExtensionId });
+    activeWatches.delete(normalizedExtensionId);
+}
+
+export async function unwatchAllExtensionsAsync() {
+    const extensionIds = [...activeWatches];
+
+    for (const extensionId of extensionIds) {
+        await stopNetworkObserveAsync({ extensionId });
+        activeWatches.delete(extensionId);
+    }
+}
+
+/** @returns {string[]} */
+export function getActiveWatches() {
+    return [...activeWatches];
 }

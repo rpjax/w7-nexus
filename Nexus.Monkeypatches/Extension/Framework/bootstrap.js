@@ -3,7 +3,8 @@ import {
     handleServiceWorkerMessage,
     injectRuntimeInMainWorldAsync,
     installIsolatedBridgeAsync,
-} from "./bridge/service_worker.js";
+} from "./bridge/service_worker/service_worker.js";
+import { clearTabWatches } from "./bridge/service_worker/network_observer.js";
 
 /** Per-tab generation counter — cancels stale bootstrap when navigation races. */
 const tabBootstrapGeneration = new Map();
@@ -33,6 +34,7 @@ chrome.webNavigation.onCommitted.addListener((details) => {
 
 chrome.tabs.onRemoved.addListener((tabId) => {
     tabBootstrapGeneration.delete(tabId);
+    clearTabWatches(tabId);
 });
 
 function isStaleBootstrap(tabId, generation) {

@@ -7,6 +7,9 @@
  * @see bridge/README.md
  */
 
+/** Protocol version — V1 is frozen; breaking changes require a new major version. */
+export const BRIDGE_VERSION = "1.0.0";
+
 /** Global on `window` where the MAIN-world API is exposed after `installMainWorldBridge()`. */
 export const BRIDGE_GLOBAL_NAME = "w7framework_bridge";
 
@@ -35,6 +38,8 @@ export const INVOCATION_METHOD = {
     FETCH: "fetch",
     SET_NETWORK_REDIRECT: "set_network_redirect",
     UNSET_NETWORK_REDIRECT: "unset_network_redirect",
+    START_NETWORK_OBSERVE: "start_network_observe",
+    STOP_NETWORK_OBSERVE: "stop_network_observe",
 };
 
 // ── Live contract examples (keep in sync with handlers) ─────────────────────
@@ -72,9 +77,18 @@ const NETWORK_EVENT_EXAMPLE = {
     target: TARGET_ID.MAIN_WORLD,
     type: MESSAGE_TYPE.NETWORK_EVENT,
     eventId: 1,
-    url: "https://example.com",
-    method: "GET",
-    status: 200,
+    phase: "headers_received",
+    extensionId: "abcdefghijklmnopabcdefghijklmnop",
+    requestId: "12345",
+    url: "https://example.com/api",
+    method: "POST",
+    resourceType: "xmlhttprequest",
+    tabId: 42,
+    timeStamp: 1_700_000_000_000,
+    statusCode: 200,
+    responseHeaders: {
+        "content-type": "application/json",
+    },
 };
 
 /** @type {import("./types.js").RelayErrorMessage} */

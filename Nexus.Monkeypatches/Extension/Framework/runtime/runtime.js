@@ -4,7 +4,7 @@ import { startMonkeyPatchManagerAsync, stopMonkeyPatchManager } from "./monkeypa
 import { getState } from "./state.js";
 import { logLifecycle } from "../logger.js";
 import { installMainWorldBridge } from "../bridge/main_world.js";
-import { watchExtension, unwatchExtension } from "./extension_watcher.js";
+import { watchExtension, unwatchExtension, unwatchAllExtensionsAsync } from "./extension_watcher.js";
 
 const RUNTIME_GLOBAL_NAME = "w7runtime";
 
@@ -55,6 +55,7 @@ function stop() {
     }
 
     stopMonkeyPatchManager();
+    void unwatchAllExtensionsAsync();
     running = false;
     logLifecycle("offline", {
         host: location.hostname,

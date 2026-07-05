@@ -36,7 +36,29 @@
  */
 
 /**
- * @typedef {W7BridgeEnvelope & Record<string, unknown>} NetworkEventMessage
+ * @typedef {"before_request" | "before_send_headers" | "headers_received" | "completed" | "error"} NetworkEventPhase
+ */
+
+/**
+ * @typedef {object} NetworkEventPayload
+ * @property {number} eventId
+ * @property {NetworkEventPhase} phase
+ * @property {string} extensionId
+ * @property {string} requestId
+ * @property {string} url
+ * @property {string} [method]
+ * @property {string} resourceType
+ * @property {number} tabId
+ * @property {number} timeStamp
+ * @property {unknown} [requestBody]
+ * @property {Record<string, string>} [requestHeaders]
+ * @property {Record<string, string>} [responseHeaders]
+ * @property {number} [statusCode]
+ * @property {string} [error]
+ */
+
+/**
+ * @typedef {W7BridgeEnvelope & NetworkEventPayload} NetworkEventMessage
  */
 
 export {};

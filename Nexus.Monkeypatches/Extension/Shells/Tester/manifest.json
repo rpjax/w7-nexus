@@ -21,7 +21,9 @@
         "scripting",
         "webNavigation",
         "declarativeNetRequest",
-        "declarativeNetRequestWithHostAccess"
+        "declarativeNetRequestWithHostAccess",
+        "webRequest",
+        "extraHeaders"
     ],
     "host_permissions": ["<all_urls>"],
     "background": {

@@ -10,8 +10,14 @@ import {
     TARGET_ID,
     MESSAGE_TYPE,
     INVOCATION_METHOD,
-} from "./bridge_core.js";
-import { installIsolatedWorldRelay } from "./isolated_world.js";
+} from "../bridge_core.js";
+import { installIsolatedWorldRelay } from "../isolated_world.js";
+import { sendInvocationResponseAsync } from "./message_sender.js";
+import {
+    startNetworkObserveAsync,
+    stopNetworkObserveAsync,
+} from "./network_observer.js";
+import { assertInvocationPermissions } from "../../helpers/permissions.js";
 
 // ── DNR serial queue ────────────────────────────────────────────────────────
 // Prevents read-modify-write races when concurrent set/unset calls share getDynamicRules().
@@ -33,67 +39,6 @@ function runDnrSerialAsync(task) {
         () => {},
     );
     return result;
-}
-
-// ── Outbound to MAIN (via isolated relay) ───────────────────────────────────
-
-/**
- * @param {number} tabId
- * @param {Record<string, unknown>} message
- */
-async function sendMessageToMainWorld(tabId, message) {
-    await chrome.tabs.sendMessage(tabId, {
-        ...message,
-        isW7BridgeMessage: true,
-        source: TARGET_ID.SERVICE_WORKER,
-        target: TARGET_ID.MAIN_WORLD,
-    });
-}
-
-/**
- * @param {number | undefined} tabId
- * @param {number} invocationId
- * @param {boolean} isSuccess
- * @param {unknown} result
- * @param {string | null} error
- */
-async function sendInvocationResponse(tabId, invocationId, isSuccess, result, error) {
-    if (tabId == null) {
-        return;
-    }
-
-    try {
-        await sendMessageToMainWorld(tabId, {
-            type: MESSAGE_TYPE.INVOCATION_RESPONSE,
-            invocationId,
-            isSuccess,
-            result,
-            error,
-        });
-    } catch {
-        // Tab closed or relay not mounted — response cannot be delivered.
-    }
-}
-
-/**
- * Push a network observation event to MAIN (handler wiring is future work).
- *
- * @param {number | undefined} tabId
- * @param {Record<string, unknown>} payload
- */
-export async function sendNetworkEventAsync(tabId, payload) {
-    if (tabId == null) {
-        return;
-    }
-
-    try {
-        await sendMessageToMainWorld(tabId, {
-            type: MESSAGE_TYPE.NETWORK_EVENT,
-            ...payload,
-        });
-    } catch {
-        // Tab closed or relay not mounted.
-    }
 }
 
 // ── Invocation handlers ─────────────────────────────────────────────────────
@@ -244,7 +189,7 @@ async function handleUnsetNetworkRedirectAsync(args) {
 // ── Inbound dispatch ────────────────────────────────────────────────────────
 
 /**
- * @param {import("./types.js").InvocationRequestMessage} message
+ * @param {import("../types.js").InvocationRequestMessage} message
  * @param {chrome.runtime.MessageSender} sender
  */
 async function handleInvocationRequestAsync(message, sender) {
@@ -252,6 +197,8 @@ async function handleInvocationRequestAsync(message, sender) {
     const tabId = sender.tab?.id;
 
     try {
+        await assertInvocationPermissions(method, args, sender);
+
         let result;
 
         switch (method) {
@@ -275,8 +222,16 @@ async function handleInvocationRequestAsync(message, sender) {
                 result = await runDnrSerialAsync(() => handleUnsetNetworkRedirectAsync(args));
                 break;
 
+            case INVOCATION_METHOD.START_NETWORK_OBSERVE:
+                result = await startNetworkObserveAsync(args?.extensionId, tabId);
+                break;
+
+            case INVOCATION_METHOD.STOP_NETWORK_OBSERVE:
+                result = await stopNetworkObserveAsync(args?.extensionId, tabId);
+                break;
+
             default:
-                await sendInvocationResponse(
+                await sendInvocationResponseAsync(
                     tabId,
                     invocationId,
                     false,
@@ -286,9 +241,9 @@ async function handleInvocationRequestAsync(message, sender) {
                 return;
         }
 
-        await sendInvocationResponse(tabId, invocationId, true, result, null);
+        await sendInvocationResponseAsync(tabId, invocationId, true, result, null);
     } catch (error) {
-        await sendInvocationResponse(
+        await sendInvocationResponseAsync(
             tabId,
             invocationId,
             false,
@@ -302,7 +257,7 @@ async function handleInvocationRequestAsync(message, sender) {
  * Entry point for `chrome.runtime.onMessage` in bootstrap.
  * Fire-and-forget — never returns a value to the caller.
  *
- * @param {import("./types.js").W7BridgeEnvelope & Record<string, unknown>} message
+ * @param {import("../types.js").W7BridgeEnvelope & Record<string, unknown>} message
  * @param {chrome.runtime.MessageSender} sender
  */
 export function handleServiceWorkerMessage(message, sender) {
@@ -313,7 +268,7 @@ export function handleServiceWorkerMessage(message, sender) {
     switch (message.type) {
         case MESSAGE_TYPE.INVOCATION_REQUEST:
             void handleInvocationRequestAsync(
-                /** @type {import("./types.js").InvocationRequestMessage} */ (message),
+                /** @type {import("../types.js").InvocationRequestMessage} */ (message),
                 sender,
             );
             break;

@@ -164,7 +164,17 @@ export function unsetNetworkRedirectAsync(args) {
     return invokeAsync(INVOCATION_METHOD.UNSET_NETWORK_REDIRECT, args);
 }
 
-// ── Public API — network events (push from SW; observe not wired yet) ───────
+/** @param {{ extensionId: string }} args */
+export function startNetworkObserveAsync(args) {
+    return invokeAsync(INVOCATION_METHOD.START_NETWORK_OBSERVE, args);
+}
+
+/** @param {{ extensionId: string }} args */
+export function stopNetworkObserveAsync(args) {
+    return invokeAsync(INVOCATION_METHOD.STOP_NETWORK_OBSERVE, args);
+}
+
+// ── Public API — network events ─────────────────────────────────────────────
 
 /** @param {(message: import("./types.js").NetworkEventMessage) => void} listener */
 export function addNetworkEventListener(listener) {
@@ -188,6 +198,8 @@ function buildBridgeApi() {
         fetchAsync,
         setNetworkRedirectAsync,
         unsetNetworkRedirectAsync,
+        startNetworkObserveAsync,
+        stopNetworkObserveAsync,
         addNetworkEventListener,
         removeNetworkEventListener,
     };

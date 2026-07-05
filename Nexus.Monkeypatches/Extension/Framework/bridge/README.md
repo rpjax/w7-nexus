@@ -1,6 +1,8 @@
-# W7 Bridge (v2)
+# W7 Bridge (V1)
 
 Event-driven protocol between **MAIN world**, **ISOLATED relay**, and the **service worker**.
+
+**Status:** V1 (`1.0.0`) — protocol frozen. New capabilities belong in runtime or a future bridge V2.
 
 ## Topology
 
@@ -20,8 +22,11 @@ SW   ──tabs.sendMessage(target: MAIN)──► ISOLATED ──postMessage─
 | `bridge_core.js` | bundled everywhere | Protocol constants and live examples |
 | `types.js` | editors only | JSDoc typedefs for message shapes |
 | `isolated_world.js` | ISOLATED (injected) | Relay — self-contained, no imports |
-| `service_worker.js` | SW (bootstrap bundle) | Dispatch, handlers, installers |
 | `main_world.js` | MAIN (runtime bundle) | Client API + `installMainWorldBridge()` |
+| `service_worker/service_worker.js` | SW (bootstrap bundle) | Dispatch, handlers, installers |
+| `service_worker/message_sender.js` | SW | Outbound channel SW → MAIN (`INVOCATION_RESPONSE`, `NETWORK_EVENT`) |
+| `service_worker/network_observer.js` | SW | Passive `webRequest` observe of other extensions |
+| `helpers/permissions.js` | SW | Invocation permission discovery and guards |
 
 ## Installation order
 
@@ -36,7 +41,7 @@ SW   ──tabs.sendMessage(target: MAIN)──► ISOLATED ──postMessage─
 | `w7bridge:invocation:request` | MAIN → SW | Start a privileged operation |
 | `w7bridge:invocation:response` | SW → MAIN | Complete or fail an invocation |
 | `w7bridge:relay_error` | ISOLATED → MAIN | `sendMessage` failed; carries `sourceMessage` |
-| `w7bridge:network:event` | SW → MAIN | Push network observation (listeners ready; SW observe TBD) |
+| `w7bridge:network:event` | SW → MAIN | Push passive network observation event |
 
 ## Invocation methods
 
@@ -47,6 +52,86 @@ SW   ──tabs.sendMessage(target: MAIN)──► ISOLATED ──postMessage─
 | `eval_in_isolated_world` | `executeScript` ISOLATED | Same shape as MAIN eval |
 | `set_network_redirect` | `declarativeNetRequest` | `args.rules` — DNR redirect rules; serialised in SW to avoid ID races |
 | `unset_network_redirect` | `declarativeNetRequest` | `args.all` or `args.ids`; serialised with set |
+| `start_network_observe` | `network_observer.js` | `args.extensionId` — subscribe tab to extension traffic |
+| `stop_network_observe` | `network_observer.js` | `args.extensionId` — unsubscribe tab |
+
+## Network observe
+
+Requires manifest permissions `webRequest`, `extraHeaders`, and `<all_urls>` host access.
+
+**Match criteria** (request belongs to watched `extensionId` if any):
+
+- `args.extensionId` is normalised (trim + lowercase) and must match `[a-p]{32}`
+
+- `details.initiator` is `chrome-extension://{id}/*`
+- `details.documentUrl` is `chrome-extension://{id}/*`
+- `details.tabId` points to a tab whose URL is `chrome-extension://{id}/*`
+
+**Phases emitted** (correlate via `requestId` + `extensionId`):
+
+| Phase | Listener | Extra fields |
+|-------|----------|--------------|
+| `before_request` | `onBeforeRequest` | `method`, `requestBody?` |
+| `before_send_headers` | `onBeforeSendHeaders` | `requestHeaders` |
+| `headers_received` | `onHeadersReceived` | `responseHeaders`, `statusCode` |
+| `completed` | `onCompleted` | `statusCode` |
+| `error` | `onErrorOccurred` | `error` |
+
+**Routing:** all tabs subscribed to the same `extensionId` receive matching events.
+
+**Subscription model:** one subscription per `(tabId, extensionId)`; `start` is idempotent (re-call after SW reload); `tabs.onRemoved` and `runtime.stop()` tear down watches.
+
+### `NETWORK_EVENT` payload
+
+| Field | Type | Notes |
+|-------|------|-------|
+| `eventId` | number | Monotonic in SW |
+| `phase` | string | See phases table above |
+| `extensionId` | string | Watched extension |
+| `requestId` | string | Chrome webRequest id — same across all phases of one request |
+| `url` | string | Request URL |
+| `method` | string | HTTP method (when available) |
+| `resourceType` | string | Resource type (xhr, fetch, etc.) |
+| `tabId` | number | Source tab (-1 if none) |
+| `timeStamp` | number | Event timestamp |
+| `requestBody` | object | Present on `before_request` when Chrome exposes body (`formData`, `raw` as base64, `truncated`) |
+| `requestHeaders` | object | Present on `before_send_headers` — keys lowercase |
+| `responseHeaders` | object | Present on `headers_received` — keys lowercase |
+| `statusCode` | number | Present on `headers_received` and `completed` |
+| `error` | string | Present on `error` |
+
+**Limitations:**
+
+- Observes network visible to `webRequest` only — not JS execution inside third-party extension pages.
+- **No response body** — Chrome does not expose it via passive `webRequest` (debugger would be required).
+- Sensitive headers (`Cookie`, `Authorization`, `Set-Cookie`, etc.) require the `extraHeaders` manifest permission. Chrome may still redact some values in edge cases even with that permission.
+
+## Invocation permissions
+
+Before dispatching any invocation, the service worker calls `assertInvocationPermissions` (`helpers/permissions.js`). Missing permissions fail via `INVOCATION_RESPONSE` with `isSuccess: false` and an error like `"missing permission: webRequest"`.
+
+| `method` | `permissions` | `origins` |
+|----------|---------------|-----------|
+| `fetch` | — | host of `args.url` (`${origin}/*`) |
+| `eval_in_main_world` | `scripting` | caller tab origin |
+| `eval_in_isolated_world` | `scripting` | caller tab origin |
+| `set_network_redirect` | `declarativeNetRequest` | — |
+| `unset_network_redirect` | `declarativeNetRequest` | — |
+| `start_network_observe` | `webRequest`, `extraHeaders` | `<all_urls>` |
+| `stop_network_observe` | `webRequest` | — |
+
+Discovery helpers (SW-only): `getInvocationRequirements`, `checkInvocationPermissions`, `getBridgeCapabilitiesAsync`. The bridge does **not** call `chrome.permissions.request` — optional permission opt-in UI is out of scope.
+
+## V1 scope (frozen)
+
+| In scope | Out of scope (runtime or future bridge) |
+|----------|----------------------------------------|
+| Invocation dispatch + permission guards | Response body capture (needs debugger) |
+| Passive network observe (5 phases) | `chrome.permissions.request` UI |
+| DNR redirect set/unset (serial queue) | Prod shell permission matrix |
+| Relay error → promise rejection | Breaking protocol changes |
+
+Version constant: `BRIDGE_VERSION` in `bridge_core.js` (`"1.0.0"`).
 
 ## MAIN-world API
 
@@ -58,9 +143,11 @@ After `installMainWorldBridge()`, `window.w7framework_bridge` exposes:
 - `fetchAsync({ url })`
 - `setNetworkRedirectAsync({ rules })`
 - `unsetNetworkRedirectAsync({ all } | { ids })`
+- `startNetworkObserveAsync({ extensionId })`
+- `stopNetworkObserveAsync({ extensionId })`
 - `addNetworkEventListener(fn)` / `removeNetworkEventListener(fn)`
 
-Modules may import the same functions directly from `main_world.js`.
+Runtime convenience: `window.w7runtime.watchExtension(id)` / `unwatchExtension(id)`.
 
 ## Error handling
 
@@ -69,6 +156,20 @@ Modules may import the same functions directly from `main_world.js`.
 - **Tab gone** before response: SW swallows `tabs.sendMessage` errors silently.
 - **Concurrent DNR updates**: `set_network_redirect` / `unset_network_redirect` run through a serial queue in the SW so parallel callers cannot read stale `getDynamicRules()` snapshots and collide on rule IDs.
 
+## Example — watch extension network
+
+```js
+window.w7framework_bridge.addNetworkEventListener((event) => {
+    if (event.phase === "headers_received") {
+        console.log(event.requestId, event.responseHeaders);
+    }
+});
+
+await window.w7runtime.watchExtension("abcdefghijklmnopabcdefghijklmnop");
+// Open the target extension popup and generate traffic
+// Sequence: before_request → before_send_headers → headers_received → completed
+```
+
 ## Example — eval in MAIN
 
 ```js
@@ -76,7 +177,3 @@ await window.w7framework_bridge.evalInMainWorldAsync({
     source: "return document.title;",
 });
 ```
-
-## Future work
-
-- `webRequest` / network observe → `sendNetworkEventAsync` + MAIN listeners (types and API already in place).
