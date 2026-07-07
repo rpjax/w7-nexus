@@ -17,7 +17,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Nexus\Nexus.csproj" />
+    <ProjectReference Include="..\Nexus.Api\Nexus.Api.csproj" />
   </ItemGroup>
 
 </Project>

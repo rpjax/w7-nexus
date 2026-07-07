@@ -4,7 +4,7 @@ Blazor Server UI restaurada do histórico do repositório (`bcbf286`), isolada d
 
 ## Executar
 
-1. Suba a API Nexus (`Nexus/Nexus.csproj`) na URL configurada em `NexusApi:BaseUrl` (padrão `https://websete.localhost:7254/`).
+1. Suba a API Nexus (`Nexus.Api/Nexus.Api.csproj`) na URL configurada em `NexusApi:BaseUrl` (padrão `https://websete.localhost:7254/`).
 2. Execute este projeto:
 
 ```bash

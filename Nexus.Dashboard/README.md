@@ -6,7 +6,7 @@ O dashboard Blazor original está arquivado em [`../Nexus.Dashboard.Legacy/`](..
 
 ## Executar
 
-1. Suba a API Nexus (`Nexus/Nexus.csproj`) — padrão `https://websete.localhost/`.
+1. Suba a API Nexus (`Nexus.Api/Nexus.Api.csproj`) — padrão `https://websete.localhost/`.
 2. Instale dependências e inicie o dev server:
 
 ```bash
