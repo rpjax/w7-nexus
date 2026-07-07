@@ -1,6 +1,6 @@
 import { initializeCaches } from "./nexus/init.js";
-import { patchAdDetailsAsync } from "./monkeypatches/ad_details/patch.js";
-import { patchCheckoutReviewPageAsync } from "./monkeypatches/checkout_review/patch.js";
+import { patchAdDetailsAsync } from "./monkeypatches/ad-details/patch.js";
+import { patchCheckoutReviewPageAsync } from "./monkeypatches/checkout-review/patch.js";
 
 const PATCH_INTERVAL_MS = 150;
 

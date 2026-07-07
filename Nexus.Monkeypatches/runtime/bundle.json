@@ -1,0 +1,9 @@
+{
+  "bundles": [
+    {
+      "name": "runtime",
+      "entry": "./runtime.js",
+      "outfile": "runtime/runtime.min.js"
+    }
+  ]
+}

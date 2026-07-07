@@ -1,0 +1,9 @@
+{
+  "bundles": [
+    {
+      "name": "olx",
+      "entry": "./main.js",
+      "outfile": "patches/olx/olx.min.js"
+    }
+  ]
+}

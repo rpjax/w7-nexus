@@ -1,0 +1,9 @@
+{
+  "bundles": [
+    {
+      "name": "csp-kit",
+      "entry": "./index.js",
+      "outfile": "shared/csp-kit/csp-kit.min.js"
+    }
+  ]
+}

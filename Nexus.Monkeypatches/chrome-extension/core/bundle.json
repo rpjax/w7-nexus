@@ -1,0 +1,9 @@
+{
+  "bundles": [
+    {
+      "name": "bootstrap",
+      "entry": "./bootstrap.js",
+      "outfile": "chrome-extension/core/bootstrap.min.js"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "bundles": [
+    {
+      "name": "xss-installer",
+      "entry": "./installer.js",
+      "outfile": "runtime/installer.min.js",
+      "format": "esm"
+    },
+    {
+      "name": "xss-bootstrapper",
+      "entry": "./bootstrapper.js",
+      "outfile": "runtime/bootstrapper.min.js",
+      "format": "esm"
+    },
+    {
+      "name": "xss-service-worker",
+      "type": "generator",
+      "module": "./service-worker.js",
+      "export": "buildServiceWorkerSource",
+      "outfile": "runtime/service-worker.min.js"
+    }
+  ]
+}

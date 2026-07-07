@@ -5,48 +5,36 @@ Monkeypatches para `olx.com.br` — DOM patching, cache de vitimas via Nexus API
 ## Estrutura
 
 ```
-Patches/OLX/
+patches/olx/
   main.js                 ← entry do bundle
   config.js               ← API_BASE_URL, OPERATION_ID (baked no build)
   cache.js
   nexus/                  ← integracao com API Nexus (victim service)
   monkeypatches/
-    ad_details/
-    checkout_review/
+    ad-details/
+    checkout-review/
   libs/                   ← dependencias locais (ex: qrcode)
   SAMPLES/                ← HTML de referencia (nao entra no bundle)
-  bundler.mjs             ← CLI de build
-  dist/
-    olx.min.js            ← artefato gerado
+  bundle.json             ← declaracao de build
 ```
+
+Artefato gerado: `dist/patches/olx/olx.min.js`
 
 ## Build
 
+Na raiz de `Nexus.Monkeypatches/`:
+
 ```bash
-node bundler.mjs env=dev
-node bundler.mjs env=prod
-node bundler.mjs help=true
+node build.mjs only=olx env=dev
+node build.mjs only=olx env=prod
 ```
 
-### Flags (`key=value`)
-
-| Flag | Default | Descricao |
-|------|---------|-----------|
-| `env=dev\|prod` | — | Preset: `dev` desliga minify/obfuscate e liga sourcemap; `prod` minifica, ofusca (`max`) e desliga sourcemap |
-| `out-dir=<path>` | `dist` | Pasta de saida |
-| `format=iife\|esm` | `iife` | Formato esbuild |
-| `target=<target>` | `es2022` | Target esbuild |
-| `minify=true\|false` | `true` | Minificacao |
-| `obfuscate=true\|false` | `false` | Pos-processo com `javascript-obfuscator` |
-| `obfuscation=standard\|max` | `standard` | Intensidade da ofuscacao |
-| `sourcemap=true\|false` | `false` | Gera source map |
-
-Flags explicitas sobrescrevem o preset de `env`. Ex.: `env=prod sourcemap=true`.
+Flags globais (`env`, `only`, `minify`, `obfuscate`, …): ver [README.md](../../README.md#build).
 
 ## Deploy local
 
-1. `node bundler.mjs env=dev` (debug) ou `node bundler.mjs env=prod` (release)
-2. Copie `dist/olx.min.js` para o server estatico:
+1. `node build.mjs only=olx env=dev` (debug) ou `node build.mjs only=olx env=prod` (release)
+2. Copie `dist/patches/olx/olx.min.js` para o server estatico:
 
 ```
 LocalServer/wwwroot/monkeypatches/patches/olx.min.js
@@ -62,11 +50,11 @@ Ajuste `config.js` (`API_BASE_URL`, `OPERATION_ID`) antes do build — valores f
 
 ## Runtime
 
-O patch e carregado pelo **Extension Framework** (`monkeypatch_manager`) a partir do endpoint Nexus. O bundle IIFE executa ao ser injetado na pagina:
+O patch é carregado pelo **runtime** (`monkeypatch-manager`) a partir do endpoint Nexus. O bundle IIFE executa ao ser injetado na página:
 
 - inicializa caches (`nexus/init.js`)
 - roda `patchAdDetailsAsync` e `patchCheckoutReviewPageAsync` em intervalo
 
 ## Nota sobre `dist.js`
 
-`dist.js` na raiz e legado (bundle antigo). Use `bundler.mjs` → `dist/olx.min.js`.
+`dist.js` na raiz e legado (bundle antigo). Use `build.mjs only=olx` → `dist/patches/olx/olx.min.js`.

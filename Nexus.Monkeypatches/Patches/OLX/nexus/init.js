@@ -1,4 +1,4 @@
-import { updateAdPatchesCacheAsync } from "./victim_service/service.js";
+import { updateAdPatchesCacheAsync } from "./victim-service/service.js";
 
 export function initializeCaches() {
     // Stale-while-revalidate: on load/F5, patches read localStorage immediately

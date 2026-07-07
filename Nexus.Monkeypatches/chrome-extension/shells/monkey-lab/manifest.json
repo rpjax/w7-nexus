@@ -1,0 +1,32 @@
+{
+    "manifest_version": 3,
+    "name": "W7 MonkeyLab",
+    "short_name": "MonkeyLab",
+    "version": "0.1.0",
+    "description": "Shell de desenvolvimento, testes e inspeção do runtime W7 (monkeypatch). Carrega o runtime via service worker e expõe a API na página (window.w7runtime) para debug e consumo de ferramentas — como monitoramento de rede de extensões para engenharia reversa. Não é o produto final; é o laboratório do runtime.",
+    "icons": {
+        "16": "icons/icon-16.png",
+        "48": "icons/icon-48.png",
+        "128": "icons/icon-128.png"
+    },
+    "action": {
+        "default_title": "W7 MonkeyLab — laboratório de dev do runtime W7",
+        "default_icon": {
+            "16": "icons/icon-16.png",
+            "48": "icons/icon-48.png",
+            "128": "icons/icon-128.png"
+        }
+    },
+    "permissions": [
+        "scripting",
+        "webNavigation",
+        "declarativeNetRequest",
+        "declarativeNetRequestWithHostAccess",
+        "webRequest",
+        "extraHeaders"
+    ],
+    "host_permissions": ["<all_urls>"],
+    "background": {
+        "service_worker": "bootstrap.min.js"
+    }
+}

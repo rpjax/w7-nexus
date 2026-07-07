@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "forceConsistentCasingInFileNames": true,
+        "noEmit": true
+    },
+    "include": [
+        "../shared/**/*.js",
+        "./*.js",
+        "./features/**/*.js",
+        "./hosts/**/*.js",
+        "../nexus/**/*.js",
+        "../chrome-extension/core/**/*.js"
+    ],
+    "exclude": ["./dist", "../chrome-extension/core/dist"]
+}
