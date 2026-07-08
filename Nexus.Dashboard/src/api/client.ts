@@ -1,6 +1,8 @@
 import { getAccessToken } from '../auth/tokenStore';
 import { readApiMessage, readJson } from './errors';
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+
 type RequestOptions = {
   fallbackError?: string;
   headers?: Record<string, string>;
@@ -31,7 +33,7 @@ async function request<T>(
   init: RequestInit,
   options?: RequestOptions,
 ): Promise<{ ok: true; data: T | null } | { ok: false; error: string; status: number }> {
-  const response = await fetch(path, {
+  const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: buildHeaders(init.headers),
   });

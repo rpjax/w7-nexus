@@ -392,6 +392,9 @@ $RECYCLE.BIN/
 .env
 .env.local
 .env.*.local
+deploy/config.json
+deploy/nexus.config.json
+deploy/out/
 *.local.json
 appsettings.*.local.json
 

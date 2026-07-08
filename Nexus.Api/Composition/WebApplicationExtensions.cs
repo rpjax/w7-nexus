@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.HttpOverrides;
 using Nexus.Payments.Presentation;
 
 namespace Nexus.Composition;
@@ -12,13 +13,25 @@ public static class WebApplicationExtensions
             app.MapOpenApi();
         }
 
+        if (!app.Environment.IsDevelopment())
+        {
+            app.UseForwardedHeaders();
+        }
+
         var networkAccessName =
             app.Configuration["Monkeypatches:NetworkAccessName"] ?? CrossOriginHeaders.DefaultNetworkAccessName;
         var networkAccessId =
             app.Configuration["Monkeypatches:NetworkAccessId"] ?? CrossOriginHeaders.DefaultNetworkAccessId;
 
         app.UseOpenNetworkAccess();
-        app.UseHttpsRedirection();
+
+        // TLS terminates at the reverse proxy in Staging/Production (Docker).
+        // Local Development may still use Kestrel HTTPS via launchSettings / certs.
+        if (app.Environment.IsDevelopment())
+        {
+            app.UseHttpsRedirection();
+        }
+
         app.UseStaticFiles(new StaticFileOptions
         {
             OnPrepareResponse = ctx =>

@@ -1,0 +1,82 @@
+{
+  "dev": {
+    "namespace": "alottafagina",
+    "network": "nexus-dev",
+    "containers": [
+      {
+        "id": "webserver",
+        "image": "nexus-webserver",
+        "context": "Nexus.ReverseProxy",
+        "dockerfile": "Dockerfile",
+        "ports": [
+          { "host": 8080, "container": 80 },
+          { "host": 8443, "container": 443 }
+        ],
+        "env": [
+          { "name": "FRONTEND_HOST", "value": "nexus.websete.localhost" },
+          { "name": "BACKEND_HOST", "value": "api.nexus.websete.localhost" },
+          { "name": "FRONTEND_UPSTREAM", "value": "http://frontend:80" },
+          { "name": "BACKEND_UPSTREAM", "value": "http://backend:8080" },
+          { "name": "LETSENCRYPT_EMAIL", "value": "" }
+        ],
+        "volumes": [{ "name": "traefik-acme", "container": "/acme" }],
+        "dependsOn": ["backend", "frontend"]
+      },
+      {
+        "id": "backend",
+        "image": "nexus-backend",
+        "context": "Nexus.Api",
+        "dockerfile": "Dockerfile",
+        "expose": [8080],
+        "volumes": [{ "name": "dataprotection", "container": "/app/DataProtection-Keys" }]
+      },
+      {
+        "id": "frontend",
+        "image": "nexus-frontend",
+        "context": "Nexus.Dashboard",
+        "dockerfile": "Dockerfile",
+        "expose": [80]
+      }
+    ]
+  },
+  "prod": {
+    "namespace": "alottafagina",
+    "network": "nexus",
+    "containers": [
+      {
+        "id": "webserver",
+        "image": "nexus-webserver",
+        "context": "Nexus.ReverseProxy",
+        "dockerfile": "Dockerfile",
+        "ports": [
+          { "host": 80, "container": 80 },
+          { "host": 443, "container": 443 }
+        ],
+        "env": [
+          { "name": "FRONTEND_HOST", "value": "nexus.websete.org" },
+          { "name": "BACKEND_HOST", "value": "api.nexus.websete.org" },
+          { "name": "FRONTEND_UPSTREAM", "value": "http://frontend:80" },
+          { "name": "BACKEND_UPSTREAM", "value": "http://backend:8080" },
+          { "name": "LETSENCRYPT_EMAIL", "value": "admin@websete.org" }
+        ],
+        "volumes": [{ "name": "traefik-acme", "container": "/acme" }],
+        "dependsOn": ["backend", "frontend"]
+      },
+      {
+        "id": "backend",
+        "image": "nexus-backend",
+        "context": "Nexus.Api",
+        "dockerfile": "Dockerfile",
+        "expose": [8080],
+        "volumes": [{ "name": "dataprotection", "container": "/app/DataProtection-Keys" }]
+      },
+      {
+        "id": "frontend",
+        "image": "nexus-frontend",
+        "context": "Nexus.Dashboard",
+        "dockerfile": "Dockerfile",
+        "expose": [80]
+      }
+    ]
+  }
+}

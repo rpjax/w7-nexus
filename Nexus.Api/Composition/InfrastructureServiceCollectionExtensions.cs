@@ -1,5 +1,6 @@
 using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.HttpOverrides;
 using Nexus.AppHost;
 using Nexus.AppHost.Contracts;
 using Nexus.Authentication.Application.Services.Models;
@@ -24,6 +25,13 @@ public static class InfrastructureServiceCollectionExtensions
             });
         services.AddHttpContextAccessor();
         services.AddSignalR();
+
+        services.Configure<ForwardedHeadersOptions>(options =>
+        {
+            options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+            options.KnownNetworks.Clear();
+            options.KnownProxies.Clear();
+        });
 
         services.Configure<AppHostOptions>(builder.Configuration.GetSection(AppHostOptions.SectionName));
         services.Configure<JwtOptions>(builder.Configuration.GetSection(JwtOptions.SectionName));

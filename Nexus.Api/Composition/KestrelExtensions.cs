@@ -34,8 +34,11 @@ public static class KestrelExtensions
         var absoluteKeyPath = Path.GetFullPath(Path.Combine(builder.Environment.ContentRootPath, keyPath));
 
         if (!File.Exists(absoluteCertPath) || !File.Exists(absoluteKeyPath))
-            throw new InvalidOperationException(
-                $"Kestrel certificate files were not found. Cert: '{absoluteCertPath}', Key: '{absoluteKeyPath}'.");
+        {
+            // Docker images omit Certificates/; Kestrel stays HTTP-only via ASPNETCORE_URLS.
+            // Local `dotnet run` with certs on disk enables HTTPS as usual.
+            return builder;
+        }
 
         var certificate = LoadCertificateFromPem(absoluteCertPath, absoluteKeyPath);
 

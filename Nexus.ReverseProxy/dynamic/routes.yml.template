@@ -1,0 +1,28 @@
+http:
+  routers:
+    frontend:
+      rule: "Host(`${FRONTEND_HOST}`)"
+      service: frontend
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+    backend:
+      rule: "Host(`${BACKEND_HOST}`)"
+      service: backend
+      entryPoints:
+        - websecure
+      tls:
+        certResolver: letsencrypt
+
+  services:
+    frontend:
+      loadBalancer:
+        servers:
+          - url: "${FRONTEND_UPSTREAM}"
+
+    backend:
+      loadBalancer:
+        servers:
+          - url: "${BACKEND_UPSTREAM}"
