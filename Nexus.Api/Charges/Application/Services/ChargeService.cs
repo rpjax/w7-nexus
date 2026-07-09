@@ -1,9 +1,9 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using MongoDB.Bson;
-using Nexus.Charges.Application;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
+using Nexus.Charges.Application.Responses;
 using Nexus.Gateways.Application.Contracts;
 using Nexus.Gateways.Application.Models;
 using Nexus.Gateways.Application.Requests;
@@ -39,9 +39,12 @@ public sealed class ChargeService : IChargeService
         _gatewayOrchestrator = gatewayOrchestrator;
     }
 
-    public async Task<IResult<CreatePixChargeResponse>> CreatePixChargeAsync(CreatePixChargeRequest request)
+    public async Task<IResult<CreatePixChargeResponse>> CreatePixChargeAsync(
+        CreatePixChargeRequest request,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
+        cancellationToken.ThrowIfCancellationRequested();
 
         if (request.Amount <= 0m)
         {
@@ -70,13 +73,16 @@ public sealed class ChargeService : IChargeService
             ?? throw new InvalidOperationException("Credential resolution succeeded without a value.");
 
         var operationId = request.OperationId?.Trim() ?? string.Empty;
-        var operatorId = request.OperatorId?.Trim();
+        var operatorId = string.IsNullOrWhiteSpace(request.OperatorId)
+            ? null
+            : request.OperatorId.Trim();
         var paymentId = ObjectId.GenerateNewId().ToString();
 
         var splitsResult = await _profitShareResolver.ResolveSplitsAsync(
             operationId,
             operatorId,
-            request.Amount);
+            request.Amount,
+            cancellationToken);
 
         if (splitsResult.IsFailure)
         {
@@ -163,7 +169,8 @@ public sealed class ChargeService : IChargeService
             var recalculated = await _splitCalculation.ApplyStrawManFeeAsync(
                 payment.Amount,
                 profitShareSplits,
-                strawManId);
+                strawManId,
+                cancellationToken);
 
             var replaceSplits = payment.ReplaceSplits(recalculated);
             if (replaceSplits.IsFailure)
@@ -180,7 +187,7 @@ public sealed class ChargeService : IChargeService
         return Result.Create<CreatePixChargeResponse>()
             .WithValue(new CreatePixChargeResponse
             {
-                Id = tryPix.TransactionId,
+                Id = payment.Id,
                 PixCode = tryPix.PixCode,
                 PaymentRecipient = ChargeDefaults.PaymentRecipient,
                 ExpirationTimeSeconds = ChargeDefaults.ExpirationTimeSeconds,

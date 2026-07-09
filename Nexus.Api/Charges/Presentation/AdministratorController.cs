@@ -2,7 +2,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Nexus.Authorization.Application.Contracts;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
 using Nexus.Controllers;
 
 namespace Nexus.Charges.Presentation;

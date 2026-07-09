@@ -3,7 +3,7 @@ using Aidan.Core.Linq;
 using Aidan.Core.Patterns;
 using Aidan.Mongo.Linq;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
 using Nexus.Charges.Application.Services;
 using Nexus.Database.Models;
 using Nexus.Gateways.Aggregates;

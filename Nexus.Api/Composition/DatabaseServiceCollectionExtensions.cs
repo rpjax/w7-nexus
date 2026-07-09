@@ -30,6 +30,8 @@ public static class DatabaseServiceCollectionExtensions
         services.AddMongoCollection<GatewayCredentialsGroupRecord>("gateway_credentials_groups");
         services.AddMongoCollection<StrawManSettingsRecord>("straw_man_settings");
         services.AddMongoCollection<OlxAdPatchRecord>("olx_ad_patches");
+        services.AddMongoCollection<ScriptRecord>("scripts");
+        services.AddMongoCollection<ReleaseRecord>("script_releases");
 
         return services;
     }

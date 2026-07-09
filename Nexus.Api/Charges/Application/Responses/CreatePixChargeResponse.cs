@@ -1,4 +1,4 @@
-namespace Nexus.Charges.Application.Models;
+namespace Nexus.Charges.Application.Responses;
 
 public sealed class CreatePixChargeResponse
 {

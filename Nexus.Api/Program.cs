@@ -1,5 +1,6 @@
 using Nexus.Charges.Composition;
 using Nexus.Composition;
+using Nexus.Scripts.Composition;
 using Nexus.StrawMen.Composition;
 
 /*
@@ -25,7 +26,8 @@ builder.Services
     .AddNexusOperations()
     .AddNexusRoles()
     .AddNexusGateways(builder.Configuration)
-    .AddNexusCharges();
+    .AddNexusCharges()
+    .AddNexusScripts();
 
 var app = builder.Build();
 

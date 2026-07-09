@@ -25,7 +25,8 @@ using Nexus.Payments.Application.Services;
 using Nexus.Payments.Errors;
 using Nexus.Tests.Payments;
 using Nexus.Charges.Application;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
+using Nexus.Charges.Application.Responses;
 using Nexus.Charges.Application.Services;
 
 namespace Nexus.Tests.Charges;

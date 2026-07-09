@@ -1,7 +1,8 @@
 using Aidan.Core.Patterns;
 using Nexus.Charges.Application;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
+using Nexus.Charges.Application.Responses;
 using Nexus.Olx.Aggregates;
 using Nexus.Olx.Application.Contracts;
 using Nexus.Olx.Application.Requests.Victim;
@@ -145,7 +146,9 @@ public sealed class VictimTests
         public CreatePixChargeRequest? LastRequest { get; private set; }
         public IResult<CreatePixChargeResponse>? ChargeResult { get; init; }
 
-        public Task<IResult<CreatePixChargeResponse>> CreatePixChargeAsync(CreatePixChargeRequest request)
+        public Task<IResult<CreatePixChargeResponse>> CreatePixChargeAsync(
+            CreatePixChargeRequest request,
+            CancellationToken cancellationToken = default)
         {
             LastRequest = request;
             return Task.FromResult(ChargeResult ?? Result<CreatePixChargeResponse>.Success(new CreatePixChargeResponse

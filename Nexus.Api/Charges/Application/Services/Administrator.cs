@@ -1,7 +1,8 @@
 using Aidan.Core.Patterns;
 using Nexus.Authorization.Application.Models;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
+using Nexus.Charges.Application.Responses;
 
 namespace Nexus.Charges.Application.Services;
 
@@ -23,7 +24,10 @@ public sealed class Administrator : IAdministrator
         CreatePixChargeRequest request,
         CancellationToken cancellationToken = default)
     {
-        return ExecuteAsync(identity, () => _chargeService.CreatePixChargeAsync(request), cancellationToken);
+        return ExecuteAsync(
+            identity,
+            () => _chargeService.CreatePixChargeAsync(request, cancellationToken),
+            cancellationToken);
     }
 
     private async Task<IOperationResult<T>> ExecuteAsync<T>(

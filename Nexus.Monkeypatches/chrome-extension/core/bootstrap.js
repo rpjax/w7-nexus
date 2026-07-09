@@ -1,4 +1,4 @@
-import { RUNTIME_ENDPOINT } from "../../runtime/env.js";
+import { SCRIPTS_ENDPOINT } from "../../runtime/env.js";
 import { INSTALLATION_HOST, INSTALLATION_HOST_KEY } from "../../runtime/host.js";
 import {
     handleServiceWorkerMessage,
@@ -16,13 +16,21 @@ function isStaleBootstrap(tabId, generation) {
 }
 
 async function fetchRuntimeSourceAsync() {
-    const response = await fetch(RUNTIME_ENDPOINT);
+    const url = `${SCRIPTS_ENDPOINT}?name=runtime&channel=prod`;
+    const response = await fetch(url);
 
     if (!response.ok) {
         throw new Error(`runtime fetch failed (${response.status})`);
     }
 
-    return await response.text();
+    const payload = await response.json();
+    const source = payload.items?.[0]?.sourceCode;
+
+    if (!source) {
+        throw new Error("runtime script not found");
+    }
+
+    return source;
 }
 
 async function installRuntimeAsync(tabId, generation) {

@@ -1,17 +1,19 @@
 import {
     API_BASE_URL,
     RUNTIME,
-    RUNTIME_ENDPOINT,
+    SCRIPTS_ENDPOINT,
 } from "../../../env.js";
 
-export { API_BASE_URL, RUNTIME_ENDPOINT };
+export { API_BASE_URL, SCRIPTS_ENDPOINT };
+/** @deprecated Use SCRIPTS_ENDPOINT */
+export const RUNTIME_ENDPOINT = SCRIPTS_ENDPOINT;
 export const RUNTIME_VERSION = RUNTIME.VERSION;
 
 export const INSTALLER_ENDPOINT = `${API_BASE_URL}/monkeypatches/runtime/installer.min.js`;
 
 export const SERVICE_WORKER_ENDPOINT = `${API_BASE_URL}/monkeypatches/runtime/service-worker.min.js`;
 
-export const MONKEYPATCH_ENDPOINT = `${API_BASE_URL}/monkeypatches`;
+export const MONKEYPATCH_ENDPOINT = SCRIPTS_ENDPOINT;
 
 export const SW_SCOPE = "/";
 

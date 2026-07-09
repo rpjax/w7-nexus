@@ -37,6 +37,9 @@ export const EXTENSION_WATCHER_API = {
 
 export const API_BASE_URL = "https://websete.localhost:444";
 
-export const RUNTIME_ENDPOINT = `${API_BASE_URL}/monkeypatches/runtime/runtime.min.js`;
+export const SCRIPTS_ENDPOINT = `${API_BASE_URL}/scripts`;
+
+/** @deprecated Use SCRIPTS_ENDPOINT with ?name=runtime */
+export const RUNTIME_ENDPOINT = SCRIPTS_ENDPOINT;
 
 export const NEXUS_HUB_URL = `${API_BASE_URL}/hubs/extension`;

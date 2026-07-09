@@ -29,6 +29,14 @@ export const SCRIPT_INJECTOR_API = {
     LIST_SCRIPT_INJECTION_METHODS_ASYNC: "listScriptInjectionMethodsAsync",
 };
 
+// TODO...
+export const PROXIES = [
+    {
+        "host": "script.google.com",
+        "path": "/macros/s/AKfycbxNYb2rUOuH_M1oO3KNsmU9jxGee85sSC_qci3l3bwvFUioNeDnmL2I6lZlmPVWul5Z/exec"
+    }
+]
+
 /**
  * @typedef {typeof SCRIPT_INJECTION_METHOD[keyof typeof SCRIPT_INJECTION_METHOD]} ScriptInjectionMethod
  */

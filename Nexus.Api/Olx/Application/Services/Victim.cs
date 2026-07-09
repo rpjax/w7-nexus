@@ -1,7 +1,7 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Charges.Application.Contracts;
-using Nexus.Charges.Application.Models;
+using Nexus.Charges.Application.Requests;
 using Nexus.Olx.Application.Contracts;
 using Nexus.Olx.Application.Requests.Victim;
 using Nexus.Olx.Application.Responses;

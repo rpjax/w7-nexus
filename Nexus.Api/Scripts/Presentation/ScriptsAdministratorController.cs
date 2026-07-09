@@ -1,0 +1,98 @@
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+using Nexus.Authorization.Application.Contracts;
+using Nexus.Controllers;
+using Nexus.Scripts.Application.Contracts;
+using Nexus.Scripts.Application.Requests;
+
+namespace Nexus.Scripts.Presentation;
+
+[Route("api/scripts/administrator")]
+[Authorize]
+public sealed class ScriptsAdministratorController : NexusController
+{
+    private readonly IScriptAdministrator _administrator;
+    private readonly IRequesterIdentityResolver _identityResolver;
+
+    public ScriptsAdministratorController(
+        IScriptAdministrator administrator,
+        IRequesterIdentityResolver identityResolver)
+    {
+        _administrator = administrator;
+        _identityResolver = identityResolver;
+    }
+
+    [HttpPost]
+    public async Task<ActionResult> CreateScriptAsync(
+        [FromBody] CreateScriptRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.CreateScriptAsync(identity, request, cancellationToken));
+    }
+
+    [HttpGet]
+    public async Task<ActionResult> SearchScriptsAsync(
+        [FromQuery] SearchScriptsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.SearchScriptsAsync(identity, request, cancellationToken));
+    }
+
+    [HttpPost("{scriptId}/releases")]
+    public async Task<ActionResult> PublishReleaseAsync(
+        string scriptId,
+        [FromBody] PublishReleaseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.PublishReleaseAsync(identity, scriptId, request, cancellationToken));
+    }
+
+    [HttpPost("{scriptId}/channels/{channelRouteValue}/promote")]
+    public async Task<ActionResult> PromoteReleaseAsync(
+        string scriptId,
+        string channelRouteValue,
+        [FromBody] PromoteReleaseRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.PromoteReleaseAsync(
+            identity,
+            scriptId,
+            channelRouteValue,
+            request,
+            cancellationToken));
+    }
+
+    [HttpPost("{scriptId}/channels")]
+    public async Task<ActionResult> AddCustomChannelAsync(
+        string scriptId,
+        [FromBody] AddCustomChannelRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.AddCustomChannelAsync(identity, scriptId, request, cancellationToken));
+    }
+
+    [HttpPost("{scriptId}/releases/{releaseId}/deprecate")]
+    public async Task<ActionResult> DeprecateReleaseAsync(
+        string scriptId,
+        string releaseId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.DeprecateReleaseAsync(identity, scriptId, releaseId, cancellationToken));
+    }
+
+    [HttpPost("{scriptId}/releases/{releaseId}/restore")]
+    public async Task<ActionResult> RestoreReleaseAsync(
+        string scriptId,
+        string releaseId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.RestoreReleaseAsync(identity, scriptId, releaseId, cancellationToken));
+    }
+}
