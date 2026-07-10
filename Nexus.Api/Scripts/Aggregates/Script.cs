@@ -134,6 +134,30 @@ public sealed class Script
         return Result.Success();
     }
 
+    public IReadOnlyList<string> ClearReleaseReference(string releaseId)
+    {
+        releaseId = releaseId?.Trim() ?? string.Empty;
+
+        if (string.IsNullOrWhiteSpace(releaseId))
+            return Array.Empty<string>();
+
+        var cleared = new List<string>();
+
+        foreach (var channel in _channels)
+        {
+            if (!string.Equals(channel.CurrentReleaseId, releaseId, StringComparison.Ordinal))
+                continue;
+
+            channel.ClearRelease();
+            cleared.Add(channel.Key.ToRouteValue());
+        }
+
+        if (cleared.Count > 0)
+            Touch();
+
+        return cleared;
+    }
+
     public IResult UpdateDescription(string? description)
     {
         description = description?.Trim();
@@ -165,6 +189,13 @@ public sealed class Script
             return Result.Failure(scopeResult.Errors);
 
         Scope = scopeResult.Value;
+        Touch();
+        return Result.Success();
+    }
+
+    public IResult UpdatePriority(int priority)
+    {
+        Priority = priority;
         Touch();
         return Result.Success();
     }

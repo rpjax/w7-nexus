@@ -19,6 +19,11 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           secure: false,
         },
+        '/openapi': {
+          target,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   };

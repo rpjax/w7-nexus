@@ -17,4 +17,6 @@ public sealed class Channel
         new(string.Empty, key, currentReleaseId: null);
 
     internal void Promote(string releaseId) => CurrentReleaseId = releaseId;
+
+    internal void ClearRelease() => CurrentReleaseId = null;
 }

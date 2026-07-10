@@ -1,3 +1,4 @@
+using System.Text;
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Nexus.Scripts.Errors;
@@ -10,6 +11,7 @@ public sealed class Release
     public string ScriptId { get; }
     public SemanticVersion Version { get; }
     public string SourceCode { get; }
+    public int SourceCodeSizeBytes { get; }
     public ContentHash Hash { get; }
     public bool IsDeprecated { get; }
     public DateTime CreatedAt { get; }
@@ -19,6 +21,7 @@ public sealed class Release
         string scriptId,
         SemanticVersion version,
         string sourceCode,
+        int sourceCodeSizeBytes,
         ContentHash hash,
         DateTime createdAt,
         bool isDeprecated = false)
@@ -27,6 +30,7 @@ public sealed class Release
         ScriptId = scriptId;
         Version = version;
         SourceCode = sourceCode;
+        SourceCodeSizeBytes = sourceCodeSizeBytes;
         Hash = hash;
         IsDeprecated = isDeprecated;
         CreatedAt = createdAt;
@@ -59,12 +63,14 @@ public sealed class Release
                 .Build());
 
         var hash = ContentHash.FromSourceCode(sourceCode);
+        var sourceCodeSizeBytes = Encoding.UTF8.GetByteCount(sourceCode);
 
         return Result<Release>.Success(new Release(
             string.Empty,
             scriptId,
             version,
             sourceCode,
+            sourceCodeSizeBytes,
             hash,
             DateTime.UtcNow));
     }
@@ -79,6 +85,7 @@ public sealed class Release
             ScriptId,
             Version,
             SourceCode,
+            SourceCodeSizeBytes,
             Hash,
             CreatedAt,
             isDeprecated: true));
@@ -94,6 +101,7 @@ public sealed class Release
             ScriptId,
             Version,
             SourceCode,
+            SourceCodeSizeBytes,
             Hash,
             CreatedAt,
             isDeprecated: false));

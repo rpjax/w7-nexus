@@ -110,6 +110,18 @@ public sealed class MongoReleaseRepository : IReleaseRepository
             cancellationToken: cancellationToken);
     }
 
+    public async Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    {
+        if (!ObjectId.TryParse(id, out var objectId))
+            return false;
+
+        var result = await _collection.DeleteOneAsync(
+            Builders<ReleaseRecord>.Filter.Eq(r => r.Id, objectId),
+            cancellationToken);
+
+        return result.DeletedCount > 0;
+    }
+
     public async Task<bool> VersionExistsAsync(
         string scriptId,
         SemanticVersion version,

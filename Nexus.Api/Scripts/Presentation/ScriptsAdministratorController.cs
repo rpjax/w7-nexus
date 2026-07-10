@@ -40,6 +40,54 @@ public sealed class ScriptsAdministratorController : NexusController
         return ToOperationResult(await _administrator.SearchScriptsAsync(identity, request, cancellationToken));
     }
 
+    [HttpGet("{scriptId}")]
+    public async Task<ActionResult> GetScriptAsync(
+        string scriptId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.GetScriptAsync(identity, scriptId, cancellationToken));
+    }
+
+    [HttpPatch("{scriptId}")]
+    public async Task<ActionResult> UpdateScriptAsync(
+        string scriptId,
+        [FromBody] UpdateScriptRequest request,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.UpdateScriptAsync(identity, scriptId, request, cancellationToken));
+    }
+
+    [HttpGet("{scriptId}/releases")]
+    public async Task<ActionResult> ListReleasesAsync(
+        string scriptId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.ListReleasesAsync(identity, scriptId, cancellationToken));
+    }
+
+    [HttpGet("{scriptId}/releases/{releaseId}")]
+    public async Task<ActionResult> GetReleaseAsync(
+        string scriptId,
+        string releaseId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.GetReleaseAsync(identity, scriptId, releaseId, cancellationToken));
+    }
+
+    [HttpGet("{scriptId}/releases/{releaseId}/source-code")]
+    public async Task<ActionResult> GetReleaseSourceCodeAsync(
+        string scriptId,
+        string releaseId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.GetReleaseSourceCodeAsync(identity, scriptId, releaseId, cancellationToken));
+    }
+
     [HttpPost("{scriptId}/releases")]
     public async Task<ActionResult> PublishReleaseAsync(
         string scriptId,
@@ -94,5 +142,15 @@ public sealed class ScriptsAdministratorController : NexusController
     {
         var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
         return ToOperationResult(await _administrator.RestoreReleaseAsync(identity, scriptId, releaseId, cancellationToken));
+    }
+
+    [HttpDelete("{scriptId}/releases/{releaseId}")]
+    public async Task<ActionResult> DeleteReleaseAsync(
+        string scriptId,
+        string releaseId,
+        CancellationToken cancellationToken)
+    {
+        var identity = await ResolveIdentityAsync(_identityResolver, cancellationToken);
+        return ToOperationResult(await _administrator.DeleteReleaseAsync(identity, scriptId, releaseId, cancellationToken));
     }
 }

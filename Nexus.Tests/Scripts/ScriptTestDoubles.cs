@@ -125,12 +125,23 @@ public sealed class InMemoryReleaseRepository : IReleaseRepository
         Task.FromResult(_releases.Any(release =>
             release.ScriptId == scriptId && release.Version.Equals(version)));
 
+    public Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default)
+    {
+        var index = _releases.FindIndex(release => release.Id == id);
+        if (index < 0)
+            return Task.FromResult(false);
+
+        _releases.RemoveAt(index);
+        return Task.FromResult(true);
+    }
+
     private static Release Clone(Release release, string id) =>
         new(
             id,
             release.ScriptId,
             release.Version,
             release.SourceCode,
+            release.SourceCodeSizeBytes,
             release.Hash,
             release.CreatedAt,
             release.IsDeprecated);

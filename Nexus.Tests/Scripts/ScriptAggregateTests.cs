@@ -69,4 +69,32 @@ public sealed class ScriptAggregateTests
         Assert.Null(script.Scope);
         Assert.False(script.HasHostPatterns());
     }
+
+    [Fact]
+    public void ClearReleaseReference_ClearsMatchingChannels()
+    {
+        var script = Script.Create("olx", ["olx.com.br"]).Value!;
+
+        script.Promote(ChannelKey.Production, "release-1");
+        script.Promote(ChannelKey.Staging, "release-2");
+        script.Promote(ChannelKey.Development, "release-1");
+
+        var cleared = script.ClearReleaseReference("release-1");
+
+        Assert.Equal(["prod", "development"], cleared);
+        Assert.Null(script.FindChannel(ChannelKey.Production)!.CurrentReleaseId);
+        Assert.Equal("release-2", script.FindChannel(ChannelKey.Staging)!.CurrentReleaseId);
+        Assert.Null(script.FindChannel(ChannelKey.Development)!.CurrentReleaseId);
+    }
+
+    [Fact]
+    public void UpdatePriority_UpdatesValue()
+    {
+        var script = Script.Create("olx", ["olx.com.br"], priority: 5).Value!;
+
+        var result = script.UpdatePriority(0);
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, script.Priority);
+    }
 }

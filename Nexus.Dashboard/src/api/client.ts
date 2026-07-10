@@ -69,8 +69,8 @@ export const apiClient = {
     return request<T>(path, { method: 'PATCH', body: JSON.stringify(body) }, options);
   },
 
-  delete(path: string, options?: RequestOptions) {
-    return request<void>(path, { method: 'DELETE' }, options);
+  delete<T = void>(path: string, options?: RequestOptions) {
+    return request<T>(path, { method: 'DELETE' }, options);
   },
 
   deleteWithBody<T>(path: string, body: unknown, options?: RequestOptions) {

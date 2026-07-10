@@ -17,6 +17,7 @@ type OpsWorkspaceProps = {
   onRefresh: () => void;
   totalItems: number;
   totalLabel?: string;
+  showTotal?: boolean;
   onCreate?: () => void;
   createLabel?: string;
   children: ReactNode;
@@ -38,6 +39,7 @@ export function OpsWorkspace({
   onRefresh,
   totalItems,
   totalLabel,
+  showTotal = true,
   onCreate,
   createLabel = 'Nova operação',
   children,
@@ -77,9 +79,11 @@ export function OpsWorkspace({
               </button>
             ) : null}
           </div>
-          <div className="ops-workspace__meta">
-            <span className="muted small">{totalText}</span>
-          </div>
+          {showTotal ? (
+            <div className="ops-workspace__meta">
+              <span className="muted small">{totalText}</span>
+            </div>
+          ) : null}
         </header>
 
         <div className="ops-workspace__divider" aria-hidden="true" />

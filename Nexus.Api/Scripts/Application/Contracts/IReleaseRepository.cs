@@ -14,5 +14,6 @@ public interface IReleaseRepository
     Task<IReadOnlyList<Release>> ListByScriptIdAsync(string scriptId, CancellationToken cancellationToken = default);
     Task<Release> InsertAsync(Release release, CancellationToken cancellationToken = default);
     Task UpdateAsync(Release release, CancellationToken cancellationToken = default);
+    Task<bool> DeleteAsync(string id, CancellationToken cancellationToken = default);
     Task<bool> VersionExistsAsync(string scriptId, SemanticVersion version, CancellationToken cancellationToken = default);
 }

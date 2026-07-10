@@ -29,6 +29,9 @@ import { GatewayCredentialsPage } from './pages/GatewayCredentialsPage';
 import { OlxAdminAdsPage } from './pages/olx/OlxAdminAdsPage';
 import { OlxOperatorAdsPage } from './pages/olx/OlxOperatorAdsPage';
 import { GatewayPlaceholderPage } from './pages/GatewayPlaceholderPage';
+import { ScriptsCommandCenterPage } from './pages/admin/scripts/ScriptsCommandCenterPage';
+import { ScriptStudioPage } from './pages/admin/scripts/ScriptStudioPage';
+import { ApiDocsPage } from './pages/admin/ApiDocsPage';
 
 export default function App() {
   return (
@@ -70,6 +73,9 @@ export default function App() {
             <Route path="/dashboard/accounts" element={<AccountsPage />} />
             <Route path="/dashboard/admin/straw-men" element={<AdminStrawManManagementPage />} />
             <Route path="/dashboard/admin/straw-man-settings" element={<Navigate to="/dashboard/admin/straw-men" replace />} />
+            <Route path="/dashboard/admin/scripts" element={<ScriptsCommandCenterPage />} />
+            <Route path="/dashboard/admin/scripts/:scriptId" element={<ScriptStudioPage />} />
+            <Route path="/dashboard/admin/api-docs" element={<ApiDocsPage />} />
           </Route>
 
           <Route element={<RequireRole role={ROLES.StrawMan} />}>

@@ -13,6 +13,7 @@ public sealed class ReleaseRecord
     public int Minor { get; set; }
     public int Patch { get; set; }
     public string SourceCode { get; set; } = string.Empty;
+    public int SourceCodeSizeBytes { get; set; }
     public string Hash { get; set; } = string.Empty;
     public bool IsDeprecated { get; set; }
     public DateTime CreatedAt { get; set; }

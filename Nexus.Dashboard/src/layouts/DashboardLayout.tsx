@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthContext';
 import { isOperationDetailPath } from '../features/operations/operationPaths';
 import { isPaymentDetailPath } from '../features/payments/paymentPaths';
 import { isTeamDetailPath } from '../features/teams/teamPaths';
+import { isScriptStudioPath } from '../features/scripts/scriptPaths';
 import { PageTitleProvider, usePageTitle } from './PageTitleContext';
 import { NavMenu } from './NavMenu';
 
@@ -17,6 +18,9 @@ function resolvePageTitle(pathname: string): string {
   }
   if (isOperationDetailPath(relative)) {
     return 'Detalhe da operação';
+  }
+  if (isScriptStudioPath(relative)) {
+    return 'Script Studio';
   }
   const map: Record<string, string> = {
     '/dashboard': 'Visão geral',
@@ -39,8 +43,26 @@ function resolvePageTitle(pathname: string): string {
     '/dashboard/gateways/gateway-3': 'GATEWAY3',
     '/dashboard/olx/ads': 'OLX — Meus anúncios',
     '/dashboard/olx/admin/ads': 'OLX — Gestão global',
+    '/dashboard/admin/scripts': 'Scripts — Inventário',
+    '/dashboard/admin/api-docs': 'Documentação da API',
   };
   return map[relative] ?? 'Websete Nexus';
+}
+
+function splitTopbarTitle(title: string): { section: string | null; page: string } {
+  const dash = title.indexOf(' — ');
+  if (dash === -1) {
+    return { section: null, page: title };
+  }
+  return {
+    section: title.slice(0, dash),
+    page: title.slice(dash + 3),
+  };
+}
+
+function userInitial(username: string | undefined): string {
+  const letter = username?.trim().charAt(0);
+  return letter ? letter.toUpperCase() : '?';
 }
 
 function DashboardLayoutInner() {
@@ -64,6 +86,8 @@ function DashboardLayoutInner() {
   }, [location.pathname, setTitle]);
 
   const topbarTitle = pageTitle ?? resolvePageTitle(location.pathname);
+  const { section: topbarSection, page: topbarPage } = splitTopbarTitle(topbarTitle);
+  const username = user?.username ?? 'Conta';
 
   return (
     <div className="app-root">
@@ -77,35 +101,56 @@ function DashboardLayoutInner() {
 
       <div className="app-main-column">
         <header className="app-topbar">
-          <button
-            type="button"
-            className="icon-btn icon-btn-ghost app-menu-btn"
-            onClick={() => setDrawerOpen((v) => !v)}
-            aria-label="Menu"
-            aria-expanded={drawerOpen}
-          >
-            <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M4 6h16M4 12h16M4 18h16" />
-            </svg>
-          </button>
-          <h1 className="app-topbar-title">{topbarTitle}</h1>
+          <div className="app-topbar-start">
+            <button
+              type="button"
+              className="icon-btn icon-btn-ghost app-menu-btn"
+              onClick={() => setDrawerOpen((v) => !v)}
+              aria-label="Menu"
+              aria-expanded={drawerOpen}
+            >
+              <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            <div className="app-topbar-heading">
+              {topbarSection ? (
+                <p className="app-topbar-eyebrow">{topbarSection}</p>
+              ) : null}
+              <h1 className="app-topbar-title">{topbarPage}</h1>
+            </div>
+          </div>
+
           <div className="app-topbar-actions">
-            <button type="button" className="icon-btn icon-btn-ghost" aria-label="Notificações">
+            <button type="button" className="icon-btn icon-btn-ghost topbar-notify-btn" aria-label="Notificações">
               <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" />
               </svg>
             </button>
-            <span className="topbar-user" title={user?.username}>{user?.username ?? 'Conta'}</span>
+
+            <span className="topbar-actions-divider" aria-hidden="true" />
+
+            <div className="topbar-user-chip" title={username}>
+              <span className="topbar-user-avatar" aria-hidden="true">{userInitial(user?.username)}</span>
+              <span className="topbar-user-name">{username}</span>
+            </div>
+
             <button
               type="button"
               className="btn btn-ghost btn-small topbar-signout"
+              aria-label="Sair"
               onClick={() => {
                 signOut();
                 navigate('/auth', { replace: true });
               }}
             >
-              Sair
+              <span className="topbar-signout-label">Sair</span>
+              <svg className="topbar-signout-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </button>
           </div>
         </header>

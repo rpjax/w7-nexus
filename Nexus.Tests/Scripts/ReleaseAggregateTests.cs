@@ -1,3 +1,4 @@
+using System.Text;
 using Nexus.Scripts.Aggregates;
 using Xunit;
 
@@ -24,6 +25,15 @@ public sealed class ReleaseAggregateTests
         var result = Release.Publish("script-1", "", new SemanticVersion(1, 0, 0));
 
         Assert.True(result.IsFailure);
+    }
+
+    [Fact]
+    public void Publish_StoresSourceCodeSizeBytes()
+    {
+        const string sourceCode = "console.log('a');";
+        var release = Release.Publish("script-1", sourceCode, new SemanticVersion(1, 0, 0)).Value!;
+
+        Assert.Equal(Encoding.UTF8.GetByteCount(sourceCode), release.SourceCodeSizeBytes);
     }
 
     [Fact]
