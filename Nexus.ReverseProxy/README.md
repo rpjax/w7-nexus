@@ -1,6 +1,6 @@
 # Nexus.ReverseProxy (webserver)
 
-Traefik edge proxy. Terminates TLS and routes by host via env vars set in `nexus.config.json`:
+Traefik edge proxy. Terminates TLS and routes by host via env vars set in `nexus.deploy.json`:
 
 | Variable | Purpose |
 |----------|---------|

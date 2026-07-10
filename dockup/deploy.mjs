@@ -2,13 +2,20 @@
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { basename, join, resolve } from "node:path";
+import { ConfigDiscoveryError, CONFIG_SUFFIX, discoverConfigFile } from "./discover-config.mjs";
+import {
+  ResolveError,
+  composeRuntimeEnv,
+  resolveBuildArgs,
+  resolveEnvironmentEnv,
+} from "./resolve-env.mjs";
 
-const deployDir = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(deployDir, "..");
 const SCRIPT_NAME = "deploy.mjs";
 const TAIL_LINES = 24;
+
+let configDir = process.cwd();
+let repoRoot = resolve(configDir, "..");
 
 // ---------------------------------------------------------------------------
 // Logger
@@ -83,7 +90,7 @@ class Logger {
 
   banner() {
     console.log("");
-    console.log(`${palette.bold}Nexus Deploy${palette.reset}  ${palette.dim}${SCRIPT_NAME}${palette.reset}`);
+    console.log(`${palette.bold}Deploy${palette.reset}  ${palette.dim}${SCRIPT_NAME}${palette.reset}`);
     console.log(`${palette.dim}────────────────────────────────────────${palette.reset}`);
   }
 
@@ -108,10 +115,11 @@ class Logger {
     process.exit(1);
   }
 
-  summary({ env, namespace, built, pushed, artifacts, elapsedSec }) {
+  summary({ env, namespace, tag, built, pushed, artifacts, elapsedSec }) {
     this.section("Summary");
     this.ok("DONE", `Environment: ${env}`);
     this.ok("DONE", `Namespace:   ${namespace}`);
+    this.ok("DONE", `Image tag:   ${tag}`);
     if (built.length) {
       this.ok("DONE", `Built:       ${built.join(", ")}`);
     }
@@ -159,17 +167,17 @@ function fail(phase, message, opts = {}) {
 function printHelp() {
   console.log(`Usage: node ${SCRIPT_NAME} env=<name> [only=<container-id>]
 
-Run from the deploy/ directory:
+Run from the directory that contains exactly one *${CONFIG_SUFFIX} file:
   cd deploy
   node ${SCRIPT_NAME} env=prod
 
-Root keys in nexus.config.json are environment names (e.g. dev, prod).
+Root keys in the config file are environment names (e.g. dev, prod).
 
 Phases:
   1. Preflight  — Docker daemon, working directory, Hub auth
-  2. Config     — load and validate nexus.config.json
-  3. Build      — docker build --build-arg ENV=<env>
-  4. Push       — docker push <namespace>/<image>:<env>
+  2. Config     — discover, load, and validate *${CONFIG_SUFFIX}
+  3. Build      — docker build with container buildArgs
+  4. Push       — docker push <namespace>/<image>:<tag>
   5. Generate   — out/<env>/docker-compose.yml + .env
   6. Validate   — docker compose config
 
@@ -220,60 +228,87 @@ function parseArgs(argv, config) {
   return result;
 }
 
-function assertDeployDirectory() {
-  const cwd = resolve(process.cwd());
-  if (cwd !== deployDir) {
-    fail("INIT", "This script must be run from the deploy/ directory.", {
-      detail: `Current directory: ${cwd}\nExpected:          ${deployDir}`,
-      hint: `Run: cd deploy && node ${SCRIPT_NAME} env=prod`,
-    });
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
 
-function loadConfig() {
-  const configPath = join(deployDir, "nexus.config.json");
-  if (!existsSync(configPath)) {
-    fail("CONFIG", `Missing nexus.config.json.`, {
-      detail: `Expected file: ${configPath}`,
-      hint: "Run: cp nexus.config.example.json nexus.config.json",
-    });
+function discoverConfig(cwd) {
+  try {
+    return discoverConfigFile(cwd);
+  } catch (err) {
+    if (err instanceof ConfigDiscoveryError) {
+      fail("CONFIG", err.message, { detail: err.detail, hint: err.hint });
+    }
+    throw err;
   }
+}
 
+function loadConfig(configPath) {
   let raw;
   try {
     raw = readFileSync(configPath, "utf8");
   } catch (err) {
-    fail("CONFIG", "Unable to read nexus.config.json.", { cause: err });
+    fail("CONFIG", `Unable to read ${configPath}.`, { cause: err });
   }
 
   try {
     return JSON.parse(raw);
   } catch (err) {
-    fail("CONFIG", "nexus.config.json is not valid JSON.", {
+    fail("CONFIG", `${configPath} is not valid JSON.`, {
       cause: err,
       hint: "Validate the file with a JSON linter.",
     });
   }
 }
 
-function validateConfig(config) {
+function validateNameValueEntries(entries, label, { allowGlobal = false, forbidGlobal = false } = {}) {
+  if (entries === undefined) {
+    return;
+  }
+
+  if (!Array.isArray(entries)) {
+    fail("CONFIG", `${label} must be an array.`);
+  }
+
+  const names = new Set();
+  for (const entry of entries) {
+    if (!entry?.name?.trim()) {
+      fail("CONFIG", `Every entry in ${label} needs a non-empty "name".`);
+    }
+    if (names.has(entry.name)) {
+      fail("CONFIG", `Duplicate name "${entry.name}" in ${label}.`);
+    }
+    names.add(entry.name);
+
+    if (entry.value === undefined || entry.value === null) {
+      fail("CONFIG", `"${entry.name}" in ${label} needs a "value".`);
+    }
+
+    if (allowGlobal && entry.global !== undefined && typeof entry.global !== "boolean") {
+      fail("CONFIG", `"${entry.name}".global in ${label} must be a boolean.`);
+    }
+
+    if (forbidGlobal && entry.global !== undefined) {
+      fail("CONFIG", `"${entry.name}".global is only allowed in environment env, not in ${label}.`);
+    }
+  }
+}
+
+function validateConfig(config, configPath) {
   if (!config || typeof config !== "object" || Array.isArray(config)) {
-    fail("CONFIG", "nexus.config.json root must be an object.");
+    fail("CONFIG", `${configPath} root must be an object.`);
   }
 
   const envNames = listEnvNames(config);
   if (envNames.length === 0) {
-    fail("CONFIG", "nexus.config.json must define at least one environment at the root.");
+    fail("CONFIG", `${configPath} must define at least one environment at the root.`);
   }
 
   for (const env of envNames) {
     validateEnvironment(config, env);
   }
 
+  log.ok("CONFIG", `Using ${basename(configPath)}`);
   log.ok("CONFIG", `Validated ${envNames.length} environment(s): ${envNames.join(", ")}`);
 }
 
@@ -286,6 +321,12 @@ function validateEnvironment(config, env) {
   if (!environment.namespace?.trim()) {
     fail("CONFIG", `"${env}".namespace is required.`);
   }
+
+  if (environment.tag !== undefined && !String(environment.tag).trim()) {
+    fail("CONFIG", `"${env}".tag must be a non-empty string when set.`);
+  }
+
+  validateNameValueEntries(environment.env, `"${env}".env`, { allowGlobal: true });
 
   const containers = environment.containers;
   if (!Array.isArray(containers) || containers.length === 0) {
@@ -304,6 +345,22 @@ function validateEnvironment(config, env) {
       fail("CONFIG", `Duplicate container id "${container.id}" in "${env}".`);
     }
     ids.add(container.id);
+
+    validateNameValueEntries(container.env, `"${env}".containers["${container.id}"].env`, {
+      forbidGlobal: true,
+    });
+    validateNameValueEntries(
+      container.buildArgs,
+      `"${env}".containers["${container.id}"].buildArgs`,
+      { forbidGlobal: true },
+    );
+
+    if ((container.buildArgs?.length ?? 0) > 0 && !container.context?.trim()) {
+      fail(
+        "CONFIG",
+        `Container "${container.id}" in "${env}" has buildArgs but no build context.`,
+      );
+    }
 
     if (container.dependsOn) {
       for (const dep of container.dependsOn) {
@@ -331,14 +388,33 @@ function validateEnvironment(config, env) {
       }
     }
   }
+
+  try {
+    const environmentEnv = environment.env ?? [];
+    const envSymbols = resolveEnvironmentEnv(environmentEnv);
+
+    for (const container of containers) {
+      resolveBuildArgs(container.buildArgs ?? [], envSymbols);
+      composeRuntimeEnv(environmentEnv, container.env ?? [], envSymbols);
+    }
+  } catch (err) {
+    if (err instanceof ResolveError) {
+      fail("CONFIG", `Environment "${env}" resolution failed: ${err.message}`);
+    }
+    throw err;
+  }
 }
 
-function getEnvironment(config, env) {
-  const environment = config[env];
+function getEnvironment(config, envKey) {
+  const environment = config[envKey];
   const network = environment.network?.trim() || "nexus";
+  const tag = environment.tag?.trim() || envKey;
+
   return {
     namespace: environment.namespace.trim(),
     network,
+    tag,
+    env: environment.env ?? [],
     containers: environment.containers,
   };
 }
@@ -362,7 +438,7 @@ function runCommand(command, args, { phase, label, inherit = true } = {}) {
     const child = spawn(command, args, {
       shell: process.platform === "win32",
       env: process.env,
-      cwd: deployDir,
+      cwd: configDir,
     });
 
     let stdout = "";
@@ -416,7 +492,7 @@ function runCommand(command, args, { phase, label, inherit = true } = {}) {
   });
 }
 
-async function preflight(namespace) {
+async function preflight(namespace, configPath) {
   log.section("Preflight");
 
   await runCommand("docker", ["version"], { phase: "PREFLIGHT", label: "Docker client/server" });
@@ -456,7 +532,8 @@ async function preflight(namespace) {
     }
   }
 
-  log.ok("PREFLIGHT", `Working directory: ${deployDir}`);
+  log.ok("PREFLIGHT", `Working directory: ${configDir}`);
+  log.ok("PREFLIGHT", `Config file:       ${configPath}`);
   log.ok("PREFLIGHT", `Repository root:   ${repoRoot}`);
 }
 
@@ -464,15 +541,15 @@ async function preflight(namespace) {
 // Docker build / push
 // ---------------------------------------------------------------------------
 
-function imageTag(namespace, container, env) {
-  return `${namespace}/${container.image}:${env}`;
+function imageTag(namespace, container, tag) {
+  return `${namespace}/${container.image}:${tag}`;
 }
 
 function hasBuildContext(container) {
   return Boolean(container.context?.trim());
 }
 
-async function buildContainer(namespace, container, env) {
+async function buildContainer(namespace, container, dockerTag, environmentEnv) {
   if (!hasBuildContext(container)) {
     log.info("BUILD", `Skipping "${container.id}" — no build context.`);
     return null;
@@ -481,28 +558,42 @@ async function buildContainer(namespace, container, env) {
   const context = join(repoRoot, container.context);
   const dockerfileName = container.dockerfile ?? "Dockerfile";
   const dockerfile = join(context, dockerfileName);
-  const tag = imageTag(namespace, container, env);
+  const tag = imageTag(namespace, container, dockerTag);
+  const envSymbols = resolveEnvironmentEnv(environmentEnv);
+  const buildArgs = resolveBuildArgs(container.buildArgs ?? [], envSymbols);
 
   log.section(`Build: ${container.id}`);
-  log.info("BUILD", `Image:  ${tag}`);
+  log.info("BUILD", `Image:   ${tag}`);
   log.info("BUILD", `Context: ${context}`);
+  if (buildArgs.length) {
+    log.info("BUILD", `Build args: ${buildArgs.map((a) => a.name).join(", ")}`);
+  }
 
-  await runCommand(
-    "docker",
-    ["build", "--build-arg", `ENV=${env}`, "-t", tag, "-f", dockerfile, context],
-    { phase: "BUILD", label: `docker build ${container.id}` },
-  );
+  const dockerCliArgs = [
+    "build",
+    ...buildArgs.flatMap((arg) => ["--build-arg", `${arg.name}=${arg.value}`]),
+    "-t",
+    tag,
+    "-f",
+    dockerfile,
+    context,
+  ];
+
+  await runCommand("docker", dockerCliArgs, {
+    phase: "BUILD",
+    label: `docker build ${container.id}`,
+  });
 
   log.ok("BUILD", `Built ${tag}`);
   return tag;
 }
 
-async function pushContainer(namespace, container, env) {
+async function pushContainer(namespace, container, dockerTag) {
   if (!hasBuildContext(container)) {
     return null;
   }
 
-  const tag = imageTag(namespace, container, env);
+  const tag = imageTag(namespace, container, dockerTag);
   log.section(`Push: ${container.id}`);
   log.info("PUSH", `Image: ${tag}`);
 
@@ -535,7 +626,7 @@ function collectNamedVolumes(containers) {
   return [...names];
 }
 
-function renderContainerService(container, network) {
+function renderContainerService(container, network, runtimeEnv) {
   const lines = [
     `  ${container.id}:`,
     `    image: \${DOCKER_NAMESPACE}/${container.image}:\${DOCKER_TAG}`,
@@ -557,9 +648,9 @@ function renderContainerService(container, network) {
     }
   }
 
-  if (container.env?.length) {
+  if (runtimeEnv.length) {
     lines.push("    environment:");
-    for (const entry of container.env) {
+    for (const entry of runtimeEnv) {
       const value = JSON.stringify(String(entry.value ?? ""));
       lines.push(`      ${entry.name}: ${value}`);
     }
@@ -589,16 +680,21 @@ function renderContainerService(container, network) {
   return lines.join("\n");
 }
 
-function generateComposeArtifacts(config, env) {
+function generateComposeArtifacts(config, envKey) {
   log.section("Generate artifacts");
 
-  const { namespace, network, containers } = getEnvironment(config, env);
-  const outDir = join(deployDir, "out", env);
+  const { namespace, network, tag, env: environmentEnv, containers } = getEnvironment(
+    config,
+    envKey,
+  );
+  const outDir = join(configDir, "out", envKey);
   mkdirSync(outDir, { recursive: true });
 
-  const serviceBlocks = containers.map((container) =>
-    renderContainerService(container, network),
-  );
+  const envSymbols = resolveEnvironmentEnv(environmentEnv);
+  const serviceBlocks = containers.map((container) => {
+    const runtimeEnv = composeRuntimeEnv(environmentEnv, container.env ?? [], envSymbols);
+    return renderContainerService(container, network, runtimeEnv);
+  });
 
   const namedVolumes = collectNamedVolumes(containers);
   const volumesBlock =
@@ -623,9 +719,9 @@ function generateComposeArtifacts(config, env) {
 
   const envFile = [
     "# Generated by deploy.mjs — do not edit by hand",
-    `# env=${env}`,
+    `# env=${envKey}`,
     `DOCKER_NAMESPACE=${namespace}`,
-    `DOCKER_TAG=${env}`,
+    `DOCKER_TAG=${tag}`,
     "",
   ].join("\n");
 
@@ -660,18 +756,20 @@ async function main() {
   const argv = process.argv.slice(2);
   log.banner();
 
-  assertDeployDirectory();
-
   if (isHelpRequest(argv)) {
     printHelp();
     return;
   }
 
-  const config = loadConfig();
-  validateConfig(config);
+  configDir = resolve(process.cwd());
+  repoRoot = resolve(configDir, "..");
+
+  const configPath = discoverConfig(configDir);
+  const config = loadConfig(configPath);
+  validateConfig(config, configPath);
 
   const args = parseArgs(argv, config);
-  const { namespace, containers } = getEnvironment(config, args.env);
+  const { namespace, tag, env: environmentEnv, containers } = getEnvironment(config, args.env);
 
   let buildTargets = containers;
   if (args.only) {
@@ -686,21 +784,22 @@ async function main() {
 
   log.info("INIT", `Environment: ${args.env}`);
   log.info("INIT", `Namespace:   ${namespace}`);
+  log.info("INIT", `Image tag:   ${tag}`);
   log.info("INIT", `Targets:     ${buildTargets.map((c) => c.id).join(", ")}`);
 
-  await preflight(namespace);
+  await preflight(namespace, configPath);
 
   const built = [];
   const pushed = [];
 
   for (const container of buildTargets) {
-    const tag = await buildContainer(namespace, container, args.env);
-    if (tag) built.push(container.id);
+    const builtTag = await buildContainer(namespace, container, tag, environmentEnv);
+    if (builtTag) built.push(container.id);
   }
 
   for (const container of buildTargets) {
-    const tag = await pushContainer(namespace, container, args.env);
-    if (tag) pushed.push(container.id);
+    const pushedTag = await pushContainer(namespace, container, tag);
+    if (pushedTag) pushed.push(container.id);
   }
 
   const artifacts = generateComposeArtifacts(config, args.env);
@@ -710,6 +809,7 @@ async function main() {
   log.summary({
     env: args.env,
     namespace,
+    tag,
     built,
     pushed,
     artifacts: [artifacts.composePath, artifacts.envPath],
@@ -724,6 +824,12 @@ main().catch((err) => {
       hint: err.hint,
       detail: err.detail,
     });
+    return;
+  }
+
+  if (err instanceof ResolveError) {
+    log.fatal("CONFIG", err.message);
+    return;
   }
 
   log.fatal("RUNTIME", "Unexpected error.", {
