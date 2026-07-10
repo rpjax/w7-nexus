@@ -137,7 +137,7 @@ public sealed class ScriptResolver : IScriptResolver
                 if (!request.AllowDeprecated && release.IsDeprecated)
                     continue;
 
-                items.Add(ToResolvedItem(script, release));
+                items.Add(ToResolvedItem(script, release, channelKey));
             }
 
             return items;
@@ -162,17 +162,18 @@ public sealed class ScriptResolver : IScriptResolver
             if (!request.AllowDeprecated && release.IsDeprecated)
                 continue;
 
-            items.Add(ToResolvedItem(script, release));
+            items.Add(ToResolvedItem(script, release, channelKey));
         }
 
         return items;
     }
 
-    private static ResolvedScriptItem ToResolvedItem(Script script, Release release) =>
+    private static ResolvedScriptItem ToResolvedItem(Script script, Release release, ChannelKey channelKey) =>
         new()
         {
             Name = script.Name.Value,
             Version = release.Version.ToString(),
+            Channel = channelKey.ToRouteValue(),
             Hash = release.Hash.Value,
             SourceCode = release.SourceCode,
             Priority = script.Priority,

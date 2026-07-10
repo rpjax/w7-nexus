@@ -23,6 +23,7 @@ public sealed class ScriptResolverTests
         Assert.True(result.IsSuccess);
         Assert.Single(result.Value!.Items);
         Assert.Equal("runtime", result.Value.Items[0].Name);
+        Assert.Equal("prod", result.Value.Items[0].Channel);
     }
 
     [Fact]

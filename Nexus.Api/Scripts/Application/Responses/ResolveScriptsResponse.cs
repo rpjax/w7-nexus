@@ -10,6 +10,7 @@ public sealed class ResolvedScriptItem
 {
     public string Name { get; init; } = string.Empty;
     public string Version { get; init; } = string.Empty;
+    public string Channel { get; init; } = string.Empty;
     public string Hash { get; init; } = string.Empty;
     public string SourceCode { get; init; } = string.Empty;
     public int Priority { get; init; }

@@ -401,14 +401,17 @@ export const API_ENDPOINTS: ApiEndpoint[] = [
       { name: 'allowDeprecated', type: 'boolean', required: false, description: 'Permitir releases depreciados' },
     ],
     responseBody: `{
-  "scripts": [
+  "items": [
     {
       "name": "checkout-helper",
-      "sourceCode": "// script content...",
       "version": "1.2.0",
-      "channel": "prod"
+      "channel": "prod",
+      "hash": "a1b2c3...",
+      "sourceCode": "// script content...",
+      "priority": 0
     }
-  ]
+  ],
+  "aggregateHash": "d4e5f6..."
 }`,
     notes: ['Retorna 304 Not Modified quando o ETag do cliente coincide.'],
   },
