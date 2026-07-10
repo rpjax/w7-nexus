@@ -78,8 +78,6 @@ export function ScriptStudioPage() {
     [releases, selectedReleaseId],
   );
 
-  const latestVersion = releases[0]?.version ?? null;
-
   const isDirty = useMemo(() => {
     if (!script) return false;
     const savedDescription = script.description ?? '';
@@ -509,7 +507,7 @@ export function ScriptStudioPage() {
         open={publishOpen}
         busy={publishBusy}
         scriptName={script.name}
-        latestVersion={latestVersion}
+        releases={releases}
         onClose={() => setPublishOpen(false)}
         onSubmit={handlePublish}
       />

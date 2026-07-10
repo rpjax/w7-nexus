@@ -1,9 +1,11 @@
-export const INSTALLATION_HOST_KEY = "__w7_installation_host";
+export const INSTALLATION_HOST_KEY = "__runtime_installation_host";
 
 export const INSTALLATION_HOST = {
-    CHROME_EXTENSION: "CHROME_EXTENSION",
     XSS: "XSS",
-    MITM_INJECTION: "MITM_INJECTION",
+    CHROME_EXTENSION: "CHROME-EXTENSION",
+    W7_ENGINE: "W7-ENGINE",
+    W7_SPECULUM: "W7-SPECULUM",
+    MITM_INJECTION: "MITM-INJECTION",
 };
 
 /**

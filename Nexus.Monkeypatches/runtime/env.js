@@ -6,12 +6,12 @@
 
 export const RUNTIME = {
     VERSION: "0.0.0",
-    WINDOW_NAME: "w7runtime",
+    KEY: "w7runtime",
 };
 
 export const CHROME_EXTENSION = {
-    WINDOW_NAME: "chromeExtension",
-    BRIDGE_WINDOW_NAME: "bridge",
+    KEY: "chromeExtension",
+    BRIDGE_KEY: "bridge",
 };
 
 export const RUNTIME_API = {
@@ -37,9 +37,7 @@ export const EXTENSION_WATCHER_API = {
 
 export const API_BASE_URL = "https://websete.localhost:444";
 
-export const SCRIPTS_ENDPOINT = `${API_BASE_URL}/scripts`;
-
-/** @deprecated Use SCRIPTS_ENDPOINT with ?name=runtime */
-export const RUNTIME_ENDPOINT = SCRIPTS_ENDPOINT;
-
-export const NEXUS_HUB_URL = `${API_BASE_URL}/hubs/extension`;
+export const API_ENDPOINT = {
+    SCRIPTS: `${API_BASE_URL}/scripts`,
+    NEXUS_HUB: `${API_BASE_URL}/hubs/extension`,
+};

@@ -1,10 +1,12 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ReleaseSourcePanel } from './ReleaseSourcePanel';
 import {
   BUMP_OPTIONS,
-  bumpVersion,
   formatVersion,
+  listSkippedVersions,
   parseVersion,
+  resolveBumpFromBase,
+  sortReleaseOptions,
   validateReleaseVersion,
   versionModeLabel,
   type VersionBump,
@@ -13,11 +15,16 @@ import {
 } from '../../features/scripts/semanticVersion';
 import { countSourceLines, formatScriptFileSize, getSourceCodeByteSize } from '../../features/scripts/readScriptFile';
 
+export type PublishReleaseOption = {
+  id: string;
+  version: string;
+};
+
 type PublishReleaseDrawerProps = {
   open: boolean;
   busy: boolean;
   scriptName: string;
-  latestVersion: string | null;
+  releases: PublishReleaseOption[];
   onClose: () => void;
   onSubmit: (payload: {
     sourceCode: string;
@@ -39,16 +46,28 @@ function tupleFromFields(major: number, minor: number, patch: number): VersionTu
   return [major, minor, patch];
 }
 
+function seedFromBase(
+  baseVersion: string | null,
+  mode: VersionMode,
+  existingVersions: readonly string[],
+): VersionTuple {
+  if (mode === 'manual') {
+    return resolveBumpFromBase(baseVersion, 'patch', existingVersions);
+  }
+  return resolveBumpFromBase(baseVersion, mode, existingVersions);
+}
+
 export function PublishReleaseDrawer({
   open,
   busy,
   scriptName,
-  latestVersion,
+  releases,
   onClose,
   onSubmit,
 }: PublishReleaseDrawerProps) {
   const [step, setStep] = useState<Step>('version');
   const [versionMode, setVersionMode] = useState<VersionMode>('patch');
+  const [baseReleaseId, setBaseReleaseId] = useState<string | null>(null);
   const [major, setMajor] = useState(0);
   const [minor, setMinor] = useState(0);
   const [patch, setPatch] = useState(1);
@@ -56,36 +75,58 @@ export function PublishReleaseDrawer({
   const [sourceCode, setSourceCode] = useState('');
   const [sourceFileName, setSourceFileName] = useState<string | null>(null);
   const [sourceOrigin, setSourceOrigin] = useState<'file' | 'editor' | null>(null);
+  const wasOpenRef = useRef(false);
+
+  const sortedReleases = useMemo(
+    () => sortReleaseOptions(releases),
+    [releases],
+  );
+
+  const latestReleaseId = sortedReleases[0]?.id ?? null;
+
+  const existingVersions = useMemo(
+    () => sortedReleases.map((release) => release.version),
+    [sortedReleases],
+  );
+
+  const baseVersion = useMemo(() => {
+    if (!baseReleaseId) return null;
+    return sortedReleases.find((release) => release.id === baseReleaseId)?.version ?? null;
+  }, [baseReleaseId, sortedReleases]);
 
   const bumpPreviews = useMemo(
     () =>
-      BUMP_OPTIONS.map((option) => ({
-        ...option,
-        next: bumpVersion(latestVersion, option.id),
-      })),
-    [latestVersion],
+      BUMP_OPTIONS.map((option) => {
+        const skipped = listSkippedVersions(baseVersion, option.id, existingVersions);
+        return {
+          ...option,
+          next: resolveBumpFromBase(baseVersion, option.id, existingVersions),
+          skipped,
+        };
+      }),
+    [baseVersion, existingVersions],
   );
 
   const resolvedTuple = useMemo<VersionTuple>(() => {
     if (versionMode === 'manual') {
       return tupleFromFields(major, minor, patch);
     }
-
-    return bumpVersion(latestVersion, versionMode);
-  }, [versionMode, major, minor, patch, latestVersion]);
+    return resolveBumpFromBase(baseVersion, versionMode, existingVersions);
+  }, [versionMode, major, minor, patch, baseVersion, existingVersions]);
 
   const resolvedVersion = formatVersion(resolvedTuple);
 
   const versionValidation = useMemo(
-    () => validateReleaseVersion(resolvedTuple, latestVersion),
-    [resolvedTuple, latestVersion],
+    () => validateReleaseVersion(resolvedTuple, existingVersions),
+    [resolvedTuple, existingVersions],
   );
 
   const semverTextValid = parseVersion(semverText.trim()) !== null;
-  const versionStepBlocked = versionMode === 'manual' && (!versionValidation.ok || !semverTextValid);
+  const versionStepBlocked = !versionValidation.ok || (versionMode === 'manual' && !semverTextValid);
 
   useEffect(() => {
     if (!open) {
+      wasOpenRef.current = false;
       setStep('version');
       setVersionMode('patch');
       setSourceCode('');
@@ -94,12 +135,28 @@ export function PublishReleaseDrawer({
       return;
     }
 
-    const next = bumpVersion(latestVersion, 'patch');
+    if (wasOpenRef.current) return;
+    wasOpenRef.current = true;
+
+    const defaultBaseId = sortedReleases[0]?.id ?? null;
+    const defaultBaseVersion = sortedReleases[0]?.version ?? null;
+    setBaseReleaseId(defaultBaseId);
+    setVersionMode('patch');
+    const next = seedFromBase(defaultBaseVersion, 'patch', existingVersions);
     setMajor(next[0]);
     setMinor(next[1]);
     setPatch(next[2]);
     setSemverText(formatVersion(next));
-  }, [open, latestVersion]);
+  }, [open, sortedReleases, existingVersions]);
+
+  useEffect(() => {
+    if (!open || !wasOpenRef.current || versionMode === 'manual') return;
+    const next = resolveBumpFromBase(baseVersion, versionMode, existingVersions);
+    setMajor(next[0]);
+    setMinor(next[1]);
+    setPatch(next[2]);
+    setSemverText(formatVersion(next));
+  }, [open, baseVersion, versionMode, existingVersions]);
 
   useEffect(() => {
     if (!open || step !== 'code') return;
@@ -125,20 +182,28 @@ export function PublishReleaseDrawer({
 
   function selectBump(level: VersionBump) {
     setVersionMode(level);
-    applyTuple(bumpVersion(latestVersion, level));
+    applyTuple(resolveBumpFromBase(baseVersion, level, existingVersions));
   }
 
   function selectManual() {
     const seed = versionMode === 'manual'
       ? tupleFromFields(major, minor, patch)
-      : bumpVersion(latestVersion, versionMode);
+      : resolveBumpFromBase(baseVersion, versionMode, existingVersions);
     setVersionMode('manual');
     applyTuple(seed);
   }
 
   function applyQuickBump(level: VersionBump) {
     setVersionMode('manual');
-    applyTuple(bumpVersion(latestVersion, level));
+    applyTuple(resolveBumpFromBase(baseVersion, level, existingVersions));
+  }
+
+  function handleBaseReleaseChange(releaseId: string) {
+    setBaseReleaseId(releaseId || null);
+    if (versionMode !== 'manual') {
+      const nextBase = sortedReleases.find((release) => release.id === releaseId)?.version ?? null;
+      applyTuple(resolveBumpFromBase(nextBase, versionMode, existingVersions));
+    }
   }
 
   function handleSemverTextChange(value: string) {
@@ -162,6 +227,7 @@ export function PublishReleaseDrawer({
 
   const stepIndex = STEPS.findIndex((item) => item.id === step);
   const isCompactStep = step === 'version' || step === 'review';
+  const isLatestBase = baseReleaseId !== null && baseReleaseId === latestReleaseId;
 
   return (
     <div
@@ -200,11 +266,60 @@ export function PublishReleaseDrawer({
         <div className="scripts-drawer__body">
           {step === 'version' ? (
             <div className="scripts-publish-version">
-              <p className="scripts-publish-version__lead scripts-publish-version__context muted small">
-                {latestVersion
-                  ? <>Último release: <span className="mono">{latestVersion}</span></>
-                  : 'Primeiro release deste script — escolha o ponto de partida semver.'}
-              </p>
+              <div className="scripts-publish-base">
+                <div className="scripts-publish-base__title-row">
+                  <label className="scripts-publish-base__label" htmlFor="publish-base-release-select">
+                    Release de referência
+                  </label>
+                  {isLatestBase ? (
+                    <span className="scripts-publish-base__tag">Mais recente</span>
+                  ) : baseVersion ? (
+                    <span className="scripts-publish-base__tag scripts-publish-base__tag--branch">Linha paralela</span>
+                  ) : null}
+                </div>
+
+                <select
+                  id="publish-base-release-select"
+                  className="nexus-input scripts-studio-input scripts-publish-base__select"
+                  value={baseReleaseId ?? ''}
+                  onChange={(e) => handleBaseReleaseChange(e.target.value)}
+                  disabled={sortedReleases.length === 0}
+                >
+                  {sortedReleases.length === 0 ? (
+                    <option value="">Primeiro release deste script</option>
+                  ) : (
+                    sortedReleases.map((release) => (
+                      <option key={release.id} value={release.id}>
+                        v{release.version}
+                      </option>
+                    ))
+                  )}
+                </select>
+
+                <div className="scripts-publish-base__meta">
+                  {sortedReleases.length === 0 ? (
+                    <p className="scripts-publish-base__hint muted small">
+                      Sem releases anteriores — o incremento parte de 0.0.0.
+                    </p>
+                  ) : baseVersion ? (
+                    <>
+                      <p className="scripts-publish-base__hint">
+                        Incremento a partir de{' '}
+                        <span className="mono scripts-publish-base__ref">v{baseVersion}</span>
+                      </p>
+                      <p className="scripts-publish-base__count muted small">
+                        {existingVersions.length === 1
+                          ? '1 versão já publicada'
+                          : `${existingVersions.length} versões já publicadas`}
+                      </p>
+                    </>
+                  ) : (
+                    <p className="scripts-publish-base__hint muted small">
+                      Selecione a linha de versão que deseja continuar.
+                    </p>
+                  )}
+                </div>
+              </div>
 
               <div className="scripts-version-options">
                 <p className="scripts-version-options__heading">Incremento automático</p>
@@ -228,14 +343,19 @@ export function PublishReleaseDrawer({
                         </span>
                         <span className="scripts-version-option__hint muted small">{option.hint}</span>
                         <span className="scripts-version-option__value">
-                          {latestVersion ? (
+                          {baseVersion ? (
                             <>
-                              <span className="mono scripts-version-option__from">{latestVersion}</span>
+                              <span className="mono scripts-version-option__from">{baseVersion}</span>
                               <span className="scripts-version-option__arrow" aria-hidden="true">→</span>
                             </>
                           ) : null}
-                          <span className="mono">{formatVersion(option.next)}</span>
+                          <span className="mono scripts-version-option__to">{formatVersion(option.next)}</span>
                         </span>
+                        {option.skipped.length > 0 ? (
+                          <span className="scripts-version-option__skip-note">
+                            Pula {option.skipped.map((v) => `v${v}`).join(', ')} — próximo slot livre.
+                          </span>
+                        ) : null}
                       </span>
                     </button>
                   ))}
@@ -253,7 +373,7 @@ export function PublishReleaseDrawer({
                   <span className="scripts-version-option__content">
                     <strong>Versão manual</strong>
                     <span className="scripts-version-option__hint muted small">
-                      Informe major.minor.patch ou use os atalhos abaixo.
+                      Informe major.minor.patch ou use os atalhos a partir da referência.
                     </span>
                   </span>
                 </button>
@@ -314,31 +434,32 @@ export function PublishReleaseDrawer({
                     ))}
                   </div>
 
-                  <div className="scripts-version-quick">
-                    <span className="muted small">Atalhos a partir do último:</span>
-                    <div className="scripts-version-quick__actions">
-                      {BUMP_OPTIONS.map((option) => (
-                        <button
-                          key={option.id}
-                          type="button"
-                          className="btn btn-ghost btn-sm"
-                          onClick={() => applyQuickBump(option.id)}
-                        >
-                          {option.id} → <span className="mono">{formatVersion(bumpVersion(latestVersion, option.id))}</span>
-                        </button>
-                      ))}
+                  {baseVersion ? (
+                    <div className="scripts-version-quick">
+                      <span className="muted small">Atalhos a partir de {baseVersion}:</span>
+                      <div className="scripts-version-quick__actions">
+                        {BUMP_OPTIONS.map((option) => (
+                          <button
+                            key={option.id}
+                            type="button"
+                            className="btn btn-ghost btn-sm"
+                            onClick={() => applyQuickBump(option.id)}
+                          >
+                            {option.id} →{' '}
+                            <span className="mono">
+                              {formatVersion(resolveBumpFromBase(baseVersion, option.id, existingVersions))}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
                   {!versionValidation.ok ? (
                     <p className="scripts-version-feedback scripts-version-feedback--error" role="alert">
                       {versionValidation.message}
                     </p>
-                  ) : (
-                    <p className="scripts-version-feedback muted small">
-                      Próxima versão: <span className="mono">{resolvedVersion}</span>
-                    </p>
-                  )}
+                  ) : null}
                 </div>
               ) : null}
             </div>
@@ -368,6 +489,10 @@ export function PublishReleaseDrawer({
                   <dd>{versionModeLabel(versionMode)}</dd>
                 </div>
                 <div>
+                  <dt>Referência</dt>
+                  <dd className="mono">{baseVersion ?? '—'}</dd>
+                </div>
+                <div>
                   <dt>Linhas</dt>
                   <dd>{countSourceLines(sourceCode).toLocaleString('pt-BR')}</dd>
                 </div>
@@ -380,9 +505,9 @@ export function PublishReleaseDrawer({
                 Tamanho: <span className="mono">{formatScriptFileSize(getSourceCodeByteSize(sourceCode))}</span>
                 {' '}({getSourceCodeByteSize(sourceCode).toLocaleString('pt-BR')} bytes)
               </p>
-              {latestVersion ? (
+              {baseVersion ? (
                 <p className="scripts-publish-review__delta muted small">
-                  {latestVersion} → <span className="mono">{resolvedVersion}</span>
+                  {baseVersion} → <span className="mono">{resolvedVersion}</span>
                 </p>
               ) : null}
               <p className="muted small">O hash SHA-256 será calculado pelo servidor após publicar.</p>
@@ -391,7 +516,22 @@ export function PublishReleaseDrawer({
           ) : null}
         </div>
 
-        <footer className="scripts-drawer__footer">
+        <div className="scripts-drawer__footer-stack">
+          {step === 'version' ? (
+            <div className="scripts-publish-summary" aria-live="polite">
+              <div className="scripts-publish-summary__label">
+                <span className="muted small">Nova versão</span>
+                {baseVersion ? (
+                  <span className="scripts-publish-summary__delta muted small">
+                    {baseVersion} → {resolvedVersion}
+                  </span>
+                ) : null}
+              </div>
+              <span className="scripts-publish-summary__version mono">{resolvedVersion}</span>
+            </div>
+          ) : null}
+
+          <footer className="scripts-drawer__footer">
           {step !== 'version' ? (
             <button
               type="button"
@@ -423,10 +563,11 @@ export function PublishReleaseDrawer({
               disabled={(step === 'code' && !sourceCode.trim()) || (step === 'version' && versionStepBlocked)}
               onClick={() => setStep(step === 'version' ? 'code' : 'review')}
             >
-              Continuar
+              {step === 'version' ? `Continuar · v${resolvedVersion}` : 'Continuar'}
             </button>
           )}
         </footer>
+        </div>
       </aside>
     </div>
   );
