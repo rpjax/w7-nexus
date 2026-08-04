@@ -1,4 +1,33 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+
+const createOperationSchema = z.object({
+  name: z.string().trim().min(1, 'Informe o nome da operação.'),
+  description: z.string(),
+});
+
+type CreateOperationValues = z.infer<typeof createOperationSchema>;
 
 type CreateOperationModalProps = {
   open: boolean;
@@ -13,76 +42,79 @@ export function CreateOperationModal({
   onClose,
   onSubmit,
 }: CreateOperationModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const form = useForm<CreateOperationValues>({
+    resolver: zodResolver(createOperationSchema),
+    defaultValues: { name: '', description: '' },
+  });
 
   useEffect(() => {
-    if (!open) {
-      setName('');
-      setDescription('');
-    }
-  }, [open]);
+    if (!open) form.reset({ name: '', description: '' });
+  }, [open, form]);
 
-  if (!open) return null;
-
-  function handleSubmit() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed, description.trim() || null);
+  function handleSubmit(values: CreateOperationValues) {
+    onSubmit(values.name.trim(), values.description.trim() || null);
   }
 
   return (
-    <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-      <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-stack-header">
-          <div>
-            <h3>Nova operação</h3>
-            <p className="muted small">Registre uma operação no repositório central.</p>
-          </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Nova operação</DialogTitle>
+          <DialogDescription>
+            Registre uma operação no repositório central.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="createOpName">Nome</label>
-            <input
-              id="createOpName"
-              className="nexus-input"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex.: Operação Atlas"
-              autoFocus
+        <Form {...form}>
+          <form className="grid gap-4" onSubmit={form.handleSubmit(handleSubmit)}>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="createOpName">Nome</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="createOpName"
+                      placeholder="Ex.: Operação Atlas"
+                      autoFocus
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-          <div className="field span-2">
-            <label htmlFor="createOpDesc">Descrição</label>
-            <textarea
-              id="createOpDesc"
-              className="nexus-input"
-              rows={2}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Contexto e escopo da operação"
+            <FormField
+              control={form.control}
+              name="description"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="createOpDesc">Descrição</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      id="createOpDesc"
+                      rows={2}
+                      placeholder="Contexto e escopo da operação"
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
             />
-          </div>
-        </div>
 
-        <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy || !name.trim()}
-            onClick={handleSubmit}
-          >
-            {busy ? 'Registrando…' : 'Registrar operação'}
-          </button>
-        </div>
-      </div>
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Registrando…' : 'Registrar operação'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

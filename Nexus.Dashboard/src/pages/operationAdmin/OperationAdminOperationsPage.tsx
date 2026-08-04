@@ -1,85 +1,76 @@
-import { useCallback, useEffect, useState } from 'react';
-import { searchOperationAdministratorOperations } from '../../api/operations/operationAdministrator/operations';
-import type { OperationDetails } from '../../api/types';
-import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
-import { EmptyState } from '../../components/EmptyState';
-import { PaginationBar } from '../../components/ListControls';
-import { OperationListItem } from '../../features/operations/OperationListItem';
-import { useNotifications } from '../../notifications/NotificationContext';
-
-const PAGE_SIZE = 20;
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { searchOperationAdministratorOperations } from '@/api/operations/operationAdministrator/operations';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { createOperationColumns } from '@/features/operations/operation-columns';
+import { detailPath } from '@/features/operations/operationPaths';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
 
 export function OperationAdminOperationsPage() {
-  const { notifyError } = useNotifications();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [items, setItems] = useState<OperationDetails[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+  const navigate = useNavigate();
+  const {
+    search,
+    setSearch,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery({
+    queryKey: ['operation-admin-operations'],
+    fetchPage: async (params) => adaptSearchResponse(await searchOperationAdministratorOperations({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword,
+    })),
+  });
 
-  const load = useCallback(async (page: number, keyword: string) => {
-    const result = await searchOperationAdministratorOperations({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword: keyword.trim() || null,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      return;
-    }
-    setTotalItems(result.data?.total ?? 0);
-    setItems(result.data?.items ?? []);
-  }, [notifyError]);
-
-  useEffect(() => {
-    void load(currentPage, query);
-  }, [currentPage, query, load]);
-
-  async function refresh() {
-    await load(currentPage, query);
-  }
-
-  async function handleSearch() {
-    setCurrentPage(1);
-    setQuery(search);
-  }
+  const columns = useMemo(() => createOperationColumns('operation-admin'), []);
 
   return (
-    <OpsWorkspace
+    <ListPageLayout
       kicker="Operação"
       title="Administração de operações"
-      lead="Operações em que você é administrador: crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder."
+      description="Operações em que você é administrador: crie equipes, defina líderes e configure laranjas e credenciais de gateway. Operadores e repasses ficam com cada líder."
+      breadcrumbs={[
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Administração de operações' },
+      ]}
       searchId="opAdminSearch"
       searchLabel="Buscar nas suas operações"
       searchPlaceholder="Nome, ID ou descrição…"
       searchValue={search}
       onSearchChange={setSearch}
-      onSearch={() => void handleSearch()}
-      onRefresh={() => void refresh()}
-      totalItems={totalItems}
+      onSearch={submitSearch}
+      onRefresh={() => void refetch()}
       totalLabel={`${totalItems} registro(s)`}
+      isLoading={isLoading}
+      error={error}
+      isEmpty={!isLoading && !error && items.length === 0}
+      emptyTitle="Nenhuma operação encontrada"
+      emptyMessage="Você ainda não administra nenhuma operação ou o filtro não retornou resultados."
       footer={totalItems > 0 ? (
-        <PaginationBar
+        <ListPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPrev={() => setCurrentPage((p) => Math.max(1, p - 1))}
-          onNext={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+          onPrev={goPrev}
+          onNext={goNext}
         />
       ) : undefined}
     >
-      {items.length === 0 ? (
-        <EmptyState
-          title="Nenhuma operação encontrada"
-          message="Você ainda não administra nenhuma operação ou o filtro não retornou resultados."
-        />
-      ) : (
-        <div className="ops-list">
-          {items.map((op) => (
-            <OperationListItem key={op.id} operation={op} scope="operation-admin" />
-          ))}
-        </div>
-      )}
-    </OpsWorkspace>
+      <DataTable
+        columns={columns}
+        data={items}
+        getRowId={(row) => row.id}
+        onRowClick={(row) => navigate(detailPath('operation-admin', row.id))}
+      />
+    </ListPageLayout>
   );
 }

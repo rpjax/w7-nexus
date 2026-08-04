@@ -1,7 +1,46 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { useEffect, useState, type ReactNode } from 'react';
+import {
+  BookOpen,
+  ChevronDown,
+  CreditCard,
+  Home,
+  Layers,
+  Megaphone,
+  Settings2,
+  Shield,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { useAuth } from '../auth/AuthContext';
-import { canUseOperatorPanel, canUseOlxPanel, canUseStrawManPanel, isAdministrator, isOlxOperator } from '../auth/roles';
+import {
+  canUseOperatorPanel,
+  canUseOlxPanel,
+  canUseStrawManPanel,
+  isAdministrator,
+  isOlxOperator,
+} from '../auth/roles';
+import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import {
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  SidebarSeparator,
+} from '@/components/ui/sidebar';
 
 type NavSectionId = 'operations' | 'accounts' | 'payments' | 'strawMen' | 'olx' | 'scripts' | 'gateways' | 'dev';
 
@@ -52,28 +91,10 @@ function defaultOpenSections(pathname: string): Record<NavSectionId, boolean> {
   };
 }
 
-function NavChevron({ open }: { open: boolean }) {
-  return (
-    <svg
-      className={`nav-chevron${open ? ' is-open' : ''}`}
-      viewBox="0 0 16 16"
-      width="14"
-      height="14"
-      aria-hidden="true"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 6l4 4 4-4" />
-    </svg>
-  );
-}
-
 function NavSection({
   id,
   label,
+  icon: Icon,
   open,
   active,
   onToggle,
@@ -82,6 +103,7 @@ function NavSection({
 }: {
   id: string;
   label: string;
+  icon: React.ComponentType<{ className?: string }>;
   open: boolean;
   active?: boolean;
   onToggle: () => void;
@@ -89,27 +111,31 @@ function NavSection({
   children: ReactNode;
 }) {
   return (
-    <div className={`nav-section${variant ? ` nav-section--${variant}` : ''}`}>
-      <button
-        type="button"
-        className={`nav-section-trigger${open ? ' is-open' : ''}${active ? ' has-active' : ''}`}
-        onClick={onToggle}
-        aria-expanded={open}
-        aria-controls={`${id}-submenu`}
-      >
-        <span className="nav-section-label">{label}</span>
-        <NavChevron open={open} />
-      </button>
-      <div
-        id={`${id}-submenu`}
-        className={`nav-section-panel${open ? ' is-open' : ''}`}
-        aria-hidden={!open}
-      >
-        <div className="nav-section-panel-inner">
-          {children}
-        </div>
-      </div>
-    </div>
+    <Collapsible open={open} onOpenChange={onToggle} className="group/collapsible">
+      <SidebarGroup className="p-0">
+        <SidebarGroupLabel asChild>
+          <CollapsibleTrigger
+            className={cn(
+              'flex w-full items-center justify-between rounded-md px-2 py-1.5 text-sm font-medium transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground',
+              active && 'text-sidebar-primary',
+              variant === 'olx' && 'text-warning',
+              variant === 'straw-men' && 'text-success',
+            )}
+          >
+            <span className="flex items-center gap-2">
+              <Icon className="size-4 shrink-0 opacity-70" />
+              {label}
+            </span>
+            <ChevronDown className={cn('size-4 transition-transform', open && 'rotate-180')} />
+          </CollapsibleTrigger>
+        </SidebarGroupLabel>
+        <CollapsibleContent>
+          <SidebarGroupContent>
+            <SidebarMenuSub id={`${id}-submenu`}>{children}</SidebarMenuSub>
+          </SidebarGroupContent>
+        </CollapsibleContent>
+      </SidebarGroup>
+    </Collapsible>
   );
 }
 
@@ -125,14 +151,24 @@ function NavSublink({
   onNavigate?: () => void;
 }) {
   return (
-    <NavLink
-      className={({ isActive }) => `nav-sublink${admin ? ' nav-sublink-admin' : ''}${isActive ? ' active' : ''}`}
-      to={to}
-      onClick={onNavigate}
-    >
-      <span className="nav-sublink-label">{children}</span>
-      {admin ? <span className="nav-admin-badge">Admin</span> : null}
-    </NavLink>
+    <SidebarMenuSubItem>
+      <SidebarMenuSubButton asChild>
+        <NavLink
+          to={to}
+          onClick={onNavigate}
+          className={({ isActive }) => cn(isActive && 'bg-sidebar-accent font-medium text-sidebar-accent-foreground')}
+        >
+          <span className="flex flex-1 items-center justify-between gap-2">
+            <span>{children}</span>
+            {admin ? (
+              <Badge variant="warning" className="h-4 px-1.5 text-[10px]">
+                Admin
+              </Badge>
+            ) : null}
+          </span>
+        </NavLink>
+      </SidebarMenuSubButton>
+    </SidebarMenuSubItem>
   );
 }
 
@@ -153,9 +189,7 @@ export function NavMenu() {
 
   const toggle = (id: NavSectionId) => {
     setOpenSections((prev) => {
-      if (prev[id]) {
-        return { ...prev, [id]: false };
-      }
+      if (prev[id]) return { ...prev, [id]: false };
       return { ...allClosedSections(), [id]: true };
     });
   };
@@ -174,33 +208,48 @@ export function NavMenu() {
             : 'Dashboard';
 
   return (
-    <nav className="nav-shell">
-      <header className="nav-brand">
-        <div className="brand-mark" aria-hidden="true" />
-        <div className="nav-brand-text">
-          <p className="brand">Websete Nexus</p>
-          <p className="brand-subtitle">{brandSubtitle}</p>
+    <>
+      <SidebarHeader className="border-b border-sidebar-border p-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="size-9 shrink-0 rounded-lg bg-gradient-to-br from-primary to-brand-violet shadow-lg shadow-primary/25"
+            aria-hidden="true"
+          />
+          <div className="min-w-0">
+            <p className="truncate text-sm font-bold tracking-tight">Websete Nexus</p>
+            <p className="truncate text-xs text-muted-foreground">{brandSubtitle}</p>
+          </div>
         </div>
-      </header>
+      </SidebarHeader>
 
-      <div className="nav-scroll">
-        <div className="nav-primary">
-          <NavLink to="/dashboard" end className={({ isActive }) => `nav-item${isActive ? ' active' : ''}`}>
-            <svg className="nav-item-icon" viewBox="0 0 20 20" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 8.5L10 3l7 5.5V16a1.5 1.5 0 0 1-1.5 1.5H4.5A1.5 1.5 0 0 1 3 16V8.5z" />
-              <path d="M8 17.5V11h4v6.5" />
-            </svg>
-            Visão geral
-          </NavLink>
-        </div>
+      <SidebarContent className="gap-0">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink
+                    to="/dashboard"
+                    end
+                    className={({ isActive }) => cn(isActive && 'bg-sidebar-accent font-medium')}
+                  >
+                    <Home className="size-4" />
+                    <span>Visão geral</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-        <div className="nav-divider" role="separator" aria-hidden="true" />
+        <SidebarSeparator />
 
-        <div className="nav-sections">
+        <div className="space-y-1 px-2 py-2">
           {showOperatorPanel || showGlobalAdminItems ? (
             <NavSection
               id="operations"
               label="Operações"
+              icon={Layers}
               open={openSections.operations}
               active={activeSection === 'operations'}
               onToggle={() => toggle('operations')}
@@ -232,6 +281,7 @@ export function NavMenu() {
             <NavSection
               id="accounts"
               label="Contas"
+              icon={Users}
               open={openSections.accounts}
               active={activeSection === 'accounts'}
               onToggle={() => toggle('accounts')}
@@ -246,6 +296,7 @@ export function NavMenu() {
             <NavSection
               id="payments"
               label="Pagamentos"
+              icon={Wallet}
               open={openSections.payments}
               active={activeSection === 'payments'}
               onToggle={() => toggle('payments')}
@@ -272,6 +323,7 @@ export function NavMenu() {
             <NavSection
               id="straw-men"
               label="Laranjas"
+              icon={Shield}
               variant="straw-men"
               open={openSections.strawMen}
               active={activeSection === 'strawMen'}
@@ -299,6 +351,7 @@ export function NavMenu() {
             <NavSection
               id="olx"
               label="OLX"
+              icon={Megaphone}
               variant="olx"
               open={openSections.olx}
               active={activeSection === 'olx'}
@@ -321,6 +374,7 @@ export function NavMenu() {
             <NavSection
               id="scripts"
               label="Scripts"
+              icon={Settings2}
               open={openSections.scripts}
               active={activeSection === 'scripts'}
               onToggle={() => toggle('scripts')}
@@ -335,6 +389,7 @@ export function NavMenu() {
             <NavSection
               id="dev"
               label="Desenvolvimento"
+              icon={BookOpen}
               open={openSections.dev}
               active={activeSection === 'dev'}
               onToggle={() => toggle('dev')}
@@ -349,6 +404,7 @@ export function NavMenu() {
             <NavSection
               id="gateways"
               label="Gateways"
+              icon={CreditCard}
               open={openSections.gateways}
               active={activeSection === 'gateways'}
               onToggle={() => toggle('gateways')}
@@ -368,7 +424,7 @@ export function NavMenu() {
             </NavSection>
           ) : null}
         </div>
-      </div>
-    </nav>
+      </SidebarContent>
+    </>
   );
 }

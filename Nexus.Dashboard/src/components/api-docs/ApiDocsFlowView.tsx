@@ -1,4 +1,15 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Progress } from '@/components/ui/progress';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
+import { cn } from '@/lib/utils';
 import { flowById, endpointById } from '../../features/api-docs/catalog';
 import { MethodBadge } from './MethodBadge';
 import { ApiDocsEndpointDetail } from './ApiDocsEndpointDetail';
@@ -9,19 +20,40 @@ type ApiDocsFlowViewProps = {
   onNavigate: (view: ApiDocsView) => void;
 };
 
+const accentHero: Record<string, string> = {
+  blue: 'border-primary/30 bg-primary/5',
+  green: 'border-success/30 bg-success/5',
+  amber: 'border-warning/30 bg-warning/5',
+  violet: 'border-purple-400/30 bg-purple-400/5',
+  rose: 'border-rose-400/30 bg-rose-400/5',
+};
+
+const accentDot: Record<string, string> = {
+  blue: 'bg-primary',
+  green: 'bg-success',
+  amber: 'bg-warning',
+  violet: 'bg-purple-400',
+  rose: 'bg-rose-400',
+};
+
+const calloutStyles: Record<string, string> = {
+  why: 'border-primary/20 bg-primary/5',
+  outcome: 'border-success/20 bg-success/5',
+  tip: 'border-purple-400/20 bg-purple-400/5',
+  warning: 'border-warning/25 bg-warning/5',
+};
+
 export function ApiDocsFlowView({ flowId, onNavigate }: ApiDocsFlowViewProps) {
   const flow = flowById.get(flowId);
   const [activeStep, setActiveStep] = useState(0);
-  const [showTechnical, setShowTechnical] = useState(false);
 
   useEffect(() => {
     setActiveStep(0);
-    setShowTechnical(false);
   }, [flowId]);
 
   if (!flow) {
     return (
-      <div className="api-docs-empty">
+      <div className="flex flex-col items-center gap-3 px-4 py-12 text-muted-foreground">
         <p>Fluxo não encontrado.</p>
       </div>
     );
@@ -32,169 +64,195 @@ export function ApiDocsFlowView({ flowId, onNavigate }: ApiDocsFlowViewProps) {
   const progress = ((activeStep + 1) / flow.steps.length) * 100;
 
   return (
-    <article className="api-flow-page">
-      <header className={`api-flow-page__hero api-flow-page__hero--${flow.accent}`}>
-        <div className="api-flow-page__hero-top">
-          <span className={`api-flow-dot api-flow-dot--${flow.accent}`} aria-hidden="true" />
-          <span className="api-flow-page__badge">Fluxo guiado · ~{flow.estimatedMinutes} min</span>
+    <article>
+      <header className={cn('mb-4 rounded-xl border p-5', accentHero[flow.accent] ?? accentHero.blue)}>
+        <div className="mb-2 flex items-center gap-2">
+          <span
+            className={cn('size-2 shrink-0 rounded-full', accentDot[flow.accent] ?? accentDot.blue)}
+            aria-hidden="true"
+          />
+          <span className="text-[0.72rem] text-muted-foreground">
+            Fluxo guiado · ~{flow.estimatedMinutes} min
+          </span>
         </div>
-        <h2 className="api-flow-page__title">{flow.title}</h2>
-        <p className="api-flow-page__lead">{flow.description}</p>
+        <h2 className="mb-1.5 text-[clamp(1.25rem,3.5vw,1.6rem)] font-bold">{flow.title}</h2>
+        <p className="mb-4 text-[0.9rem] leading-relaxed text-muted-foreground">{flow.description}</p>
 
-        <div className="api-flow-page__meta">
-          <div className="api-flow-meta-card">
-            <span className="api-flow-meta-card__label">Para quem</span>
-            <span className="api-flow-meta-card__value">{flow.audience}</span>
-          </div>
-          <div className="api-flow-meta-card">
-            <span className="api-flow-meta-card__label">Pré-requisitos</span>
-            <ul className="api-flow-meta-card__list">
-              {flow.prerequisites.map((item) => (
-                <li key={item}>{item}</li>
-              ))}
-            </ul>
-          </div>
-          <div className="api-flow-meta-card api-flow-meta-card--outcome">
-            <span className="api-flow-meta-card__label">Resultado esperado</span>
-            <span className="api-flow-meta-card__value">{flow.outcome}</span>
-          </div>
+        <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+          <Card className="border-border bg-background/50 shadow-none">
+            <CardContent className="pt-4">
+              <span className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                Para quem
+              </span>
+              <span className="text-[0.84rem] leading-snug">{flow.audience}</span>
+            </CardContent>
+          </Card>
+          <Card className="border-border bg-background/50 shadow-none">
+            <CardContent className="pt-4">
+              <span className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                Pré-requisitos
+              </span>
+              <ul className="m-0 list-disc pl-4 text-[0.82rem] leading-snug text-muted-foreground">
+                {flow.prerequisites.map((item) => (
+                  <li key={item}>{item}</li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+          <Card className="border-success/25 bg-background/50 shadow-none">
+            <CardContent className="pt-4">
+              <span className="mb-1 block text-[0.68rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                Resultado esperado
+              </span>
+              <span className="text-[0.84rem] leading-snug">{flow.outcome}</span>
+            </CardContent>
+          </Card>
         </div>
       </header>
 
-      <div className="api-flow-progress" aria-label={`Passo ${activeStep + 1} de ${flow.steps.length}`}>
-        <div className="api-flow-progress__bar">
-          <div className="api-flow-progress__fill" style={{ width: `${progress}%` }} />
-        </div>
-        <span className="api-flow-progress__label">
+      <div className="mb-3.5" aria-label={`Passo ${activeStep + 1} de ${flow.steps.length}`}>
+        <Progress value={progress} className="mb-1.5 h-1" />
+        <span className="text-xs text-muted-foreground">
           Passo {activeStep + 1} de {flow.steps.length}
         </span>
       </div>
 
-      <nav className="api-flow-tabs" aria-label="Passos do fluxo">
+      <ToggleGroup
+        type="single"
+        value={String(activeStep)}
+        onValueChange={(value) => {
+          if (value) setActiveStep(Number(value));
+        }}
+        variant="outline"
+        size="sm"
+        className="mb-4 flex flex-wrap justify-start gap-1.5"
+        aria-label="Passos do fluxo"
+      >
         {flow.steps.map((s, index) => (
-          <button
+          <ToggleGroupItem
             key={s.title}
-            type="button"
-            className={`api-flow-tab${index === activeStep ? ' is-active' : ''}${index < activeStep ? ' is-done' : ''}`}
-            onClick={() => {
-              setActiveStep(index);
-              setShowTechnical(false);
-            }}
+            value={String(index)}
+            className={cn(
+              'max-w-full gap-1.5 rounded-full px-2.5 py-1.5 text-[0.78rem] data-[state=on]:border-primary/40 data-[state=on]:bg-primary/15',
+              index < activeStep && 'border-success/30 text-success',
+            )}
             aria-current={index === activeStep ? 'step' : undefined}
           >
-            <span className="api-flow-tab__num">{index + 1}</span>
-            <span className="api-flow-tab__label">{s.title}</span>
-          </button>
+            <span className="text-[0.72rem] font-bold">{index + 1}</span>
+            <span className="truncate">{s.title}</span>
+          </ToggleGroupItem>
         ))}
-      </nav>
+      </ToggleGroup>
 
       {step ? (
-        <section className="api-flow-step-panel">
-          <header className="api-flow-step-panel__header">
-            <h3>{step.title}</h3>
-            <p className="api-flow-step-panel__summary">{step.summary}</p>
+        <section className="overflow-hidden rounded-xl border border-border bg-card/35">
+          <header className="border-b border-border bg-background/40 px-4 py-4">
+            <h3 className="mb-1 text-[1.15rem] font-semibold">{step.title}</h3>
+            <p className="m-0 text-[0.88rem] text-primary">{step.summary}</p>
           </header>
 
-          <div className="api-flow-step-panel__body">
-            <div className="api-prose-block">
-              <h4>O que acontece</h4>
+          <div className="flex flex-col gap-3.5 px-4 py-4">
+            <div>
+              <h4 className="mb-1.5 text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                O que acontece
+              </h4>
               {step.narrative.split('\n\n').map((paragraph) => (
-                <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+                <p key={paragraph.slice(0, 40)} className="mb-2.5 text-[0.9rem] leading-relaxed last:mb-0">
+                  {paragraph}
+                </p>
               ))}
             </div>
 
-            <div className="api-callout api-callout--why">
-              <h4>Por que este passo importa</h4>
-              <p>{step.why}</p>
-            </div>
+            <Accordion type="multiple" defaultValue={['why', 'outcome', 'tip', 'pitfalls']}>
+              <AccordionItem value="why" className="rounded-lg border px-3">
+                <AccordionTrigger className={cn('py-3 hover:no-underline', calloutStyles.why)}>
+                  <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                    Por que este passo importa
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-3">
+                  <p className="m-0 text-[0.86rem] leading-relaxed">{step.why}</p>
+                </AccordionContent>
+              </AccordionItem>
 
-            <div className="api-callout api-callout--outcome">
-              <h4>O que você terá ao concluir</h4>
-              <p>{step.outcome}</p>
-            </div>
+              <AccordionItem value="outcome" className="mt-2 rounded-lg border px-3">
+                <AccordionTrigger className={cn('py-3 hover:no-underline', calloutStyles.outcome)}>
+                  <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                    O que você terá ao concluir
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="pb-3">
+                  <p className="m-0 text-[0.86rem] leading-relaxed">{step.outcome}</p>
+                </AccordionContent>
+              </AccordionItem>
 
-            {step.tip ? (
-              <div className="api-callout api-callout--tip">
-                <h4>Dica prática</h4>
-                <p>{step.tip}</p>
-              </div>
-            ) : null}
+              {step.tip ? (
+                <AccordionItem value="tip" className="mt-2 rounded-lg border px-3">
+                  <AccordionTrigger className={cn('py-3 hover:no-underline', calloutStyles.tip)}>
+                    <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Dica prática
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    <p className="m-0 text-[0.86rem] leading-relaxed">{step.tip}</p>
+                  </AccordionContent>
+                </AccordionItem>
+              ) : null}
 
-            {step.pitfalls && step.pitfalls.length > 0 ? (
-              <div className="api-callout api-callout--warning">
-                <h4>Armadilhas comuns</h4>
-                <ul>
-                  {step.pitfalls.map((pitfall) => (
-                    <li key={pitfall}>{pitfall}</li>
-                  ))}
-                </ul>
-              </div>
-            ) : null}
+              {step.pitfalls && step.pitfalls.length > 0 ? (
+                <AccordionItem value="pitfalls" className="mt-2 rounded-lg border px-3">
+                  <AccordionTrigger className={cn('py-3 hover:no-underline', calloutStyles.warning)}>
+                    <span className="text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                      Armadilhas comuns
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="pb-3">
+                    <ul className="m-0 list-disc pl-4 text-[0.86rem] leading-relaxed">
+                      {step.pitfalls.map((pitfall) => (
+                        <li key={pitfall}>{pitfall}</li>
+                      ))}
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
+              ) : null}
+            </Accordion>
           </div>
 
           {endpoint ? (
-            <div className="api-flow-technical">
-              <button
-                type="button"
-                className="api-flow-technical__toggle"
-                aria-expanded={showTechnical}
-                onClick={() => setShowTechnical((v) => !v)}
-              >
-                <span>Referência técnica do endpoint</span>
-                <MethodBadge method={endpoint.method} compact />
-                <code>{endpoint.path}</code>
-                <svg
-                  className={`api-flow-technical__chevron${showTechnical ? ' is-open' : ''}`}
-                  viewBox="0 0 16 16"
-                  width="14"
-                  height="14"
-                  aria-hidden="true"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.75"
-                >
-                  <path d="M4 6l4 4 4-4" />
-                </svg>
-              </button>
-              {showTechnical ? (
-                <div className="api-flow-technical__panel">
+            <Accordion type="single" collapsible className="border-t border-border">
+              <AccordionItem value="technical" className="border-none">
+                <AccordionTrigger className="flex-wrap gap-2 bg-background/35 px-4 py-3 text-[0.84rem] font-medium hover:no-underline">
+                  <span>Referência técnica do endpoint</span>
+                  <MethodBadge method={endpoint.method} compact />
+                  <code className="max-w-full truncate text-[0.75rem] text-muted-foreground">{endpoint.path}</code>
+                </AccordionTrigger>
+                <AccordionContent className="border-t border-border px-4 pb-4">
                   <ApiDocsEndpointDetail endpoint={endpoint} embedded />
-                </div>
-              ) : null}
-            </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           ) : null}
 
-          <footer className="api-flow-step-panel__footer">
-            <button
+          <footer className="flex flex-wrap justify-between gap-2 border-t border-border bg-background/30 px-4 py-3.5">
+            <Button
               type="button"
-              className="btn"
+              variant="outline"
               disabled={activeStep === 0}
-              onClick={() => {
-                setActiveStep((s) => s - 1);
-                setShowTechnical(false);
-              }}
+              onClick={() => setActiveStep((s) => s - 1)}
             >
               ← Anterior
-            </button>
+            </Button>
             {activeStep < flow.steps.length - 1 ? (
-              <button
+              <Button
                 type="button"
-                className="btn btn-primary"
-                onClick={() => {
-                  setActiveStep((s) => s + 1);
-                  setShowTechnical(false);
-                }}
+                onClick={() => setActiveStep((s) => s + 1)}
               >
                 Próximo passo →
-              </button>
+              </Button>
             ) : (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={() => onNavigate({ kind: 'overview' })}
-              >
+              <Button type="button" onClick={() => onNavigate({ kind: 'overview' })}>
                 Concluir fluxo
-              </button>
+              </Button>
             )}
           </footer>
         </section>

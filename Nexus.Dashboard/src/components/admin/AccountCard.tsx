@@ -1,9 +1,21 @@
 import { useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import type { AccountRow } from '../../api/types';
-import { roleLabel, roleTone, summarizeRoles } from '../../utils/accountAccess';
+import { roleLabel, roleTone, summarizeRoles, type AccessTone } from '../../utils/accountAccess';
 import { formatDateTime, shortId } from '../../utils/format';
-import { IconButton } from '../IconButton';
+import { Copy } from 'lucide-react';
 import { AccountAccessEditor } from './AccountAccessEditor';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 type AccountCardProps = {
   account: AccountRow;
@@ -16,6 +28,14 @@ function accountInitial(username: string): string {
   const trimmed = username.trim();
   return trimmed ? trimmed[0]!.toUpperCase() : '?';
 }
+
+const toneVariant: Record<AccessTone, 'warning' | 'info' | 'secondary' | 'success' | 'outline'> = {
+  admin: 'warning',
+  operator: 'info',
+  straw: 'secondary',
+  olx: 'success',
+  permission: 'outline',
+};
 
 export function AccountCard({ account, onMutated, onError, defaultExpanded = false }: AccountCardProps) {
   const [expanded, setExpanded] = useState(defaultExpanded);
@@ -34,85 +54,94 @@ export function AccountCard({ account, onMutated, onError, defaultExpanded = fal
   const roleSummary = summarizeRoles(roles);
 
   return (
-    <article className={`account-card${expanded ? ' account-card--expanded' : ''}`}>
-      <header className="account-card-header">
+    <Card className={cn('border-border/60 bg-card/80', expanded && 'ring-1 ring-primary/15')}>
+      <CardHeader className="p-0">
         <button
           type="button"
-          className="account-card-header__toggle"
+          className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
           aria-expanded={expanded}
           onClick={() => setExpanded((open) => !open)}
         >
-          <span className="account-card-avatar" aria-hidden="true">
-            {accountInitial(account.username)}
-          </span>
-          <span className="account-card-heading">
-            <span className="account-card-name-row">
-              <strong className="account-card-title">@{account.username}</strong>
+          <Avatar>
+            <AvatarFallback>{accountInitial(account.username)}</AvatarFallback>
+          </Avatar>
+          <span className="min-w-0 flex-1 space-y-1">
+            <span className="flex flex-wrap items-center gap-2">
+              <strong className="text-sm font-semibold text-foreground">@{account.username}</strong>
               {roles.length > 0 ? (
-                <span className="account-card-role-stack" aria-label={roleSummary}>
+                <span className="flex flex-wrap gap-1" aria-label={roleSummary}>
                   {roles.map((role) => (
-                    <span
-                      key={role}
-                      className={`account-card-role-pill account-card-role-pill--${roleTone(role)}`}
-                    >
+                    <Badge key={role} variant={toneVariant[roleTone(role)]}>
                       {roleLabel(role)}
-                    </span>
+                    </Badge>
                   ))}
                 </span>
               ) : (
-                <span className="account-card-role-pill account-card-role-pill--empty">Sem funções</span>
+                <Badge variant="outline">Sem funções</Badge>
               )}
             </span>
-            <span className="account-card-summary muted small">
+            <span className="block text-sm text-muted-foreground">
               {permissions.length > 0
                 ? `${permissions.length} permissão(ões) extra(s)`
                 : 'Somente funções base'}
-              <span className="account-card-summary__sep" aria-hidden="true">·</span>
+              <span className="mx-1.5" aria-hidden="true">·</span>
               Atualizada {formatDateTime(account.lastUpdatedAt)}
             </span>
           </span>
-          <span className="account-card-chevron" aria-hidden="true">{expanded ? '▾' : '▸'}</span>
+          {expanded
+            ? <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+            : <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
         </button>
-      </header>
+      </CardHeader>
 
       {expanded ? (
-        <div className="account-card-body">
-          <AccountAccessEditor
-            accountId={account.id}
-            roles={roles}
-            permissions={permissions}
-            onMutated={onMutated}
-            onError={onError}
-          />
+        <>
+          <Separator />
+          <CardContent className="space-y-4 pt-4">
+            <AccountAccessEditor
+              accountId={account.id}
+              roles={roles}
+              permissions={permissions}
+              onMutated={onMutated}
+              onError={onError}
+            />
 
-          <section className="account-card-technical">
-            <button
-              type="button"
-              className="account-card-technical__toggle"
-              aria-expanded={technicalOpen}
-              onClick={() => setTechnicalOpen((open) => !open)}
-            >
-              Detalhes técnicos
-              <span aria-hidden="true">{technicalOpen ? '▾' : '▸'}</span>
-            </button>
-            {technicalOpen ? (
-              <div className="account-card-technical__grid">
-                <div>
-                  <span className="account-card-meta-label">ID</span>
-                  <p className="account-card-meta-value mono">
-                    <span title={account.id}>{shortId(account.id, 28)}</span>
-                    <IconButton icon="copy" label="Copiar ID da conta" onClick={() => void copyId()} />
-                  </p>
+            <Collapsible open={technicalOpen} onOpenChange={setTechnicalOpen}>
+              <CollapsibleTrigger asChild>
+                <Button type="button" variant="ghost" size="sm" className="w-full justify-between px-0">
+                  Detalhes técnicos
+                  {technicalOpen
+                    ? <ChevronDown className="size-4" aria-hidden="true" />
+                    : <ChevronRight className="size-4" aria-hidden="true" />}
+                </Button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <div className="mt-2 grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ID</span>
+                    <p className="flex items-center gap-1 font-mono text-sm text-foreground">
+                      <span title={account.id}>{shortId(account.id, 28)}</span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        aria-label="Copiar ID da conta"
+                        onClick={() => void copyId()}
+                      >
+                        <Copy className="size-4" />
+                      </Button>
+                    </p>
+                  </div>
+                  <div className="space-y-1">
+                    <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Criada em</span>
+                    <p className="text-sm text-foreground">{formatDateTime(account.createdAt)}</p>
+                  </div>
                 </div>
-                <div>
-                  <span className="account-card-meta-label">Criada em</span>
-                  <p className="account-card-meta-value">{formatDateTime(account.createdAt)}</p>
-                </div>
-              </div>
-            ) : null}
-          </section>
-        </div>
+              </CollapsibleContent>
+            </Collapsible>
+          </CardContent>
+        </>
       ) : null}
-    </article>
+    </Card>
   );
 }

@@ -1,110 +1,83 @@
-import { useCallback, useEffect, useState } from 'react';
-import { searchStrawManPayments } from '../../api/payments/strawMan';
-import type { PaymentRow } from '../../api/types';
-import { useAuth } from '../../auth/AuthContext';
-import { EmptyState } from '../../components/EmptyState';
-import { PaginationBar } from '../../components/ListControls';
-import { PageHeading } from '../../layouts/PageHeading';
-import { PaymentListItem } from '../../features/payments/PaymentListItem';
-import { useNotifications } from '../../notifications/NotificationContext';
-
-const PAGE_SIZE = 20;
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { searchStrawManPayments } from '@/api/payments/strawMan';
+import type { PaymentRow } from '@/api/types';
+import { useAuth } from '@/auth/AuthContext';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { createPaymentColumns } from '@/features/payments/payment-columns';
+import { detailPath } from '@/features/payments/paymentPaths';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
 
 export function StrawManPaymentsPage() {
+  const navigate = useNavigate();
   const { user } = useAuth();
-  const { notifyError } = useNotifications();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [rows, setRows] = useState<PaymentRow[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+  const {
+    search,
+    setSearch,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery<PaymentRow>({
+    queryKey: ['straw-man-payments'],
+    fetchPage: async (params) => adaptSearchResponse(await searchStrawManPayments({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword,
+    })),
+  });
 
-  const load = useCallback(async (page: number, keyword: string) => {
-    const result = await searchStrawManPayments({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword: keyword.trim() || null,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      setRows([]);
-      setTotalItems(0);
-      return;
-    }
-    setRows(result.data?.items ?? []);
-    setTotalItems(result.data?.total ?? 0);
-  }, [notifyError]);
-
-  useEffect(() => {
-    void load(currentPage, query);
-  }, [currentPage, query, load]);
+  const columns = useMemo(
+    () => createPaymentColumns('straw-man', { highlightAccountId: user?.accountId }),
+    [user?.accountId],
+  );
 
   return (
-    <div className="ops-page">
-      <PageHeading
-        kicker="Laranjas"
-        title="Meus pagamentos"
-        subtitle="Cobranças vinculadas à sua conta laranja — somente leitura."
-        backLink={{ to: '/dashboard/straw-man/settings', label: 'Minhas configurações' }}
-      />
-
-      <section className="ops-page__toolbar bank-managed-section">
-        <div className="ops-page__toolbar-head">
-          <p className="ops-page__count muted small">{totalItems} registro(s)</p>
-        </div>
-        <form
-          className="payment-search-form payment-search-form--compact"
-          onSubmit={(event) => {
-            event.preventDefault();
-            setCurrentPage(1);
-            setQuery(search);
-          }}
-        >
-          <label className="field payment-search-form__keyword">
-            <span className="field-label">Buscar</span>
-            <input
-              className="field-input"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="ID, operação ou transação gateway…"
-            />
-          </label>
-          <div className="payment-search-form__actions">
-            <button type="submit" className="btn btn-primary btn-small">Buscar</button>
-            <button type="button" className="btn btn-ghost btn-small" onClick={() => void load(currentPage, query)}>
-              Atualizar
-            </button>
-          </div>
-        </form>
-      </section>
-
-      {rows.length === 0 ? (
-        <EmptyState
-          title="Nenhum pagamento encontrado"
-          message="Não há pagamentos vinculados ao seu laranja ou o filtro não retornou resultados."
-        />
-      ) : (
-        <div className="ops-list payment-list">
-          {rows.map((row) => (
-            <PaymentListItem
-              key={row.id}
-              payment={row}
-              scope="straw-man"
-              highlightAccountId={user?.accountId}
-            />
-          ))}
-        </div>
-      )}
-
-      {totalItems > 0 ? (
-        <PaginationBar
+    <ListPageLayout
+      kicker="Laranjas"
+      title="Meus pagamentos"
+      description="Cobranças vinculadas à sua conta laranja — somente leitura."
+      breadcrumbs={[
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Configurações', href: '/dashboard/straw-man/settings' },
+        { label: 'Meus pagamentos' },
+      ]}
+      searchId="strawman-payment-search"
+      searchLabel="Buscar"
+      searchPlaceholder="ID, operação ou transação gateway…"
+      searchValue={search}
+      onSearchChange={setSearch}
+      onSearch={submitSearch}
+      onRefresh={() => void refetch()}
+      totalLabel={`${totalItems} registro(s)`}
+      isLoading={isLoading}
+      error={error}
+      isEmpty={!isLoading && !error && items.length === 0}
+      emptyTitle="Nenhum pagamento encontrado"
+      emptyMessage="Não há pagamentos vinculados ao seu laranja ou o filtro não retornou resultados."
+      footer={totalItems > 0 ? (
+        <ListPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPrev={() => setCurrentPage((page) => Math.max(1, page - 1))}
-          onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          onPrev={goPrev}
+          onNext={goNext}
         />
-      ) : null}
-    </div>
+      ) : undefined}
+    >
+      <DataTable
+        columns={columns}
+        data={items}
+        getRowId={(row) => row.id}
+        onRowClick={(row) => navigate(detailPath('straw-man', row.id))}
+      />
+    </ListPageLayout>
   );
 }

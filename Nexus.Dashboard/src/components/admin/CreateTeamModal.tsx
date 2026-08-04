@@ -1,4 +1,31 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+
+const createTeamSchema = z.object({
+  name: z.string().trim().min(1, 'Informe o nome da equipe.'),
+});
+
+type CreateTeamValues = z.infer<typeof createTeamSchema>;
 
 type CreateTeamModalProps = {
   open: boolean;
@@ -15,64 +42,62 @@ export function CreateTeamModal({
   onClose,
   onSubmit,
 }: CreateTeamModalProps) {
-  const [name, setName] = useState('');
+  const form = useForm<CreateTeamValues>({
+    resolver: zodResolver(createTeamSchema),
+    defaultValues: { name: '' },
+  });
 
   useEffect(() => {
-    if (!open) setName('');
-  }, [open]);
-
-  if (!open) return null;
-
-  function handleSubmit() {
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    onSubmit(trimmed);
-  }
+    if (!open) form.reset({ name: '' });
+  }, [open, form]);
 
   return (
-    <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-      <div className="dialog-card" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-stack-header">
-          <div>
-            <h3>Nova equipe</h3>
-            {operationName ? (
-              <p className="muted small">Operação: {operationName}</p>
-            ) : (
-              <p className="muted small">Crie uma equipe para esta operação.</p>
-            )}
-          </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Nova equipe</DialogTitle>
+          <DialogDescription>
+            {operationName
+              ? `Operação: ${operationName}`
+              : 'Crie uma equipe para esta operação.'}
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="field">
-          <label htmlFor="createTeamName">Nome da equipe</label>
-          <input
-            id="createTeamName"
-            className="nexus-input"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Ex.: Equipe Alpha"
-            autoFocus
-            onKeyDown={(e) => { if (e.key === 'Enter') handleSubmit(); }}
-          />
-        </div>
-
-        <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy || !name.trim()}
-            onClick={handleSubmit}
+        <Form {...form}>
+          <form
+            className="space-y-4"
+            onSubmit={form.handleSubmit((values) => onSubmit(values.name.trim()))}
           >
-            {busy ? 'Criando…' : 'Criar equipe'}
-          </button>
-        </div>
-      </div>
-    </div>
+            <FormField
+              control={form.control}
+              name="name"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel htmlFor="createTeamName">Nome da equipe</FormLabel>
+                  <FormControl>
+                    <Input
+                      id="createTeamName"
+                      placeholder="Ex.: Equipe Alpha"
+                      autoFocus
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Criando…' : 'Criar equipe'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

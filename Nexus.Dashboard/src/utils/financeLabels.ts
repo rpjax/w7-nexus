@@ -53,3 +53,14 @@ export function distributionStatusTone(status: string): 'info' | 'success' | 'wa
 export function formatMoney(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
+
+export type StatusTone = 'info' | 'success' | 'warn' | 'danger';
+
+export function statusToneToBadgeVariant(
+  tone: StatusTone,
+): 'info' | 'success' | 'warning' | 'destructive' {
+  if (tone === 'success') return 'success';
+  if (tone === 'warn') return 'warning';
+  if (tone === 'danger') return 'destructive';
+  return 'info';
+}

@@ -3,12 +3,10 @@ import {
   useCallback,
   useContext,
   useMemo,
-  useRef,
-  useState,
   type ReactNode,
 } from 'react';
-import { NotificationHost } from './NotificationHost';
-import type { NotificationItem, NotificationVariant } from './types';
+import { toast } from 'sonner';
+import type { NotificationVariant } from './types';
 
 type NotifyOptions = {
   variant?: NotificationVariant;
@@ -30,24 +28,9 @@ const DEFAULT_DURATION_MS: Record<NotificationVariant, number> = {
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
 
-function createNotificationId(): string {
-  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
-    return crypto.randomUUID();
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`;
-}
-
 export function NotificationProvider({ children }: { children: ReactNode }) {
-  const [items, setItems] = useState<NotificationItem[]>([]);
-  const timersRef = useRef<Map<string, number>>(new Map());
-
   const dismiss = useCallback((id: string) => {
-    const timer = timersRef.current.get(id);
-    if (timer !== undefined) {
-      window.clearTimeout(timer);
-      timersRef.current.delete(id);
-    }
-    setItems((current) => current.filter((item) => item.id !== id));
+    toast.dismiss(id);
   }, []);
 
   const notify = useCallback((message: string, options?: NotifyOptions) => {
@@ -55,15 +38,18 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!trimmed) return;
 
     const variant = options?.variant ?? 'info';
-    const id = createNotificationId();
-    const item: NotificationItem = { id, message: trimmed, variant };
+    const duration = options?.durationMs ?? DEFAULT_DURATION_MS[variant];
 
-    setItems((current) => [...current, item]);
-
-    const durationMs = options?.durationMs ?? DEFAULT_DURATION_MS[variant];
-    const timer = window.setTimeout(() => dismiss(id), durationMs);
-    timersRef.current.set(id, timer);
-  }, [dismiss]);
+    if (variant === 'error') {
+      toast.error(trimmed, { duration });
+      return;
+    }
+    if (variant === 'success') {
+      toast.success(trimmed, { duration });
+      return;
+    }
+    toast.info(trimmed, { duration });
+  }, []);
 
   const notifyError = useCallback((message: string) => {
     notify(message, { variant: 'error' });
@@ -83,7 +69,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   return (
     <NotificationContext.Provider value={value}>
       {children}
-      <NotificationHost items={items} onDismiss={dismiss} />
     </NotificationContext.Provider>
   );
 }

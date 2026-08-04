@@ -13,8 +13,17 @@ import {
   updateScript,
 } from '../../../api/scripts/administrator';
 import type { ChannelSummary, ReleaseSummary, ScriptDetail } from '../../../api/scripts/types';
-import { ConfirmDialog } from '../../../components/ConfirmDialog';
-import { EmptyState } from '../../../components/EmptyState';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AddCustomChannelModal } from '../../../components/scripts/AddCustomChannelModal';
 import { ChannelMatrix } from '../../../components/scripts/ChannelMatrix';
 import { HostPatternChips } from '../../../components/scripts/HostPatternChips';
@@ -27,6 +36,13 @@ import { ResolutionModeBadge } from '../../../components/scripts/ResolutionModeB
 import { ScriptMetadataPanel } from '../../../components/scripts/ScriptMetadataPanel';
 import { SCRIPTS_ADMIN_LIST_PATH } from '../../../features/scripts/scriptPaths';
 import { useNotifications } from '../../../notifications/NotificationContext';
+import { channelToneClass } from '@/lib/channel-tones';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { cn } from '@/lib/utils';
 
 type StudioTab = 'overview' | 'releases' | 'channels';
 
@@ -290,85 +306,89 @@ export function ScriptStudioPage() {
 
   if (loading && !script) {
     return (
-      <div className="ops-page scripts-studio">
-        <div className="scripts-studio__skeleton scripts-studio__hero" aria-hidden="true" />
-        <div className="scripts-studio__skeleton scripts-studio__tabs" aria-hidden="true" />
-        <div className="scripts-studio__skeleton scripts-studio__panel" aria-hidden="true" />
-        <p className="muted scripts-skeleton">Carregando studio…</p>
+      <div className="flex flex-col gap-4 p-4">
+        <Skeleton className="h-28 w-full" aria-hidden="true" />
+        <Skeleton className="h-10 w-72" aria-hidden="true" />
+        <Skeleton className="h-64 w-full" aria-hidden="true" />
+        <p className="text-sm text-muted-foreground">Carregando studio…</p>
       </div>
     );
   }
 
   if (!script) {
     return (
-      <div className="ops-page scripts-studio">
-        <EmptyState title="Script não encontrado" message="Volte ao inventário e tente novamente." />
-        <Link className="btn btn-ghost" to={SCRIPTS_ADMIN_LIST_PATH}>← Inventário</Link>
+      <div className="flex flex-col gap-4 p-4">
+        <Alert>
+          <AlertTitle>Script não encontrado</AlertTitle>
+          <AlertDescription>Volte ao inventário e tente novamente.</AlertDescription>
+        </Alert>
+        <Button variant="ghost" asChild>
+          <Link to={SCRIPTS_ADMIN_LIST_PATH}>← Inventário</Link>
+        </Button>
       </div>
     );
   }
 
   return (
-    <div className="ops-page scripts-studio">
-      <header className="scripts-studio__hero">
-        <div className="scripts-studio__hero-main">
-          <Link className="scripts-studio__back" to={SCRIPTS_ADMIN_LIST_PATH}>
-            ← Inventário
-          </Link>
-          <p className="scripts-studio__kicker">Admin · Script Studio</p>
-          <div className="scripts-studio__title-row">
-            <h1>{script.name}</h1>
-            <span className="scripts-priority" title="Menor prioridade injeta primeiro">P{script.priority}</span>
+    <div className="flex flex-col gap-4 p-4">
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0 flex-1">
+          <Button variant="ghost" size="sm" className="mb-2 -ml-2 h-auto px-2 py-1" asChild>
+            <Link to={SCRIPTS_ADMIN_LIST_PATH}>← Inventário</Link>
+          </Button>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Admin · Script Studio</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <h1 className="text-2xl font-semibold">{script.name}</h1>
+            <Badge
+              variant="outline"
+              className={cn(channelToneClass('accent'), 'font-mono text-xs font-normal')}
+              title="Menor prioridade injeta primeiro"
+            >
+              P{script.priority}
+            </Badge>
             <ResolutionModeBadge hostPatterns={hostPatterns} />
           </div>
           {hostPatterns.length > 0 ? (
-            <HostPatternChips patterns={hostPatterns} />
+            <div className="mt-2">
+              <HostPatternChips patterns={hostPatterns} />
+            </div>
           ) : (
-            <p className="scripts-studio__resolve-hint muted small">
-              Resolve via <code>GET /scripts?name={script.name}</code>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Resolve via <code className="font-mono">GET /scripts?name={script.name}</code>
             </p>
           )}
         </div>
 
-        <div className="scripts-studio__actions">
-          <button
-            type="button"
-            className="btn btn-scripts-outline"
-            onClick={() => setPublishOpen(true)}
-          >
+        <div className="flex shrink-0 gap-2">
+          <Button type="button" variant="outline" onClick={() => setPublishOpen(true)}>
             Publicar release
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
-            className="btn btn-scripts-accent"
+            variant="secondary"
+            className={channelToneClass('accent', 'md')}
             onClick={() => setTab('channels')}
           >
             Promover
-          </button>
+          </Button>
         </div>
       </header>
 
-      <nav className="scripts-tabs" aria-label="Seções do studio">
-        {(['overview', 'releases', 'channels'] as const).map((item) => (
-          <button
-            key={item}
-            type="button"
-            className={`scripts-tabs__item ${tab === item ? 'is-active' : ''}`}
-            onClick={() => setTab(item)}
-            aria-current={tab === item ? 'page' : undefined}
-          >
-            {TAB_LABELS[item]}
-          </button>
-        ))}
-      </nav>
+      <Tabs value={tab} onValueChange={(value) => setTab(value as StudioTab)}>
+        <TabsList aria-label="Seções do studio">
+          {(['overview', 'releases', 'channels'] as const).map((item) => (
+            <TabsTrigger key={item} value={item}>
+              {TAB_LABELS[item]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-      <div className="scripts-studio__overview">
-        <ReleaseStudioOverview releases={releases} channels={script.channels} />
-      </div>
+        <div className="mt-3">
+          <ReleaseStudioOverview releases={releases} channels={script.channels} />
+        </div>
 
-      <div className="scripts-studio__content">
-        {tab === 'overview' ? (
-          <div className="scripts-studio-grid">
+        <TabsContent value="overview" className="mt-4">
+          <div className="grid gap-4 lg:grid-cols-2">
             <ScriptMetadataPanel
               scriptName={script.name}
               description={description}
@@ -382,60 +402,60 @@ export function ScriptStudioPage() {
               onSave={() => void handleSaveOverview()}
             />
 
-            <section className="scripts-panel scripts-panel--channels">
-              <header className="scripts-panel__head scripts-channels-panel__head">
-                <div>
-                  <h2>Canais</h2>
-                  <p className="scripts-panel__sub muted small">Versão promovida em cada ambiente.</p>
-                </div>
-              </header>
-              <div className="scripts-panel__body scripts-channels-panel__body">
+            <Card className="border-border/60">
+              <CardHeader>
+                <CardTitle>Canais</CardTitle>
+                <CardDescription>Versão promovida em cada ambiente.</CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
                 <ChannelMatrix
                   channels={script.channels}
                   releases={releases}
                   onPromote={openPromoteDrawer}
                   compact
                 />
-              </div>
-            </section>
+              </CardContent>
+            </Card>
 
             {hostPatterns.length > 0 ? (
-              <section className="scripts-panel scripts-panel--full scripts-impact-callout">
-                <header className="scripts-panel__head">
-                  <h2>Impacto em produção</h2>
-                </header>
-                <div className="scripts-panel__body scripts-impact-callout__body">
-                  <p className="muted small">
+              <Card className={cn('lg:col-span-2', channelToneClass('prod', 'md'))}>
+                <CardHeader>
+                  <CardTitle>Impacto em produção</CardTitle>
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2 pt-0">
+                  <p className="text-xs text-muted-foreground">
                     Clientes com hosts correspondentes recebem o release promovido em{' '}
-                    <code>prod</code> via:
+                    <code className="font-mono">prod</code> via:
                   </p>
-                  <code className="scripts-impact-callout__code">GET /scripts?host=…&channel=prod</code>
+                  <code className="font-mono text-sm">GET /scripts?host=…&channel=prod</code>
                   <HostPatternChips patterns={hostPatterns} />
-                </div>
-              </section>
+                </CardContent>
+              </Card>
             ) : null}
           </div>
-        ) : null}
+        </TabsContent>
 
-        {tab === 'releases' ? (
-          <div className="scripts-releases-layout">
-            <aside className="scripts-panel scripts-releases-layout__timeline">
-              <header className="scripts-panel__head scripts-panel__head--compact scripts-releases-layout__toolbar">
-                <h2>Histórico</h2>
-                <button type="button" className="btn btn-scripts-outline btn-sm" onClick={() => setPublishOpen(true)}>
-                  + Nova release
-                </button>
-              </header>
-              <div className="scripts-panel__body scripts-panel__body--flush-timeline">
+        <TabsContent value="releases" className="mt-4">
+          <div className="grid gap-4 lg:grid-cols-[minmax(0,320px)_1fr]">
+            <Card className="overflow-hidden border-border/60 py-0">
+              <CardHeader className="flex-row items-center justify-between space-y-0 border-b border-border/50 py-3">
+                <CardTitle className="text-base">Histórico</CardTitle>
+                <CardAction>
+                  <Button type="button" variant="outline" size="sm" onClick={() => setPublishOpen(true)}>
+                    + Nova release
+                  </Button>
+                </CardAction>
+              </CardHeader>
+              <CardContent className="p-0">
                 <ReleaseTimeline
                   releases={releases}
                   selectedId={selectedReleaseId}
                   onSelect={setSelectedReleaseId}
                 />
-              </div>
-            </aside>
+              </CardContent>
+            </Card>
 
-            <section className="scripts-panel scripts-releases-layout__editor">
+            <Card className="border-border/60 py-0">
               {selectedRelease ? (
                 <ReleaseInspectorPanel
                   release={selectedRelease}
@@ -453,27 +473,31 @@ export function ScriptStudioPage() {
                   onDelete={() => setDeleteTarget(selectedRelease)}
                 />
               ) : (
-                <div className="scripts-panel__body">
-                  <EmptyState
-                    title="Selecione um release"
-                    message="Escolha um item no histórico para ver metadados, canais e estado de promoção."
-                  />
-                </div>
+                <CardContent className="py-8">
+                  <Alert>
+                    <AlertTitle>Selecione um release</AlertTitle>
+                    <AlertDescription>
+                      Escolha um item no histórico para ver metadados, canais e estado de promoção.
+                    </AlertDescription>
+                  </Alert>
+                </CardContent>
               )}
-            </section>
+            </Card>
           </div>
-        ) : null}
+        </TabsContent>
 
-        {tab === 'channels' ? (
-          <section className="scripts-panel scripts-panel--full scripts-promo-panel">
-            <header className="scripts-panel__head scripts-panel__head--compact scripts-promo-panel__head">
-              <h2>Promoção</h2>
-              <button type="button" className="btn btn-scripts-outline btn-sm" onClick={() => setCustomChannelOpen(true)}>
-                + Canal
-              </button>
-            </header>
+        <TabsContent value="channels" className="mt-4">
+          <Card className="border-border/60">
+            <CardHeader className="flex-row items-center justify-between space-y-0">
+              <CardTitle>Promoção</CardTitle>
+              <CardAction>
+                <Button type="button" variant="outline" size="sm" onClick={() => setCustomChannelOpen(true)}>
+                  + Canal
+                </Button>
+              </CardAction>
+            </CardHeader>
 
-            <div className="scripts-panel__body scripts-promo-panel__body">
+            <CardContent className="flex flex-col gap-4 pt-0">
               <ChannelMatrix
                 channels={script.channels}
                 releases={releases}
@@ -485,23 +509,23 @@ export function ScriptStudioPage() {
               />
 
               {script.hostPatterns.length > 0 ? (
-                <div className="scripts-promo-panel__hosts muted small">
+                <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <span>Hosts:</span>
                   {script.hostPatterns.map((host) => (
-                    <code key={host}>{host}</code>
+                    <code key={host} className="font-mono">{host}</code>
                   ))}
                 </div>
               ) : null}
 
-              <p className="scripts-promo-panel__cache muted small">
+              <p className="text-xs text-muted-foreground">
                 <strong>Cache L1 (~60s)</strong>
                 {' — '}
                 promoções invalidam o ScriptCache; clientes podem ver a versão anterior por até 1 minuto.
               </p>
-            </div>
-          </section>
-        ) : null}
-      </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       <PublishReleaseDrawer
         open={publishOpen}
@@ -537,29 +561,39 @@ export function ScriptStudioPage() {
         onSubmit={handleAddChannel}
       />
 
-      <ConfirmDialog
-        open={deprecateTarget !== null}
-        title={deprecateTarget?.isDeprecated ? 'Restaurar release?' : 'Deprecar release?'}
-        message={
-          deprecateTarget?.isDeprecated
-            ? 'O release voltará a ser elegível no resolve público (salvo filtro allowDeprecated).'
-            : 'Releases deprecados são omitidos do GET /scripts por padrão.'
-        }
-        onCancel={() => setDeprecateTarget(null)}
-        onConfirm={handleDeprecateConfirm}
-      />
+      <AlertDialog open={deprecateTarget !== null} onOpenChange={(open) => { if (!open) setDeprecateTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{deprecateTarget?.isDeprecated ? 'Restaurar release?' : 'Deprecar release?'}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deprecateTarget?.isDeprecated
+                ? 'O release voltará a ser elegível no resolve público (salvo filtro allowDeprecated).'
+                : 'Releases deprecados são omitidos do GET /scripts por padrão.'}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeprecateConfirm}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <ConfirmDialog
-        open={deleteTarget !== null}
-        title="Excluir release?"
-        message={
-          deleteTarget
-            ? `A versão ${deleteTarget.version} será removida permanentemente. Canais que apontam para este release terão o ponteiro anulado automaticamente.`
-            : ''
-        }
-        onCancel={() => setDeleteTarget(null)}
-        onConfirm={handleDeleteConfirm}
-      />
+      <AlertDialog open={deleteTarget !== null} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir release?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {deleteTarget
+                ? `A versão ${deleteTarget.version} será removida permanentemente. Canais que apontam para este release terão o ponteiro anulado automaticamente.`
+                : ''}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -14,6 +14,27 @@ import {
   type VersionTuple,
 } from '../../features/scripts/semanticVersion';
 import { countSourceLines, formatScriptFileSize, getSourceCodeByteSize } from '../../features/scripts/readScriptFile';
+import {
+  Sheet,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Badge } from '@/components/ui/badge';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { channelToneClass } from '@/lib/channel-tones';
+import { cn } from '@/lib/utils';
 
 export type PublishReleaseOption = {
   id: string;
@@ -171,8 +192,6 @@ export function PublishReleaseDrawer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [open, step]);
 
-  if (!open) return null;
-
   function applyTuple(next: VersionTuple) {
     setMajor(next[0]);
     setMinor(next[1]);
@@ -226,191 +245,203 @@ export function PublishReleaseDrawer({
   }
 
   const stepIndex = STEPS.findIndex((item) => item.id === step);
-  const isCompactStep = step === 'version' || step === 'review';
   const isLatestBase = baseReleaseId !== null && baseReleaseId === latestReleaseId;
 
   return (
-    <div
-      className={`scripts-drawer-backdrop ${isCompactStep ? 'scripts-drawer-backdrop--center' : ''}`}
-      onClick={onClose}
-    >
-      <aside
-        className={`scripts-drawer scripts-drawer--publish ${isCompactStep ? 'scripts-drawer--compact' : 'scripts-drawer--code'} scripts-drawer--step-${step}`}
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="publish-release-title"
-        onClick={(e) => e.stopPropagation()}
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+      <SheetContent
+        side="right"
+        className={cn(
+          'flex w-full flex-col gap-0 overflow-y-auto p-0',
+          step === 'code' ? 'sm:max-w-2xl' : 'sm:max-w-lg',
+        )}
       >
-        <header className="scripts-drawer__header">
-          <div className="scripts-drawer__header-main">
-            <p className="scripts-drawer__kicker">Nova release · {scriptName}</p>
-            <h3 id="publish-release-title">Nova release</h3>
-            <ol className="scripts-drawer__steps" aria-label="Progresso">
-              {STEPS.map((item, index) => (
-                <li
-                  key={item.id}
-                  className={`scripts-drawer__step ${index === stepIndex ? 'is-current' : ''} ${index < stepIndex ? 'is-done' : ''}`}
-                  aria-current={index === stepIndex ? 'step' : undefined}
-                >
-                  <span className="scripts-drawer__step-index">{index + 1}</span>
-                  <span className="scripts-drawer__step-label">{item.label}</span>
-                </li>
-              ))}
-            </ol>
-          </div>
-          <button type="button" className="account-picker-close scripts-drawer__close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </header>
+        <SheetHeader className="border-b border-border/50 px-4 py-4">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Nova release · {scriptName}
+          </p>
+          <SheetTitle>Nova release</SheetTitle>
+          <ol className="mt-3 flex gap-2" aria-label="Progresso">
+            {STEPS.map((item, index) => (
+              <li
+                key={item.id}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-2 py-1 text-xs',
+                  index === stepIndex && 'bg-warning/15 text-warning',
+                  index < stepIndex && 'text-muted-foreground',
+                  index > stepIndex && 'text-muted-foreground/60',
+                )}
+                aria-current={index === stepIndex ? 'step' : undefined}
+              >
+                <span className="font-mono">{index + 1}</span>
+                <span>{item.label}</span>
+              </li>
+            ))}
+          </ol>
+        </SheetHeader>
 
-        <div className="scripts-drawer__body">
+        <div className="flex-1 px-4 py-4">
           {step === 'version' ? (
-            <div className="scripts-publish-version">
-              <div className="scripts-publish-base">
-                <div className="scripts-publish-base__title-row">
-                  <label className="scripts-publish-base__label" htmlFor="publish-base-release-select">
-                    Release de referência
-                  </label>
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <Label htmlFor="publish-base-release-select">Release de referência</Label>
                   {isLatestBase ? (
-                    <span className="scripts-publish-base__tag">Mais recente</span>
+                    <Badge variant="outline" className="text-xs font-normal">Mais recente</Badge>
                   ) : baseVersion ? (
-                    <span className="scripts-publish-base__tag scripts-publish-base__tag--branch">Linha paralela</span>
+                    <Badge variant="secondary" className="text-xs font-normal">Linha paralela</Badge>
                   ) : null}
                 </div>
 
-                <select
-                  id="publish-base-release-select"
-                  className="nexus-input scripts-studio-input scripts-publish-base__select"
-                  value={baseReleaseId ?? ''}
-                  onChange={(e) => handleBaseReleaseChange(e.target.value)}
+                <Select
+                  value={baseReleaseId ?? undefined}
+                  onValueChange={handleBaseReleaseChange}
                   disabled={sortedReleases.length === 0}
                 >
-                  {sortedReleases.length === 0 ? (
-                    <option value="">Primeiro release deste script</option>
-                  ) : (
-                    sortedReleases.map((release) => (
-                      <option key={release.id} value={release.id}>
+                  <SelectTrigger id="publish-base-release-select" className="w-full">
+                    <SelectValue placeholder="Primeiro release deste script" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortedReleases.map((release) => (
+                      <SelectItem key={release.id} value={release.id}>
                         v{release.version}
-                      </option>
-                    ))
-                  )}
-                </select>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
 
-                <div className="scripts-publish-base__meta">
+                <div>
                   {sortedReleases.length === 0 ? (
-                    <p className="scripts-publish-base__hint muted small">
+                    <p className="text-xs text-muted-foreground">
                       Sem releases anteriores — o incremento parte de 0.0.0.
                     </p>
                   ) : baseVersion ? (
                     <>
-                      <p className="scripts-publish-base__hint">
+                      <p className="text-sm">
                         Incremento a partir de{' '}
-                        <span className="mono scripts-publish-base__ref">v{baseVersion}</span>
+                        <span className="font-mono text-warning">v{baseVersion}</span>
                       </p>
-                      <p className="scripts-publish-base__count muted small">
+                      <p className="text-xs text-muted-foreground">
                         {existingVersions.length === 1
                           ? '1 versão já publicada'
                           : `${existingVersions.length} versões já publicadas`}
                       </p>
                     </>
                   ) : (
-                    <p className="scripts-publish-base__hint muted small">
+                    <p className="text-xs text-muted-foreground">
                       Selecione a linha de versão que deseja continuar.
                     </p>
                   )}
                 </div>
               </div>
 
-              <div className="scripts-version-options">
-                <p className="scripts-version-options__heading">Incremento automático</p>
-                <div role="radiogroup" aria-label="Incremento semver" className="scripts-version-options__list">
+              <div className="flex flex-col gap-2">
+                <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  Incremento semver
+                </p>
+                <RadioGroup
+                  value={versionMode}
+                  onValueChange={(value) => {
+                    if (value === 'manual') selectManual();
+                    else selectBump(value as VersionBump);
+                  }}
+                  aria-label="Incremento semver"
+                  className="gap-2"
+                >
                   {bumpPreviews.map((option) => (
-                    <button
+                    <Label
                       key={option.id}
-                      type="button"
-                      role="radio"
-                      aria-checked={versionMode === option.id}
-                      className={`scripts-version-option ${versionMode === option.id ? 'is-selected' : ''}`}
-                      onClick={() => selectBump(option.id)}
+                      htmlFor={`bump-${option.id}`}
+                      className={cn(
+                        'flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors',
+                        versionMode === option.id
+                          ? 'border-warning/40 bg-warning/8'
+                          : 'border-border/50 hover:bg-muted/30',
+                      )}
                     >
-                      <span className="scripts-version-option__marker" aria-hidden="true" />
-                      <span className="scripts-version-option__content">
-                        <span className="scripts-version-option__title-row">
-                          <strong>{option.title}</strong>
+                      <RadioGroupItem value={option.id} id={`bump-${option.id}`} className="mt-1" />
+                      <span className="flex min-w-0 flex-col gap-1">
+                        <span className="flex flex-wrap items-center gap-2">
+                          <strong className="text-sm">{option.title}</strong>
                           {option.recommended ? (
-                            <span className="scripts-version-option__badge">Recomendado</span>
+                            <Badge variant="outline" className="text-[0.65rem] font-normal">
+                              Recomendado
+                            </Badge>
                           ) : null}
                         </span>
-                        <span className="scripts-version-option__hint muted small">{option.hint}</span>
-                        <span className="scripts-version-option__value">
+                        <span className="text-xs text-muted-foreground">{option.hint}</span>
+                        <span className="font-mono text-sm">
                           {baseVersion ? (
                             <>
-                              <span className="mono scripts-version-option__from">{baseVersion}</span>
-                              <span className="scripts-version-option__arrow" aria-hidden="true">→</span>
+                              <span className="text-muted-foreground">{baseVersion}</span>
+                              <span className="mx-1 text-muted-foreground" aria-hidden="true">→</span>
                             </>
                           ) : null}
-                          <span className="mono scripts-version-option__to">{formatVersion(option.next)}</span>
+                          <span className="text-warning">{formatVersion(option.next)}</span>
                         </span>
                         {option.skipped.length > 0 ? (
-                          <span className="scripts-version-option__skip-note">
+                          <span className="text-xs text-warning">
                             Pula {option.skipped.map((v) => `v${v}`).join(', ')} — próximo slot livre.
                           </span>
                         ) : null}
                       </span>
-                    </button>
+                    </Label>
                   ))}
-                </div>
 
-                <p className="scripts-version-options__heading">Personalizado</p>
-                <button
-                  type="button"
-                  role="radio"
-                  aria-checked={versionMode === 'manual'}
-                  className={`scripts-version-option ${versionMode === 'manual' ? 'is-selected' : ''}`}
-                  onClick={selectManual}
-                >
-                  <span className="scripts-version-option__marker" aria-hidden="true" />
-                  <span className="scripts-version-option__content">
-                    <strong>Versão manual</strong>
-                    <span className="scripts-version-option__hint muted small">
-                      Informe major.minor.patch ou use os atalhos a partir da referência.
+                  <Label
+                    htmlFor="bump-manual"
+                    className={cn(
+                      'flex cursor-pointer gap-3 rounded-lg border p-3 transition-colors',
+                      versionMode === 'manual'
+                        ? 'border-warning/40 bg-warning/8'
+                        : 'border-border/50 hover:bg-muted/30',
+                    )}
+                  >
+                    <RadioGroupItem value="manual" id="bump-manual" className="mt-1" />
+                    <span className="flex flex-col gap-1">
+                      <strong className="text-sm">Versão manual</strong>
+                      <span className="text-xs text-muted-foreground">
+                        Informe major.minor.patch ou use os atalhos a partir da referência.
+                      </span>
                     </span>
-                  </span>
-                </button>
+                  </Label>
+                </RadioGroup>
               </div>
 
               {versionMode === 'manual' ? (
-                <div className="scripts-version-manual" aria-label="Versão manual">
-                  <label className="scripts-version-manual__combined field">
-                    <span>Versão</span>
-                    <input
+                <div className="flex flex-col gap-3 rounded-lg border border-border/50 bg-muted/20 p-3" aria-label="Versão manual">
+                  <div className="flex flex-col gap-2">
+                    <Label htmlFor="publish-semver-text">Versão</Label>
+                    <Input
+                      id="publish-semver-text"
                       type="text"
                       inputMode="decimal"
-                      className="nexus-input scripts-studio-input mono"
+                      className="font-mono"
                       value={semverText}
                       onChange={(e) => handleSemverTextChange(e.target.value)}
                       placeholder="0.0.1"
                       aria-invalid={!semverTextValid || !versionValidation.ok}
                     />
-                  </label>
+                  </div>
 
-                  <div className="scripts-version-inputs">
+                  <div className="grid grid-cols-3 gap-2">
                     {(['major', 'minor', 'patch'] as const).map((field) => (
-                      <label key={field} className="scripts-version-inputs__field">
-                        <span>{field}</span>
-                        <div className="scripts-version-stepper">
-                          <button
+                      <div key={field} className="flex flex-col gap-1">
+                        <Label className="text-xs capitalize">{field}</Label>
+                        <div className="flex items-center gap-0.5">
+                          <Button
                             type="button"
-                            className="btn btn-ghost btn-sm"
+                            variant="ghost"
+                            size="sm"
                             aria-label={`Diminuir ${field}`}
                             onClick={() => adjustField(field, -1)}
                           >
                             −
-                          </button>
-                          <input
+                          </Button>
+                          <Input
                             type="number"
                             min={0}
-                            className="nexus-input scripts-studio-input"
+                            className="text-center"
                             value={field === 'major' ? major : field === 'minor' ? minor : patch}
                             onChange={(e) => {
                               const value = Math.max(0, Number(e.target.value) || 0);
@@ -421,42 +452,44 @@ export function PublishReleaseDrawer({
                               ]);
                             }}
                           />
-                          <button
+                          <Button
                             type="button"
-                            className="btn btn-ghost btn-sm"
+                            variant="ghost"
+                            size="sm"
                             aria-label={`Aumentar ${field}`}
                             onClick={() => adjustField(field, 1)}
                           >
                             +
-                          </button>
+                          </Button>
                         </div>
-                      </label>
+                      </div>
                     ))}
                   </div>
 
                   {baseVersion ? (
-                    <div className="scripts-version-quick">
-                      <span className="muted small">Atalhos a partir de {baseVersion}:</span>
-                      <div className="scripts-version-quick__actions">
+                    <div className="flex flex-col gap-2">
+                      <span className="text-xs text-muted-foreground">Atalhos a partir de {baseVersion}:</span>
+                      <div className="flex flex-wrap gap-1">
                         {BUMP_OPTIONS.map((option) => (
-                          <button
+                          <Button
                             key={option.id}
                             type="button"
-                            className="btn btn-ghost btn-sm"
+                            variant="ghost"
+                            size="sm"
                             onClick={() => applyQuickBump(option.id)}
                           >
                             {option.id} →{' '}
-                            <span className="mono">
+                            <span className="font-mono">
                               {formatVersion(resolveBumpFromBase(baseVersion, option.id, existingVersions))}
                             </span>
-                          </button>
+                          </Button>
                         ))}
                       </div>
                     </div>
                   ) : null}
 
                   {!versionValidation.ok ? (
-                    <p className="scripts-version-feedback scripts-version-feedback--error" role="alert">
+                    <p className="text-sm text-destructive" role="alert">
                       {versionValidation.message}
                     </p>
                   ) : null}
@@ -478,97 +511,98 @@ export function PublishReleaseDrawer({
           ) : null}
 
           {step === 'review' ? (
-            <div className="scripts-publish-review">
-              <dl className="scripts-publish-review__meta">
-                <div>
-                  <dt>Versão</dt>
-                  <dd className="mono">{resolvedVersion}</dd>
-                </div>
-                <div>
-                  <dt>Semver</dt>
-                  <dd>{versionModeLabel(versionMode)}</dd>
-                </div>
-                <div>
-                  <dt>Referência</dt>
-                  <dd className="mono">{baseVersion ?? '—'}</dd>
-                </div>
-                <div>
-                  <dt>Linhas</dt>
-                  <dd>{countSourceLines(sourceCode).toLocaleString('pt-BR')}</dd>
-                </div>
-                <div>
-                  <dt>Origem</dt>
-                  <dd>{sourceOrigin === 'file' && sourceFileName ? sourceFileName : sourceOrigin === 'editor' ? 'Editor' : '—'}</dd>
-                </div>
+            <div className="flex flex-col gap-3">
+              <dl className="grid gap-3 sm:grid-cols-2">
+                <ReviewItem label="Versão" value={resolvedVersion} mono />
+                <ReviewItem label="Semver" value={versionModeLabel(versionMode)} />
+                <ReviewItem label="Referência" value={baseVersion ?? '—'} mono />
+                <ReviewItem label="Linhas" value={countSourceLines(sourceCode).toLocaleString('pt-BR')} />
+                <ReviewItem
+                  label="Origem"
+                  value={sourceOrigin === 'file' && sourceFileName ? sourceFileName : sourceOrigin === 'editor' ? 'Editor' : '—'}
+                />
               </dl>
-              <p className="scripts-publish-review__size muted small">
-                Tamanho: <span className="mono">{formatScriptFileSize(getSourceCodeByteSize(sourceCode))}</span>
+              <p className="text-xs text-muted-foreground">
+                Tamanho: <span className="font-mono">{formatScriptFileSize(getSourceCodeByteSize(sourceCode))}</span>
                 {' '}({getSourceCodeByteSize(sourceCode).toLocaleString('pt-BR')} bytes)
               </p>
               {baseVersion ? (
-                <p className="scripts-publish-review__delta muted small">
-                  {baseVersion} → <span className="mono">{resolvedVersion}</span>
+                <p className="text-xs text-muted-foreground">
+                  {baseVersion} → <span className="font-mono">{resolvedVersion}</span>
                 </p>
               ) : null}
-              <p className="muted small">O hash SHA-256 será calculado pelo servidor após publicar.</p>
-              <pre className="scripts-publish-review__preview">{sourceCode.slice(0, 400)}{sourceCode.length > 400 ? '…' : ''}</pre>
+              <p className="text-xs text-muted-foreground">O hash SHA-256 será calculado pelo servidor após publicar.</p>
+              <pre className="max-h-40 overflow-auto rounded-lg border border-border/50 bg-muted p-3 font-mono text-xs">
+                {sourceCode.slice(0, 400)}{sourceCode.length > 400 ? '…' : ''}
+              </pre>
             </div>
           ) : null}
         </div>
 
-        <div className="scripts-drawer__footer-stack">
+        <div className="mt-auto border-t border-border/50">
           {step === 'version' ? (
-            <div className="scripts-publish-summary" aria-live="polite">
-              <div className="scripts-publish-summary__label">
-                <span className="muted small">Nova versão</span>
+            <div className="flex items-center justify-between gap-3 px-4 py-3" aria-live="polite">
+              <div className="flex flex-col gap-0.5">
+                <span className="text-xs text-muted-foreground">Nova versão</span>
                 {baseVersion ? (
-                  <span className="scripts-publish-summary__delta muted small">
+                  <span className="text-xs text-muted-foreground">
                     {baseVersion} → {resolvedVersion}
                   </span>
                 ) : null}
               </div>
-              <span className="scripts-publish-summary__version mono">{resolvedVersion}</span>
+              <span className="font-mono text-lg font-semibold text-warning">{resolvedVersion}</span>
             </div>
           ) : null}
 
-          <footer className="scripts-drawer__footer">
-          {step !== 'version' ? (
-            <button
-              type="button"
-              className="btn btn-scripts-outline"
-              disabled={busy}
-              onClick={() => setStep(step === 'review' ? 'code' : 'version')}
-            >
-              Voltar
-            </button>
-          ) : (
-            <button type="button" className="btn btn-scripts-outline" onClick={onClose} disabled={busy}>
-              Cancelar
-            </button>
-          )}
+          <SheetFooter className="flex-row justify-end gap-2 px-4 pb-4">
+            {step !== 'version' ? (
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                onClick={() => setStep(step === 'review' ? 'code' : 'version')}
+              >
+                Voltar
+              </Button>
+            ) : (
+              <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+                Cancelar
+              </Button>
+            )}
 
-          {step === 'review' ? (
-            <button
-              type="button"
-              className="btn btn-scripts-accent"
-              disabled={busy || !sourceCode.trim()}
-              onClick={handlePublish}
-            >
-              {busy ? 'Publicando…' : 'Publicar release'}
-            </button>
-          ) : (
-            <button
-              type="button"
-              className="btn btn-scripts-accent"
-              disabled={(step === 'code' && !sourceCode.trim()) || (step === 'version' && versionStepBlocked)}
-              onClick={() => setStep(step === 'version' ? 'code' : 'review')}
-            >
-              {step === 'version' ? `Continuar · v${resolvedVersion}` : 'Continuar'}
-            </button>
-          )}
-        </footer>
+            {step === 'review' ? (
+              <Button
+                type="button"
+                variant="secondary"
+                className={channelToneClass('accent', 'md')}
+                disabled={busy || !sourceCode.trim()}
+                onClick={handlePublish}
+              >
+                {busy ? 'Publicando…' : 'Publicar release'}
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                variant="secondary"
+                className={channelToneClass('accent', 'md')}
+                disabled={(step === 'code' && !sourceCode.trim()) || (step === 'version' && versionStepBlocked)}
+                onClick={() => setStep(step === 'version' ? 'code' : 'review')}
+              >
+                {step === 'version' ? `Continuar · v${resolvedVersion}` : 'Continuar'}
+              </Button>
+            )}
+          </SheetFooter>
         </div>
-      </aside>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function ReviewItem({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
+  return (
+    <div className="flex flex-col gap-0.5">
+      <dt className="text-xs uppercase tracking-wide text-muted-foreground">{label}</dt>
+      <dd className={cn('text-sm', mono && 'font-mono')}>{value}</dd>
     </div>
   );
 }

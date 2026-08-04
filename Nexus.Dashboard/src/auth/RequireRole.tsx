@@ -1,6 +1,7 @@
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from './AuthContext';
 import { hasAnyRole, hasRole, type AppRole } from './roles';
+import { AuthLoadingCard } from '@/components/AuthLoadingCard';
 
 type RequireRoleProps = {
   role: AppRole;
@@ -14,14 +15,7 @@ function RoleGate({ allowed }: { allowed: boolean }) {
   const { isInitializing } = useAuth();
 
   if (isInitializing) {
-    return (
-      <div className="auth-loading" role="status" aria-live="polite">
-        <div className="auth-loading-card card">
-          <p className="auth-loading-title">Nexus</p>
-          <p className="muted">Verificando permissões…</p>
-        </div>
-      </div>
-    );
+    return <AuthLoadingCard message="Verificando permissões…" />;
   }
 
   if (!allowed) {

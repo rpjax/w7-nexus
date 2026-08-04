@@ -1,9 +1,14 @@
 import type { ReactNode } from 'react';
 import type { OperatorDetails, TeamDetails } from '../../api/types';
-import { Icon, IconButton } from '../IconButton';
+import { Link2, Percent, Plus, Trash2 } from 'lucide-react';
 import { shortId } from '../../utils/format';
 import { AdminTeamGatewaySection } from './AdminTeamGatewaySection';
 import type { AdminTeamPanelActions, AdminTeamPanelScope } from './adminTeamTypes';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export type { AdminTeamPanelActions, AdminTeamPanelScope };
 
@@ -40,7 +45,6 @@ function TeamSection({
   action,
   children,
   className = '',
-  variant = 'list',
 }: {
   title: string;
   desc?: string;
@@ -49,18 +53,16 @@ function TeamSection({
   className?: string;
   variant?: 'list' | 'detail';
 }) {
-  const sectionClass = variant === 'detail' ? 'admin-op-section' : 'admin-op-team-section';
-
   return (
-    <section className={`${sectionClass} ${className}`.trim()}>
-      <div className="admin-op-section__head">
-        <div className="admin-op-section__head-text">
-          <h2 className="admin-op-section-title">{title}</h2>
-          {desc ? <p className="admin-op-section-desc muted small">{desc}</p> : null}
+    <section className={cn('space-y-3', className)}>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h2 className="text-base font-semibold text-foreground">{title}</h2>
+          {desc ? <p className="text-sm text-muted-foreground">{desc}</p> : null}
         </div>
         {action ?? null}
       </div>
-      <div className="admin-op-section__body">{children}</div>
+      <div>{children}</div>
     </section>
   );
 }
@@ -75,13 +77,19 @@ function PersonRow({
   action?: ReactNode;
 }) {
   return (
-    <li className="admin-op-person">
-      <span className="admin-op-person-avatar" aria-hidden="true">{personInitial(username)}</span>
-      <span className="admin-op-person-meta">
-        <span className="admin-op-person-name">{personLabel(accountId, username)}</span>
-        <span className="admin-op-person-id mono" title={accountId}>{shortId(accountId, 22)}</span>
+    <li className="flex items-center gap-3 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+      <Avatar size="sm">
+        <AvatarFallback>{personInitial(username)}</AvatarFallback>
+      </Avatar>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">
+          {personLabel(accountId, username)}
+        </span>
+        <span className="block truncate font-mono text-xs text-muted-foreground" title={accountId}>
+          {shortId(accountId, 22)}
+        </span>
       </span>
-      {action ? <span className="admin-op-person-action">{action}</span> : null}
+      {action ? <span className="shrink-0">{action}</span> : null}
     </li>
   );
 }
@@ -103,57 +111,60 @@ function OperatorDetailRow({
   const label = personLabel(operator.accountId, operator.username);
 
   return (
-    <li className="admin-op-operator-row">
-      <div className="admin-op-operator-row__main">
-        <div className="admin-op-operator-row__identity">
-          <span className="admin-op-person-avatar admin-op-person-avatar--sm" aria-hidden="true">
-            {personInitial(operator.username)}
-          </span>
-          <div className="admin-op-operator-row__meta">
-            <span className="admin-op-person-name">{label}</span>
-            <span className="admin-op-person-id mono" title={operator.accountId}>
+    <li className="space-y-3 rounded-xl border border-border/60 bg-background/40 p-3">
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <Avatar size="sm">
+            <AvatarFallback>{personInitial(operator.username)}</AvatarFallback>
+          </Avatar>
+          <div className="min-w-0">
+            <span className="block truncate text-sm font-medium text-foreground">{label}</span>
+            <span className="block truncate font-mono text-xs text-muted-foreground" title={operator.accountId}>
               {shortId(operator.accountId, 18)}
             </span>
           </div>
         </div>
-        <div className="admin-op-operator-row__actions icon-btn-group">
-          <IconButton
-            icon="percent"
-            label={`Editar repasse de ${label}`}
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-sm"
+            aria-label={`Editar repasse de ${label}`}
             disabled={busy}
             onClick={() => onEditProfitShare(teamId, operator)}
-          />
-          <IconButton
-            icon="trash"
-            label={`Remover operador ${label}`}
-            variant="danger"
+          >
+            <Percent className="size-4" />
+          </Button>
+          <Button
+            type="button"
+            variant="destructive"
+            size="icon-sm"
+            aria-label={`Remover operador ${label}`}
             disabled={busy}
             onClick={() => onUnassignOperator(teamId, operator.accountId)}
-          />
+          >
+            <Trash2 className="size-4" />
+          </Button>
         </div>
       </div>
 
-      <div className="admin-op-operator-row__repasse">
-        <div className="admin-op-operator-row__repasse-inner">
-          <span className="admin-op-operator-row__repasse-kicker">
-            <Icon name="percent" />
-            Repasse
-          </span>
-          {cuts.length === 0 ? (
-            <span className="admin-op-operator-row__repasse-empty muted small">Sem repasse configurado</span>
-          ) : (
-            <ul className="admin-op-operator-row__cuts" aria-label={`Regras de repasse de ${label}`}>
-              {cuts.map((cut) => (
-                <li key={`${cut.accountId}-${cut.percentage}`} className="admin-op-operator-row__cut">
-                  <span className="admin-op-operator-row__cut-name">
-                    {personLabel(cut.accountId, cut.username)}
-                  </span>
-                  <span className="admin-op-operator-row__cut-pct">{formatPercent(cut.percentage)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+      <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+        <span className="mb-2 flex items-center gap-1.5 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+          <Percent className="size-3" />
+          Repasse
+        </span>
+        {cuts.length === 0 ? (
+          <span className="text-sm text-muted-foreground">Sem repasse configurado</span>
+        ) : (
+          <ul className="space-y-1" aria-label={`Regras de repasse de ${label}`}>
+            {cuts.map((cut) => (
+              <li key={`${cut.accountId}-${cut.percentage}`} className="flex items-center justify-between gap-2 text-sm">
+                <span className="truncate text-foreground">{personLabel(cut.accountId, cut.username)}</span>
+                <span className="shrink-0 font-medium text-foreground">{formatPercent(cut.percentage)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </li>
   );
@@ -164,283 +175,269 @@ export function AdminTeamPanel({ team, scope, actions, variant = 'list' }: Admin
   const showStructure = scope === 'full' || scope === 'operation-admin';
   const showPeople = scope === 'full' || scope === 'team-leader';
   const showGateway = scope === 'full' || scope === 'operation-admin';
-  const rootClass = isDetail
-    ? 'admin-op-card admin-op-card--detail admin-op-team-detail'
-    : 'ops-list-item ops-list-item--team';
 
   const leaderAssignAction = team.teamLeader ? (
-    <IconButton
-      icon="trash"
-      label={`Remover líder ${personLabel(team.teamLeader.accountId, team.teamLeader.username)}`}
-      variant="danger"
+    <Button
+      type="button"
+      variant="destructive"
+      size="icon-sm"
+      aria-label={`Remover líder ${personLabel(team.teamLeader.accountId, team.teamLeader.username)}`}
       disabled={actions.busy}
       onClick={() => actions.onUnassignLeader(team.id)}
-    />
+    >
+      <Trash2 className="size-4" />
+    </Button>
   ) : (
-    <IconButton
-      icon="link"
-      label="Vincular líder"
-      variant="primary"
+    <Button
+      type="button"
+      size="icon-sm"
+      aria-label="Vincular líder"
       disabled={actions.busy}
       onClick={() => actions.onAssignLeader(team.id)}
-    />
+    >
+      <Link2 className="size-4" />
+    </Button>
+  );
+
+  const facts = (
+    <dl className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="space-y-1 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+        <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">ID</dt>
+        <dd className="truncate font-mono text-sm" title={team.id}>{shortId(team.id, isDetail ? 24 : 18)}</dd>
+      </div>
+      {showStructure ? (
+        <div className="space-y-1 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Líder</dt>
+          <dd className="truncate text-sm">
+            {team.teamLeader
+              ? personLabel(team.teamLeader.accountId, team.teamLeader.username)
+              : '—'}
+          </dd>
+        </div>
+      ) : null}
+      {showPeople ? (
+        <div className="space-y-1 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Operadores</dt>
+          <dd className="text-sm">{team.operators.length}</dd>
+        </div>
+      ) : null}
+      {showGateway && team.gatewaySelectionStrategy ? (
+        <div className="space-y-1 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+          <dt className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Gateway</dt>
+          <dd className="text-sm font-medium">{gatewayStrategyLabel(team.gatewaySelectionStrategy)}</dd>
+        </div>
+      ) : null}
+    </dl>
   );
 
   return (
-    <article className={rootClass}>
-      {isDetail ? (
-        <section className="admin-op-section">
-          <div className="admin-op-section__head">
-            <div className="admin-op-section__head-text">
-              <h2 className="admin-op-section-title">Visão geral</h2>
-            </div>
-          </div>
-          <div className="admin-op-section__body">
-            <div className="admin-op-identity">
-              <h3 className="admin-op-card-title">{team.name}</h3>
-              <dl className="admin-op-identity__facts">
-                <div className="admin-op-fact">
-                  <dt>ID</dt>
-                  <dd className="mono admin-op-fact-id-text" title={team.id}>{shortId(team.id, 24)}</dd>
-                </div>
-                {showStructure ? (
-                  <div className="admin-op-fact">
-                    <dt>Líder</dt>
-                    <dd>
-                      {team.teamLeader
-                        ? personLabel(team.teamLeader.accountId, team.teamLeader.username)
-                        : '—'}
-                    </dd>
-                  </div>
-                ) : null}
-                {showPeople ? (
-                  <div className="admin-op-fact">
-                    <dt>Operadores</dt>
-                    <dd>{team.operators.length}</dd>
-                  </div>
-                ) : null}
-                {showGateway && team.gatewaySelectionStrategy ? (
-                  <div className="admin-op-fact">
-                    <dt>Gateway</dt>
-                    <dd className="admin-op-team-fact--gateway">
-                      {gatewayStrategyLabel(team.gatewaySelectionStrategy)}
-                    </dd>
-                  </div>
-                ) : null}
-              </dl>
-            </div>
-          </div>
-        </section>
-      ) : (
-        <header className="admin-op-team-card__head">
-          <div className="admin-op-team-card__bar">
-            <div className="admin-op-team-card__title-block">
-              <span className="admin-op-team-card__kicker">Equipe</span>
-              <h5 className="admin-op-team-name">{team.name}</h5>
+    <Card className="border-border/60 bg-card/80">
+      {!isDetail ? (
+        <CardHeader className="gap-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 space-y-0.5">
+              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Equipe</span>
+              <h5 className="truncate text-base font-semibold text-foreground">{team.name}</h5>
             </div>
             {showStructure ? (
-              <IconButton
-                icon="trash"
-                label={`Excluir equipe ${team.name}`}
-                variant="danger"
-                disabled={actions.busy}
-                onClick={() => actions.onDeleteTeam(team.id)}
-              />
-            ) : null}
-          </div>
-
-          <dl className="admin-op-team-facts">
-            <div className="admin-op-fact">
-              <dt>ID</dt>
-              <dd className="mono admin-op-fact-id-text" title={team.id}>{shortId(team.id, 18)}</dd>
-            </div>
-            {showStructure ? (
-              <div className="admin-op-fact">
-                <dt>Líder</dt>
-                <dd>
-                  {team.teamLeader
-                    ? personLabel(team.teamLeader.accountId, team.teamLeader.username)
-                    : '—'}
-                </dd>
-              </div>
-            ) : null}
-            {showPeople ? (
-              <div className="admin-op-fact">
-                <dt>Operadores</dt>
-                <dd>{team.operators.length}</dd>
-              </div>
-            ) : null}
-            {showGateway && team.gatewaySelectionStrategy ? (
-              <div className="admin-op-fact">
-                <dt>Gateway</dt>
-                <dd className="admin-op-team-fact--gateway">
-                  {gatewayStrategyLabel(team.gatewaySelectionStrategy)}
-                </dd>
-              </div>
-            ) : null}
-          </dl>
-        </header>
-      )}
-
-      {isDetail && showStructure ? (
-        <section className="admin-op-section">
-          <div className="admin-op-section__head">
-            <div className="admin-op-section__head-text">
-              <h2 className="admin-op-section-title">Ações</h2>
-            </div>
-          </div>
-          <div className="admin-op-section__body">
-            <div className="admin-op-actions">
-              <button
+              <Button
                 type="button"
-                className="btn btn-danger btn-small btn-with-icon"
+                variant="destructive"
+                size="icon-sm"
+                aria-label={`Excluir equipe ${team.name}`}
                 disabled={actions.busy}
                 onClick={() => actions.onDeleteTeam(team.id)}
               >
-                <Icon name="trash" />
-                Excluir equipe
-              </button>
-            </div>
+                <Trash2 className="size-4" />
+              </Button>
+            ) : null}
           </div>
-        </section>
+          {facts}
+        </CardHeader>
       ) : null}
 
-      {showStructure ? (
-        <TeamSection
-          variant={variant}
-          title="Líder"
-          desc="Responsável pela equipe."
-          action={leaderAssignAction}
-        >
-          {team.teamLeader ? (
-            isDetail ? (
-              <ul className="admin-op-person-list">
-                <PersonRow
-                  accountId={team.teamLeader.accountId}
-                  username={team.teamLeader.username}
-                />
-              </ul>
-            ) : (
-              <div className="admin-op-role-card">
-                <span className="admin-op-person-avatar" aria-hidden="true">
-                  {personInitial(team.teamLeader.username)}
-                </span>
-                <div className="admin-op-role-card__body">
-                  <span className="admin-op-role-card__label">Líder da equipe</span>
-                  <span className="admin-op-person-name">
-                    {personLabel(team.teamLeader.accountId, team.teamLeader.username)}
-                  </span>
-                  <span className="admin-op-person-id mono" title={team.teamLeader.accountId}>
-                    {shortId(team.teamLeader.accountId, 18)}
-                  </span>
-                </div>
-              </div>
-            )
-          ) : (
-            <p className={`admin-op-empty muted small${isDetail ? '' : ' admin-op-col-empty-hint'}`}>
-              Nenhum líder vinculado.
-            </p>
-          )}
-        </TeamSection>
-      ) : null}
+      <CardContent className={cn('space-y-6', isDetail ? 'pt-6' : 'border-t border-border/60 pt-4')}>
+        {isDetail ? (
+          <TeamSection title="Visão geral">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-foreground">{team.name}</h3>
+              {facts}
+            </div>
+          </TeamSection>
+        ) : null}
 
-      {showPeople ? (
-        <TeamSection
-          variant={variant}
-          title="Operadores"
-          desc="Alocação e regras de repasse."
-          action={(
-            <IconButton
-              icon="plus"
-              label="Alocar operador"
-              variant="primary"
-              disabled={actions.busy}
-              onClick={() => actions.onAssignOperator(team.id)}
-            />
-          )}
-        >
-          {team.operators.length === 0 ? (
-            <p className="admin-op-empty muted small">Nenhum operador alocado.</p>
-          ) : (
-            <ul className={`admin-op-operator-list${isDetail ? ' admin-op-operator-list--flat' : ''}`}>
-              {team.operators.map((operator) => (
+        {isDetail && showStructure ? (
+          <>
+            <Separator />
+            <TeamSection title="Ações">
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                disabled={actions.busy}
+                onClick={() => actions.onDeleteTeam(team.id)}
+              >
+                <Trash2 className="size-4" />
+                Excluir equipe
+              </Button>
+            </TeamSection>
+          </>
+        ) : null}
+
+        {showStructure ? (
+          <>
+            {isDetail ? <Separator /> : null}
+            <TeamSection
+              variant={variant}
+              title="Líder"
+              desc="Responsável pela equipe."
+              action={leaderAssignAction}
+            >
+              {team.teamLeader ? (
                 isDetail ? (
-                  <OperatorDetailRow
-                    key={operator.accountId}
-                    operator={operator}
-                    teamId={team.id}
-                    busy={actions.busy}
-                    onEditProfitShare={actions.onEditProfitShare}
-                    onUnassignOperator={actions.onUnassignOperator}
-                  />
+                  <ul className="space-y-2">
+                    <PersonRow
+                      accountId={team.teamLeader.accountId}
+                      username={team.teamLeader.username}
+                    />
+                  </ul>
                 ) : (
-                  <li key={operator.accountId} className="admin-op-operator-card">
-                    <div className="admin-op-operator-card__head">
-                      <div className="admin-op-operator-card__identity">
-                        <span className="admin-op-person-avatar admin-op-person-avatar--sm" aria-hidden="true">
-                          {personInitial(operator.username)}
-                        </span>
-                        <div className="admin-op-operator-card__meta">
-                          <span className="admin-op-person-name">
-                            {personLabel(operator.accountId, operator.username)}
-                          </span>
-                          <span className="admin-op-person-id mono" title={operator.accountId}>
-                            {shortId(operator.accountId, 18)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="icon-btn-group">
-                        <IconButton
-                          icon="percent"
-                          label={`Editar repasse de ${personLabel(operator.accountId, operator.username)}`}
-                          disabled={actions.busy}
-                          onClick={() => actions.onEditProfitShare(team.id, operator)}
-                        />
-                        <IconButton
-                          icon="trash"
-                          label={`Remover operador ${personLabel(operator.accountId, operator.username)}`}
-                          variant="danger"
-                          disabled={actions.busy}
-                          onClick={() => actions.onUnassignOperator(team.id, operator.accountId)}
-                        />
-                      </div>
+                  <div className="flex items-center gap-3 rounded-lg border border-border/50 bg-background/40 px-3 py-2">
+                    <Avatar>
+                      <AvatarFallback>{personInitial(team.teamLeader.username)}</AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0">
+                      <span className="block text-xs text-muted-foreground">Líder da equipe</span>
+                      <span className="block truncate text-sm font-medium text-foreground">
+                        {personLabel(team.teamLeader.accountId, team.teamLeader.username)}
+                      </span>
+                      <span className="block truncate font-mono text-xs text-muted-foreground" title={team.teamLeader.accountId}>
+                        {shortId(team.teamLeader.accountId, 18)}
+                      </span>
                     </div>
-
-                    <div className="admin-op-operator-card__repasse">
-                      <span className="admin-op-operator-card__repasse-label">Repasse</span>
-                      {(operator.profitShareRule?.cuts ?? []).length === 0 ? (
-                        <p className="admin-op-operator-card__repasse-empty muted small">Sem repasse configurado.</p>
-                      ) : (
-                        <ul className="admin-op-profit-cuts">
-                          {(operator.profitShareRule?.cuts ?? []).map((cut) => (
-                            <li key={`${cut.accountId}-${cut.percentage}`}>
-                              <span className="admin-op-profit-cut-name">
-                                {personLabel(cut.accountId, cut.username)}
-                              </span>
-                              <span className="admin-op-profit-cut-pct">{formatPercent(cut.percentage)}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-                    </div>
-                  </li>
+                  </div>
                 )
-              ))}
-            </ul>
-          )}
-        </TeamSection>
-      ) : null}
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  Nenhum líder vinculado.
+                </p>
+              )}
+            </TeamSection>
+          </>
+        ) : null}
 
-      {showGateway ? (
-        <TeamSection
-          variant={variant}
-          title="Gateway"
-          desc="Estratégia de roteamento e credenciais."
-          className="admin-op-team-section--gateway"
-        >
-          <AdminTeamGatewaySection team={team} actions={actions} showHeader={false} />
-        </TeamSection>
-      ) : null}
-    </article>
+        {showPeople ? (
+          <>
+            {showStructure ? <Separator /> : null}
+            <TeamSection
+              variant={variant}
+              title="Operadores"
+              desc="Alocação e regras de repasse."
+              action={(
+                <Button
+                  type="button"
+                  size="icon-sm"
+                  aria-label="Alocar operador"
+                  disabled={actions.busy}
+                  onClick={() => actions.onAssignOperator(team.id)}
+                >
+                  <Plus className="size-4" />
+                </Button>
+              )}
+            >
+              {team.operators.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Nenhum operador alocado.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {team.operators.map((operator) => (
+                    isDetail ? (
+                      <OperatorDetailRow
+                        key={operator.accountId}
+                        operator={operator}
+                        teamId={team.id}
+                        busy={actions.busy}
+                        onEditProfitShare={actions.onEditProfitShare}
+                        onUnassignOperator={actions.onUnassignOperator}
+                      />
+                    ) : (
+                      <li key={operator.accountId} className="space-y-3 rounded-xl border border-border/60 bg-background/40 p-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-3">
+                            <Avatar size="sm">
+                              <AvatarFallback>{personInitial(operator.username)}</AvatarFallback>
+                            </Avatar>
+                            <div className="min-w-0">
+                              <span className="block truncate text-sm font-medium text-foreground">
+                                {personLabel(operator.accountId, operator.username)}
+                              </span>
+                              <span className="block truncate font-mono text-xs text-muted-foreground" title={operator.accountId}>
+                                {shortId(operator.accountId, 18)}
+                              </span>
+                            </div>
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Editar repasse de ${personLabel(operator.accountId, operator.username)}`}
+                              disabled={actions.busy}
+                              onClick={() => actions.onEditProfitShare(team.id, operator)}
+                            >
+                              <Percent className="size-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon-sm"
+                              aria-label={`Remover operador ${personLabel(operator.accountId, operator.username)}`}
+                              disabled={actions.busy}
+                              onClick={() => actions.onUnassignOperator(team.id, operator.accountId)}
+                            >
+                              <Trash2 className="size-4" />
+                            </Button>
+                          </div>
+                        </div>
+
+                        <div className="rounded-lg border border-border/50 bg-muted/20 px-3 py-2">
+                          <span className="mb-2 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                            Repasse
+                          </span>
+                          {(operator.profitShareRule?.cuts ?? []).length === 0 ? (
+                            <p className="text-sm text-muted-foreground">Sem repasse configurado.</p>
+                          ) : (
+                            <ul className="space-y-1">
+                              {(operator.profitShareRule?.cuts ?? []).map((cut) => (
+                                <li key={`${cut.accountId}-${cut.percentage}`} className="flex items-center justify-between gap-2 text-sm">
+                                  <span className="truncate">{personLabel(cut.accountId, cut.username)}</span>
+                                  <span className="shrink-0 font-medium">{formatPercent(cut.percentage)}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </li>
+                    )
+                  ))}
+                </ul>
+              )}
+            </TeamSection>
+          </>
+        ) : null}
+
+        {showGateway ? (
+          <>
+            <Separator />
+            <TeamSection
+              variant={variant}
+              title="Gateway"
+              desc="Estratégia de roteamento e credenciais."
+            >
+              <AdminTeamGatewaySection team={team} actions={actions} showHeader={false} />
+            </TeamSection>
+          </>
+        ) : null}
+      </CardContent>
+    </Card>
   );
 }

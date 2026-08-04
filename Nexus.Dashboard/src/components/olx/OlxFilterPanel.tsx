@@ -1,4 +1,6 @@
 import type { ReactNode } from 'react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 
 export type OlxScopeFilter = {
   id: string;
@@ -16,12 +18,12 @@ export function OlxActiveFilters({ filters, onClearFilter, onClearAll }: Omit<Ol
   if (filters.length === 0) return null;
 
   return (
-    <div className="olx-active-filters" aria-label="Filtros ativos">
+    <div className="flex flex-wrap items-center gap-2" aria-label="Filtros ativos">
       {filters.map((filter) => (
         <button
           key={filter.id}
           type="button"
-          className="olx-active-filter"
+          className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/50 px-2.5 py-1 text-xs transition-colors hover:bg-muted"
           onClick={() => onClearFilter(filter.id)}
           title="Remover filtro"
         >
@@ -30,9 +32,9 @@ export function OlxActiveFilters({ filters, onClearFilter, onClearAll }: Omit<Ol
         </button>
       ))}
       {onClearAll && filters.length > 1 ? (
-        <button type="button" className="btn btn-ghost btn-small" onClick={onClearAll}>
+        <Button type="button" variant="ghost" size="xs" onClick={onClearAll}>
           Limpar tudo
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -44,22 +46,30 @@ type OlxPickerFieldProps = {
   placeholder: string;
   onPick: () => void;
   onClear?: () => void;
+  fullWidth?: boolean;
 };
 
-export function OlxPickerField({ label, value, placeholder, onPick, onClear }: OlxPickerFieldProps) {
+export function OlxPickerField({ label, value, placeholder, onPick, onClear, fullWidth }: OlxPickerFieldProps) {
   return (
-    <div className="olx-picker-field">
-      <span className="olx-picker-field__label">{label}</span>
-      <button type="button" className="olx-picker-field__button" onClick={onPick}>
-        <span className={value ? 'olx-picker-field__value' : 'olx-picker-field__placeholder muted'}>
+    <div className={cn('flex flex-col gap-1.5', fullWidth && 'w-full')}>
+      {label ? <span className="text-xs font-medium text-muted-foreground">{label}</span> : null}
+      <button
+        type="button"
+        className={cn(
+          'flex w-full items-center justify-between gap-2 rounded-lg border border-input bg-background/60 px-3 py-2 text-left text-sm transition-colors hover:bg-muted/50',
+          fullWidth && 'w-full',
+        )}
+        onClick={onPick}
+      >
+        <span className={cn(value ? 'text-foreground' : 'text-muted-foreground')}>
           {value ?? placeholder}
         </span>
-        <span className="olx-picker-field__chevron" aria-hidden="true">▾</span>
+        <span className="text-muted-foreground" aria-hidden="true">▾</span>
       </button>
       {value && onClear ? (
-        <button type="button" className="olx-picker-field__clear btn btn-ghost btn-small" onClick={onClear}>
+        <Button type="button" variant="ghost" size="xs" className="self-start" onClick={onClear}>
           Limpar
-        </button>
+        </Button>
       ) : null}
     </div>
   );
@@ -67,9 +77,41 @@ export function OlxPickerField({ label, value, placeholder, onPick, onClear }: O
 
 export function OlxFilterPanel({ children, filters, onClearFilter, onClearAll }: OlxScopeFilterBarProps) {
   return (
-    <div className="olx-filter-panel">
-      <div className="olx-filter-panel__grid">{children}</div>
-      <OlxActiveFilters filters={filters} onClearFilter={onClearFilter} onClearAll={onClearAll} />
+    <div className="rounded-xl border border-border bg-card/40 p-3.5">
+      <div className="grid grid-cols-1 items-end gap-3 md:grid-cols-[1fr_1fr_auto] lg:grid-cols-[1fr_1fr_1fr_auto]">
+        {children}
+      </div>
+      <div className="mt-3">
+        <OlxActiveFilters filters={filters} onClearFilter={onClearFilter} onClearAll={onClearAll} />
+      </div>
+    </div>
+  );
+}
+
+export function OlxHubStrip({
+  items,
+  variant = 'default',
+}: {
+  items: { label: string; value: number | string }[];
+  variant?: 'default' | 'admin';
+}) {
+  return (
+    <div
+      className="mb-4 grid grid-cols-2 gap-3 sm:max-w-md"
+      aria-label={variant === 'admin' ? 'Resumo OLX admin' : 'Resumo OLX'}
+    >
+      {items.map((item) => (
+        <div
+          key={item.label}
+          className={cn(
+            'rounded-xl border border-border bg-card/60 px-3.5 py-3',
+            variant === 'admin' && 'border-primary/20 bg-primary/5',
+          )}
+        >
+          <span className="block text-xs text-muted-foreground">{item.label}</span>
+          <strong className="text-xl font-bold">{item.value}</strong>
+        </div>
+      ))}
     </div>
   );
 }

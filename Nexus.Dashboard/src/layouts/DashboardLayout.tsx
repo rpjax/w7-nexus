@@ -1,171 +1,86 @@
-import { useEffect, useState } from 'react';
-import { Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { useAuth } from '../auth/AuthContext';
-import { isOperationDetailPath } from '../features/operations/operationPaths';
-import { isPaymentDetailPath } from '../features/payments/paymentPaths';
-import { isTeamDetailPath } from '../features/teams/teamPaths';
-import { isScriptStudioPath } from '../features/scripts/scriptPaths';
-import { PageTitleProvider, usePageTitle } from './PageTitleContext';
+import { Outlet } from 'react-router-dom';
+import { LogOut, User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { NavMenu } from './NavMenu';
-
-function resolvePageTitle(pathname: string): string {
-  const relative = pathname.replace(/\/$/, '').toLowerCase();
-  if (isPaymentDetailPath(relative)) {
-    return 'Detalhe do pagamento';
-  }
-  if (isTeamDetailPath(relative)) {
-    return 'Detalhe da equipe';
-  }
-  if (isOperationDetailPath(relative)) {
-    return 'Detalhe da operação';
-  }
-  if (isScriptStudioPath(relative)) {
-    return 'Script Studio';
-  }
-  const map: Record<string, string> = {
-    '/dashboard': 'Visão geral',
-    '/dashboard/operations': 'Minhas operações',
-    '/dashboard/admin/operations': 'Todas as operações',
-    '/dashboard/operation-admin/operations': 'Administração de operações',
-    '/dashboard/team-leader/operations': 'Liderança de equipes',
-    '/dashboard/accounts': 'Contas',
-    '/dashboard/payments': 'Meus pagamentos',
-    '/dashboard/admin/payments': 'Todos os pagamentos',
-    '/dashboard/straw-man/payments': 'Meus pagamentos',
-    '/dashboard/straw-man/settings': 'Minhas configurações',
-    '/dashboard/admin/straw-men': 'Gestão de laranjas',
-    '/dashboard/payments/pix': 'Pagamentos — Gerar PIX',
-    '/dashboard/gateways': 'Gateways',
-    '/dashboard/gateways/frendz': 'Frendz',
-    '/dashboard/gateways/sigilopay': 'SigiloPay',
-    '/dashboard/gateways/wintech': 'Wintech',
-    '/dashboard/gateways/gateway-2': 'GATEWAY2',
-    '/dashboard/gateways/gateway-3': 'GATEWAY3',
-    '/dashboard/olx/ads': 'OLX — Meus anúncios',
-    '/dashboard/olx/admin/ads': 'OLX — Gestão global',
-    '/dashboard/admin/scripts': 'Scripts — Inventário',
-    '/dashboard/admin/api-docs': 'Documentação da API',
-  };
-  return map[relative] ?? 'Websete Nexus';
-}
-
-function splitTopbarTitle(title: string): { section: string | null; page: string } {
-  const dash = title.indexOf(' — ');
-  if (dash === -1) {
-    return { section: null, page: title };
-  }
-  return {
-    section: title.slice(0, dash),
-    page: title.slice(dash + 3),
-  };
-}
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import {
+  Sidebar,
+  SidebarFooter,
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from '@/components/ui/sidebar';
+import { useAuth } from '@/auth/AuthContext';
+import { cn } from '@/lib/utils';
 
 function userInitial(username: string | undefined): string {
   const letter = username?.trim().charAt(0);
   return letter ? letter.toUpperCase() : '?';
 }
 
-function DashboardLayoutInner() {
-  const location = useLocation();
+export function DashboardLayout() {
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { title: pageTitle, setTitle } = usePageTitle();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-
-  useEffect(() => {
-    setDrawerOpen(false);
-  }, [location.pathname]);
-
-  useEffect(() => {
-    const onNamedDetail = isOperationDetailPath(location.pathname)
-      || isTeamDetailPath(location.pathname)
-      || isPaymentDetailPath(location.pathname);
-    if (!onNamedDetail) {
-      setTitle(null);
-    }
-  }, [location.pathname, setTitle]);
-
-  const topbarTitle = pageTitle ?? resolvePageTitle(location.pathname);
-  const { section: topbarSection, page: topbarPage } = splitTopbarTitle(topbarTitle);
   const username = user?.username ?? 'Conta';
 
   return (
-    <div className="app-root">
-      {drawerOpen ? (
-        <button type="button" className="drawer-scrim" aria-label="Fechar menu" onClick={() => setDrawerOpen(false)} />
-      ) : null}
-
-      <aside className={`app-sidebar ${drawerOpen ? 'is-drawer-open' : ''}`} aria-label="Navegação principal">
+    <SidebarProvider defaultOpen>
+      <Sidebar collapsible="offcanvas">
         <NavMenu />
-      </aside>
+        <SidebarFooter className="border-t border-sidebar-border p-2">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" className="h-auto w-full justify-start gap-2 px-2 py-2">
+                <Avatar className="size-8">
+                  <AvatarFallback>{userInitial(user?.username)}</AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 text-left">
+                  <p className="truncate text-sm font-medium">{username}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {user?.roles.join(', ') || 'Sessão ativa'}
+                  </p>
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="start" className="w-56">
+              <DropdownMenuLabel>Minha conta</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem disabled>
+                <User className="size-4" />
+                {username}
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                onClick={() => {
+                  signOut();
+                  navigate('/auth', { replace: true });
+                }}
+              >
+                <LogOut className="size-4" />
+                Sair
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </SidebarFooter>
+      </Sidebar>
 
-      <div className="app-main-column">
-        <header className="app-topbar">
-          <div className="app-topbar-start">
-            <button
-              type="button"
-              className="icon-btn icon-btn-ghost app-menu-btn"
-              onClick={() => setDrawerOpen((v) => !v)}
-              aria-label="Menu"
-              aria-expanded={drawerOpen}
-            >
-              <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-                <path d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            </button>
-            <div className="app-topbar-heading">
-              {topbarSection ? (
-                <p className="app-topbar-eyebrow">{topbarSection}</p>
-              ) : null}
-              <h1 className="app-topbar-title">{topbarPage}</h1>
-            </div>
-          </div>
-
-          <div className="app-topbar-actions">
-            <button type="button" className="icon-btn icon-btn-ghost topbar-notify-btn" aria-label="Notificações">
-              <svg className="topbar-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-              </svg>
-            </button>
-
-            <span className="topbar-actions-divider" aria-hidden="true" />
-
-            <div className="topbar-user-chip" title={username}>
-              <span className="topbar-user-avatar" aria-hidden="true">{userInitial(user?.username)}</span>
-              <span className="topbar-user-name">{username}</span>
-            </div>
-
-            <button
-              type="button"
-              className="btn btn-ghost btn-small topbar-signout"
-              aria-label="Sair"
-              onClick={() => {
-                signOut();
-                navigate('/auth', { replace: true });
-              }}
-            >
-              <span className="topbar-signout-label">Sair</span>
-              <svg className="topbar-signout-icon" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                <polyline points="16 17 21 12 16 7" />
-                <line x1="21" y1="12" x2="9" y2="12" />
-              </svg>
-            </button>
-          </div>
+      <SidebarInset className="min-h-dvh">
+        <header className="sticky top-0 z-40 flex h-14 items-center gap-2 border-b bg-background/80 px-4 backdrop-blur-md">
+          <SidebarTrigger />
+          <div className="text-sm font-medium text-muted-foreground">Websete Nexus</div>
         </header>
-        <main className="app-main app-main--scroll-host" id="main-content">
+        <main id="main-content" className={cn('flex-1 overflow-auto p-4 md:p-6')}>
           <Outlet />
         </main>
-      </div>
-    </div>
-  );
-}
-
-export function DashboardLayout() {
-  return (
-    <PageTitleProvider>
-      <DashboardLayoutInner />
-    </PageTitleProvider>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

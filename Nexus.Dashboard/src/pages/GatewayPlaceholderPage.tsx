@@ -1,4 +1,6 @@
-import { EmptyState } from '../components/EmptyState';
+import { PageHeader } from '@/components/layout/page-header';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Card, CardContent } from '@/components/ui/card';
 
 type GatewayPlaceholderPageProps = {
   title: string;
@@ -6,18 +8,27 @@ type GatewayPlaceholderPageProps = {
 
 export function GatewayPlaceholderPage({ title }: GatewayPlaceholderPageProps) {
   return (
-    <>
-      <section className="page-header">
-        <h1>{title}</h1>
-        <p>Espaço reservado para o próximo módulo de integração de pagamento.</p>
-      </section>
+    <div className="space-y-6">
+      <PageHeader
+        title={title}
+        description="Espaço reservado para o próximo módulo de integração de pagamento."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Gateways', href: '/dashboard/gateways' },
+          { label: title },
+        ]}
+      />
 
-      <section className="card">
-        <EmptyState
-          title="Gateway em planejamento"
-          message="A estrutura de navegação já está pronta. Quando o integrador for implementado, os casos de uso entram aqui sem redesenhar o dashboard."
-        />
-      </section>
-    </>
+      <Card className="border-border/60 bg-card/80">
+        <CardContent className="pt-6">
+          <Alert>
+            <AlertTitle>Gateway em planejamento</AlertTitle>
+            <AlertDescription>
+              A estrutura de navegação já está pronta. Quando o integrador for implementado, os casos de uso entram aqui sem redesenhar o dashboard.
+            </AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

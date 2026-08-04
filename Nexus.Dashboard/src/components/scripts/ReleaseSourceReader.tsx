@@ -1,4 +1,12 @@
 import { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import { countSourceLines, formatScriptFileSize } from '../../features/scripts/readScriptFile';
 import { CodeStudioPanel } from './CodeStudioPanel';
 
@@ -31,51 +39,46 @@ export function ReleaseSourceReader({
     if (!open) setExpanded(false);
   }, [open]);
 
-  useEffect(() => {
-    if (!expanded) return undefined;
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') setExpanded(false);
-    }
-
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [expanded]);
-
   function handleCopy() {
     if (!sourceCode) return;
     void navigator.clipboard.writeText(sourceCode);
   }
 
-  const toolbar = (
-    <div className="scripts-source-reader__toolbar">
-      <div className="scripts-source-reader__meta">
-        <strong className="mono">{version}</strong>
-        {sizeLabel ? <span className="muted small">{sizeLabel}</span> : null}
-        {lineCount > 0 ? <span className="muted small">{lineCount} linhas</span> : null}
+  const toolbar = (fullscreen?: boolean) => (
+    <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border/50 px-3 py-2">
+      <div className="flex flex-wrap items-center gap-2">
+        <strong className="font-mono text-sm">{version}</strong>
+        {sizeLabel ? <span className="text-xs text-muted-foreground">{sizeLabel}</span> : null}
+        {lineCount > 0 ? <span className="text-xs text-muted-foreground">{lineCount} linhas</span> : null}
+        {fullscreen ? <span className="text-xs text-muted-foreground">Somente leitura</span> : null}
       </div>
-      <div className="scripts-source-reader__actions">
-        <button
+      <div className="flex flex-wrap items-center gap-1">
+        <Button
           type="button"
-          className={`btn btn-ghost btn-sm ${wordWrap ? 'is-active' : ''}`}
+          variant="ghost"
+          size="sm"
+          className={cn(wordWrap && 'bg-muted')}
           onClick={() => setWordWrap((value) => !value)}
           title="Alternar quebra de linha"
         >
           Quebra
-        </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopy} disabled={!sourceCode}>
+        </Button>
+        <Button type="button" variant="ghost" size="sm" onClick={handleCopy} disabled={!sourceCode}>
           Copiar
-        </button>
-        <button
+        </Button>
+        {!fullscreen ? (
+          <Button type="button" variant="ghost" size="sm" onClick={() => setExpanded(true)}>
+            Expandir
+          </Button>
+        ) : null}
+        <Button
           type="button"
-          className="btn btn-ghost btn-sm"
-          onClick={() => setExpanded(true)}
+          variant="ghost"
+          size="sm"
+          onClick={fullscreen ? () => setExpanded(false) : onClose}
         >
-          Expandir
-        </button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={onClose}>
-          Ocultar
-        </button>
+          {fullscreen ? 'Fechar' : 'Ocultar'}
+        </Button>
       </div>
     </div>
   );
@@ -90,80 +93,48 @@ export function ReleaseSourceReader({
   ) : null;
 
   return (
-    <section className={`scripts-source-reader ${open ? 'is-open' : ''}`} aria-label="Código-fonte do release">
+    <section className="rounded-lg border border-border/60" aria-label="Código-fonte do release">
       {!open ? (
-        <div className="scripts-source-reader__closed">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
           <div>
-            <h3>Código-fonte</h3>
-            <p className="muted small">
+            <h3 className="text-sm font-medium">Código-fonte</h3>
+            <p className="text-xs text-muted-foreground">
               {sizeLabel ? `${sizeLabel}` : 'Bundle'}
               {' · '}
               Editor Monaco com busca, minimap e modo expandido.
             </p>
           </div>
-          <button
-            type="button"
-            className="btn btn-scripts-outline btn-sm"
-            disabled={loading}
-            onClick={onOpen}
-          >
+          <Button type="button" variant="outline" size="sm" disabled={loading} onClick={onOpen}>
             {loading ? 'Carregando…' : 'Visualizar código'}
-          </button>
+          </Button>
         </div>
       ) : (
-        <div className="scripts-source-reader__open">
-          {toolbar}
+        <div>
+          {toolbar()}
           {loading ? (
-            <div className="scripts-source-reader__loading muted">Carregando bundle…</div>
+            <div className="px-4 py-8 text-sm text-muted-foreground">Carregando bundle…</div>
           ) : (
             editor
           )}
         </div>
       )}
 
-      {expanded && sourceCode ? (
-        <div
-          className="scripts-source-reader-backdrop"
-          role="presentation"
-          onClick={() => setExpanded(false)}
-        >
-          <div
-            className="scripts-source-reader scripts-source-reader--fullscreen"
-            role="dialog"
-            aria-modal="true"
-            aria-label={`Código-fonte ${version}`}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="scripts-source-reader__toolbar scripts-source-reader__toolbar--fullscreen">
-              <div className="scripts-source-reader__meta">
-                <strong className="mono">{version}</strong>
-                <span className="muted small">Somente leitura</span>
-              </div>
-              <div className="scripts-source-reader__actions">
-                <button
-                  type="button"
-                  className={`btn btn-ghost btn-sm ${wordWrap ? 'is-active' : ''}`}
-                  onClick={() => setWordWrap((value) => !value)}
-                >
-                  Quebra
-                </button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={handleCopy}>
-                  Copiar
-                </button>
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setExpanded(false)}>
-                  Fechar
-                </button>
-              </div>
-            </div>
+      <Dialog open={expanded && Boolean(sourceCode)} onOpenChange={(next) => !next && setExpanded(false)}>
+        <DialogContent className="flex h-[calc(100dvh-2rem)] max-w-[calc(100vw-2rem)] flex-col gap-0 overflow-hidden p-0 sm:max-w-[calc(100vw-2rem)]">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Código-fonte {version}</DialogTitle>
+          </DialogHeader>
+          {toolbar(true)}
+          {sourceCode ? (
             <CodeStudioPanel
               value={sourceCode}
               readOnly
               wordWrap={wordWrap}
               height="calc(100dvh - 5.5rem)"
             />
-          </div>
-        </div>
-      ) : null}
+          ) : null}
+        </DialogContent>
+      </Dialog>
     </section>
   );
 }

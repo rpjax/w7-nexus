@@ -1,36 +1,60 @@
-import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { searchAdministratorOperations } from '../api/administrator/operations';
-import { searchOlxAdminAdPatches } from '../api/olx/admin';
-import { searchOlxOperatorAdPatches } from '../api/olx/operator';
-import { searchGatewayCredentials } from '../api/gateways';
-import { searchOperatorOperations } from '../api/operations/operator';
 import { useAuth } from '../auth/AuthContext';
 import { canUseOperatorPanel, canUseOlxPanel, canUseStrawManPanel, isAdministrator, isOlxOperator } from '../auth/roles';
-import { StatCard } from '../components/StatCard';
-import { PageHeading } from '../layouts/PageHeading';
+import { PageHeader } from '@/components/layout/page-header';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
+import { useHomeMetrics, type CredentialStat } from '@/hooks/use-home-metrics';
+import { cn } from '@/lib/utils';
 
-type CredentialStat = {
-  status: string;
-  caption: string;
-  tone: 'info' | 'success' | 'danger' | 'warn';
+const toneColor: Record<CredentialStat['tone'], string> = {
+  info: 'bg-primary',
+  success: 'bg-success',
+  danger: 'bg-destructive',
+  warn: 'bg-warning',
 };
 
-function resolveCredentialStat(total: number, enabled: number): CredentialStat {
-  const caption = total === 0
-    ? 'Nenhuma credencial cadastrada'
-    : `${enabled} habilitada(s) de ${total} cadastrada(s)`;
+type MetricCardProps = {
+  label: string;
+  value: string;
+  caption?: string;
+  tone?: CredentialStat['tone'];
+  loading?: boolean;
+};
 
-  if (total === 0) return { status: 'Ausente', caption, tone: 'danger' };
-  if (enabled === 0) return { status: 'Desativadas', caption, tone: 'warn' };
-  return { status: 'Pronto', caption, tone: 'success' };
+function MetricCard({ label, value, caption, tone, loading }: MetricCardProps) {
+  return (
+    <Card className="border-border/60 bg-card/80 backdrop-blur-sm">
+      <CardHeader className="pb-2">
+        <CardDescription className="text-xs font-medium uppercase tracking-wide">{label}</CardDescription>
+        {loading ? (
+          <Skeleton className="mt-1 h-8 w-24" />
+        ) : (
+          <CardTitle className="flex items-center gap-2 text-2xl font-bold">
+            {tone ? (
+              <span className={cn('size-2 shrink-0 rounded-full', toneColor[tone])} aria-hidden="true" />
+            ) : null}
+            {value}
+          </CardTitle>
+        )}
+      </CardHeader>
+      {caption ? (
+        <CardContent className="pt-0">
+          <p className="text-xs text-muted-foreground">{caption}</p>
+        </CardContent>
+      ) : null}
+    </Card>
+  );
 }
 
-const defaultStat: CredentialStat = {
-  status: 'Verificando...',
-  caption: 'Cadastradas vs habilitadas para cobrança',
-  tone: 'info',
-};
+function QuickAction({ to, admin, children }: { to: string; admin?: boolean; children: React.ReactNode }) {
+  return (
+    <Button variant="outline" asChild className={cn(admin && 'border-warning/40 text-warning hover:bg-warning/10')}>
+      <Link to={to}>{children}</Link>
+    </Button>
+  );
+}
 
 export function HomePage() {
   const { user } = useAuth();
@@ -40,59 +64,12 @@ export function HomePage() {
   const olxPanel = canUseOlxPanel(user);
   const olxOperator = isOlxOperator(user);
 
-  const [myOperationsTotal, setMyOperationsTotal] = useState<number | null>(null);
-  const [systemOperationsTotal, setSystemOperationsTotal] = useState<number | null>(null);
-  const [frendz, setFrendz] = useState<CredentialStat>(defaultStat);
-  const [sigiloPay, setSigiloPay] = useState<CredentialStat>(defaultStat);
-  const [wintech, setWintech] = useState<CredentialStat>(defaultStat);
-  const [olxPatchesTotal, setOlxPatchesTotal] = useState<number | null>(null);
-
-  useEffect(() => {
-    void (async () => {
-      if (operatorPanel) {
-        const ops = await searchOperatorOperations({ limit: 1, offset: 0, keyword: null });
-        if (ops.ok) setMyOperationsTotal(ops.data?.total ?? 0);
-      }
-
-      if (adminView) {
-        const ops = await searchAdministratorOperations({ limit: 1, offset: 0, keyword: null });
-        if (ops.ok) setSystemOperationsTotal(ops.data?.total ?? 0);
-      }
-
-      if (olxPanel) {
-        const search = olxOperator
-          ? searchOlxOperatorAdPatches
-          : adminView
-            ? searchOlxAdminAdPatches
-            : null;
-        if (search) {
-          const patches = await search({ limit: 1, offset: 0, keyword: null, operationIds: [] });
-          if (patches.ok) setOlxPatchesTotal(patches.data?.total ?? 0);
-        }
-      }
-
-      if (!operatorPanel) return;
-
-      async function loadGateway(
-        prefix: 'frendz' | 'sigilopay' | 'wintech',
-        setter: (stat: CredentialStat) => void,
-      ) {
-        const [totalRes, enabledRes] = await Promise.all([
-          searchGatewayCredentials(prefix, { limit: 1, offset: 0, keyword: null }),
-          searchGatewayCredentials(prefix, { limit: 1, offset: 0, keyword: null, enabledOnly: true }),
-        ]);
-        if (totalRes.ok && enabledRes.ok) {
-          setter(resolveCredentialStat(totalRes.data?.total ?? 0, enabledRes.data?.total ?? 0));
-        }
-      }
-
-      await Promise.all([
-        loadGateway('frendz', setFrendz),
-        loadGateway('sigilopay', setSigiloPay),
-        loadGateway('wintech', setWintech),
-      ]);
-    })();
-  }, [operatorPanel, adminView, olxPanel, olxOperator]);
+  const { data: metrics, isLoading: metricsLoading } = useHomeMetrics({
+    operatorPanel,
+    adminView,
+    olxPanel,
+    olxOperator,
+  });
 
   const homeKicker = adminView && operatorPanel
     ? 'Administração e operação'
@@ -119,47 +96,69 @@ export function HomePage() {
             : 'Nenhum papel operacional ou administrativo associado à sua sessão.';
 
   return (
-    <>
-      <PageHeading
+    <div className="space-y-6">
+      <PageHeader
         kicker={homeKicker}
         kickerVariant={adminView ? 'admin' : 'default'}
         title="Visão geral"
-        subtitle={homeSubtitle}
+        description={homeSubtitle}
+        breadcrumbs={[{ label: 'Dashboard' }]}
       />
 
-      <section className="stats-grid">
+      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {operatorPanel ? (
-          <StatCard
+          <MetricCard
             label="Minhas operações"
-            value={myOperationsTotal?.toString() ?? '—'}
+            value={metrics?.myOperationsTotal?.toString() ?? '—'}
             caption="Operações em que você está alocado"
             tone="info"
+            loading={metricsLoading}
           />
         ) : null}
         {adminView ? (
-          <StatCard
+          <MetricCard
             label="Operações no sistema"
-            value={systemOperationsTotal?.toString() ?? '—'}
+            value={metrics?.systemOperationsTotal?.toString() ?? '—'}
             caption="Total no repositório global"
             tone="info"
+            loading={metricsLoading}
           />
         ) : null}
         {operatorPanel ? (
           <>
-            <StatCard label="Credencial Frendz" value={frendz.status} caption={frendz.caption} tone={frendz.tone} />
-            <StatCard label="Credencial SigiloPay" value={sigiloPay.status} caption={sigiloPay.caption} tone={sigiloPay.tone} />
-            <StatCard label="Credencial Wintech" value={wintech.status} caption={wintech.caption} tone={wintech.tone} />
+            <MetricCard
+              label="Credencial Frendz"
+              value={metrics?.frendz.status ?? '—'}
+              caption={metrics?.frendz.caption}
+              tone={metrics?.frendz.tone}
+              loading={metricsLoading}
+            />
+            <MetricCard
+              label="Credencial SigiloPay"
+              value={metrics?.sigiloPay.status ?? '—'}
+              caption={metrics?.sigiloPay.caption}
+              tone={metrics?.sigiloPay.tone}
+              loading={metricsLoading}
+            />
+            <MetricCard
+              label="Credencial Wintech"
+              value={metrics?.wintech.status ?? '—'}
+              caption={metrics?.wintech.caption}
+              tone={metrics?.wintech.tone}
+              loading={metricsLoading}
+            />
           </>
         ) : null}
         {olxPanel ? (
-          <StatCard
+          <MetricCard
             label="Anúncios OLX"
-            value={olxPatchesTotal?.toString() ?? '—'}
+            value={metrics?.olxPatchesTotal?.toString() ?? '—'}
             caption={olxOperator ? 'Patches sob seu controle' : 'Registros globais de patch'}
             tone="success"
+            loading={metricsLoading}
           />
         ) : null}
-        <StatCard
+        <MetricCard
           label="Sessão"
           value={user?.username ?? '—'}
           caption={user?.roles.length ? user.roles.join(', ') : 'Autenticado'}
@@ -167,45 +166,49 @@ export function HomePage() {
         />
       </section>
 
-      <section className="card">
-        <h2>Atalhos</h2>
-        <div className="quick-actions">
-          {operatorPanel ? (
-            <>
-              <Link className="quick-action" to="/dashboard/operations">Minhas operações</Link>
-              <Link className="quick-action" to="/dashboard/payments">Meus pagamentos</Link>
-              <Link className="quick-action" to="/dashboard/payments/pix">Gerar cobrança PIX</Link>
-              <Link className="quick-action" to="/dashboard/gateways/frendz">Credenciais Frendz</Link>
-              <Link className="quick-action" to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</Link>
-              <Link className="quick-action" to="/dashboard/gateways/wintech">Credenciais Wintech</Link>
-            </>
-          ) : null}
-          {adminView ? (
-            <>
-              <Link className="quick-action quick-action-admin" to="/dashboard/admin/operations">Todas as operações</Link>
-              <Link className="quick-action quick-action-admin" to="/dashboard/admin/payments">Todos os pagamentos</Link>
-              <Link className="quick-action quick-action-admin" to="/dashboard/accounts">Contas</Link>
-              <Link className="quick-action quick-action-admin" to="/dashboard/admin/straw-men">Gestão de laranjas</Link>
-            </>
-          ) : null}
-          {strawManPanel ? (
-            <>
-              <Link className="quick-action" to="/dashboard/straw-man/payments">Meus pagamentos</Link>
-              <Link className="quick-action" to="/dashboard/straw-man/settings">Minhas configurações</Link>
-            </>
-          ) : null}
-          {olxPanel ? (
-            <>
-              {olxOperator ? (
-                <Link className="quick-action" to="/dashboard/olx/ads">OLX — Meus anúncios</Link>
-              ) : null}
-              {adminView ? (
-                <Link className="quick-action quick-action-admin" to="/dashboard/olx/admin/ads">OLX — Gestão global</Link>
-              ) : null}
-            </>
-          ) : null}
-        </div>
-      </section>
-    </>
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader>
+          <CardTitle>Atalhos</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-wrap gap-2">
+            {operatorPanel ? (
+              <>
+                <QuickAction to="/dashboard/operations">Minhas operações</QuickAction>
+                <QuickAction to="/dashboard/payments">Meus pagamentos</QuickAction>
+                <QuickAction to="/dashboard/payments/pix">Gerar cobrança PIX</QuickAction>
+                <QuickAction to="/dashboard/gateways/frendz">Credenciais Frendz</QuickAction>
+                <QuickAction to="/dashboard/gateways/sigilopay">Credenciais SigiloPay</QuickAction>
+                <QuickAction to="/dashboard/gateways/wintech">Credenciais Wintech</QuickAction>
+              </>
+            ) : null}
+            {adminView ? (
+              <>
+                <QuickAction to="/dashboard/admin/operations" admin>Todas as operações</QuickAction>
+                <QuickAction to="/dashboard/admin/payments" admin>Todos os pagamentos</QuickAction>
+                <QuickAction to="/dashboard/accounts" admin>Contas</QuickAction>
+                <QuickAction to="/dashboard/admin/straw-men" admin>Gestão de laranjas</QuickAction>
+              </>
+            ) : null}
+            {strawManPanel ? (
+              <>
+                <QuickAction to="/dashboard/straw-man/payments">Meus pagamentos</QuickAction>
+                <QuickAction to="/dashboard/straw-man/settings">Minhas configurações</QuickAction>
+              </>
+            ) : null}
+            {olxPanel ? (
+              <>
+                {olxOperator ? (
+                  <QuickAction to="/dashboard/olx/ads">OLX — Meus anúncios</QuickAction>
+                ) : null}
+                {adminView ? (
+                  <QuickAction to="/dashboard/olx/admin/ads" admin>OLX — Gestão global</QuickAction>
+                ) : null}
+              </>
+            ) : null}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

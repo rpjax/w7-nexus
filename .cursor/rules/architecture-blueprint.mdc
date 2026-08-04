@@ -1,0 +1,32 @@
+---
+description: Nexus architecture standard — follow docs/architecture-blueprint.md for all backend domain work
+alwaysApply: true
+---
+
+# Nexus Architecture (mandatory)
+
+Source of truth: [`docs/architecture-blueprint.md`](docs/architecture-blueprint.md)
+
+Before creating or substantially changing backend domains in `Nexus.Api` (or `Refactor/Nexus.Api`), **read and obey that document**. Do not invent a competing layout.
+
+## Non-negotiables
+
+- Domain/bounded context is the structural root — never role-first trees (`Operator/Payments`).
+- Layers: `Domain/` · `Application/` · `Infrastructure/` · `Presentation/` · `Composition/`
+- Roles only in `Application/Ports/In`, `Application/UseCases`, `Application/Authorization`, `Presentation/Http`
+- One use case = one input port + one handler (no giant `IAdministrator` / `IOperator` services)
+- Handlers return `IOperationResult<T>`; `*Result` is the success payload, not a second Result framework
+- Controllers do not mutate aggregates; HTTP contracts stay in `Presentation`
+- Aggregates own invariants; no persistence/transport details in Domain
+- Event sourcing is a plug-in behind `I<Aggregate>Repository` — never expose `IEventStore` to use cases by default
+- No role-specific aggregates for the same concept; no empty optional folders; no cross-domain `Infrastructure` references
+- Domain events ≠ integration events; do not publish raw domain events as cross-context contracts
+
+## Defaults
+
+- Scaffold **minimum viable domain** only; add optional folders when needed
+- Start state-based; add ES/projections later without changing application ports
+- Group authorization policies by role/domain; split per capability only when justified
+- Existing code outside this standard is debt — migrate opportunistically; do not copy it as the model
+
+Deviations need an explicit reason in the change.

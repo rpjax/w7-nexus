@@ -1,5 +1,8 @@
 import { useState } from 'react';
 import { validateHostPattern } from '../../features/scripts/hostPatternValidation';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { cn } from '@/lib/utils';
 
 type HostPatternEditorProps = {
   patterns: string[];
@@ -48,32 +51,36 @@ export function HostPatternEditor({
   }
 
   return (
-    <div className="scripts-host-editor">
+    <div className="flex flex-col gap-2">
       {patterns.length === 0 && !compactEmpty ? (
-        <p className="scripts-host-editor__empty muted small">
-          Sem hosts — resolvido apenas via <code>GET /scripts?name=…</code>
+        <p className="rounded-lg border border-dashed border-border/60 px-3 py-2 text-sm text-muted-foreground">
+          Sem hosts — resolvido apenas via <code className="font-mono text-xs">GET /scripts?name=…</code>
         </p>
       ) : patterns.length > 0 ? (
-        <ul className="scripts-host-editor__list">
+        <ul className="flex flex-col gap-1.5">
           {patterns.map((pattern) => (
-            <li key={pattern} className="scripts-host-editor__item">
-              <code>{pattern}</code>
-              <button
+            <li
+              key={pattern}
+              className="flex items-center justify-between gap-2 rounded-lg border border-border/50 bg-muted/20 px-3 py-2"
+            >
+              <code className="font-mono text-sm">{pattern}</code>
+              <Button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                variant="ghost"
+                size="sm"
                 disabled={disabled}
                 onClick={() => removePattern(pattern)}
               >
                 Remover
-              </button>
+              </Button>
             </li>
           ))}
         </ul>
       ) : null}
 
-      <div className="scripts-host-editor__add">
-        <input
-          className="nexus-input scripts-host-editor__input"
+      <div className="flex gap-2">
+        <Input
+          className="flex-1 font-mono text-sm"
           placeholder={placeholder}
           value={draft}
           disabled={disabled}
@@ -89,21 +96,23 @@ export function HostPatternEditor({
             }
           }}
         />
-        <button
+        <Button
           type="button"
-          className="btn btn-ghost btn-sm scripts-host-editor__add-btn"
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
           disabled={disabled || !draft.trim()}
           onClick={addPattern}
         >
           Adicionar
-        </button>
+        </Button>
       </div>
 
-      {error ? <p className="scripts-host-editor__error small">{error}</p> : null}
+      {error ? <p className={cn('text-sm text-destructive')}>{error}</p> : null}
 
       {!hideHint ? (
-        <p className="scripts-host-editor__hint muted small">
-          Aceita <code>*</code>, <code>*.domínio.tld</code> ou host exato.
+        <p className="text-xs text-muted-foreground">
+          Aceita <code className="font-mono">*</code>, <code className="font-mono">*.domínio.tld</code> ou host exato.
         </p>
       ) : null}
     </div>

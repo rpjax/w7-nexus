@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Check, ChevronRight, Link2, Plus, Trash2, X } from 'lucide-react';
 import type { ProfitShareCutInput } from '../../api/types';
 import {
   clampCutToBudget,
@@ -17,9 +18,32 @@ import {
   splitEvenlyPercentages,
   sumProfitSharePercentages,
 } from '../../utils/profitShare';
-import { Icon, IconButton } from '../IconButton';
-import { ConfirmDialog } from '../ConfirmDialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { shortId } from '../../utils/format';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Progress } from '@/components/ui/progress';
+import { Separator } from '@/components/ui/separator';
+import { cn } from '@/lib/utils';
 
 export type ProfitShareCutDraft = ProfitShareCutInput & {
   label?: string;
@@ -83,47 +107,40 @@ function ProfitShareCutRow({
   const accountLabel = cut.label || (cut.accountId ? shortId(cut.accountId, 18) : 'Escolher conta');
   const hasAccount = Boolean(cut.accountId.trim());
   const sliderValue = Math.round(cut.percentage);
-  const fillPct = Math.min(Math.max(sliderValue, 0), PROFIT_SHARE_MAX_CUT);
 
   function handleSliderChange(raw: number) {
     onChange(clampCutToBudget(cuts, index, Math.round(raw)));
   }
 
   return (
-    <li className="ps-cut">
-      {/* Row 1: account button | pct input | divider | trash */}
-      <div className="ps-cut__top">
-        {/* Left: clearly a button — avatar + name + chevron */}
-        <button
+    <li className="space-y-2 rounded-lg border border-border/60 bg-background/40 p-3">
+      <div className="flex items-center gap-2">
+        <Button
           type="button"
-          className={`ps-cut__account${hasAccount ? '' : ' is-empty'}`}
+          variant="outline"
+          className={cn(
+            'h-auto min-w-0 flex-1 justify-start gap-2 px-2 py-1.5 font-normal',
+            !hasAccount && 'text-muted-foreground',
+          )}
           onClick={onPickAccount}
           disabled={busy}
           title={hasAccount ? cut.accountId : 'Vincular conta'}
         >
-          <span className="admin-op-person-avatar admin-op-person-avatar--sm" aria-hidden="true">
-            {hasAccount ? personInitial(cut.label ?? cut.accountId) : <Icon name="link" />}
+          <Avatar size="sm">
+            <AvatarFallback>
+              {hasAccount ? personInitial(cut.label ?? cut.accountId) : <Link2 className="size-3" />}
+            </AvatarFallback>
+          </Avatar>
+          <span className="min-w-0 flex-1 truncate text-left">
+            {hasAccount ? accountLabel : 'Vincular conta'}
           </span>
-          <span className="ps-cut__account-body">
-            {hasAccount ? (
-              <>
-                <span className="ps-cut__account-name">{accountLabel}</span>
-                <Icon name="chevron-right" className="ps-cut__account-chevron" />
-              </>
-            ) : (
-              <>
-                <span className="ps-cut__account-name">Vincular conta</span>
-                <Icon name="chevron-right" className="ps-cut__account-chevron" />
-              </>
-            )}
-          </span>
-        </button>
+          <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+        </Button>
 
-        {/* Right: editable pct pill */}
-        <label className="ps-cut__pct-pill" htmlFor={`ps-input-${index}`}>
-          <input
+        <label className="flex items-center gap-0.5 rounded-md border border-border/60 bg-card px-2 py-1" htmlFor={`ps-input-${index}`}>
+          <Input
             id={`ps-input-${index}`}
-            className="ps-cut__pct-input"
+            className="h-7 w-12 border-0 bg-transparent p-0 text-center shadow-none focus-visible:ring-0"
             type="text"
             inputMode="decimal"
             enterKeyHint="done"
@@ -137,32 +154,27 @@ function ProfitShareCutRow({
               if (e.key === 'Enter') { e.preventDefault(); commitText(text); }
             }}
           />
-          <span className="ps-cut__pct-sym" aria-hidden="true">%</span>
+          <span className="text-xs text-muted-foreground" aria-hidden="true">%</span>
         </label>
 
-        {/* Divider + trash — clearly separated */}
-        <span className="ps-cut__sep" aria-hidden="true" />
-        <IconButton
-          icon="trash"
-          label="Remover fatia"
-          variant="danger"
-          className="ps-cut__remove"
+        <Separator orientation="vertical" className="h-6" />
+        <Button
+          type="button"
+          variant="destructive"
+          size="icon-sm"
+          aria-label="Remover fatia"
           disabled={!canRemove || busy}
           onClick={onRemove}
-        />
+        >
+          <Trash2 className="size-4" />
+        </Button>
       </div>
 
-      {/* Row 2: full-width slider */}
-      <div
-        className="ps-cut__slider-row"
-        style={{ ['--ps-fill' as string]: `${fillPct}%` }}
-      >
-        <div className="ps-cut__track" aria-hidden="true">
-          <span className="ps-cut__fill" />
-        </div>
+      <div className="space-y-1">
+        <Progress value={Math.min(Math.max(sliderValue, 0), PROFIT_SHARE_MAX_CUT)} className="h-1.5" />
         <input
           id={`ps-slider-${index}`}
-          className="ps-cut__slider"
+          className="w-full accent-primary"
           type="range"
           min={0}
           max={PROFIT_SHARE_MAX_CUT}
@@ -199,8 +211,6 @@ export function ProfitShareRuleModal({
       setPendingRemoveIndex(null);
     }
   }, [open]);
-
-  if (!open) return null;
 
   const total = sumProfitSharePercentages(cuts);
   const totalValid = isProfitShareTotalValid(total);
@@ -288,119 +298,121 @@ export function ProfitShareRuleModal({
 
   return (
     <>
-      <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-        <div
-          className="dialog-card dialog-card--wide profit-share-modal"
-          role="dialog"
-          aria-modal="true"
-          aria-labelledby="profit-share-modal-title"
-          onClick={(e) => e.stopPropagation()}
-        >
-        <header className="account-picker-header profit-share-modal__head">
-          <div className="account-picker-heading">
-            <h3 id="profit-share-modal-title" className="account-picker-title">Regra de repasse</h3>
-            <p className="account-picker-sub">Operador: {operatorName}</p>
-          </div>
-          <IconButton icon="x" label="Fechar" onClick={onClose} />
-        </header>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-xl" showCloseButton={false}>
+          <DialogHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <DialogTitle>Regra de repasse</DialogTitle>
+                <DialogDescription>Operador: {operatorName}</DialogDescription>
+              </div>
+              <Button type="button" variant="ghost" size="icon-sm" aria-label="Fechar" onClick={onClose}>
+                <X className="size-4" />
+              </Button>
+            </div>
+          </DialogHeader>
 
-        <div className="profit-share-modal__body">
-          <div className={`ps-total ps-total--${totalValid ? 'ok' : 'warn'}${totalComplete ? ' ps-total--complete' : ''}`}>
-            <div className="ps-total__row">
-              <span className="ps-total__label">Total</span>
-              <strong className="ps-total__value">{formatProfitShareInput(total) || '0'}%</strong>
-              {totalComplete ? (
-                <span className="ps-total__badge">
-                  <Icon name="check" />
-                  100%
-                </span>
-              ) : remaining >= PROFIT_SHARE_MIN_CUT ? (
-                <span className="ps-total__remaining muted small">Faltam {formatProfitShareInput(remaining)}%</span>
-              ) : total > PROFIT_SHARE_MAX_CUT ? (
-                <span className="ps-total__remaining ps-total__remaining--over">Excedeu {formatProfitShareInput(total - PROFIT_SHARE_MAX_CUT)}%</span>
+          <div className="space-y-4">
+            <div
+              className={cn(
+                'space-y-2 rounded-lg border px-3 py-2',
+                totalValid ? 'border-success/40 bg-success/5' : 'border-warning/40 bg-warning/5',
+              )}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <strong className="text-base text-foreground">{formatProfitShareInput(total) || '0'}%</strong>
+                {totalComplete ? (
+                  <Badge variant="success" className="gap-1">
+                    <Check className="size-3" />
+                    100%
+                  </Badge>
+                ) : remaining >= PROFIT_SHARE_MIN_CUT ? (
+                  <span className="text-sm text-muted-foreground">Faltam {formatProfitShareInput(remaining)}%</span>
+                ) : total > PROFIT_SHARE_MAX_CUT ? (
+                  <span className="text-sm text-destructive">Excedeu {formatProfitShareInput(total - PROFIT_SHARE_MAX_CUT)}%</span>
+                ) : null}
+              </div>
+              <Progress value={totalProgress} className={cn('h-1.5', !totalValid && '[&_[data-slot=progress-indicator]]:bg-warning')} />
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={addCut} disabled={busy}>
+                <Plus className="size-4" />
+                Fatia
+              </Button>
+              {cuts.length >= 2 ? (
+                <Button type="button" variant="outline" size="sm" onClick={splitEvenly} disabled={busy}>
+                  Dividir igual
+                </Button>
+              ) : null}
+              {!totalValid && remaining >= PROFIT_SHARE_MIN_CUT && cuts.length > 0 ? (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => fillRemaining(cuts.length - 1)}
+                  disabled={busy}
+                >
+                  Completar 100%
+                </Button>
               ) : null}
             </div>
-            <div className="ps-total__bar" aria-hidden="true">
-              <span className="ps-total__fill" style={{ width: `${totalProgress}%` }} />
-              <span className="ps-total__target" />
-            </div>
+
+            {cuts.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Nenhuma fatia. Toque em &quot;Fatia&quot; para começar.</p>
+            ) : (
+              <ul className="space-y-2" aria-label="Fatias de repasse">
+                {cuts.map((cut, index) => (
+                  <ProfitShareCutRow
+                    key={`${cut.accountId}-${index}`}
+                    index={index}
+                    cut={cut}
+                    cuts={cuts}
+                    busy={busy}
+                    canRemove={cuts.length > 1}
+                    onPickAccount={() => onPickAccount(index)}
+                    onRemove={() => requestRemoveCut(index)}
+                    onChange={(value) => updatePercentage(index, value)}
+                  />
+                ))}
+              </ul>
+            )}
+
+            {error ? <p className="text-sm text-destructive" role="alert">{error}</p> : null}
           </div>
 
-          <div className="ps-toolbar">
-            <button
-              type="button"
-              className="btn btn-ghost btn-small btn-with-icon"
-              onClick={addCut}
-              disabled={busy}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={handleSave} disabled={busy || !totalValid}>
+              {busy ? 'Salvando…' : 'Salvar repasse'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={pendingRemoveIndex !== null} onOpenChange={(open) => { if (!open) setPendingRemoveIndex(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover fatia</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Deseja remover a fatia de repasse${pendingCutLabel ? ` de ${pendingCutLabel}` : ''}?`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (pendingRemoveIndex !== null) removeCut(pendingRemoveIndex);
+              }}
             >
-              <Icon name="plus" />
-              Fatia
-            </button>
-            {cuts.length >= 2 ? (
-              <button
-                type="button"
-                className="btn btn-ghost btn-small"
-                onClick={splitEvenly}
-                disabled={busy}
-              >
-                Dividir igual
-              </button>
-            ) : null}
-            {!totalValid && remaining >= PROFIT_SHARE_MIN_CUT && cuts.length > 0 ? (
-              <button
-                type="button"
-                className="btn btn-ghost btn-small"
-                onClick={() => fillRemaining(cuts.length - 1)}
-                disabled={busy}
-              >
-                Completar 100%
-              </button>
-            ) : null}
-          </div>
-
-          {cuts.length === 0 ? (
-            <p className="admin-op-empty muted small">Nenhuma fatia. Toque em &quot;Fatia&quot; para começar.</p>
-          ) : (
-            <ul className="ps-cut-list" aria-label="Fatias de repasse">
-              {cuts.map((cut, index) => (
-                <ProfitShareCutRow
-                  key={`${cut.accountId}-${index}`}
-                  index={index}
-                  cut={cut}
-                  cuts={cuts}
-                  busy={busy}
-                  canRemove={cuts.length > 1}
-                  onPickAccount={() => onPickAccount(index)}
-                  onRemove={() => requestRemoveCut(index)}
-                  onChange={(value) => updatePercentage(index, value)}
-                />
-              ))}
-            </ul>
-          )}
-
-          {error ? <p className="profit-share-modal__error" role="alert">{error}</p> : null}
-        </div>
-
-        <footer className="profit-share-modal__foot">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-          <button type="button" className="btn btn-primary" onClick={handleSave} disabled={busy || !totalValid}>
-            {busy ? 'Salvando…' : 'Salvar repasse'}
-          </button>
-        </footer>
-        </div>
-      </div>
-
-      <ConfirmDialog
-        open={pendingRemoveIndex !== null}
-        title="Remover fatia"
-        message={`Deseja remover a fatia de repasse${pendingCutLabel ? ` de ${pendingCutLabel}` : ''}?`}
-        onCancel={() => setPendingRemoveIndex(null)}
-        onConfirm={() => {
-          if (pendingRemoveIndex !== null) removeCut(pendingRemoveIndex);
-        }}
-      />
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

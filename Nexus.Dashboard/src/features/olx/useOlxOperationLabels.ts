@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { searchAdministratorAccounts } from '../../api/administrator/accounts';
 import { searchAdministratorOperations } from '../../api/administrator/operations';
 import { isAdministrator } from '../../auth/roles';
@@ -10,37 +11,27 @@ export function useOlxOperationLabels(
 ) {
   const { user } = useAuth();
   const adminView = isAdministrator(user);
-  const [labels, setLabels] = useState<Record<string, string>>({});
 
   const operationIds = useMemo(
     () => [...new Set(rows.map((row) => row.operationId).filter(Boolean))].sort().join(','),
     [rows],
   );
 
-  useEffect(() => {
-    const ids = operationIds ? operationIds.split(',') : [];
-    if (!adminView || ids.length === 0) {
-      setLabels({});
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
+  const { data: labels = {} } = useQuery({
+    queryKey: ['olx-operation-labels', operationIds],
+    enabled: adminView && Boolean(operationIds),
+    queryFn: async () => {
+      const ids = operationIds.split(',');
       const result = await searchAdministratorOperations({ limit: 200, offset: 0, keyword: null });
-      if (!result.ok || cancelled) return;
+      if (!result.ok) return {};
 
       const next: Record<string, string> = {};
       for (const operation of result.data?.items ?? []) {
         if (ids.includes(operation.id)) next[operation.id] = operation.name;
       }
-      setLabels(next);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [adminView, operationIds]);
+      return next;
+    },
+  });
 
   return useMemo(
     () => ({ ...labels, ...extraLabels }),
@@ -61,25 +52,19 @@ export function useOlxOperatorLabels(
 ) {
   const { user } = useAuth();
   const adminView = isAdministrator(user);
-  const [labels, setLabels] = useState<Record<string, string>>({});
 
   const operatorIds = useMemo(
     () => [...new Set(rows.map((row) => row.operatorId).filter(Boolean) as string[])].sort().join(','),
     [rows],
   );
 
-  useEffect(() => {
-    const ids = operatorIds ? operatorIds.split(',') : [];
-    if (!adminView || ids.length === 0) {
-      setLabels({});
-      return;
-    }
-
-    let cancelled = false;
-
-    void (async () => {
+  const { data: labels = {} } = useQuery({
+    queryKey: ['olx-operator-labels', operatorIds],
+    enabled: adminView && Boolean(operatorIds),
+    queryFn: async () => {
+      const ids = operatorIds.split(',');
       const result = await searchAdministratorAccounts({ limit: 200, offset: 0, keyword: null });
-      if (!result.ok || cancelled) return;
+      if (!result.ok) return {};
 
       const next: Record<string, string> = {};
       for (const account of result.data?.items ?? []) {
@@ -87,13 +72,9 @@ export function useOlxOperatorLabels(
           next[account.id] = account.username;
         }
       }
-      setLabels(next);
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [adminView, operatorIds]);
+      return next;
+    },
+  });
 
   return useMemo(
     () => ({ ...labels, ...extraLabels }),

@@ -9,8 +9,17 @@ import {
 } from '../../api/administrator/payments';
 import { searchAdministratorOperatorsPicker } from '../../api/accountPickerSources';
 import type { PaymentRow } from '../../api/types';
-import { AccountPickerModal } from '../../components/AccountPickerModal';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
+import { AccountPickerDialog } from '@/components/data/entity-picker-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNotifications } from '../../notifications/NotificationContext';
 import {
   canKillPayment,
@@ -20,6 +29,18 @@ import {
   needsOperatorBind,
   needsSplitsForPay,
 } from './PaymentDetailPanel';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 type UsePaymentAdminActionsOptions = {
   payment: PaymentRow | null;
@@ -146,86 +167,102 @@ export function usePaymentAdminActions({
   }
 
   const actionBar = payment ? (
-    <section className="payment-admin-actions">
-      <h3 className="payment-detail-panel__section-title">Transições disponíveis</h3>
-      {transitions.needsOperator ? (
-        <p className="payment-admin-actions__hint muted small">
-          Vincule um operador antes de marcar como pago.
-        </p>
-      ) : null}
-      {transitions.needsSplits ? (
-        <p className="payment-admin-actions__hint muted small">
-          Este pagamento ainda não possui splits de repasse configurados.
-        </p>
-      ) : null}
-      <div className="payment-admin-actions__buttons">
+    <Card>
+      <CardContent className="grid gap-3 p-4">
+        <h3 className="text-sm font-semibold text-foreground">Transições disponíveis</h3>
         {transitions.needsOperator ? (
-          <button type="button" className="btn btn-secondary btn-small" disabled={busy} onClick={() => setBindOperatorOpen(true)}>
-            Vincular operador
-          </button>
+          <p className="text-sm text-muted-foreground">
+            Vincule um operador antes de marcar como pago.
+          </p>
         ) : null}
-        <button type="button" className="btn btn-primary btn-small" disabled={busy || !transitions.canPay} onClick={() => void handlePay()}>
-          Marcar como pago
-        </button>
-        <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canRefund} onClick={() => setRefundOpen(true)}>
-          Reembolsar
-        </button>
-        <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canMarkDistributed} onClick={() => void handleMarkDistributed()}>
-          Marcar como repassado
-        </button>
-        <button type="button" className="btn btn-secondary btn-small" disabled={busy || !transitions.canKill} onClick={() => setKillOpen(true)}>
-          Cancelar
-        </button>
-        <button type="button" className="btn btn-danger btn-small" disabled={busy || !transitions.canDelete} onClick={() => setDeleteOpen(true)}>
-          Excluir
-        </button>
-      </div>
-    </section>
+        {transitions.needsSplits ? (
+          <p className="text-sm text-muted-foreground">
+            Este pagamento ainda não possui splits de repasse configurados.
+          </p>
+        ) : null}
+        <div className="flex flex-col gap-2">
+          {transitions.needsOperator ? (
+            <Button type="button" variant="secondary" size="sm" disabled={busy} onClick={() => setBindOperatorOpen(true)}>
+              Vincular operador
+            </Button>
+          ) : null}
+          <Button type="button" size="sm" disabled={busy || !transitions.canPay} onClick={() => void handlePay()}>
+            Marcar como pago
+          </Button>
+          <Button type="button" variant="secondary" size="sm" disabled={busy || !transitions.canRefund} onClick={() => setRefundOpen(true)}>
+            Reembolsar
+          </Button>
+          <Button type="button" variant="secondary" size="sm" disabled={busy || !transitions.canMarkDistributed} onClick={() => void handleMarkDistributed()}>
+            Marcar como repassado
+          </Button>
+          <Button type="button" variant="secondary" size="sm" disabled={busy || !transitions.canKill} onClick={() => setKillOpen(true)}>
+            Cancelar
+          </Button>
+          <Button type="button" variant="destructive" size="sm" disabled={busy || !transitions.canDelete} onClick={() => setDeleteOpen(true)}>
+            Excluir
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
   ) : null;
 
   const modals: ReactNode = (
     <>
-      <ConfirmDialog
-        open={refundOpen}
-        title="Reembolsar pagamento"
-        message="Confirma o reembolso deste pagamento? Não é possível reembolsar pagamentos já sacados do gateway."
-        onCancel={() => setRefundOpen(false)}
-        onConfirm={() => void handleRefund()}
-      />
-      <ConfirmDialog
-        open={deleteOpen}
-        title="Excluir pagamento"
-        message="Esta ação remove o registro do repositório. Deseja continuar?"
-        onCancel={() => setDeleteOpen(false)}
-        onConfirm={() => void handleDelete()}
-      />
-      {killOpen ? (
-        <div className="modal-backdrop" role="presentation">
-          <div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="kill-payment-title">
-            <h2 id="kill-payment-title" className="modal-card__title">Cancelar pagamento</h2>
-            <p className="modal-card__lead muted">Informe o motivo — é obrigatório no domínio.</p>
-            <label className="field">
-              <span className="field-label">Motivo</span>
-              <textarea
-                className="field-input"
-                rows={3}
-                value={killReason}
-                onChange={(event) => setKillReason(event.target.value)}
-                placeholder="Descreva o motivo do cancelamento…"
-              />
-            </label>
-            <div className="modal-card__actions">
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => setKillOpen(false)}>
-                Voltar
-              </button>
-              <button type="button" className="btn btn-danger" disabled={busy} onClick={() => void handleKill()}>
-                Cancelar pagamento
-              </button>
-            </div>
+      <AlertDialog open={refundOpen} onOpenChange={(open) => { if (!open) setRefundOpen(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Reembolsar pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Confirma o reembolso deste pagamento? Não é possível reembolsar pagamentos já sacados do gateway.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleRefund()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <AlertDialog open={deleteOpen} onOpenChange={(open) => { if (!open) setDeleteOpen(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir pagamento</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove o registro do repositório. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void handleDelete()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      <Dialog open={killOpen} onOpenChange={(open) => { if (!open) setKillOpen(false); }}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Cancelar pagamento</DialogTitle>
+            <DialogDescription>Informe o motivo — é obrigatório no domínio.</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="kill-reason">Motivo</Label>
+            <Textarea
+              id="kill-reason"
+              rows={3}
+              value={killReason}
+              onChange={(event) => setKillReason(event.target.value)}
+              placeholder="Descreva o motivo do cancelamento…"
+            />
           </div>
-        </div>
-      ) : null}
-      <AccountPickerModal
+          <DialogFooter>
+            <Button type="button" variant="ghost" disabled={busy} onClick={() => setKillOpen(false)}>
+              Voltar
+            </Button>
+            <Button type="button" variant="destructive" disabled={busy} onClick={() => void handleKill()}>
+              Cancelar pagamento
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <AccountPickerDialog
         open={bindOperatorOpen}
         title="Vincular operador"
         onClose={() => setBindOperatorOpen(false)}

@@ -1,6 +1,8 @@
 import { lazy, Suspense, useMemo } from 'react';
 import type { Monaco } from '@monaco-editor/react';
 import type { editor } from 'monaco-editor';
+import { Card } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 const MonacoEditor = lazy(() => import('@monaco-editor/react'));
 
@@ -107,8 +109,13 @@ export function CodeStudioPanel({
   );
 
   return (
-    <div className={`scripts-code-studio ${readOnly ? 'scripts-code-studio--readonly' : ''}`}>
-      <Suspense fallback={<div className="scripts-code-studio__loading muted">Carregando editor…</div>}>
+    <Card
+      className={cn(
+        'overflow-hidden rounded-lg border-border/60 bg-card py-0 ring-0',
+        readOnly && 'opacity-95',
+      )}
+    >
+      <Suspense fallback={<div className="px-4 py-8 text-sm text-muted-foreground">Carregando editor…</div>}>
         <MonacoEditor
           height={height}
           defaultLanguage="javascript"
@@ -119,6 +126,6 @@ export function CodeStudioPanel({
           options={options}
         />
       </Suspense>
-    </div>
+    </Card>
   );
 }

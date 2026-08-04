@@ -1,14 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
-import { searchAdministratorPayments } from '../../api/administrator/payments';
-import type { PaymentRow } from '../../api/types';
-import { EmptyState } from '../../components/EmptyState';
-import { PaginationBar } from '../../components/ListControls';
-import { PageHeading } from '../../layouts/PageHeading';
-import { PaymentListItem } from '../../features/payments/PaymentListItem';
-import { useNotifications } from '../../notifications/NotificationContext';
-
-const PAGE_SIZE = 20;
+import { useMemo, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { searchAdministratorPayments } from '@/api/administrator/payments';
+import type { PaymentRow } from '@/api/types';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { createPaymentColumns } from '@/features/payments/payment-columns';
+import { detailPath } from '@/features/payments/paymentPaths';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 const STATUS_OPTIONS = [
   { value: '', label: 'Todos os status' },
@@ -30,149 +38,152 @@ const DISTRIBUTION_OPTIONS = [
   { value: 'Complete', label: 'Repassado' },
 ];
 
+const ALL_VALUE = '__all__';
+
+function toSelectValue(value: string): string {
+  return value || ALL_VALUE;
+}
+
+function fromSelectValue(value: string): string {
+  return value === ALL_VALUE ? '' : value;
+}
+
 export function AdminPaymentsPage() {
-  const { notifyError } = useNotifications();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
+  const navigate = useNavigate();
   const [statusFilter, setStatusFilter] = useState('');
   const [settlementFilter, setSettlementFilter] = useState('');
   const [distributionFilter, setDistributionFilter] = useState('');
   const [appliedStatus, setAppliedStatus] = useState('');
   const [appliedSettlement, setAppliedSettlement] = useState('');
   const [appliedDistribution, setAppliedDistribution] = useState('');
-  const [rows, setRows] = useState<PaymentRow[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
 
-  const load = useCallback(async (
-    page: number,
-    keyword: string,
-    status: string,
-    settlement: string,
-    distribution: string,
-  ) => {
-    const result = await searchAdministratorPayments({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword: keyword.trim() || null,
-      status: status || null,
-      settlementStatus: settlement || null,
-      distributionStatus: distribution || null,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      setRows([]);
-      setTotalItems(0);
-      return;
-    }
-    setRows(result.data?.items ?? []);
-    setTotalItems(result.data?.total ?? 0);
-  }, [notifyError]);
+  const {
+    search,
+    setSearch,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery<PaymentRow>({
+    queryKey: ['admin-payments', appliedStatus, appliedSettlement, appliedDistribution],
+    fetchPage: async (params) => adaptSearchResponse(await searchAdministratorPayments({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword,
+      status: appliedStatus || null,
+      settlementStatus: appliedSettlement || null,
+      distributionStatus: appliedDistribution || null,
+    })),
+  });
 
-  useEffect(() => {
-    void load(currentPage, query, appliedStatus, appliedSettlement, appliedDistribution);
-  }, [currentPage, query, appliedStatus, appliedSettlement, appliedDistribution, load]);
+  const columns = useMemo(() => createPaymentColumns('global-admin'), []);
 
   function handleSearch() {
-    setCurrentPage(1);
-    setQuery(search);
     setAppliedStatus(statusFilter);
     setAppliedSettlement(settlementFilter);
     setAppliedDistribution(distributionFilter);
+    submitSearch();
   }
 
   return (
-    <div className="ops-page">
-      <PageHeading
-        kicker="Administração"
-        kickerVariant="admin"
-        title="Todos os pagamentos"
-        subtitle="Visão global do repositório com filtros e transições de domínio (pagar, reembolsar, cancelar)."
-        backLink={{ to: '/dashboard', label: 'Visão geral' }}
-      />
-
-      <section className="ops-page__toolbar bank-managed-section">
-        <div className="ops-page__toolbar-head">
-          <p className="ops-page__count muted small">{totalItems} registro(s)</p>
-          <Link className="btn btn-primary btn-small" to="/dashboard/payments/pix">
-            Gerar PIX
-          </Link>
-        </div>
-        <form
-          className="payment-search-form"
-          onSubmit={(event) => {
-            event.preventDefault();
-            handleSearch();
-          }}
-        >
-          <label className="field payment-search-form__keyword">
-            <span className="field-label">Buscar</span>
-            <input
-              className="field-input"
-              value={search}
-              onChange={(event) => setSearch(event.target.value)}
-              placeholder="ID, operação, transação gateway, operador ou laranja…"
-            />
-          </label>
-          <label className="field">
-            <span className="field-label">Status</span>
-            <select className="field-input" value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
-              {STATUS_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Liquidação</span>
-            <select className="field-input" value={settlementFilter} onChange={(event) => setSettlementFilter(event.target.value)}>
-              {SETTLEMENT_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <label className="field">
-            <span className="field-label">Repasse</span>
-            <select className="field-input" value={distributionFilter} onChange={(event) => setDistributionFilter(event.target.value)}>
-              {DISTRIBUTION_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>{option.label}</option>
-              ))}
-            </select>
-          </label>
-          <div className="payment-search-form__actions">
-            <button type="submit" className="btn btn-primary btn-small">Buscar</button>
-            <button
-              type="button"
-              className="btn btn-ghost btn-small"
-              onClick={() => void load(currentPage, query, appliedStatus, appliedSettlement, appliedDistribution)}
-            >
-              Atualizar
-            </button>
-          </div>
-        </form>
-      </section>
-
-      {rows.length === 0 ? (
-        <EmptyState
-          title="Nenhum pagamento encontrado"
-          message="Ajuste os filtros ou gere uma cobrança em Gerar PIX."
-        />
-      ) : (
-        <div className="ops-list payment-list">
-          {rows.map((row) => (
-            <PaymentListItem key={row.id} payment={row} scope="global-admin" />
-          ))}
-        </div>
+    <ListPageLayout
+      className="rounded-lg border border-warning/40"
+      kicker="Administração"
+      kickerVariant="admin"
+      title="Todos os pagamentos"
+      description="Visão global do repositório com filtros e transições de domínio (pagar, reembolsar, cancelar)."
+      breadcrumbs={[
+        { label: 'Dashboard', href: '/dashboard' },
+        { label: 'Todos os pagamentos' },
+      ]}
+      searchId="admin-payment-search"
+      searchLabel="Buscar"
+      searchPlaceholder="ID, operação, transação gateway, operador ou laranja…"
+      searchValue={search}
+      onSearchChange={setSearch}
+      onSearch={handleSearch}
+      onRefresh={() => void refetch()}
+      totalLabel={`${totalItems} registro(s)`}
+      createAction={(
+        <Button size="sm" asChild>
+          <Link to="/dashboard/payments/pix">Gerar PIX</Link>
+        </Button>
       )}
-
-      {totalItems > 0 ? (
-        <PaginationBar
+      toolbarExtra={(
+        <>
+          <div className="hidden w-40 space-y-2 lg:block">
+            <Label>Status</Label>
+            <Select value={toSelectValue(statusFilter)} onValueChange={(value) => setStatusFilter(fromSelectValue(value))}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((option) => (
+                  <SelectItem key={option.value || 'all'} value={toSelectValue(option.value)}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="hidden w-40 space-y-2 lg:block">
+            <Label>Liquidação</Label>
+            <Select value={toSelectValue(settlementFilter)} onValueChange={(value) => setSettlementFilter(fromSelectValue(value))}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {SETTLEMENT_OPTIONS.map((option) => (
+                  <SelectItem key={option.value || 'all'} value={toSelectValue(option.value)}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="hidden w-40 space-y-2 lg:block">
+            <Label>Repasse</Label>
+            <Select value={toSelectValue(distributionFilter)} onValueChange={(value) => setDistributionFilter(fromSelectValue(value))}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {DISTRIBUTION_OPTIONS.map((option) => (
+                  <SelectItem key={option.value || 'all'} value={toSelectValue(option.value)}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </>
+      )}
+      isLoading={isLoading}
+      error={error}
+      isEmpty={!isLoading && !error && items.length === 0}
+      emptyTitle="Nenhum pagamento encontrado"
+      emptyMessage="Ajuste os filtros ou gere uma cobrança em Gerar PIX."
+      footer={totalItems > 0 ? (
+        <ListPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPrev={() => setCurrentPage((page) => Math.max(1, page - 1))}
-          onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+          onPrev={goPrev}
+          onNext={goNext}
         />
-      ) : null}
-    </div>
+      ) : undefined}
+    >
+      <DataTable
+        columns={columns}
+        data={items}
+        getRowId={(row) => row.id}
+        onRowClick={(row) => navigate(detailPath('global-admin', row.id))}
+      />
+    </ListPageLayout>
   );
 }

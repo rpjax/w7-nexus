@@ -1,6 +1,6 @@
 # Nexus.ReverseProxy (webserver)
 
-Traefik edge proxy. Terminates TLS and routes by host via env vars set in `nexus.deploy.json`:
+Traefik edge proxy. Terminates TLS and routes by host via env vars set in `nexus.dockup.json`:
 
 | Variable | Purpose |
 |----------|---------|
@@ -15,6 +15,6 @@ At container start, `docker-entrypoint.sh` runs `envsubst` on `traefik.yml.templ
 ## Build
 
 ```bash
-cd deploy
-node deploy.mjs env=prod only=webserver
+cd dockup
+dockup deploy --env prod --only webserver --root ..
 ```

@@ -41,9 +41,17 @@ import {
 import type { OperationDetails, OperationWithLedTeamsDetails, OperatorDetails, ProfitShareCutInput } from '../../api/types';
 import type { AdminOperationCardActions } from '../../components/admin/AdminOperationCard';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
-import { AccountPickerModal } from '../../components/AccountPickerModal';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { GatewayCredentialPickerModal } from '../../components/GatewayCredentialPickerModal';
+import { AccountPickerDialog, GatewayCredentialPickerDialog } from '@/components/data/entity-picker-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNotifications } from '../../notifications/NotificationContext';
 import { fetchOperationById } from './fetchOperationById';
 import { cardScope, type OperationScope } from './operationPaths';
@@ -426,18 +434,25 @@ export function useOperationScopeActions({
 
   const modals: ReactNode = mode === 'list' ? (
     scope === 'global-admin' ? (
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Excluir operação"
-        message="Esta ação remove a operação do sistema. Deseja continuar?"
-        onCancel={() => { setDeleteDialogOpen(false); setDeleteOperationId(''); }}
-        onConfirm={() => void confirmDeleteOperation()}
-      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open) { setDeleteDialogOpen(false); setDeleteOperationId(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir operação</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove a operação do sistema. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDeleteOperation()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     ) : null
   ) : (
     <>
       {scope === 'global-admin' ? (
-        <AccountPickerModal
+        <AccountPickerDialog
           open={accountPickerMode?.kind === 'admin'}
           onClose={() => setAccountPickerMode(null)}
           searchAccounts={searchAdministratorAccountsPicker}
@@ -451,7 +466,7 @@ export function useOperationScopeActions({
 
       {scope === 'team-leader' ? (
         <>
-          <AccountPickerModal
+          <AccountPickerDialog
             open={accountPickerMode?.kind === 'operator'}
             onClose={() => setAccountPickerMode(null)}
             searchAccounts={operatorPickerSearch}
@@ -459,7 +474,7 @@ export function useOperationScopeActions({
             subtitle="Conta que operará nesta equipe."
             onSelected={(row) => void handleAccountPicked(row.id, row.username)}
           />
-          <AccountPickerModal
+          <AccountPickerDialog
             open={accountPickerMode?.kind === 'profitShareCut'}
             onClose={() => setAccountPickerMode(null)}
             searchAccounts={profitSharePickerSearch}
@@ -484,18 +499,25 @@ export function useOperationScopeActions({
       ) : null}
 
       {scope === 'global-admin' ? (
-        <ConfirmDialog
-          open={deleteDialogOpen}
-          title="Excluir operação"
-          message="Esta ação remove a operação do sistema. Deseja continuar?"
-          onCancel={() => { setDeleteDialogOpen(false); setDeleteOperationId(''); }}
-          onConfirm={() => void confirmDeleteOperation()}
-        />
+        <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open) { setDeleteDialogOpen(false); setDeleteOperationId(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir operação</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação remove a operação do sistema. Deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void confirmDeleteOperation()}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ) : null}
 
       {scope === 'global-admin' || scope === 'operation-admin' ? (
         <>
-          <AccountPickerModal
+          <AccountPickerDialog
             open={accountPickerMode?.kind === 'strawMan'}
             onClose={() => setAccountPickerMode(null)}
             searchAccounts={strawManPickerSearch}
@@ -503,7 +525,7 @@ export function useOperationScopeActions({
             subtitle="Conta laranja usada na estratégia de gateway da operação."
             onSelected={(row) => void handleAccountPicked(row.id, row.username)}
           />
-          <GatewayCredentialPickerModal
+          <GatewayCredentialPickerDialog
             open={gatewayPickerOpen}
             onClose={() => setGatewayPickerOpen(false)}
             title="Vincular credencial"
@@ -521,23 +543,37 @@ export function useOperationScopeActions({
       ) : null}
 
       {scope === 'global-admin' || scope === 'operation-admin' ? (
-        <ConfirmDialog
-          open={deleteTeamDialogOpen}
-          title="Excluir equipe"
-          message="Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?"
-          onCancel={() => { setDeleteTeamDialogOpen(false); setDeleteTeamId(''); }}
-          onConfirm={() => void confirmDeleteTeam()}
-        />
+        <AlertDialog open={deleteTeamDialogOpen} onOpenChange={(open) => { if (!open) { setDeleteTeamDialogOpen(false); setDeleteTeamId(''); } }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Excluir equipe</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void confirmDeleteTeam()}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ) : null}
 
       {scope === 'team-leader' ? (
-        <ConfirmDialog
-          open={unassignOperatorTarget !== null}
-          title="Remover operador"
-          message={`Deseja remover${unassignOperatorName ? ` ${unassignOperatorName}` : ' este operador'} da equipe? A regra de repasse também será excluída.`}
-          onCancel={() => setUnassignOperatorTarget(null)}
-          onConfirm={() => void confirmUnassignOperator()}
-        />
+        <AlertDialog open={unassignOperatorTarget !== null} onOpenChange={(open) => { if (!open) setUnassignOperatorTarget(null); }}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Remover operador</AlertDialogTitle>
+              <AlertDialogDescription>
+                {`Deseja remover${unassignOperatorName ? ` ${unassignOperatorName}` : ' este operador'} da equipe? A regra de repasse também será excluída.`}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={() => void confirmUnassignOperator()}>Confirmar</AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       ) : null}
     </>
   );

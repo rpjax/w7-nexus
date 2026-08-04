@@ -36,9 +36,17 @@ import {
 import type { OperatorDetails, ProfitShareCutInput, TeamDetails } from '../../api/types';
 import type { AdminTeamPanelActions } from '../../components/admin/adminTeamTypes';
 import { ProfitShareRuleModal, type ProfitShareCutDraft } from '../../components/admin/ProfitShareRuleModal';
-import { AccountPickerModal } from '../../components/AccountPickerModal';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { GatewayCredentialPickerModal } from '../../components/GatewayCredentialPickerModal';
+import { AccountPickerDialog, GatewayCredentialPickerDialog } from '@/components/data/entity-picker-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useNotifications } from '../../notifications/NotificationContext';
 import { teamPanelScope, type TeamScope } from './teamPaths';
 
@@ -300,7 +308,7 @@ export function useTeamScopeActions({
 
   const modals: ReactNode = (
     <>
-      <AccountPickerModal
+      <AccountPickerDialog
         open={pickerKind !== null}
         onClose={() => setAccountPickerMode(null)}
         searchAccounts={accountPickerSearch}
@@ -311,7 +319,7 @@ export function useTeamScopeActions({
 
       {scope === 'global-admin' ? (
         <>
-          <AccountPickerModal
+          <AccountPickerDialog
             open={accountPickerMode?.kind === 'profitShareCut'}
             onClose={() => setAccountPickerMode(null)}
             searchAccounts={searchAdministratorProfitShareAccountsPicker}
@@ -335,7 +343,7 @@ export function useTeamScopeActions({
         </>
       ) : null}
 
-      <GatewayCredentialPickerModal
+      <GatewayCredentialPickerDialog
         open={gatewayPickerOpen}
         onClose={() => setGatewayPickerOpen(false)}
         title="Vincular credencial"
@@ -350,21 +358,35 @@ export function useTeamScopeActions({
         }}
       />
 
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Excluir equipe"
-        message="Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?"
-        onCancel={() => setDeleteDialogOpen(false)}
-        onConfirm={() => void confirmDeleteTeam()}
-      />
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open) setDeleteDialogOpen(false); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir equipe</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação remove a equipe e todos os vínculos associados. Deseja continuar?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDeleteTeam()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
-      <ConfirmDialog
-        open={unassignOperatorTarget !== null}
-        title="Remover operador"
-        message={`Deseja remover${unassignOperatorName ? ` ${unassignOperatorName}` : ' este operador'} da equipe? A regra de repasse também será excluída.`}
-        onCancel={() => setUnassignOperatorTarget(null)}
-        onConfirm={() => void confirmUnassignOperator()}
-      />
+      <AlertDialog open={unassignOperatorTarget !== null} onOpenChange={(open) => { if (!open) setUnassignOperatorTarget(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover operador</AlertDialogTitle>
+            <AlertDialogDescription>
+              {`Deseja remover${unassignOperatorName ? ` ${unassignOperatorName}` : ' este operador'} da equipe? A regra de repasse também será excluída.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmUnassignOperator()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 

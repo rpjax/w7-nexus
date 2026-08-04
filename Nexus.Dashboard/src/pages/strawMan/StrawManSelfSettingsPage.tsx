@@ -1,12 +1,16 @@
-import { useEffect, useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { getStrawManSettings } from '../../api/strawMen/strawMan';
-import type { StrawManSettings } from '../../api/types';
 import { useAuth } from '../../auth/AuthContext';
-import { PageHeading } from '../../layouts/PageHeading';
+import { PageHeader } from '@/components/layout/page-header';
 import { paymentsPath } from '../../features/strawMen/strawManPaths';
 import { formatDateTime, shortId } from '../../utils/format';
-import { useNotifications } from '../../notifications/NotificationContext';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
+import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function formatFee(value: number): string {
   return value.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 4 });
@@ -14,85 +18,99 @@ function formatFee(value: number): string {
 
 export function StrawManSelfSettingsPage() {
   const { user } = useAuth();
-  const { notifyError } = useNotifications();
-  const [settings, setSettings] = useState<StrawManSettings | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    void (async () => {
-      setLoading(true);
+  const { data: settings, isLoading, error } = useQuery({
+    queryKey: ['straw-man-settings'],
+    queryFn: async () => {
       const result = await getStrawManSettings();
-      if (!result.ok) {
-        notifyError(result.error);
-        setSettings(null);
-      } else {
-        setSettings(result.data ?? null);
-      }
-      setLoading(false);
-    })();
-  }, [notifyError]);
+      if (!result.ok) throw new Error(result.error);
+      return result.data ?? null;
+    },
+  });
 
   const fee = settings?.movementFeePercentage ?? 0;
 
   return (
-    <div className="ops-page straw-man-page">
-      <PageHeading
+    <div className="space-y-4">
+      <PageHeader
         kicker="Laranjas"
         title="Minhas configurações"
-        subtitle="Parâmetros da sua conta laranja definidos pela administração."
+        description="Parâmetros da sua conta laranja definidos pela administração."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Minhas configurações' },
+        ]}
       />
 
-      <section className="pix-workspace straw-man-workspace" aria-labelledby="straw-man-self-settings">
-        <header className="pix-workspace__hero straw-man-workspace__hero">
-          <div className="pix-workspace__hero-main">
-            <span className="straw-man-workspace__badge">Conta laranja</span>
-            <p className="straw-man-workspace__identity" aria-live="polite">
+      {error ? (
+        <Alert variant="destructive">
+          <AlertTitle>Não foi possível carregar as configurações</AlertTitle>
+          <AlertDescription>{error instanceof Error ? error.message : 'Erro desconhecido'}</AlertDescription>
+        </Alert>
+      ) : null}
+
+      <Card className="overflow-hidden border-border/60">
+        <CardHeader className="flex flex-row items-start justify-between gap-4 border-b bg-muted/20 pb-4">
+          <div className="space-y-2">
+            <Badge variant="secondary">Conta laranja</Badge>
+            <p className="text-lg font-semibold" aria-live="polite">
               @{user?.username ?? '—'}
             </p>
-            <p className="pix-workspace__hero-hint muted small">
+            <p className="text-sm text-muted-foreground">
               Taxa aplicada quando saldos são movimentados entre contas.
             </p>
           </div>
-          <div className="pix-workspace__hero-mark straw-man-workspace__mark" aria-hidden="true">
-            <span className="straw-man-workspace__mark-icon">SM</span>
+          <div
+            className="flex size-12 shrink-0 items-center justify-center rounded-xl border border-border bg-muted/40 text-xs font-bold"
+            aria-hidden="true"
+          >
+            SM
           </div>
-        </header>
+        </CardHeader>
 
-        <div className="pix-workspace__divider" aria-hidden="true" />
-
-        <div className="pix-workspace__body">
-          {loading ? (
-            <p className="muted">Carregando configurações…</p>
+        <CardContent className="pt-4">
+          {isLoading ? (
+            <div className="space-y-4 py-2">
+              <Skeleton className="h-28 w-full rounded-xl" />
+              <Skeleton className="h-4 w-full" />
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <Skeleton className="h-12 w-full" />
+                <Skeleton className="h-12 w-full" />
+              </div>
+            </div>
           ) : (
-            <section className="straw-man-settings-panel" id="straw-man-self-settings">
-              <div className="straw-man-settings-panel__metric">
-                <span className="straw-man-settings-panel__metric-label">Taxa de movimentação</span>
-                <strong className="straw-man-settings-panel__metric-value">{formatFee(fee)}%</strong>
-                <p className="muted small straw-man-settings-panel__metric-hint">
+            <section className="space-y-4" id="straw-man-self-settings">
+              <div className="rounded-xl border border-border bg-muted/20 p-4">
+                <span className="block text-xs uppercase tracking-wide text-muted-foreground">
+                  Taxa de movimentação
+                </span>
+                <strong className="text-3xl font-bold">{formatFee(fee)}%</strong>
+                <p className="mt-1 text-sm text-muted-foreground">
                   Percentual retido em movimentações entre contas do mesmo titular ou de terceiros.
                 </p>
               </div>
 
-              <dl className="straw-man-settings-panel__meta">
+              <Separator />
+
+              <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
                 <div>
-                  <dt>Identificador</dt>
-                  <dd className="mono">{settings?.strawManId ? shortId(settings.strawManId, 16) : '—'}</dd>
+                  <dt className="text-muted-foreground">Identificador</dt>
+                  <dd className="font-mono">{settings?.strawManId ? shortId(settings.strawManId, 16) : '—'}</dd>
                 </div>
                 <div>
-                  <dt>Última atualização</dt>
+                  <dt className="text-muted-foreground">Última atualização</dt>
                   <dd>{settings?.updatedAt ? formatDateTime(settings.updatedAt) : 'Padrão do sistema (0%)'}</dd>
                 </div>
               </dl>
 
-              <div className="straw-man-settings-panel__actions">
-                <Link className="btn btn-primary btn-sm" to={paymentsPath('self')}>
-                  Ver meus pagamentos
-                </Link>
-              </div>
+              <CardFooter className="px-0 pb-0">
+                <Button size="sm" asChild>
+                  <Link to={paymentsPath('self')}>Ver meus pagamentos</Link>
+                </Button>
+              </CardFooter>
             </section>
           )}
-        </div>
-      </section>
+        </CardContent>
+      </Card>
     </div>
   );
 }

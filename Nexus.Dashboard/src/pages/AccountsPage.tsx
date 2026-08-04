@@ -1,14 +1,40 @@
-import { useCallback, useEffect, useState } from 'react';
-import { createAdministratorAccount } from '../api/administrator/accounts';
-import { searchAdministratorAccounts } from '../api/administrator/accounts';
-import type { AccountRow } from '../api/types';
-import { AccountCard } from '../components/admin/AccountCard';
-import { EmptyState } from '../components/EmptyState';
-import { PageHeading } from '../layouts/PageHeading';
-import { useNotifications } from '../notifications/NotificationContext';
-import { ACCOUNT_ROLE_CATALOG } from '../utils/accountAccess';
+import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useMemo, useState } from 'react';
+import { createAdministratorAccount, searchAdministratorAccounts } from '@/api/administrator/accounts';
+import type { AccountRow } from '@/api/types';
+import { AccountAccessEditor } from '@/components/admin/AccountAccessEditor';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { createAccountColumns } from '@/features/accounts/account-columns';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
+import { useNotifications } from '@/notifications/NotificationContext';
+import { ACCOUNT_ROLE_CATALOG, type AccessTone } from '@/utils/accountAccess';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { cn } from '@/lib/utils';
 
-const PAGE_SIZE = 20;
+const toneAccent: Record<AccessTone, string> = {
+  admin: 'border-l-warning',
+  operator: 'border-l-primary',
+  straw: 'border-l-muted-foreground',
+  olx: 'border-l-success',
+  permission: 'border-l-border',
+};
 
 export function AccountsPage() {
   const { notifyError, notifySuccess } = useNotifications();
@@ -16,40 +42,35 @@ export function AccountsPage() {
   const [password, setPassword] = useState('');
   const [createBusy, setCreateBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
+  const [manageAccount, setManageAccount] = useState<AccountRow | null>(null);
 
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
-  const [items, setItems] = useState<AccountRow[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+  const {
+    search,
+    setSearch,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    clearSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery<AccountRow>({
+    queryKey: ['admin-accounts'],
+    fetchPage: async (params) => adaptSearchResponse(await searchAdministratorAccounts({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword,
+    })),
+  });
 
-  const load = useCallback(async (page: number, keyword: string) => {
-    const result = await searchAdministratorAccounts({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword: keyword.trim() || null,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      return;
-    }
-    setTotalItems(result.data?.total ?? 0);
-    setItems(result.data?.items ?? []);
-  }, [notifyError]);
-
-  useEffect(() => {
-    void load(currentPage, query);
-  }, [currentPage, query, load]);
-
-  async function handleSearch() {
-    setCurrentPage(1);
-    setQuery(search);
-  }
-
-  async function handleRefresh() {
-    await load(currentPage, query);
-  }
+  const columns = useMemo(
+    () => createAccountColumns({ onManage: setManageAccount }),
+    [],
+  );
 
   async function handleCreate() {
     setCreateBusy(true);
@@ -67,164 +88,151 @@ export function AccountsPage() {
       setUsername('');
       setPassword('');
       setCreateOpen(false);
-      setCurrentPage(1);
-      setQuery('');
-      setSearch('');
-      await load(1, '');
+      clearSearch();
+      await refetch();
     } finally {
       setCreateBusy(false);
     }
   }
 
   return (
-    <div className="accounts-page">
-      <PageHeading
+    <>
+      <ListPageLayout
         kicker="Administração"
         kickerVariant="admin"
         title="Contas"
-        subtitle="Gerencie usuários e ative funções com um clique. Cada conta pode acumular vários papéis."
-      />
-
-      <section className="accounts-legend card ops-card admin-surface">
-        <div className="accounts-legend__head">
-          <h2 className="accounts-legend__title">Funções disponíveis</h2>
-          <p className="accounts-legend__lead muted small">
-            Referência rápida dos papéis que você pode atribuir a qualquer conta.
-          </p>
-        </div>
-        <ul className="accounts-legend__list">
-          {ACCOUNT_ROLE_CATALOG.map((role) => (
-            <li key={role.id} className={`accounts-legend__item accounts-legend__item--${role.tone}`}>
-              <strong>{role.label}</strong>
-              <span className="muted small">{role.description}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="card ops-card admin-surface accounts-create-panel">
-        <button
-          type="button"
-          className="accounts-create-panel__toggle"
-          aria-expanded={createOpen}
-          onClick={() => setCreateOpen((open) => !open)}
-        >
-          <span>
-            <strong>Registrar nova conta</strong>
-            <span className="muted small">Login e senha inicial — funções são atribuídas depois.</span>
-          </span>
-          <span aria-hidden="true">{createOpen ? '▾' : '▸'}</span>
-        </button>
-
-        {createOpen ? (
-          <div className="accounts-create-panel__body">
-            <div className="form-grid">
-              <div className="field">
-                <label htmlFor="accUsername">Usuário</label>
-                <input
-                  id="accUsername"
-                  className="nexus-input"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  autoComplete="off"
-                  placeholder="nome.de.login"
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="accPassword">Senha</label>
-                <input
-                  id="accPassword"
-                  className="nexus-input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  placeholder="Senha inicial"
-                />
-              </div>
-            </div>
-            <div className="card-actions">
-              <button type="button" className="btn btn-primary" onClick={() => void handleCreate()} disabled={createBusy}>
-                {createBusy ? 'Registrando…' : 'Registrar conta'}
-              </button>
-            </div>
-          </div>
-        ) : null}
-      </section>
-
-      <section className="card ops-card admin-surface accounts-panel">
-        <div className="accounts-search-row">
-          <input
-            id="accSearch"
-            className="nexus-input accounts-search-input"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            onKeyDown={(e) => { if (e.key === 'Enter') void handleSearch(); }}
-            placeholder="Buscar por @username…"
-            aria-label="Buscar contas"
+        description="Gerencie usuários e ative funções com um clique. Cada conta pode acumular vários papéis."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Contas' },
+        ]}
+        searchId="accSearch"
+        searchLabel="Buscar contas"
+        searchPlaceholder="Buscar por @username…"
+        searchValue={search}
+        onSearchChange={setSearch}
+        onSearch={submitSearch}
+        onRefresh={() => void refetch()}
+        totalLabel={`${totalItems} registro(s)`}
+        isLoading={isLoading}
+        error={error}
+        isEmpty={!isLoading && !error && items.length === 0}
+        emptyTitle="Nenhuma conta encontrada"
+        emptyMessage="Registre uma conta abaixo ou ajuste o filtro de busca."
+        footer={totalItems > 0 ? (
+          <ListPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPrev={goPrev}
+            onNext={goNext}
           />
-          <button type="button" className="btn btn-primary accounts-search-btn" onClick={() => void handleSearch()}>
-            Buscar
-          </button>
-          <button type="button" className="btn btn-ghost accounts-refresh-btn" onClick={() => void handleRefresh()}>
-            Atualizar
-          </button>
+        ) : undefined}
+      >
+        <div className="mb-6 space-y-6">
+          <Card className="border-border/60 bg-card/80">
+            <CardHeader>
+              <CardTitle>Funções disponíveis</CardTitle>
+              <CardDescription>
+                Referência rápida dos papéis que você pode atribuir a qualquer conta.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="grid gap-2 sm:grid-cols-2">
+                {ACCOUNT_ROLE_CATALOG.map((role) => (
+                  <li
+                    key={role.id}
+                    className={cn(
+                      'rounded-lg border border-border/60 border-l-4 bg-background/40 px-3 py-2',
+                      toneAccent[role.tone],
+                    )}
+                  >
+                    <strong className="block text-sm text-foreground">{role.label}</strong>
+                    <span className="text-sm text-muted-foreground">{role.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="border-border/60 bg-card/80">
+            <Collapsible open={createOpen} onOpenChange={setCreateOpen}>
+              <CollapsibleTrigger asChild>
+                <button
+                  type="button"
+                  className="flex w-full items-center justify-between gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/30"
+                >
+                  <span className="space-y-0.5">
+                    <strong className="block text-sm font-semibold text-foreground">Registrar nova conta</strong>
+                    <span className="block text-sm text-muted-foreground">
+                      Login e senha inicial — funções são atribuídas depois.
+                    </span>
+                  </span>
+                  {createOpen
+                    ? <ChevronDown className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+                    : <ChevronRight className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />}
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent>
+                <CardContent className="space-y-4 border-t border-border/60 pt-4">
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="accUsername">Usuário</Label>
+                      <Input
+                        id="accUsername"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        autoComplete="off"
+                        placeholder="nome.de.login"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="accPassword">Senha</Label>
+                      <Input
+                        id="accPassword"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        autoComplete="new-password"
+                        placeholder="Senha inicial"
+                      />
+                    </div>
+                  </div>
+                  <Button type="button" onClick={() => void handleCreate()} disabled={createBusy}>
+                    {createBusy ? 'Registrando…' : 'Registrar conta'}
+                  </Button>
+                </CardContent>
+              </CollapsibleContent>
+            </Collapsible>
+          </Card>
         </div>
 
-        <div className="accounts-panel-head">
-          <div className="accounts-panel-head__copy">
-            <h2 className="section-title">Contas cadastradas</h2>
-            <p className="muted small">Expanda uma conta para alternar funções e permissões.</p>
-          </div>
-          <span className="accounts-panel-head__count muted small">{totalItems} registro(s)</span>
-        </div>
+        <DataTable columns={columns} data={items} getRowId={(row) => row.id} />
+      </ListPageLayout>
 
-        {items.length === 0 ? (
-          <EmptyState
-            title="Nenhuma conta encontrada"
-            message="Registre uma conta acima ou ajuste o filtro de busca."
-          />
-        ) : (
-          <>
-            <div className="accounts-list">
-              {items.map((account, index) => (
-                <AccountCard
-                  key={account.id}
-                  account={account}
-                  defaultExpanded={index === 0 && items.length === 1}
+      <Sheet open={manageAccount !== null} onOpenChange={(open) => { if (!open) setManageAccount(null); }}>
+        <SheetContent className="overflow-y-auto sm:max-w-lg">
+          {manageAccount ? (
+            <>
+              <SheetHeader>
+                <SheetTitle>@{manageAccount.username}</SheetTitle>
+                <SheetDescription>Alterne funções e permissões desta conta.</SheetDescription>
+              </SheetHeader>
+              <div className="mt-6">
+                <AccountAccessEditor
+                  accountId={manageAccount.id}
+                  roles={manageAccount.roles ?? []}
+                  permissions={manageAccount.permissions ?? []}
                   onMutated={() => {
                     notifySuccess('Conta atualizada.');
-                    void load(currentPage, query);
+                    void refetch();
                   }}
                   onError={notifyError}
                 />
-              ))}
-            </div>
-
-            {totalItems > 0 ? (
-              <div className="pagination accounts-pagination">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-small"
-                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                  disabled={currentPage <= 1}
-                >
-                  Anterior
-                </button>
-                <span className="muted accounts-page-indicator">{currentPage} / {totalPages}</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-small"
-                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={currentPage >= totalPages}
-                >
-                  Próxima
-                </button>
               </div>
-            ) : null}
-          </>
-        )}
-      </section>
-    </div>
+            </>
+          ) : null}
+        </SheetContent>
+      </Sheet>
+    </>
   );
 }

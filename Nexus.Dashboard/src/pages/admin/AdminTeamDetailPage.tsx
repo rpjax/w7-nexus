@@ -29,6 +29,7 @@ export function AdminTeamDetailPage() {
         scope="global-admin"
         operationId={operationId ?? ''}
         operationName={operation?.name}
+        teamName={team?.name}
         loading={loading}
         notFound={notFound}
       >

@@ -10,8 +10,21 @@ import {
   olxAdUrlValidationMessage,
   parseOlxAdIdInput,
 } from '../../features/olx/adPatchDisplay';
-import { OperationPickerModal } from '../OperationPickerModal';
+import { OperationPickerDialog } from '@/components/data/entity-picker-dialog';
 import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { cn } from '@/lib/utils';
+import { OlxPickerField } from './OlxFilterPanel';
 
 type ImpersonateAdModalProps = {
   open: boolean;
@@ -77,8 +90,6 @@ export function ImpersonateAdModal({
 
   const canSubmit = Boolean(operationId.trim()) && isValidOlxAdId(adId) && isValidAdUrl(adUrl);
 
-  if (!open) return null;
-
   function applyAdIdInput(raw: string) {
     const parsed = parseOlxAdIdInput(raw);
     setAdId(parsed.value);
@@ -136,53 +147,44 @@ export function ImpersonateAdModal({
 
   return (
     <>
-      <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-        <div className="dialog-card olx-modal" onClick={(e) => e.stopPropagation()}>
-          <div className="modal-stack-header">
-            <div>
-              <h3>Impersonar anúncio</h3>
-              <p className="muted small">
-                Reserve o anúncio para patch. Apenas anúncios livres podem ser assumidos.
-              </p>
-            </div>
-            <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-              <span aria-hidden="true">×</span>
-            </button>
-          </div>
+      <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+        <DialogContent className="sm:max-w-lg" showCloseButton>
+          <DialogHeader>
+            <DialogTitle>Impersonar anúncio</DialogTitle>
+            <DialogDescription>
+              Reserve o anúncio para patch. Apenas anúncios livres podem ser assumidos.
+            </DialogDescription>
+          </DialogHeader>
 
-          <div className="form-grid">
-            <div className="field">
-              <label>Operação</label>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>Operação</Label>
               {adminView ? (
-                <button
-                  type="button"
-                  className="olx-picker-field__button olx-picker-field__button--full"
-                  onClick={() => setOperationPickerOpen(true)}
-                >
-                  <span className={operationLabel ? 'olx-picker-field__value' : 'olx-picker-field__placeholder muted'}>
-                    {operationLabel ?? 'Selecionar operação…'}
-                  </span>
-                  <span className="olx-picker-field__chevron" aria-hidden="true">▾</span>
-                </button>
+                <OlxPickerField
+                  label=""
+                  value={operationLabel}
+                  placeholder="Selecionar operação…"
+                  onPick={() => setOperationPickerOpen(true)}
+                  fullWidth
+                />
               ) : (
                 <>
-                  <input
+                  <Input
                     id="impersonateOpId"
-                    className="nexus-input"
                     value={operationId}
                     onChange={(e) => setOperationId(e.target.value)}
                     placeholder="ID da operação vinculada ao anúncio"
                     autoFocus
                   />
-                  <p className="form-hint muted small">Informe a operação à qual o anúncio pertence.</p>
+                  <p className="text-xs text-muted-foreground">Informe a operação à qual o anúncio pertence.</p>
                 </>
               )}
             </div>
-            <div className="field">
-              <label htmlFor="impersonateAdUrl">URL do anúncio OLX</label>
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="impersonateAdUrl">URL do anúncio OLX</Label>
+              <Input
                 id="impersonateAdUrl"
-                className={`nexus-input${adUrlError ? ' nexus-input--invalid' : ''}`}
+                className={cn(adUrlError && 'border-destructive')}
                 value={adUrl}
                 type="url"
                 inputMode="url"
@@ -198,16 +200,16 @@ export function ImpersonateAdModal({
               />
               <p
                 id="impersonateAdUrlHint"
-                className={`form-hint small${adUrlError ? ' form-hint--error' : ' muted'}`}
+                className={cn('text-xs', adUrlError ? 'text-destructive' : 'text-muted-foreground')}
               >
                 {adUrlError ?? 'Cole a URL completa do anúncio. O ID será preenchido automaticamente quando possível.'}
               </p>
             </div>
-            <div className="field">
-              <label htmlFor="impersonateAdId">ID do anúncio OLX</label>
-              <input
+            <div className="grid gap-2">
+              <Label htmlFor="impersonateAdId">ID do anúncio OLX</Label>
+              <Input
                 id="impersonateAdId"
-                className={`nexus-input${adIdError ? ' nexus-input--invalid' : ''}`}
+                className={cn(adIdError && 'border-destructive')}
                 value={adId}
                 inputMode="numeric"
                 autoComplete="off"
@@ -221,7 +223,7 @@ export function ImpersonateAdModal({
               />
               <p
                 id="impersonateAdIdHint"
-                className={`form-hint small${adIdError ? ' form-hint--error' : ' muted'}`}
+                className={cn('text-xs', adIdError ? 'text-destructive' : 'text-muted-foreground')}
               >
                 {adIdError
                   ? adIdError
@@ -232,24 +234,19 @@ export function ImpersonateAdModal({
             </div>
           </div>
 
-          <div className="dialog-actions">
-            <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
               Cancelar
-            </button>
-            <button
-              type="button"
-              className="btn btn-primary"
-              disabled={busy || !canSubmit}
-              onClick={handleSubmit}
-            >
+            </Button>
+            <Button type="button" disabled={busy || !canSubmit} onClick={handleSubmit}>
               {busy ? 'Processando…' : 'Impersonar'}
-            </button>
-          </div>
-        </div>
-      </div>
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {adminView ? (
-        <OperationPickerModal
+        <OperationPickerDialog
           open={operationPickerOpen}
           title="Operação do anúncio"
           subtitle="Escolha a operação à qual o anúncio OLX está vinculado."

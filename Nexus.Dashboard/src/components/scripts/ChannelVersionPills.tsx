@@ -1,14 +1,11 @@
 import type { ChannelSummary } from '../../api/scripts/types';
+import { channelToneClass, channelToneFromRoute } from '@/lib/channel-tones';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 type ChannelVersionPillsProps = {
   channels: ChannelSummary[];
   compact?: boolean;
-};
-
-const CHANNEL_CLASS: Record<string, string> = {
-  prod: 'scripts-pill--prod',
-  staging: 'scripts-pill--staging',
-  development: 'scripts-pill--dev',
 };
 
 const COMPACT_LABEL: Record<string, string> = {
@@ -25,9 +22,9 @@ export function ChannelVersionPills({ channels, compact = false }: ChannelVersio
   ];
 
   return (
-    <div className={`scripts-channel-pills ${compact ? 'scripts-channel-pills--compact' : ''}`}>
+    <div className={cn('flex flex-wrap gap-1.5', compact && 'gap-1')}>
       {ordered.map((channel) => {
-        const cls = CHANNEL_CLASS[channel.routeValue] ?? 'scripts-pill--custom';
+        const toneClass = channelToneClass(channelToneFromRoute(channel.routeValue));
         const label = compact
           ? (COMPACT_LABEL[channel.routeValue] ?? channel.routeValue)
           : channel.displayName;
@@ -37,22 +34,29 @@ export function ChannelVersionPills({ channels, compact = false }: ChannelVersio
           : 'Nenhum release promovido neste canal';
 
         return (
-          <span
+          <Badge
             key={channel.routeValue}
-            className={`scripts-pill ${cls} ${hasVersion ? 'scripts-pill--filled' : 'scripts-pill--empty'}`.trim()}
+            variant="outline"
             title={versionTitle}
+            className={cn(
+              'gap-1 font-mono text-xs font-normal',
+              toneClass,
+              !hasVersion && 'opacity-60',
+            )}
           >
-            <span className="scripts-pill__label">{label}</span>
+            <span>{label}</span>
             {hasVersion ? (
               <>
-                <span className="scripts-pill__dot" aria-hidden="true" />
-                <span className="scripts-pill__version">{channel.version}</span>
+                <span className="opacity-50" aria-hidden="true">·</span>
+                <span>{channel.version}</span>
               </>
             ) : (
-              <span className="scripts-pill__empty">sem release</span>
+              <span className="opacity-70">sem release</span>
             )}
-            {channel.isDeprecated ? <span className="scripts-pill__warn">dep</span> : null}
-          </span>
+            {channel.isDeprecated ? (
+              <span className="text-destructive">dep</span>
+            ) : null}
+          </Badge>
         );
       })}
     </div>

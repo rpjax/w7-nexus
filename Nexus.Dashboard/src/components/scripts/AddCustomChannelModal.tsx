@@ -1,4 +1,15 @@
 import { useEffect, useState } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type AddCustomChannelModalProps = {
   open: boolean;
@@ -14,26 +25,18 @@ export function AddCustomChannelModal({ open, busy, onClose, onSubmit }: AddCust
     if (!open) setName('');
   }, [open]);
 
-  if (!open) return null;
-
   return (
-    <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-      <div className="dialog-card scripts-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-stack-header">
-          <div>
-            <h3>Canal customizado</h3>
-            <p className="muted small">Ex.: beta, canary, qa</p>
-          </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Canal customizado</DialogTitle>
+          <DialogDescription>Ex.: beta, canary, qa</DialogDescription>
+        </DialogHeader>
 
-        <div className="field">
-          <label htmlFor="customChannelName">Nome</label>
-          <input
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="customChannelName">Nome</Label>
+          <Input
             id="customChannelName"
-            className="nexus-input"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="beta"
@@ -41,18 +44,19 @@ export function AddCustomChannelModal({ open, busy, onClose, onSubmit }: AddCust
           />
         </div>
 
-        <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>Cancelar</button>
-          <button
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+            Cancelar
+          </Button>
+          <Button
             type="button"
-            className="btn btn-primary"
             disabled={busy || !name.trim()}
             onClick={() => onSubmit(name.trim())}
           >
             {busy ? 'Adicionando…' : 'Adicionar canal'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -25,7 +25,8 @@ export function AdminOperationDetailPage() {
   return (
     <>
       <OperationDetailShell
-        listPath={listPath('global-admin')}
+        scope="global-admin"
+        operationName={operation?.name}
         loading={loading}
         notFound={notFound}
       >

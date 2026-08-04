@@ -1,4 +1,29 @@
 import { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from '@/components/ui/accordion';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { Card, CardContent } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 import { getAccessToken } from '../../auth/tokenStore';
 import { endpointById, API_GROUPS } from '../../features/api-docs/catalog';
 import { buildCurlExample, copyText } from '../../features/api-docs/utils';
@@ -33,64 +58,134 @@ export function ApiDocsEndpointDetail({ endpoint, embedded }: ApiDocsEndpointDet
     endpoint.auth === 'jwt' ? token : null,
   );
 
+  const hasParams = Boolean(
+    (endpoint.pathParams && endpoint.pathParams.length > 0)
+    || (endpoint.queryParams && endpoint.queryParams.length > 0)
+    || (endpoint.notes && endpoint.notes.length > 0),
+  );
+
   return (
-    <article className={`api-endpoint${embedded ? ' api-endpoint--embedded' : ''}`}>
+    <article className={cn(embedded && 'pt-2')}>
       {!embedded ? (
-        <header className="api-endpoint__header">
-          <div className="api-endpoint__method-row">
+        <header className="mb-4">
+          <div className="mb-2.5 flex gap-1.5">
             <MethodBadge method={endpoint.method} />
             <AuthBadge auth={endpoint.auth} />
           </div>
-          <h2 className="api-endpoint__title">{endpoint.title}</h2>
-          <p className="api-endpoint__desc">{endpoint.summary ?? endpoint.description}</p>
+          <h2 className="mb-1 text-[clamp(1.2rem,3vw,1.45rem)] font-bold">{endpoint.title}</h2>
+          <p className="m-0 text-[0.9rem] leading-normal text-muted-foreground">
+            {endpoint.summary ?? endpoint.description}
+          </p>
           {endpoint.whenToUse ? (
-            <div className="api-callout api-callout--why api-endpoint__when">
-              <h4>Quando usar</h4>
-              <p>{endpoint.whenToUse}</p>
-            </div>
+            <Card className="mt-3.5 border-primary/20 bg-primary/5">
+              <CardContent className="pt-4">
+                <h4 className="mb-1.5 text-[0.78rem] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Quando usar
+                </h4>
+                <p className="m-0 text-[0.86rem] leading-relaxed">{endpoint.whenToUse}</p>
+              </CardContent>
+            </Card>
           ) : null}
         </header>
       ) : null}
 
-      <div className="api-endpoint__path-bar">
+      <div className="mb-4 flex flex-wrap items-center gap-1.5 rounded-lg border border-border bg-background/80 px-3 py-2">
         <MethodBadge method={endpoint.method} compact />
-        <code className="api-endpoint__path">{endpoint.path}</code>
-        <button type="button" className="api-endpoint__copy" onClick={() => void handleCopyPath()}>
+        <code className="min-w-0 flex-1 break-all text-[0.8rem] text-primary/80">{endpoint.path}</code>
+        <Button
+          type="button"
+          variant="ghost"
+          size="xs"
+          className="h-auto shrink-0 px-1.5 py-0.5 text-[0.72rem] text-primary"
+          onClick={() => void handleCopyPath()}
+        >
           {copiedPath ? 'Copiado' : 'Copiar'}
-        </button>
+        </Button>
       </div>
 
-      {endpoint.pathParams && endpoint.pathParams.length > 0 ? (
-        <section className="api-endpoint__section">
-          <h4>Parâmetros de rota</h4>
-          <div className="api-param-table">
-            {endpoint.pathParams.map((p) => (
-              <div key={p.name} className="api-param-row">
-                <code>{p.name}</code>
-                <span className="api-param-type">{p.type}</span>
-                <span className="muted">{p.description}</span>
-              </div>
-            ))}
-          </div>
-        </section>
+      {hasParams ? (
+        <Accordion type="multiple" className="mb-4" defaultValue={['path-params', 'query-params', 'notes'].filter((id) => {
+          if (id === 'path-params') return endpoint.pathParams && endpoint.pathParams.length > 0;
+          if (id === 'query-params') return endpoint.queryParams && endpoint.queryParams.length > 0;
+          if (id === 'notes') return endpoint.notes && endpoint.notes.length > 0;
+          return false;
+        })}>
+          {endpoint.pathParams && endpoint.pathParams.length > 0 ? (
+            <AccordionItem value="path-params">
+              <AccordionTrigger className="text-[0.78rem] uppercase tracking-wide text-muted-foreground">
+                Parâmetros de rota
+              </AccordionTrigger>
+              <AccordionContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Descrição</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {endpoint.pathParams.map((p) => (
+                      <TableRow key={p.name}>
+                        <TableCell><code>{p.name}</code></TableCell>
+                        <TableCell className="text-primary">{p.type}</TableCell>
+                        <TableCell className="text-muted-foreground">{p.description}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          ) : null}
+
+          {endpoint.queryParams && endpoint.queryParams.length > 0 ? (
+            <AccordionItem value="query-params">
+              <AccordionTrigger className="text-[0.78rem] uppercase tracking-wide text-muted-foreground">
+                Query parameters
+              </AccordionTrigger>
+              <AccordionContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>Tipo</TableHead>
+                      <TableHead>Descrição</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {endpoint.queryParams.map((p) => (
+                      <TableRow key={p.name}>
+                        <TableCell><code>{p.name}</code></TableCell>
+                        <TableCell className="text-primary">
+                          {p.type}{p.required ? ' *' : ''}
+                        </TableCell>
+                        <TableCell className="text-muted-foreground">{p.description}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </AccordionContent>
+            </AccordionItem>
+          ) : null}
+
+          {endpoint.notes && endpoint.notes.length > 0 ? (
+            <AccordionItem value="notes">
+              <AccordionTrigger className="text-[0.78rem] uppercase tracking-wide text-muted-foreground">
+                Notas
+              </AccordionTrigger>
+              <AccordionContent>
+                <ul className="my-2 list-disc pl-5 text-[0.86rem] leading-relaxed text-muted-foreground">
+                  {endpoint.notes.map((note) => (
+                    <li key={note}>{note}</li>
+                  ))}
+                </ul>
+              </AccordionContent>
+            </AccordionItem>
+          ) : null}
+        </Accordion>
       ) : null}
 
-      {endpoint.queryParams && endpoint.queryParams.length > 0 ? (
-        <section className="api-endpoint__section">
-          <h4>Query parameters</h4>
-          <div className="api-param-table">
-            {endpoint.queryParams.map((p) => (
-              <div key={p.name} className="api-param-row">
-                <code>{p.name}</code>
-                <span className="api-param-type">{p.type}{p.required ? ' *' : ''}</span>
-                <span className="muted">{p.description}</span>
-              </div>
-            ))}
-          </div>
-        </section>
-      ) : null}
-
-      <div className="api-endpoint__examples">
+      <div className="mb-4 flex flex-col gap-2.5">
         {endpoint.requestBody ? (
           <CodeBlock code={endpoint.requestBody} label="Request body" />
         ) : null}
@@ -109,17 +204,6 @@ export function ApiDocsEndpointDetail({ endpoint, embedded }: ApiDocsEndpointDet
           language="bash"
         />
       </div>
-
-      {endpoint.notes && endpoint.notes.length > 0 ? (
-        <section className="api-endpoint__section">
-          <h4>Notas</h4>
-          <ul className="api-docs-list">
-            {endpoint.notes.map((note) => (
-              <li key={note}>{note}</li>
-            ))}
-          </ul>
-        </section>
-      ) : null}
     </article>
   );
 }
@@ -134,11 +218,11 @@ export function ApiDocsEndpointView({ endpointId, onNavigate }: ApiDocsEndpointV
 
   if (!endpoint) {
     return (
-      <div className="api-docs-empty">
+      <div className="flex flex-col items-center gap-3 px-4 py-12 text-muted-foreground">
         <p>Endpoint não encontrado.</p>
-        <button type="button" className="btn" onClick={() => onNavigate({ kind: 'overview' })}>
+        <Button type="button" variant="outline" onClick={() => onNavigate({ kind: 'overview' })}>
           Voltar ao início
-        </button>
+        </Button>
       </div>
     );
   }
@@ -146,14 +230,32 @@ export function ApiDocsEndpointView({ endpointId, onNavigate }: ApiDocsEndpointV
   const groupTitle = API_GROUPS.find((g) => g.id === endpoint.groupId)?.title ?? endpoint.groupId;
 
   return (
-    <div className="api-docs-endpoint-view">
-      <button
-        type="button"
-        className="api-docs-back-link muted small"
-        onClick={() => onNavigate({ kind: 'group', id: endpoint.groupId })}
-      >
-        ← Voltar para {groupTitle}
-      </button>
+    <div>
+      <Breadcrumb className="mb-3">
+        <BreadcrumbList>
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="cursor-pointer"
+              onClick={() => onNavigate({ kind: 'overview' })}
+            >
+              Início
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbLink
+              className="cursor-pointer"
+              onClick={() => onNavigate({ kind: 'group', id: endpoint.groupId })}
+            >
+              {groupTitle}
+            </BreadcrumbLink>
+          </BreadcrumbItem>
+          <BreadcrumbSeparator />
+          <BreadcrumbItem>
+            <BreadcrumbPage>{endpoint.title}</BreadcrumbPage>
+          </BreadcrumbItem>
+        </BreadcrumbList>
+      </Breadcrumb>
       <ApiDocsEndpointDetail endpoint={endpoint} onNavigate={onNavigate} />
     </div>
   );

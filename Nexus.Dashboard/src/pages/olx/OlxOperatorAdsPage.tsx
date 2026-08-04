@@ -1,91 +1,116 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import {
   impersonateOlxAd,
   searchOlxOperatorAdPatches,
   unimpersonateOlxAd,
   updateOlxAdPatch,
-} from '../../api/olx/operator';
-import { searchAdministratorOperationsPicker } from '../../api/operationPickerSources';
-import type { OlxOperatorAdPatchRow } from '../../api/olx/types';
-import { useAuth } from '../../auth/AuthContext';
-import { isAdministrator } from '../../auth/roles';
-import { OpsWorkspace } from '../../components/admin/OpsWorkspace';
-import { ConfirmDialog } from '../../components/ConfirmDialog';
-import { EmptyState } from '../../components/EmptyState';
-import { ImpersonateAdModal } from '../../components/olx/ImpersonateAdModal';
-import { OlxFilterPanel, OlxPickerField } from '../../components/olx/OlxFilterPanel';
-import { UpdatePatchModal } from '../../components/olx/UpdatePatchModal';
-import { OperationPickerModal } from '../../components/OperationPickerModal';
-import { PaginationBar } from '../../components/ListControls';
-import { AdPatchListItem } from '../../features/olx/AdPatchListItem';
-import { useOlxOperationLabels } from '../../features/olx/useOlxOperationLabels';
-import { useNotifications } from '../../notifications/NotificationContext';
-
-const PAGE_SIZE = 20;
+} from '@/api/olx/operator';
+import { searchAdministratorOperationsPicker } from '@/api/operationPickerSources';
+import type { OlxOperatorAdPatchRow } from '@/api/olx/types';
+import { useAuth } from '@/auth/AuthContext';
+import { isAdministrator } from '@/auth/roles';
+import { OperationPickerDialog } from '@/components/data/entity-picker-dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { ImpersonateAdModal } from '@/components/olx/ImpersonateAdModal';
+import { OlxFilterPanel, OlxHubStrip, OlxPickerField } from '@/components/olx/OlxFilterPanel';
+import { UpdatePatchModal } from '@/components/olx/UpdatePatchModal';
+import { createAdPatchColumns } from '@/features/olx/ad-patch-columns';
+import { useOlxOperationLabels } from '@/features/olx/useOlxOperationLabels';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
+import { useNotifications } from '@/notifications/NotificationContext';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export function OlxOperatorAdsPage() {
   const { user } = useAuth();
   const adminView = isAdministrator(user);
   const { notifyError, notifySuccess } = useNotifications();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
   const [operationId, setOperationId] = useState('');
   const [operationLabel, setOperationLabel] = useState<string | null>(null);
   const [appliedOperationIds, setAppliedOperationIds] = useState<string[]>([]);
-  const [rows, setRows] = useState<OlxOperatorAdPatchRow[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
   const [busy, setBusy] = useState(false);
   const [impersonateOpen, setImpersonateOpen] = useState(false);
   const [impersonateSeed, setImpersonateSeed] = useState<{ operationId?: string; adId?: string; adUrl?: string }>({});
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [editRow, setEditRow] = useState<OlxOperatorAdPatchRow | null>(null);
   const [confirmRelease, setConfirmRelease] = useState<OlxOperatorAdPatchRow | null>(null);
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
+
+  const {
+    search,
+    setSearch,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery<OlxOperatorAdPatchRow>({
+    queryKey: ['olx-operator-ads', appliedOperationIds],
+    fetchPage: async (params) => adaptSearchResponse(await searchOlxOperatorAdPatches({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword,
+      operationIds: appliedOperationIds,
+    })),
+  });
 
   const extraOperationLabels = useMemo(
     () => (operationLabel && operationId ? { [operationId]: operationLabel } : {}),
     [operationId, operationLabel],
   );
-  const operationLabels = useOlxOperationLabels(rows, extraOperationLabels);
+  const operationLabels = useOlxOperationLabels(items, extraOperationLabels);
 
   const activeCount = useMemo(
-    () => rows.filter((row) => row.isImpersonating).length,
-    [rows],
+    () => items.filter((row) => row.isImpersonating).length,
+    [items],
   );
 
-  const load = useCallback(async (page: number, keyword: string, operationIds: string[]) => {
-    const result = await searchOlxOperatorAdPatches({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword: keyword.trim() || null,
-      operationIds,
-    });
-    if (!result.ok) {
-      notifyError(result.error);
-      setRows([]);
-      setTotalItems(0);
-      return;
-    }
-    setRows(result.data?.items ?? []);
-    setTotalItems(result.data?.total ?? 0);
-  }, [notifyError]);
-
-  useEffect(() => {
-    void load(currentPage, query, appliedOperationIds);
-  }, [currentPage, query, appliedOperationIds, load]);
+  const columns = useMemo(
+    () => createAdPatchColumns('operator', {
+      operationLabels,
+      currentAccountId: user?.accountId,
+      busy,
+      onImpersonate: (row) => {
+        setImpersonateSeed({
+          operationId: row.operationId,
+          adId: row.adId,
+          adUrl: row.adUrl,
+        });
+        setImpersonateOpen(true);
+      },
+      onEditPrices: (row) => setEditRow(row as OlxOperatorAdPatchRow),
+      onUnimpersonate: (row) => setConfirmRelease(row as OlxOperatorAdPatchRow),
+    }),
+    [operationLabels, user?.accountId, busy],
+  );
 
   function handleSearch() {
-    setCurrentPage(1);
-    setQuery(search);
     setAppliedOperationIds(operationId.trim() ? [operationId.trim()] : []);
+    submitSearch();
   }
 
   function clearOperationFilter() {
     setOperationId('');
     setOperationLabel(null);
-    setCurrentPage(1);
     setAppliedOperationIds([]);
+    submitSearch();
   }
 
   const activeFilters = appliedOperationIds.length > 0 && operationLabel
@@ -94,7 +119,7 @@ export function OlxOperatorAdsPage() {
       ? [{ id: 'operation', label: `Operação: ${appliedOperationIds[0]}` }]
       : [];
 
-  async function runMutation(task: () => Promise<{ ok: boolean; error?: string }>, successMessage: string) {
+  const runMutation = useCallback(async (task: () => Promise<{ ok: boolean; error?: string }>, successMessage: string) => {
     setBusy(true);
     const result = await task();
     setBusy(false);
@@ -103,9 +128,9 @@ export function OlxOperatorAdsPage() {
       return false;
     }
     notifySuccess(successMessage);
-    await load(currentPage, query, appliedOperationIds);
+    await refetch();
     return true;
-  }
+  }, [notifyError, notifySuccess, refetch]);
 
   async function handleImpersonate(operationIdValue: string, adId: string, adUrl: string) {
     if (!user?.accountId) return;
@@ -159,97 +184,84 @@ export function OlxOperatorAdsPage() {
 
   return (
     <>
-      <OpsWorkspace
-        title="Meus anúncios"
+      <ListPageLayout
         kicker="OLX"
-        lead="Assuma anúncios livres, defina preços patchados e libere slots quando terminar."
+        title="Meus anúncios"
+        description="Assuma anúncios livres, defina preços patchados e libere slots quando terminar."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Meus anúncios' },
+        ]}
         searchId="olx-op-search"
         searchLabel="Buscar"
         searchPlaceholder="ID do anúncio ou operação…"
         searchValue={search}
         onSearchChange={setSearch}
         onSearch={handleSearch}
-        onRefresh={() => void load(currentPage, query, appliedOperationIds)}
-        totalItems={totalItems}
+        onRefresh={() => void refetch()}
         totalLabel={`${totalItems} anúncio(s) · ${activeCount} em controle`}
-        onCreate={() => openImpersonate()}
-        createLabel="Assumir anúncio"
+        createAction={(
+          <Button type="button" onClick={() => openImpersonate()}>
+            Assumir anúncio
+          </Button>
+        )}
+        isLoading={isLoading}
+        error={error}
+        isEmpty={!isLoading && !error && items.length === 0}
+        emptyTitle="Nenhum anúncio patchado"
+        emptyMessage="Assuma um anúncio livre para começar. Apenas registros sob seu controle aparecem aqui."
         footer={totalItems > 0 ? (
-          <PaginationBar
+          <ListPagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPrev={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
+            onPrev={goPrev}
+            onNext={goNext}
           />
         ) : undefined}
       >
-        <div className="olx-hub-strip" aria-label="Resumo OLX">
-          <div className="olx-hub-strip__card">
-            <span className="olx-hub-strip__label">Em controle</span>
-            <strong className="olx-hub-strip__value">{activeCount}</strong>
-          </div>
-          <div className="olx-hub-strip__card">
-            <span className="olx-hub-strip__label">Total visível</span>
-            <strong className="olx-hub-strip__value">{totalItems}</strong>
-          </div>
+        <div className="mb-6 space-y-4">
+          <OlxHubStrip
+            items={[
+              { label: 'Em controle', value: activeCount },
+              { label: 'Total visível', value: totalItems },
+            ]}
+          />
+
+          <OlxFilterPanel
+            filters={activeFilters}
+            onClearFilter={() => clearOperationFilter()}
+            onClearAll={activeFilters.length > 0 ? clearOperationFilter : undefined}
+          >
+            {adminView ? (
+              <OlxPickerField
+                label="Operação"
+                value={operationLabel}
+                placeholder="Todas as operações"
+                onPick={() => setOperationPickerOpen(true)}
+                onClear={operationLabel ? clearOperationFilter : undefined}
+              />
+            ) : (
+              <div className="grid gap-2">
+                <Label htmlFor="olx-op-operation-filter">Operação</Label>
+                <Input
+                  id="olx-op-operation-filter"
+                  value={operationId}
+                  onChange={(e) => setOperationId(e.target.value)}
+                  placeholder="Filtrar por ID da operação"
+                  onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                />
+              </div>
+            )}
+            <Button type="button" variant="secondary" size="sm" onClick={handleSearch}>
+              Aplicar filtros
+            </Button>
+          </OlxFilterPanel>
         </div>
 
-        <OlxFilterPanel
-          filters={activeFilters}
-          onClearFilter={() => clearOperationFilter()}
-          onClearAll={activeFilters.length > 0 ? clearOperationFilter : undefined}
-        >
-          {adminView ? (
-            <OlxPickerField
-              label="Operação"
-              value={operationLabel}
-              placeholder="Todas as operações"
-              onPick={() => setOperationPickerOpen(true)}
-              onClear={operationLabel ? clearOperationFilter : undefined}
-            />
-          ) : (
-            <div className="field grow">
-              <label htmlFor="olx-op-operation-filter">Operação</label>
-              <input
-                id="olx-op-operation-filter"
-                className="nexus-input"
-                value={operationId}
-                onChange={(e) => setOperationId(e.target.value)}
-                placeholder="Filtrar por ID da operação"
-                onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-              />
-            </div>
-          )}
-          <button type="button" className="btn btn-secondary btn-sm olx-filter-panel__apply" onClick={handleSearch}>
-            Aplicar filtros
-          </button>
-        </OlxFilterPanel>
+        <DataTable columns={columns} data={items} getRowId={(row) => row.id} />
+      </ListPageLayout>
 
-        {rows.length === 0 ? (
-          <EmptyState
-            title="Nenhum anúncio patchado"
-            message="Assuma um anúncio livre para começar. Apenas registros sob seu controle aparecem aqui."
-          />
-        ) : (
-          <div className="olx-ad-list">
-            {rows.map((row) => (
-              <AdPatchListItem
-                key={row.id}
-                row={row}
-                scope="operator"
-                operationLabels={operationLabels}
-                currentAccountId={user?.accountId}
-                busy={busy}
-                onImpersonate={() => openImpersonate(row)}
-                onEditPrices={() => setEditRow(row)}
-                onUnimpersonate={() => setConfirmRelease(row)}
-              />
-            ))}
-          </div>
-        )}
-      </OpsWorkspace>
-
-      <OperationPickerModal
+      <OperationPickerDialog
         open={operationPickerOpen}
         title="Filtrar por operação"
         subtitle="Mostra apenas anúncios vinculados à operação escolhida."
@@ -280,13 +292,22 @@ export function OlxOperatorAdsPage() {
         onSubmit={handleUpdatePrices}
       />
 
-      <ConfirmDialog
-        open={confirmRelease !== null}
-        title="Liberar anúncio"
-        message="Encerrar a impersonação deste anúncio? Outro operador OLX poderá assumi-lo."
-        onCancel={() => setConfirmRelease(null)}
-        onConfirm={() => { if (confirmRelease) void handleRelease(confirmRelease); }}
-      />
+      <AlertDialog open={confirmRelease !== null} onOpenChange={(open) => { if (!open) setConfirmRelease(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Liberar anúncio</AlertDialogTitle>
+            <AlertDialogDescription>
+              Encerrar a impersonação deste anúncio? Outro operador OLX poderá assumi-lo.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => { if (confirmRelease) void handleRelease(confirmRelease); }}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

@@ -1,4 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Eye, Pencil, Plus, Trash2 } from 'lucide-react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import {
   addKeyPairCredential,
   addTokenCredential,
@@ -10,12 +14,53 @@ import {
 } from '../api/gateways';
 import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import type { GatewayPrefix, KeyPairCredential, TokenCredential } from '../api/types';
-import { AccountPickerModal } from '../components/AccountPickerModal';
-import { ConfirmDialog } from '../components/ConfirmDialog';
-import { EmptyState } from '../components/EmptyState';
-import { PageHeading } from '../layouts/PageHeading';
+import { AccountPickerDialog } from '@/components/data/entity-picker-dialog';
+import { EntityCombobox } from '@/components/data/entity-combobox';
+import { PageHeader } from '@/components/layout/page-header';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { useNotifications } from '../notifications/NotificationContext';
 import { maskKey, maskToken, shortId } from '../utils/format';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Textarea } from '@/components/ui/textarea';
 
 type Variant = GatewayPrefix;
 
@@ -49,15 +94,24 @@ const CONFIG: Record<Variant, GatewayConfig> = {
 
 type CredentialRow = TokenCredential & KeyPairCredential;
 
-type EditModel = {
-  id: string;
-  name: string;
-  token: string;
-  publicKey: string;
-  secretKey: string;
-  strawManId: string | null;
-  enabled: boolean;
-};
+const credentialBaseSchema = z.object({
+  name: z.string(),
+  enabled: z.boolean(),
+  strawManId: z.string().nullable(),
+  strawLabel: z.string().nullable(),
+});
+
+const tokenCredentialSchema = credentialBaseSchema.extend({
+  token: z.string().trim().min(1, 'O token é obrigatório.'),
+});
+
+const keyPairCredentialSchema = credentialBaseSchema.extend({
+  publicKey: z.string().trim().min(1, 'Chave pública e secreta são obrigatórias.'),
+  secretKey: z.string().trim().min(1, 'Chave pública e secreta são obrigatórias.'),
+});
+
+type TokenCredentialValues = z.infer<typeof tokenCredentialSchema>;
+type KeyPairCredentialValues = z.infer<typeof keyPairCredentialSchema>;
 
 type GatewayCredentialsPageProps = {
   variant: Variant;
@@ -68,25 +122,64 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
   const { notifyError, notifySuccess } = useNotifications();
   const [credentials, setCredentials] = useState<CredentialRow[]>([]);
   const [search, setSearch] = useState('');
-  const [addBusy, setAddBusy] = useState(false);
-  const [editBusy, setEditBusy] = useState(false);
   const [enableToggleBusyId, setEnableToggleBusyId] = useState<string | null>(null);
   const [accountLabels, setAccountLabels] = useState<Record<string, string>>({});
 
-  const [addName, setAddName] = useState('');
-  const [addToken, setAddToken] = useState('');
-  const [addPublicKey, setAddPublicKey] = useState('');
-  const [addSecretKey, setAddSecretKey] = useState('');
-  const [addEnabled, setAddEnabled] = useState(true);
-  const [addStrawManId, setAddStrawManId] = useState<string | null>(null);
-  const [addStrawLabel, setAddStrawLabel] = useState<string | null>(null);
   const [addStrawPickerOpen, setAddStrawPickerOpen] = useState(false);
-
-  const [editing, setEditing] = useState<EditModel | null>(null);
   const [editStrawPickerOpen, setEditStrawPickerOpen] = useState(false);
+  const [addStrawOptions, setAddStrawOptions] = useState<{ id: string; label: string; description?: string }[]>([]);
+  const [editStrawOptions, setEditStrawOptions] = useState<{ id: string; label: string; description?: string }[]>([]);
+
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<CredentialRow | null>(null);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleteId, setDeleteId] = useState('');
+
+  const addTokenForm = useForm<TokenCredentialValues>({
+    resolver: zodResolver(tokenCredentialSchema),
+    defaultValues: {
+      name: '',
+      token: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    },
+  });
+
+  const addKeyPairForm = useForm<KeyPairCredentialValues>({
+    resolver: zodResolver(keyPairCredentialSchema),
+    defaultValues: {
+      name: '',
+      publicKey: '',
+      secretKey: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    },
+  });
+
+  const editTokenForm = useForm<TokenCredentialValues>({
+    resolver: zodResolver(tokenCredentialSchema),
+    defaultValues: {
+      name: '',
+      token: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    },
+  });
+
+  const editKeyPairForm = useForm<KeyPairCredentialValues>({
+    resolver: zodResolver(keyPairCredentialSchema),
+    defaultValues: {
+      name: '',
+      publicKey: '',
+      secretKey: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    },
+  });
 
   const filteredCredentials = useMemo(() => {
     if (!search.trim()) return credentials;
@@ -127,53 +220,52 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
     return accountLabels[strawManId] ?? strawManId;
   }
 
-  async function handleAdd() {
-    setAddBusy(true);
-    try {
-      if (config.mode === 'token') {
-        if (!addToken.trim()) {
-          notifyError('O token é obrigatório.');
-          return;
-        }
-        const result = await addTokenCredential(variant, {
-          name: addName,
-          token: addToken,
-          strawManId: addStrawManId,
-          enabled: addEnabled,
-        });
-        if (!result.ok) {
-          notifyError(result.error);
-          return;
-        }
-      } else {
-        if (!addPublicKey.trim() || !addSecretKey.trim()) {
-          notifyError('Chave pública e secreta são obrigatórias.');
-          return;
-        }
-        const result = await addKeyPairCredential(variant, {
-          name: addName,
-          publicKey: addPublicKey,
-          secretKey: addSecretKey,
-          strawManId: addStrawManId,
-          enabled: addEnabled,
-        });
-        if (!result.ok) {
-          notifyError(result.error);
-          return;
-        }
-      }
-      notifySuccess('Credencial adicionada com sucesso.');
-      setAddName('');
-      setAddToken('');
-      setAddPublicKey('');
-      setAddSecretKey('');
-      setAddStrawManId(null);
-      setAddStrawLabel(null);
-      setAddEnabled(true);
-      await refresh();
-    } finally {
-      setAddBusy(false);
+  async function handleAddToken(values: TokenCredentialValues) {
+    const result = await addTokenCredential(variant, {
+      name: values.name,
+      token: values.token,
+      strawManId: values.strawManId,
+      enabled: values.enabled,
+    });
+    if (!result.ok) {
+      notifyError(result.error);
+      return;
     }
+    notifySuccess('Credencial adicionada com sucesso.');
+    addTokenForm.reset({
+      name: '',
+      token: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    });
+    setAddStrawOptions([]);
+    await refresh();
+  }
+
+  async function handleAddKeyPair(values: KeyPairCredentialValues) {
+    const result = await addKeyPairCredential(variant, {
+      name: values.name,
+      publicKey: values.publicKey,
+      secretKey: values.secretKey,
+      strawManId: values.strawManId,
+      enabled: values.enabled,
+    });
+    if (!result.ok) {
+      notifyError(result.error);
+      return;
+    }
+    notifySuccess('Credencial adicionada com sucesso.');
+    addKeyPairForm.reset({
+      name: '',
+      publicKey: '',
+      secretKey: '',
+      enabled: true,
+      strawManId: null,
+      strawLabel: null,
+    });
+    setAddStrawOptions([]);
+    await refresh();
   }
 
   async function handleEnabledToggle(cred: CredentialRow, enabled: boolean) {
@@ -193,61 +285,70 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
   }
 
   function beginEdit(cred: CredentialRow) {
-    setEditing({
-      id: cred.id,
+    const strawLabel = cred.strawManId
+      ? (accountLabels[cred.strawManId] ? `${accountLabels[cred.strawManId]} (${cred.strawManId})` : cred.strawManId)
+      : null;
+    const common = {
       name: cred.name,
-      token: cred.token ?? '',
-      publicKey: cred.publicKey ?? '',
-      secretKey: cred.secretKey ?? '',
-      strawManId: cred.strawManId ?? null,
       enabled: cred.enabled,
-    });
+      strawManId: cred.strawManId ?? null,
+      strawLabel,
+    };
+    if (config.mode === 'token') {
+      editTokenForm.reset({
+        ...common,
+        token: cred.token ?? '',
+      });
+    } else {
+      editKeyPairForm.reset({
+        ...common,
+        publicKey: cred.publicKey ?? '',
+        secretKey: cred.secretKey ?? '',
+      });
+    }
+    if (cred.strawManId && strawLabel) {
+      setEditStrawOptions([{ id: cred.strawManId, label: strawLabel, description: cred.strawManId }]);
+    } else {
+      setEditStrawOptions([]);
+    }
+    setEditingId(cred.id);
   }
 
-  async function handleUpdate() {
-    if (!editing) return;
-    setEditBusy(true);
-    try {
-      if (config.mode === 'token') {
-        if (!editing.token.trim()) {
-          notifyError('O token é obrigatório.');
-          return;
-        }
-        const result = await updateTokenCredential(variant, {
-          id: editing.id,
-          name: editing.name,
-          token: editing.token,
-          strawManId: editing.strawManId,
-          enabled: editing.enabled,
-        });
-        if (!result.ok) {
-          notifyError(result.error);
-          return;
-        }
-      } else {
-        if (!editing.publicKey.trim() || !editing.secretKey.trim()) {
-          notifyError('Chave pública e secreta são obrigatórias.');
-          return;
-        }
-        const result = await updateKeyPairCredential(variant, {
-          id: editing.id,
-          name: editing.name,
-          publicKey: editing.publicKey,
-          secretKey: editing.secretKey,
-          strawManId: editing.strawManId,
-          enabled: editing.enabled,
-        });
-        if (!result.ok) {
-          notifyError(result.error);
-          return;
-        }
-      }
-      notifySuccess('Credencial atualizada com sucesso.');
-      setEditing(null);
-      await refresh();
-    } finally {
-      setEditBusy(false);
+  async function handleUpdateToken(values: TokenCredentialValues) {
+    if (!editingId) return;
+    const result = await updateTokenCredential(variant, {
+      id: editingId,
+      name: values.name,
+      token: values.token,
+      strawManId: values.strawManId,
+      enabled: values.enabled,
+    });
+    if (!result.ok) {
+      notifyError(result.error);
+      return;
     }
+    notifySuccess('Credencial atualizada com sucesso.');
+    setEditingId(null);
+    await refresh();
+  }
+
+  async function handleUpdateKeyPair(values: KeyPairCredentialValues) {
+    if (!editingId) return;
+    const result = await updateKeyPairCredential(variant, {
+      id: editingId,
+      name: values.name,
+      publicKey: values.publicKey,
+      secretKey: values.secretKey,
+      strawManId: values.strawManId,
+      enabled: values.enabled,
+    });
+    if (!result.ok) {
+      notifyError(result.error);
+      return;
+    }
+    notifySuccess('Credencial atualizada com sucesso.');
+    setEditingId(null);
+    await refresh();
   }
 
   async function confirmDelete() {
@@ -257,274 +358,565 @@ export function GatewayCredentialsPage({ variant }: GatewayCredentialsPageProps)
     if (result.ok) notifySuccess('Credencial excluída com sucesso.');
     else notifyError(result.error);
     setDeleteId('');
-    setEditing(null);
+    setEditingId(null);
     await refresh();
   }
 
-  const editStrawLabel = editing?.strawManId
-    ? (accountLabels[editing.strawManId] ? `${accountLabels[editing.strawManId]} (${editing.strawManId})` : editing.strawManId)
-    : null;
-
-  return (
-    <>
-      <PageHeading
-        kicker="Integração"
-        title={config.title}
-        subtitle={config.lead}
-        backLink={{ to: '/dashboard/gateways', label: 'Hub de gateways' }}
-      />
-
-      <section className="card ops-card">
-        <div className="card-title-row">
-          <h2>Adicionar credencial</h2>
-          <span className="post-badge">POST /api/{variant}/credentials</span>
-        </div>
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="credName">Nome</label>
-            <input id="credName" className="nexus-input" value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={config.addPlaceholder} />
-          </div>
-          {config.mode === 'token' ? (
-            <div className="field">
-              <label htmlFor="credToken">Token</label>
-              <input id="credToken" className="nexus-input" type="password" value={addToken} onChange={(e) => setAddToken(e.target.value)} placeholder="Cole o token" />
-            </div>
-          ) : (
-            <>
-              <div className="field">
-                <label htmlFor="credPublicKey">Chave pública</label>
-                <input id="credPublicKey" className="nexus-input" type="password" value={addPublicKey} onChange={(e) => setAddPublicKey(e.target.value)} placeholder="x-public-key" />
-              </div>
-              <div className="field">
-                <label htmlFor="credSecretKey">Chave secreta</label>
-                <input id="credSecretKey" className="nexus-input" type="password" value={addSecretKey} onChange={(e) => setAddSecretKey(e.target.value)} placeholder="x-secret-key" />
-              </div>
-            </>
-          )}
-          <div className="field">
-            <label className="checkbox-field">
-              <input type="checkbox" checked={addEnabled} onChange={(e) => setAddEnabled(e.target.checked)} />
-              <span>Habilitada para cobrança</span>
-            </label>
-            <p className="muted small" style={{ margin: '0.25rem 0 0 1.5rem' }}>Desmarque para manter a credencial cadastrada sem usar no orquestrador.</p>
-          </div>
-          <div className="field span-2">
-            <label>Laranja (conta) <span className="muted small">opcional</span></label>
-            <div className="account-select-row">
-              <button type="button" className="account-select-trigger" onClick={() => setAddStrawPickerOpen(true)}>
-                {addStrawLabel ?? 'Genérico (sem laranja)'}
-              </button>
-              <button type="button" className="btn-icon btn-icon-warm" onClick={() => setAddStrawPickerOpen(true)} title="Selecionar laranja">＋</button>
-              {addStrawManId ? (
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => { setAddStrawManId(null); setAddStrawLabel(null); }}>Limpar</button>
+  function renderStrawField(
+    form: typeof addTokenForm,
+    setPickerOpen: (open: boolean) => void,
+    options: { id: string; label: string; description?: string }[],
+    setOptions: (options: { id: string; label: string; description?: string }[]) => void,
+  ) {
+    return (
+      <FormField
+        control={form.control}
+        name="strawManId"
+        render={({ field }) => (
+          <FormItem className="sm:col-span-2">
+            <FormLabel>
+              Laranja (conta) <span className="font-normal text-muted-foreground">opcional</span>
+            </FormLabel>
+            <FormControl>
+              <EntityCombobox
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
+                  if (!value) form.setValue('strawLabel', null);
+                }}
+                options={options}
+                placeholder="Genérico (sem laranja)"
+                searchPlaceholder="Buscar laranja…"
+              />
+            </FormControl>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                Buscar laranja…
+              </Button>
+              {field.value ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    field.onChange(null);
+                    form.setValue('strawLabel', null);
+                    setOptions([]);
+                  }}
+                >
+                  Limpar
+                </Button>
               ) : null}
             </div>
-          </div>
-        </div>
-        <div className="card-actions">
-          <button type="button" className="btn btn-primary" onClick={() => void handleAdd()} disabled={addBusy}>Adicionar</button>
-        </div>
-      </section>
-
-      <section className="card ops-card">
-        <div className="toolbar toolbar-tight">
-          <div className="field grow">
-            <label htmlFor="credSearch">Buscar credenciais</label>
-            <input id="credSearch" className="nexus-input" value={search} onChange={(e) => setSearch(e.target.value)} placeholder={config.mode === 'token' ? 'Nome, ID ou token…' : 'Nome, ID ou chave…'} />
-          </div>
-          <button type="button" className="btn btn-ghost" onClick={() => setSearch(search)}>Buscar</button>
-          <button type="button" className="btn btn-ghost" onClick={() => void refresh()}>Atualizar</button>
-        </div>
-
-        <h2 className="section-title">Credenciais cadastradas</h2>
-
-        {filteredCredentials.length === 0 ? (
-          <EmptyState title="Nenhuma credencial encontrada" message="Cadastre uma credencial acima ou ajuste a busca." />
-        ) : (
-          <div className="table-wrap table-top-gap">
-            <table className="responsive-data ops-table">
-              <thead>
-                <tr>
-                  <th>Nome</th>
-                  {config.mode === 'token' ? (
-                    <th>Token</th>
-                  ) : (
-                    <>
-                      <th>Chave pública</th>
-                      <th>Chave secreta</th>
-                    </>
-                  )}
-                  <th>Laranja</th>
-                  <th>Ativa</th>
-                  <th className="th-actions" scope="col">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCredentials.map((cred) => (
-                  <tr key={cred.id}>
-                    <td data-label="Nome">{cred.name}</td>
-                    {config.mode === 'token' ? (
-                      <td data-label="Token"><span className="mono token-mask" title="Mascarado">{maskToken(cred.token ?? '')}</span></td>
-                    ) : (
-                      <>
-                        <td data-label="Chave pública"><span className="mono token-mask" title="Mascarado">{maskKey(cred.publicKey ?? '')}</span></td>
-                        <td data-label="Chave secreta"><span className="mono token-mask" title="Mascarado">{maskKey(cred.secretKey ?? '')}</span></td>
-                      </>
-                    )}
-                    <td data-label="Laranja" className="muted">{formatStraw(cred.strawManId)}</td>
-                    <td data-label="Ativa">
-                      <label className="toggle-inline">
-                        <input
-                          type="checkbox"
-                          checked={cred.enabled}
-                          disabled={enableToggleBusyId === cred.id}
-                          onChange={(e) => void handleEnabledToggle(cred, e.target.checked)}
-                        />
-                        <span className="muted small">{cred.enabled ? 'Sim' : 'Não'}</span>
-                      </label>
-                    </td>
-                    <td className="cell-actions" data-label="Ações">
-                      <div className="row-actions">
-                        <button type="button" className="icon-action" title="Ver credencial" aria-label="Ver credencial" onClick={() => setViewing(cred)}>👁</button>
-                        <button type="button" className="icon-action" title="Editar" aria-label="Editar credencial" onClick={() => beginEdit(cred)}>✎</button>
-                        <button type="button" className="icon-action icon-action-danger" title="Excluir" aria-label="Excluir credencial" onClick={() => { setDeleteId(cred.id); setDeleteDialogOpen(true); }}>🗑</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+            <FormMessage />
+          </FormItem>
         )}
-      </section>
+      />
+    );
+  }
 
-      {editing ? (
-        <div className="dialog-backdrop dialog-backdrop--modal" onClick={() => setEditing(null)}>
-          <div className="dialog-card dialog-card--wide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-stack">
-              <div className="modal-stack-header">
-                <div>
-                  <h2 className="manage-ids-title">Editar credencial</h2>
-                  <p className="muted small">PUT /api/{variant}/credentials</p>
+  function renderKeyPairStrawField(
+    form: typeof addKeyPairForm,
+    setPickerOpen: (open: boolean) => void,
+    options: { id: string; label: string; description?: string }[],
+    setOptions: (options: { id: string; label: string; description?: string }[]) => void,
+  ) {
+    return (
+      <FormField
+        control={form.control}
+        name="strawManId"
+        render={({ field }) => (
+          <FormItem className="sm:col-span-2">
+            <FormLabel>
+              Laranja (conta) <span className="font-normal text-muted-foreground">opcional</span>
+            </FormLabel>
+            <FormControl>
+              <EntityCombobox
+                value={field.value}
+                onChange={(value) => {
+                  field.onChange(value);
+                  if (!value) form.setValue('strawLabel', null);
+                }}
+                options={options}
+                placeholder="Genérico (sem laranja)"
+                searchPlaceholder="Buscar laranja…"
+              />
+            </FormControl>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="outline" size="sm" onClick={() => setPickerOpen(true)}>
+                Buscar laranja…
+              </Button>
+              {field.value ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    field.onChange(null);
+                    form.setValue('strawLabel', null);
+                    setOptions([]);
+                  }}
+                >
+                  Limpar
+                </Button>
+              ) : null}
+            </div>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+    );
+  }
+
+  function renderEnabledField(form: typeof addTokenForm) {
+    return (
+      <FormField
+        control={form.control}
+        name="enabled"
+        render={({ field }) => (
+          <FormItem className="sm:col-span-2">
+            <div className="flex items-center gap-2">
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormLabel className="font-normal">Habilitada para cobrança</FormLabel>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Desmarque para manter a credencial cadastrada sem usar no orquestrador.
+            </p>
+          </FormItem>
+        )}
+      />
+    );
+  }
+
+  function renderKeyPairEnabledField(form: typeof addKeyPairForm) {
+    return (
+      <FormField
+        control={form.control}
+        name="enabled"
+        render={({ field }) => (
+          <FormItem className="sm:col-span-2">
+            <div className="flex items-center gap-2">
+              <FormControl>
+                <Switch checked={field.value} onCheckedChange={field.onChange} />
+              </FormControl>
+              <FormLabel className="font-normal">Habilitada para cobrança</FormLabel>
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Desmarque para manter a credencial cadastrada sem usar no orquestrador.
+            </p>
+          </FormItem>
+        )}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        kicker="Integração"
+        title={config.title}
+        description={config.lead}
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Gateways', href: '/dashboard/gateways' },
+          { label: config.title },
+        ]}
+      />
+
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader className="flex-row items-center justify-between gap-3 space-y-0">
+          <CardTitle>Adicionar credencial</CardTitle>
+          <Badge variant="outline">POST /api/{variant}/credentials</Badge>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {config.mode === 'token' ? (
+            <Form {...addTokenForm}>
+              <form className="space-y-4" onSubmit={addTokenForm.handleSubmit(handleAddToken)}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={addTokenForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="credName">Nome</FormLabel>
+                        <FormControl>
+                          <Input id="credName" placeholder={config.addPlaceholder} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addTokenForm.control}
+                    name="token"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="credToken">Token</FormLabel>
+                        <FormControl>
+                          <Input id="credToken" type="password" placeholder="Cole o token" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {renderEnabledField(addTokenForm)}
+                  {renderStrawField(addTokenForm, setAddStrawPickerOpen, addStrawOptions, setAddStrawOptions)}
                 </div>
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing(null)}>Fechar</button>
-              </div>
-              <div className="form-grid">
-                <div className="field">
-                  <label htmlFor="editCredName">Nome</label>
-                  <input id="editCredName" className="nexus-input" value={editing.name} onChange={(e) => setEditing({ ...editing, name: e.target.value })} />
+                <Button type="submit" disabled={addTokenForm.formState.isSubmitting}>
+                  <Plus className="size-4" />
+                  Adicionar
+                </Button>
+              </form>
+            </Form>
+          ) : (
+            <Form {...addKeyPairForm}>
+              <form className="space-y-4" onSubmit={addKeyPairForm.handleSubmit(handleAddKeyPair)}>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <FormField
+                    control={addKeyPairForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="credName">Nome</FormLabel>
+                        <FormControl>
+                          <Input id="credName" placeholder={config.addPlaceholder} {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addKeyPairForm.control}
+                    name="publicKey"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="credPublicKey">Chave pública</FormLabel>
+                        <FormControl>
+                          <Input id="credPublicKey" type="password" placeholder="x-public-key" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={addKeyPairForm.control}
+                    name="secretKey"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel htmlFor="credSecretKey">Chave secreta</FormLabel>
+                        <FormControl>
+                          <Input id="credSecretKey" type="password" placeholder="x-secret-key" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  {renderKeyPairEnabledField(addKeyPairForm)}
+                  {renderKeyPairStrawField(addKeyPairForm, setAddStrawPickerOpen, addStrawOptions, setAddStrawOptions)}
                 </div>
-                {config.mode === 'token' ? (
-                  <div className="field">
-                    <label htmlFor="editCredToken">Token</label>
-                    <input id="editCredToken" className="nexus-input" type="password" value={editing.token} onChange={(e) => setEditing({ ...editing, token: e.target.value })} />
-                  </div>
-                ) : (
-                  <>
-                    <div className="field">
-                      <label htmlFor="editPublicKey">Chave pública</label>
-                      <input id="editPublicKey" className="nexus-input" type="password" value={editing.publicKey} onChange={(e) => setEditing({ ...editing, publicKey: e.target.value })} />
-                    </div>
-                    <div className="field">
-                      <label htmlFor="editSecretKey">Chave secreta</label>
-                      <input id="editSecretKey" className="nexus-input" type="password" value={editing.secretKey} onChange={(e) => setEditing({ ...editing, secretKey: e.target.value })} />
-                    </div>
-                  </>
-                )}
-                <div className="field span-2">
-                  <label>Laranja (conta)</label>
-                  <div className="account-select-row">
-                    <button type="button" className="account-select-trigger" onClick={() => setEditStrawPickerOpen(true)}>
-                      {editStrawLabel ?? 'Genérico (sem laranja)'}
-                    </button>
-                    <button type="button" className="btn-icon btn-icon-warm" onClick={() => setEditStrawPickerOpen(true)} title="Selecionar laranja">＋</button>
-                    {editing.strawManId ? (
-                      <button type="button" className="btn btn-ghost btn-small" onClick={() => setEditing({ ...editing, strawManId: null })}>Limpar</button>
-                    ) : null}
-                  </div>
-                </div>
-                <div className="field span-2">
-                  <label className="checkbox-field">
-                    <input type="checkbox" checked={editing.enabled} onChange={(e) => setEditing({ ...editing, enabled: e.target.checked })} />
-                    <span>Habilitada para cobrança</span>
-                  </label>
-                </div>
-              </div>
-              <div className="modal-stack-footer">
-                <button type="button" className="btn btn-primary" onClick={() => void handleUpdate()} disabled={editBusy}>Salvar</button>
-                <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>Cancelar</button>
-              </div>
+                <Button type="submit" disabled={addKeyPairForm.formState.isSubmitting}>
+                  <Plus className="size-4" />
+                  Adicionar
+                </Button>
+              </form>
+            </Form>
+          )}
+        </CardContent>
+      </Card>
+
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader className="gap-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+            <div className="min-w-0 flex-1 space-y-2">
+              <Label htmlFor="credSearch">Buscar credenciais</Label>
+              <Input
+                id="credSearch"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder={config.mode === 'token' ? 'Nome, ID ou token…' : 'Nome, ID ou chave…'}
+              />
+            </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={() => setSearch(search)}>Buscar</Button>
+              <Button type="button" variant="outline" onClick={() => void refresh()}>Atualizar</Button>
             </div>
           </div>
-        </div>
-      ) : null}
+          <CardTitle>Credenciais cadastradas</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {filteredCredentials.length === 0 ? (
+            <Alert>
+              <AlertTitle>Nenhuma credencial encontrada</AlertTitle>
+              <AlertDescription>Cadastre uma credencial acima ou ajuste a busca.</AlertDescription>
+            </Alert>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  {config.mode === 'token' ? (
+                    <TableHead>Token</TableHead>
+                  ) : (
+                    <>
+                      <TableHead>Chave pública</TableHead>
+                      <TableHead>Chave secreta</TableHead>
+                    </>
+                  )}
+                  <TableHead>Laranja</TableHead>
+                  <TableHead>Ativa</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredCredentials.map((cred) => (
+                  <TableRow key={cred.id}>
+                    <TableCell>{cred.name}</TableCell>
+                    {config.mode === 'token' ? (
+                      <TableCell>
+                        <span className="font-mono text-xs" title="Mascarado">{maskToken(cred.token ?? '')}</span>
+                      </TableCell>
+                    ) : (
+                      <>
+                        <TableCell>
+                          <span className="font-mono text-xs" title="Mascarado">{maskKey(cred.publicKey ?? '')}</span>
+                        </TableCell>
+                        <TableCell>
+                          <span className="font-mono text-xs" title="Mascarado">{maskKey(cred.secretKey ?? '')}</span>
+                        </TableCell>
+                      </>
+                    )}
+                    <TableCell className="text-muted-foreground">{formatStraw(cred.strawManId)}</TableCell>
+                    <TableCell>
+                      <label className="flex items-center gap-2">
+                        <Switch
+                          checked={cred.enabled}
+                          disabled={enableToggleBusyId === cred.id}
+                          onCheckedChange={(checked) => void handleEnabledToggle(cred, checked)}
+                        />
+                        <span className="text-sm text-muted-foreground">{cred.enabled ? 'Sim' : 'Não'}</span>
+                      </label>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="inline-flex items-center gap-1">
+                        <Button type="button" variant="ghost" size="icon-sm" title="Ver credencial" aria-label="Ver credencial" onClick={() => setViewing(cred)}>
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button type="button" variant="ghost" size="icon-sm" title="Editar" aria-label="Editar credencial" onClick={() => beginEdit(cred)}>
+                          <Pencil className="size-4" />
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="text-destructive hover:text-destructive"
+                          title="Excluir"
+                          aria-label="Excluir credencial"
+                          onClick={() => { setDeleteId(cred.id); setDeleteDialogOpen(true); }}
+                        >
+                          <Trash2 className="size-4" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-      {viewing ? (
-        <div className="dialog-backdrop dialog-backdrop--modal" onClick={() => setViewing(null)}>
-          <div className="dialog-card dialog-card--wide" onClick={(e) => e.stopPropagation()}>
-            <div className="modal-stack">
-              <div className="modal-stack-header">
-                <h2 className="manage-ids-title">Credencial</h2>
-                <button type="button" className="btn btn-ghost btn-small" onClick={() => setViewing(null)}>Fechar</button>
-              </div>
-              <p className="muted stack-tight"><strong>ID:</strong> <span className="mono">{viewing.id}</span></p>
-              <p className="muted stack-tight"><strong>Nome:</strong> {viewing.name}</p>
-              <p className="muted stack-tight"><strong>Cobrança:</strong> {viewing.enabled ? 'Habilitada' : 'Desabilitada'}</p>
+      <Dialog open={editingId !== null} onOpenChange={(isOpen) => { if (!isOpen) setEditingId(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Editar credencial</DialogTitle>
+            <DialogDescription>PUT /api/{variant}/credentials</DialogDescription>
+          </DialogHeader>
+          {config.mode === 'token' ? (
+            <Form {...editTokenForm}>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={editTokenForm.handleSubmit(handleUpdateToken)}>
+                <FormField
+                  control={editTokenForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel htmlFor="editCredName">Nome</FormLabel>
+                      <FormControl>
+                        <Input id="editCredName" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editTokenForm.control}
+                  name="token"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel htmlFor="editCredToken">Token</FormLabel>
+                      <FormControl>
+                        <Input id="editCredToken" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {renderStrawField(editTokenForm, setEditStrawPickerOpen, editStrawOptions, setEditStrawOptions)}
+                {renderEnabledField(editTokenForm)}
+                <DialogFooter className="sm:col-span-2">
+                  <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
+                  <Button type="submit" disabled={editTokenForm.formState.isSubmitting}>Salvar</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          ) : (
+            <Form {...editKeyPairForm}>
+              <form className="grid gap-4 sm:grid-cols-2" onSubmit={editKeyPairForm.handleSubmit(handleUpdateKeyPair)}>
+                <FormField
+                  control={editKeyPairForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem className="sm:col-span-2">
+                      <FormLabel htmlFor="editCredName">Nome</FormLabel>
+                      <FormControl>
+                        <Input id="editCredName" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editKeyPairForm.control}
+                  name="publicKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="editPublicKey">Chave pública</FormLabel>
+                      <FormControl>
+                        <Input id="editPublicKey" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={editKeyPairForm.control}
+                  name="secretKey"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="editSecretKey">Chave secreta</FormLabel>
+                      <FormControl>
+                        <Input id="editSecretKey" type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                {renderKeyPairStrawField(editKeyPairForm, setEditStrawPickerOpen, editStrawOptions, setEditStrawOptions)}
+                {renderKeyPairEnabledField(editKeyPairForm)}
+                <DialogFooter className="sm:col-span-2">
+                  <Button type="button" variant="outline" onClick={() => setEditingId(null)}>Cancelar</Button>
+                  <Button type="submit" disabled={editKeyPairForm.formState.isSubmitting}>Salvar</Button>
+                </DialogFooter>
+              </form>
+            </Form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={viewing !== null} onOpenChange={(isOpen) => { if (!isOpen) setViewing(null); }}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Credencial</DialogTitle>
+          </DialogHeader>
+          {viewing ? (
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">ID:</strong>{' '}
+                <span className="font-mono">{viewing.id}</span>
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Nome:</strong> {viewing.name}
+              </p>
+              <p className="text-sm text-muted-foreground">
+                <strong className="text-foreground">Cobrança:</strong>{' '}
+                {viewing.enabled ? 'Habilitada' : 'Desabilitada'}
+              </p>
               {config.mode === 'token' ? (
-                <div className="field">
-                  <label>Token</label>
-                  <textarea readOnly rows={5} className="nexus-input" value={viewing.token ?? ''} />
+                <div className="space-y-2">
+                  <Label>Token</Label>
+                  <Textarea readOnly rows={5} value={viewing.token ?? ''} className="font-mono text-xs" />
                 </div>
               ) : (
                 <>
-                  <div className="field">
-                    <label>Chave pública</label>
-                    <textarea readOnly rows={3} className="nexus-input" value={viewing.publicKey ?? ''} />
+                  <div className="space-y-2">
+                    <Label>Chave pública</Label>
+                    <Textarea readOnly rows={3} value={viewing.publicKey ?? ''} className="font-mono text-xs" />
                   </div>
-                  <div className="field">
-                    <label>Chave secreta</label>
-                    <textarea readOnly rows={3} className="nexus-input" value={viewing.secretKey ?? ''} />
+                  <div className="space-y-2">
+                    <Label>Chave secreta</Label>
+                    <Textarea readOnly rows={3} value={viewing.secretKey ?? ''} className="font-mono text-xs" />
                   </div>
                 </>
               )}
             </div>
-          </div>
-        </div>
-      ) : null}
+          ) : null}
+        </DialogContent>
+      </Dialog>
 
-      <AccountPickerModal
+      <AccountPickerDialog
         open={addStrawPickerOpen}
         onClose={() => setAddStrawPickerOpen(false)}
         searchAccounts={searchAdministratorAccountsPicker}
         title="Laranja para credencial"
         subtitle="Opcional. Credenciais sem laranja participam como genéricas no filtro de cobrança."
         onSelected={(row) => {
-          setAddStrawManId(row.id);
-          setAddStrawLabel(`${row.username} (${row.id})`);
+          const label = `${row.username} (${row.id})`;
+          if (config.mode === 'token') {
+            addTokenForm.setValue('strawManId', row.id);
+            addTokenForm.setValue('strawLabel', label);
+          } else {
+            addKeyPairForm.setValue('strawManId', row.id);
+            addKeyPairForm.setValue('strawLabel', label);
+          }
+          setAddStrawOptions([{ id: row.id, label: row.username, description: row.id }]);
           setAccountLabels((prev) => ({ ...prev, [row.id]: row.username }));
         }}
       />
 
-      <AccountPickerModal
+      <AccountPickerDialog
         open={editStrawPickerOpen}
         onClose={() => setEditStrawPickerOpen(false)}
         searchAccounts={searchAdministratorAccountsPicker}
         title="Laranja para credencial"
         subtitle="Vincule uma conta ou deixe genérico."
         onSelected={(row) => {
-          if (!editing) return;
-          setEditing({ ...editing, strawManId: row.id });
+          if (config.mode === 'token') {
+            editTokenForm.setValue('strawManId', row.id);
+            editTokenForm.setValue('strawLabel', `${row.username} (${row.id})`);
+          } else {
+            editKeyPairForm.setValue('strawManId', row.id);
+            editKeyPairForm.setValue('strawLabel', `${row.username} (${row.id})`);
+          }
+          setEditStrawOptions([{ id: row.id, label: row.username, description: row.id }]);
           setAccountLabels((prev) => ({ ...prev, [row.id]: row.username }));
         }}
       />
 
-      <ConfirmDialog
-        open={deleteDialogOpen}
-        title="Confirmar exclusão"
-        message="Tem certeza que deseja excluir esta credencial?"
-        onCancel={() => { setDeleteDialogOpen(false); setDeleteId(''); }}
-        onConfirm={() => void confirmDelete()}
-      />
-    </>
+      <AlertDialog open={deleteDialogOpen} onOpenChange={(open) => { if (!open) { setDeleteDialogOpen(false); setDeleteId(''); } }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir esta credencial?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => void confirmDelete()}>Confirmar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }

@@ -7,6 +7,14 @@ import {
   readScriptFile,
   SCRIPT_FILE_ACCEPT,
 } from '../../features/scripts/readScriptFile';
+import { Button } from '@/components/ui/button';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
+import { cn } from '@/lib/utils';
+import { ChevronDownIcon } from 'lucide-react';
 
 type ReleaseSourcePanelProps = {
   versionLabel: string;
@@ -88,14 +96,17 @@ export function ReleaseSourcePanel({
   }
 
   return (
-    <div className="scripts-release-source">
-      <p className="scripts-release-source__lead muted small">
-        Release <span className="mono">{versionLabel}</span> · carregue o bundle ou use o editor.
+    <div className="flex flex-col gap-3">
+      <p className="text-sm text-muted-foreground">
+        Release <span className="font-mono">{versionLabel}</span> · carregue o bundle ou use o editor.
       </p>
 
       {!hasSource ? (
         <div
-          className={`scripts-release-source__dropzone ${dragging ? 'is-dragging' : ''}`}
+          className={cn(
+            'relative rounded-xl border-2 border-dashed border-border/60 px-6 py-8 text-center transition-colors',
+            dragging && 'border-warning/50 bg-warning/5',
+          )}
           onDragEnter={(event) => {
             event.preventDefault();
             setDragging(true);
@@ -112,25 +123,26 @@ export function ReleaseSourcePanel({
             id={inputId}
             type="file"
             accept={SCRIPT_FILE_ACCEPT}
-            className="scripts-release-source__input"
+            className="sr-only"
             onChange={handleFileInput}
           />
 
-          <div className="scripts-release-source__dropzone-body">
-            <p className="scripts-release-source__dropzone-title">
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm font-medium">
               {loading ? 'Lendo bundle…' : 'Arraste um bundle .js'}
             </p>
-            <p className="scripts-release-source__dropzone-hint muted small">
+            <p className="text-xs text-muted-foreground">
               Saída do build (webpack, rollup, esbuild…) · até {formatScriptFileSize(5 * 1024 * 1024)}
             </p>
-            <button
+            <Button
               type="button"
-              className="btn btn-scripts-outline btn-sm"
+              variant="outline"
+              size="sm"
               disabled={loading}
               onClick={() => fileInputRef.current?.click()}
             >
               Selecionar arquivo
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
@@ -139,73 +151,84 @@ export function ReleaseSourcePanel({
           id={inputId}
           type="file"
           accept={SCRIPT_FILE_ACCEPT}
-          className="scripts-release-source__input"
+          className="sr-only"
           onChange={handleFileInput}
         />
       )}
 
       {error ? (
-        <p className="scripts-release-source__error" role="alert">{error}</p>
+        <p className="text-sm text-destructive" role="alert">{error}</p>
       ) : null}
 
       {hasSource ? (
-        <div className="scripts-release-source__loaded">
-          <div className="scripts-release-source__meta">
+        <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+          <div className="grid gap-3 sm:grid-cols-3">
             <div>
-              <span className="scripts-release-source__meta-label muted small">Origem</span>
-              <strong>{origin === 'file' && fileName ? fileName : 'Editor manual'}</strong>
+              <span className="text-xs text-muted-foreground">Origem</span>
+              <p className="text-sm font-medium">{origin === 'file' && fileName ? fileName : 'Editor manual'}</p>
             </div>
             <div>
-              <span className="scripts-release-source__meta-label muted small">Tamanho</span>
-              <strong className="mono">{formatScriptFileSize(sizeBytes)}</strong>
+              <span className="text-xs text-muted-foreground">Tamanho</span>
+              <p className="font-mono text-sm font-medium">{formatScriptFileSize(sizeBytes)}</p>
             </div>
             <div>
-              <span className="scripts-release-source__meta-label muted small">Linhas</span>
-              <strong className="mono">{lineCount.toLocaleString('pt-BR')}</strong>
+              <span className="text-xs text-muted-foreground">Linhas</span>
+              <p className="font-mono text-sm font-medium">{lineCount.toLocaleString('pt-BR')}</p>
             </div>
           </div>
-          <div className="scripts-release-source__loaded-actions">
-            <button
+          <div className="mt-3 flex gap-2">
+            <Button
               type="button"
-              className="btn btn-ghost btn-sm"
+              variant="ghost"
+              size="sm"
               disabled={loading}
               onClick={() => fileInputRef.current?.click()}
             >
               Trocar arquivo
-            </button>
-            <button type="button" className="btn btn-ghost btn-sm" onClick={clearSource}>
+            </Button>
+            <Button type="button" variant="ghost" size="sm" onClick={clearSource}>
               Limpar
-            </button>
+            </Button>
           </div>
         </div>
       ) : (
-        <p className="scripts-release-source__manual-hint muted small">
+        <p className="text-xs text-muted-foreground">
           Sem bundle?{' '}
-          <button type="button" className="scripts-release-source__manual-link" onClick={openManualEditor}>
+          <Button
+            type="button"
+            variant="link"
+            size="sm"
+            className="h-auto px-0 text-xs"
+            onClick={openManualEditor}
+          >
             Escrever no editor
-          </button>
+          </Button>
         </p>
       )}
 
       {hasSource || editorOpen ? (
-        <div className="scripts-release-source__editor">
-          <button
-            type="button"
-            className="scripts-release-source__editor-toggle"
-            aria-expanded={editorOpen}
-            onClick={() => setEditorOpen((open) => !open)}
-          >
-            <span>Visualizar / editar</span>
-            <span className="scripts-release-source__editor-chevron" aria-hidden="true">{editorOpen ? '▾' : '▸'}</span>
-          </button>
-
-          {editorOpen ? (
-            <CodeStudioPanel value={value} onChange={(next) => {
-              onChange(next);
-              if (origin !== 'file') onOriginChange('editor');
-            }} height="min(48vh, 480px)" />
-          ) : null}
-        </div>
+        <Collapsible open={editorOpen} onOpenChange={setEditorOpen}>
+          <CollapsibleTrigger asChild>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full justify-between px-2"
+            >
+              <span>Visualizar / editar</span>
+              <ChevronDownIcon className={cn('size-4 transition-transform', editorOpen && 'rotate-180')} />
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            <CodeStudioPanel
+              value={value}
+              onChange={(next) => {
+                onChange(next);
+                if (origin !== 'file') onOriginChange('editor');
+              }}
+              height="min(48vh, 480px)"
+            />
+          </CollapsibleContent>
+        </Collapsible>
       ) : null}
     </div>
   );

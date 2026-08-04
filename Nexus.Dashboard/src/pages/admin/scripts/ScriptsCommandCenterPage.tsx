@@ -1,18 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { createScript, searchScripts } from '../../../api/scripts/administrator';
-import type { ChannelFilter, ResolutionModeFilter, ScriptSummary } from '../../../api/scripts/types';
-import { OpsWorkspace } from '../../../components/admin/OpsWorkspace';
-import { EmptyState } from '../../../components/EmptyState';
-import { PaginationBar } from '../../../components/ListControls';
-import { CreateScriptModal } from '../../../components/scripts/CreateScriptModal';
-import { ScriptCard } from '../../../components/scripts/ScriptCard';
-import { ScriptFilterBar } from '../../../components/scripts/ScriptFilterBar';
-import { ScriptInventoryKpis } from '../../../components/scripts/ScriptInventoryKpis';
-import { scriptStudioPath } from '../../../features/scripts/scriptPaths';
-import { useNotifications } from '../../../notifications/NotificationContext';
-
-const PAGE_SIZE = 20;
+import { createScript, searchScripts } from '@/api/scripts/administrator';
+import type { ChannelFilter, ResolutionModeFilter, ScriptSummary } from '@/api/scripts/types';
+import { DataTable } from '@/components/data/data-table';
+import { ListPagination } from '@/components/data/list-pagination';
+import { ListPageLayout } from '@/components/layout/list-page-layout';
+import { CreateScriptModal } from '@/components/scripts/CreateScriptModal';
+import { ScriptFilterBar } from '@/components/scripts/ScriptFilterBar';
+import { ScriptInventoryKpis } from '@/components/scripts/ScriptInventoryKpis';
+import { createScriptColumns } from '@/features/scripts/script-columns';
+import { scriptStudioPath } from '@/features/scripts/scriptPaths';
+import { usePaginatedQuery, adaptSearchResponse } from '@/hooks/use-paginated-query';
+import { useNotifications } from '@/notifications/NotificationContext';
+import { Button } from '@/components/ui/button';
 
 function channelVersion(script: ScriptSummary, routeValue: string): string | null {
   return script.channels.find((channel) => channel.routeValue === routeValue)?.version ?? null;
@@ -33,39 +33,34 @@ function filterByChannel(items: ScriptSummary[], channel: ChannelFilter): Script
 export function ScriptsCommandCenterPage() {
   const navigate = useNavigate();
   const { notifyError, notifySuccess } = useNotifications();
-  const [search, setSearch] = useState('');
-  const [query, setQuery] = useState('');
   const [mode, setMode] = useState<ResolutionModeFilter>('all');
   const [channel, setChannel] = useState<ChannelFilter>('all');
-  const [rows, setRows] = useState<ScriptSummary[]>([]);
   const [kpiRows, setKpiRows] = useState<ScriptSummary[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const [busy, setBusy] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [createBusy, setCreateBusy] = useState(false);
 
-  const totalPages = totalItems === 0 ? 1 : Math.ceil(totalItems / PAGE_SIZE);
-
-  const load = useCallback(async (page: number, keyword: string) => {
-    setBusy(true);
-    const result = await searchScripts({
-      limit: PAGE_SIZE,
-      offset: (page - 1) * PAGE_SIZE,
-      keyword,
-    });
-    setBusy(false);
-
-    if (!result.ok) {
-      notifyError(result.error);
-      setRows([]);
-      setTotalItems(0);
-      return;
-    }
-
-    setRows(result.data?.items ?? []);
-    setTotalItems(result.data?.total ?? 0);
-  }, [notifyError]);
+  const {
+    search,
+    setSearch,
+    query,
+    currentPage,
+    totalItems,
+    totalPages,
+    items,
+    isLoading,
+    error,
+    refetch,
+    submitSearch,
+    goPrev,
+    goNext,
+  } = usePaginatedQuery({
+    queryKey: ['admin-scripts'],
+    fetchPage: async (params) => adaptSearchResponse(await searchScripts({
+      limit: params.limit,
+      offset: params.offset,
+      keyword: params.keyword ?? '',
+    })),
+  });
 
   const loadKpis = useCallback(async (keyword: string) => {
     const result = await searchScripts({ limit: 100, offset: 0, keyword });
@@ -73,16 +68,12 @@ export function ScriptsCommandCenterPage() {
   }, []);
 
   useEffect(() => {
-    void load(currentPage, query);
-  }, [currentPage, query, load]);
-
-  useEffect(() => {
     void loadKpis(query);
   }, [query, loadKpis]);
 
   const visibleRows = useMemo(
-    () => filterByChannel(filterByMode(rows, mode), channel),
-    [rows, mode, channel],
+    () => filterByChannel(filterByMode(items, mode), channel),
+    [items, mode, channel],
   );
 
   const kpis = useMemo(() => {
@@ -97,10 +88,7 @@ export function ScriptsCommandCenterPage() {
     };
   }, [kpiRows]);
 
-  function handleSearch() {
-    setCurrentPage(1);
-    setQuery(search);
-  }
+  const columns = useMemo(() => createScriptColumns(), []);
 
   async function handleCreate(payload: {
     name: string;
@@ -124,78 +112,67 @@ export function ScriptsCommandCenterPage() {
 
   return (
     <>
-      <OpsWorkspace
-        className="admin-surface scripts-page"
-        title="Inventário de runtime patches"
+      <ListPageLayout
         kicker="Admin · Scripts"
         kickerVariant="admin"
-        lead="Gerencie scripts, releases e promoções de canal com visibilidade operacional."
+        title="Inventário de runtime patches"
+        description="Gerencie scripts, releases e promoções de canal com visibilidade operacional."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Scripts' },
+        ]}
         searchId="scripts-search"
         searchLabel="Buscar scripts"
         searchPlaceholder="Nome ou descrição"
         searchValue={search}
         onSearchChange={setSearch}
-        onSearch={handleSearch}
+        onSearch={submitSearch}
         onRefresh={() => {
-          void load(currentPage, query);
+          void refetch();
           void loadKpis(query);
         }}
-        totalItems={totalItems}
-        showTotal={false}
-        onCreate={() => setCreateOpen(true)}
-        createLabel="Novo script"
+        createAction={(
+          <Button type="button" onClick={() => setCreateOpen(true)}>
+            Novo script
+          </Button>
+        )}
+        isLoading={isLoading}
+        error={error}
+        isEmpty={!isLoading && !error && visibleRows.length === 0}
+        emptyTitle="Nenhum script encontrado"
+        emptyMessage={query || mode !== 'all' || channel !== 'all'
+          ? 'Tente outro termo de busca ou limpe os filtros.'
+          : 'Crie o primeiro script para começar.'}
         footer={(
-          <PaginationBar
+          <ListPagination
             currentPage={currentPage}
             totalPages={totalPages}
-            onPrev={() => setCurrentPage((page) => Math.max(1, page - 1))}
-            onNext={() => setCurrentPage((page) => Math.min(totalPages, page + 1))}
-            disabled={busy}
+            onPrev={goPrev}
+            onNext={goNext}
+            disabled={isLoading}
           />
         )}
       >
-        <div className="scripts-command-center">
+        <div className="mb-6 space-y-5">
           <ScriptInventoryKpis {...kpis} />
 
-          <section className="scripts-inventory-panel" aria-label="Lista de scripts">
-            <ScriptFilterBar
-              mode={mode}
-              channel={channel}
-              visibleCount={visibleRows.length}
-              totalCount={totalItems}
-              onModeChange={(next) => { setMode(next); setCurrentPage(1); }}
-              onChannelChange={(next) => { setChannel(next); setCurrentPage(1); }}
-            />
-
-            {busy && rows.length === 0 ? (
-              <div className="scripts-inventory-panel__body">
-                <div className="scripts-skeleton-grid" aria-hidden="true">
-                  <div className="scripts-skeleton-card" />
-                  <div className="scripts-skeleton-card" />
-                </div>
-                <p className="muted scripts-skeleton">Carregando scripts…</p>
-              </div>
-            ) : visibleRows.length === 0 ? (
-              <div className="scripts-inventory-panel__body">
-                <EmptyState
-                  title="Nenhum script encontrado"
-                  message={query || mode !== 'all' || channel !== 'all'
-                    ? 'Tente outro termo de busca ou limpe os filtros.'
-                    : 'Crie o primeiro script para começar.'}
-                />
-              </div>
-            ) : (
-              <div className="scripts-inventory-panel__body">
-                <div className="scripts-card-grid">
-                  {visibleRows.map((script) => (
-                    <ScriptCard key={script.id} script={script} />
-                  ))}
-                </div>
-              </div>
-            )}
-          </section>
+          <ScriptFilterBar
+            mode={mode}
+            channel={channel}
+            visibleCount={visibleRows.length}
+            totalCount={totalItems}
+            onModeChange={(next) => { setMode(next); }}
+            onChannelChange={(next) => { setChannel(next); }}
+          />
         </div>
-      </OpsWorkspace>
+
+        <DataTable
+          columns={columns}
+          data={visibleRows}
+          getRowId={(row) => row.id}
+          onRowClick={(row) => navigate(scriptStudioPath(row.id))}
+        />
+      </ListPageLayout>
 
       <CreateScriptModal
         open={createOpen}

@@ -1,4 +1,12 @@
 import { useState } from 'react';
+import { channelToneClass } from '@/lib/channel-tones';
+import { Button } from '@/components/ui/button';
+import { Card, CardAction, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 import { HostPatternEditor } from './HostPatternEditor';
 import { ResolutionModeBadge } from './ResolutionModeBadge';
 
@@ -34,46 +42,49 @@ export function ScriptMetadataPanel({
   const canCollapseDescription = description.length > DESCRIPTION_COLLAPSE_THRESHOLD;
 
   return (
-    <section className="scripts-panel scripts-panel--metadata">
-      <header className="scripts-panel__head scripts-metadata-panel__head">
-        <h2>Metadados</h2>
+    <Card className="border-border/60">
+      <CardHeader className="border-b border-border/50">
+        <CardTitle>Metadados</CardTitle>
         {isDirty || saving ? (
-          <div className="scripts-metadata-panel__head-actions">
-            {isDirty ? <span className="scripts-panel__dirty">Não salvo</span> : null}
-            <button
+          <CardAction className="flex items-center gap-2">
+            {isDirty ? (
+              <Badge variant="warning" className="font-normal">
+                Não salvo
+              </Badge>
+            ) : null}
+            <Button
               type="button"
-              className="btn btn-scripts-accent btn-sm"
+              size="sm"
+              variant="secondary"
+              className={channelToneClass('accent', 'md')}
               disabled={saving || !isDirty}
               onClick={onSave}
             >
               {saving ? 'Salvando…' : 'Salvar'}
-            </button>
-          </div>
+            </Button>
+          </CardAction>
         ) : null}
-      </header>
+      </CardHeader>
 
-      <div className="scripts-panel__body scripts-metadata-panel__body">
-        <section className="scripts-metadata-block">
-          <div className="scripts-metadata-field__label-row">
-            <label htmlFor="studioDesc">Descrição</label>
+      <CardContent className="flex flex-col gap-5 pt-4">
+        <section className="flex flex-col gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <Label htmlFor="studioDesc">Descrição</Label>
             {canCollapseDescription ? (
-              <button
+              <Button
                 type="button"
-                className="scripts-metadata-field__toggle"
+                variant="link"
+                size="sm"
+                className="h-auto px-0 text-xs"
                 onClick={() => setDescExpanded((open) => !open)}
               >
                 {descExpanded ? 'Recolher' : 'Ver tudo'}
-              </button>
+              </Button>
             ) : null}
           </div>
-          <textarea
+          <Textarea
             id="studioDesc"
-            className={[
-              'nexus-input',
-              'scripts-studio-input',
-              'scripts-studio-desc-input',
-              canCollapseDescription && !descExpanded ? 'is-collapsed' : '',
-            ].filter(Boolean).join(' ')}
+            className={cn(!descExpanded && canCollapseDescription && 'max-h-24')}
             rows={descExpanded ? 6 : 3}
             value={description}
             placeholder="Descreva o papel deste script no ecossistema"
@@ -82,100 +93,109 @@ export function ScriptMetadataPanel({
           />
         </section>
 
-        <section className="scripts-metadata-block scripts-metadata-block--priority">
-          <div className="scripts-metadata-priority">
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
-              <label htmlFor="studioPriority" className="scripts-metadata-priority__label">
-                Prioridade
-              </label>
-              <p className="scripts-metadata-panel__hint muted small">
+              <Label htmlFor="studioPriority">Prioridade</Label>
+              <p className="mt-1 text-xs text-muted-foreground">
                 {hasHosts
                   ? 'Menor número = injeta primeiro quando o host casa com vários scripts.'
                   : 'Relevante depois que hosts forem configurados abaixo.'}
               </p>
             </div>
-            <div className="scripts-priority-stepper scripts-studio-priority">
-              <button
+            <div className="flex items-center gap-1">
+              <Button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                variant="ghost"
+                size="sm"
                 disabled={saving}
                 onClick={() => onPriorityChange(Math.max(0, priority - 1))}
                 aria-label="Diminuir prioridade"
               >
                 −
-              </button>
-              <input
+              </Button>
+              <Input
                 id="studioPriority"
                 type="number"
                 min={0}
-                className="nexus-input scripts-priority-stepper__input scripts-studio-input"
+                className="w-20 text-center"
                 value={priority}
                 onChange={(e) => onPriorityChange(Number(e.target.value))}
               />
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                variant="ghost"
+                size="sm"
                 disabled={saving}
                 onClick={() => onPriorityChange(priority + 1)}
                 aria-label="Aumentar prioridade"
               >
                 +
-              </button>
+              </Button>
             </div>
           </div>
         </section>
 
-        <section className="scripts-metadata-block scripts-metadata-resolution" aria-labelledby="metadata-resolution-title">
-          <div className="scripts-metadata-resolution__head">
+        <section className="flex flex-col gap-4" aria-labelledby="metadata-resolution-title">
+          <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
-              <h3 id="metadata-resolution-title" className="scripts-metadata-resolution__title">
+              <h3 id="metadata-resolution-title" className="text-sm font-medium">
                 Como clientes obtêm o script
               </h3>
-              <p className="scripts-metadata-panel__hint muted small">
+              <p className="mt-1 text-xs text-muted-foreground">
                 Todo script responde por nome. Hosts adicionais habilitam injeção automática por domínio.
               </p>
             </div>
             <ResolutionModeBadge hostPatterns={hostPatterns} />
           </div>
 
-          <div className="scripts-metadata-resolution__modes">
-            <div className="scripts-metadata-resolution__mode scripts-metadata-resolution__mode--active">
-              <p className="scripts-metadata-resolution__mode-label">Por nome</p>
-              <p className="scripts-metadata-resolution__mode-desc muted small">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className={cn('rounded-lg border p-3', channelToneClass('accent', 'md'))}>
+              <p className="text-sm font-medium">Por nome</p>
+              <p className="mt-1 text-xs text-muted-foreground">
                 Sempre disponível — o cliente pede o script pelo identificador.
               </p>
-              <code className="scripts-metadata-resolution__endpoint mono">
+              <code className="mt-2 block font-mono text-xs">
                 GET /scripts?name={scriptName}
               </code>
             </div>
 
-            <div className={`scripts-metadata-resolution__mode ${hasHosts ? 'scripts-metadata-resolution__mode--active' : ''}`}>
-              <p className="scripts-metadata-resolution__mode-label">
+            <div
+              className={cn(
+                'rounded-lg border p-3',
+                hasHosts
+                  ? channelToneClass('development', 'md')
+                  : 'border-border/50 bg-muted/20',
+              )}
+            >
+              <p className="text-sm font-medium">
                 Por host
-                <span className="muted"> — opcional</span>
+                <span className="font-normal text-muted-foreground"> — opcional</span>
               </p>
-              <p className="scripts-metadata-resolution__mode-desc muted small">
+              <p className="mt-1 text-xs text-muted-foreground">
                 {hasHosts
                   ? 'Clientes nestes domínios recebem o script sem passar o nome.'
                   : 'Adicione um domínio (ex.: *.olx.com.br) para ativar lookup por host.'}
               </p>
-              <HostPatternEditor
-                patterns={hostPatterns}
-                onChange={onHostPatternsChange}
-                disabled={saving}
-                compactEmpty
-                hideHint={false}
-                placeholder="*.seudominio.com.br"
-              />
+              <div className="mt-3">
+                <HostPatternEditor
+                  patterns={hostPatterns}
+                  onChange={onHostPatternsChange}
+                  disabled={saving}
+                  compactEmpty
+                  hideHint={false}
+                  placeholder="*.seudominio.com.br"
+                />
+              </div>
               {hasHosts ? (
-                <p className="scripts-metadata-resolution__endpoint-hint muted small">
-                  Endpoint: <code className="mono">GET /scripts?host=…&channel=prod</code>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  Endpoint: <code className="font-mono">GET /scripts?host=…&channel=prod</code>
                 </p>
               ) : null}
             </div>
           </div>
         </section>
-      </div>
-    </section>
+      </CardContent>
+    </Card>
   );
 }

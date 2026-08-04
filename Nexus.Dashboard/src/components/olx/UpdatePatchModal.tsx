@@ -1,5 +1,16 @@
 import { useEffect, useState } from 'react';
 import type { OlxOperatorAdPatchRow } from '../../api/olx/types';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 type UpdatePatchModalProps = {
   open: boolean;
@@ -34,8 +45,6 @@ export function UpdatePatchModal({
     setPromotionalPrice(toInput(row.promotionalPrice));
   }, [open, row]);
 
-  if (!open || !row) return null;
-
   function parsePrice(raw: string): number | null {
     const trimmed = raw.trim();
     if (!trimmed) return null;
@@ -54,37 +63,30 @@ export function UpdatePatchModal({
   const hasPrice = parsePrice(originalPrice) !== null || parsePrice(promotionalPrice) !== null;
 
   return (
-    <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-      <div className="dialog-card olx-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-stack-header">
-          <div>
-            <h3>Editar preços patchados</h3>
-            <p className="muted small">
-              Anúncio <strong>{row.adId}</strong> — informe ao menos um preço visível para a vítima.
-            </p>
-          </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
+    <Dialog open={open && row !== null} onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}>
+      <DialogContent className="sm:max-w-md" showCloseButton>
+        <DialogHeader>
+          <DialogTitle>Editar preços patchados</DialogTitle>
+          <DialogDescription>
+            Anúncio <strong>{row?.adId}</strong> — informe ao menos um preço visível para a vítima.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="form-grid">
-          <div className="field">
-            <label htmlFor="patchOriginalPrice">Preço original (R$)</label>
-            <input
+        <div className="grid gap-4">
+          <div className="grid gap-2">
+            <Label htmlFor="patchOriginalPrice">Preço original (R$)</Label>
+            <Input
               id="patchOriginalPrice"
-              className="nexus-input"
               inputMode="decimal"
               value={originalPrice}
               onChange={(e) => setOriginalPrice(e.target.value)}
               placeholder="Ex.: 1999.90"
             />
           </div>
-          <div className="field">
-            <label htmlFor="patchPromoPrice">Preço promocional (R$)</label>
-            <input
+          <div className="grid gap-2">
+            <Label htmlFor="patchPromoPrice">Preço promocional (R$)</Label>
+            <Input
               id="patchPromoPrice"
-              className="nexus-input"
               inputMode="decimal"
               value={promotionalPrice}
               onChange={(e) => setPromotionalPrice(e.target.value)}
@@ -93,20 +95,15 @@ export function UpdatePatchModal({
           </div>
         </div>
 
-        <div className="dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
+        <DialogFooter>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
             Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy || !hasPrice}
-            onClick={handleSubmit}
-          >
+          </Button>
+          <Button type="button" disabled={busy || !hasPrice} onClick={handleSubmit}>
             {busy ? 'Salvando…' : 'Salvar preços'}
-          </button>
-        </div>
-      </div>
-    </div>
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }

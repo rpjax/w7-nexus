@@ -1,5 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
+import { MenuIcon } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { ApiDocsSidebar } from '../../components/api-docs/ApiDocsSidebar';
 import { ApiDocsOverview } from '../../components/api-docs/ApiDocsOverview';
 import { ApiDocsFlowView } from '../../components/api-docs/ApiDocsFlowView';
@@ -29,11 +40,6 @@ export function ApiDocsPage() {
   }, [navigate]);
 
   useEffect(() => {
-    const main = document.querySelector('.api-docs-content');
-    main?.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [searchParams]);
-
-  useEffect(() => {
     if (!navOpen) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setNavOpen(false);
@@ -43,26 +49,44 @@ export function ApiDocsPage() {
   }, [navOpen]);
 
   return (
-    <div className="api-docs-page">
-      <header className="api-docs-toolbar">
-        <button
-          type="button"
-          className="api-docs-toolbar__menu btn btn-ghost"
-          onClick={() => setNavOpen(true)}
-          aria-label="Abrir navegação"
-        >
-          <svg viewBox="0 0 20 20" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" strokeWidth="1.6">
-            <path d="M3 5h14M3 10h14M3 15h14" strokeLinecap="round" />
-          </svg>
-          Explorar
-        </button>
-        <div className="api-docs-toolbar__context">
-          <span className="api-docs-toolbar__kicker">API Nexus</span>
-          <span className="api-docs-toolbar__title">{viewTitle(activeView)}</span>
+    <div className="flex min-h-0 flex-1 flex-col gap-0">
+      <header className="flex shrink-0 flex-col gap-2 pb-3">
+        <div className="flex items-center gap-3">
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="inline-flex shrink-0 gap-1.5 lg:hidden"
+            onClick={() => setNavOpen(true)}
+            aria-label="Abrir navegação"
+          >
+            <MenuIcon className="size-[18px]" aria-hidden="true" />
+            Explorar
+          </Button>
+          <Breadcrumb className="min-w-0 flex-1">
+            <BreadcrumbList>
+              <BreadcrumbItem>
+                <BreadcrumbLink
+                  className="cursor-pointer"
+                  onClick={() => handleNavigate({ kind: 'overview' })}
+                >
+                  API Nexus
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {activeView.kind !== 'overview' ? (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="truncate">{viewTitle(activeView)}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              ) : null}
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
       </header>
 
-      <div className="api-docs-layout">
+      <div className="relative flex min-h-0 flex-1 gap-4">
         <ApiDocsSidebar
           activeView={activeView}
           onNavigate={handleNavigate}
@@ -70,20 +94,22 @@ export function ApiDocsPage() {
           onMobileClose={() => setNavOpen(false)}
         />
 
-        <div className="api-docs-content admin-surface">
-          {activeView.kind === 'overview' ? (
-            <ApiDocsOverview onNavigate={handleNavigate} />
-          ) : null}
-          {activeView.kind === 'flow' ? (
-            <ApiDocsFlowView flowId={activeView.id} onNavigate={handleNavigate} />
-          ) : null}
-          {activeView.kind === 'group' ? (
-            <ApiDocsGroupView groupId={activeView.id} onNavigate={handleNavigate} />
-          ) : null}
-          {activeView.kind === 'endpoint' ? (
-            <ApiDocsEndpointView endpointId={activeView.id} onNavigate={handleNavigate} />
-          ) : null}
-        </div>
+        <ScrollArea className="min-h-0 min-w-0 flex-1 rounded-xl border border-border bg-card/80">
+          <div className="p-4 lg:p-5">
+            {activeView.kind === 'overview' ? (
+              <ApiDocsOverview onNavigate={handleNavigate} />
+            ) : null}
+            {activeView.kind === 'flow' ? (
+              <ApiDocsFlowView flowId={activeView.id} onNavigate={handleNavigate} />
+            ) : null}
+            {activeView.kind === 'group' ? (
+              <ApiDocsGroupView groupId={activeView.id} onNavigate={handleNavigate} />
+            ) : null}
+            {activeView.kind === 'endpoint' ? (
+              <ApiDocsEndpointView endpointId={activeView.id} onNavigate={handleNavigate} />
+            ) : null}
+          </div>
+        </ScrollArea>
       </div>
     </div>
   );

@@ -1,9 +1,8 @@
 import { useParams } from 'react-router-dom';
-import { AdminOperationCard } from '../../components/admin/AdminOperationCard';
-import { OperationDetailShell } from '../../features/operations/OperationDetailShell';
-import { listPath } from '../../features/operations/operationPaths';
-import { useOperationDetail } from '../../features/operations/useOperationDetail';
-import { useOperationScopeActions } from '../../features/operations/useOperationScopeActions';
+import { AdminOperationCard } from '@/components/admin/AdminOperationCard';
+import { OperationDetailShell } from '@/features/operations/OperationDetailShell';
+import { useOperationDetail } from '@/features/operations/useOperationDetail';
+import { useOperationScopeActions } from '@/features/operations/useOperationScopeActions';
 
 export function TeamLeaderOperationDetailPage() {
   const { operationId } = useParams<{ operationId: string }>();
@@ -19,7 +18,8 @@ export function TeamLeaderOperationDetailPage() {
   return (
     <>
       <OperationDetailShell
-        listPath={listPath('team-leader')}
+        scope="team-leader"
+        operationName={operation?.name}
         loading={loading}
         notFound={notFound}
       >

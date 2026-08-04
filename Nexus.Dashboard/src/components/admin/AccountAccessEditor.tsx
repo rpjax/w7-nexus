@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useForm } from 'react-hook-form';
 import {
   grantAdministratorAccountPermission,
   grantAdministratorAccountRole,
@@ -10,7 +11,17 @@ import {
   ACCOUNT_ROLE_CATALOG,
   hasPermissionIgnoreCase,
   hasRoleIgnoreCase,
+  type AccessTone,
 } from '../../utils/accountAccess';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+} from '@/components/ui/form';
+import { Switch } from '@/components/ui/switch';
+import { cn } from '@/lib/utils';
 
 type AccountAccessEditorProps = {
   accountId: string;
@@ -20,6 +31,30 @@ type AccountAccessEditorProps = {
   onError: (message: string) => void;
 };
 
+type AccessFormValues = {
+  roles: Record<string, boolean>;
+  permissions: Record<string, boolean>;
+};
+
+const toneAccent: Record<AccessTone, string> = {
+  admin: 'border-warning/40 data-[active=true]:bg-warning/10',
+  operator: 'border-primary/40 data-[active=true]:bg-primary/10',
+  straw: 'border-border data-[active=true]:bg-muted/60',
+  olx: 'border-success/40 data-[active=true]:bg-success/10',
+  permission: 'border-border data-[active=true]:bg-muted/60',
+};
+
+function buildDefaultValues(roles: string[], permissions: string[]): AccessFormValues {
+  return {
+    roles: Object.fromEntries(
+      ACCOUNT_ROLE_CATALOG.map((role) => [role.id, hasRoleIgnoreCase(roles, role.id)]),
+    ),
+    permissions: Object.fromEntries(
+      ACCOUNT_PERMISSION_CATALOG.map((permission) => [permission.id, hasPermissionIgnoreCase(permissions, permission.id)]),
+    ),
+  };
+}
+
 export function AccountAccessEditor({
   accountId,
   roles,
@@ -28,6 +63,14 @@ export function AccountAccessEditor({
   onError,
 }: AccountAccessEditorProps) {
   const [busyKey, setBusyKey] = useState<string | null>(null);
+
+  const form = useForm<AccessFormValues>({
+    defaultValues: buildDefaultValues(roles, permissions),
+  });
+
+  useEffect(() => {
+    form.reset(buildDefaultValues(roles, permissions));
+  }, [roles, permissions, form]);
 
   async function runAction(key: string, action: () => Promise<{ ok: boolean; error?: string }>) {
     setBusyKey(key);
@@ -69,90 +112,111 @@ export function AccountAccessEditor({
   ).length;
 
   return (
-    <div className="account-access-editor">
-      <section className="account-access-block">
-        <header className="account-access-block__head">
-          <div>
-            <h4 className="account-access-block__title">Funções</h4>
-            <p className="account-access-block__hint muted small">
-              Ative os papéis que esta conta pode exercer na plataforma.
-            </p>
-          </div>
-          <span className="account-access-block__count muted small">
-            {activeRoleCount} / {ACCOUNT_ROLE_CATALOG.length}
-          </span>
-        </header>
+    <Form {...form}>
+      <div className="space-y-6">
+        <section className="space-y-3">
+          <header className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-foreground">Funções</h4>
+              <p className="text-sm text-muted-foreground">
+                Ative os papéis que esta conta pode exercer na plataforma.
+              </p>
+            </div>
+            <span className="shrink-0 text-sm text-muted-foreground">
+              {activeRoleCount} / {ACCOUNT_ROLE_CATALOG.length}
+            </span>
+          </header>
 
-        <div className="access-toggle-grid" role="group" aria-label="Funções da conta">
-          {ACCOUNT_ROLE_CATALOG.map((role) => {
-            const active = hasRoleIgnoreCase(roles, role.id);
-
-            return (
-              <button
+          <div className="grid gap-2 sm:grid-cols-2">
+            {ACCOUNT_ROLE_CATALOG.map((role) => (
+              <FormField
                 key={role.id}
-                type="button"
-                className={`access-toggle-card access-toggle-card--${role.tone}${active ? ' is-active' : ''}`}
-                disabled={busyKey !== null}
-                aria-pressed={active}
-                title={role.id}
-                onClick={() => void toggleRole(role.id, active)}
-              >
-                <span className="access-toggle-card__row">
-                  <span className="access-toggle-card__copy">
-                    <strong className="access-toggle-card__label">{role.label}</strong>
-                    <span className="access-toggle-card__desc">{role.description}</span>
-                  </span>
-                  <span className={`access-toggle-card__switch${active ? ' is-on' : ''}`} aria-hidden="true">
-                    <span className="access-toggle-card__knob" />
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      <section className="account-access-block account-access-block--permissions">
-        <header className="account-access-block__head">
-          <div>
-            <h4 className="account-access-block__title">Permissões extras</h4>
-            <p className="account-access-block__hint muted small">
-              Capacidades adicionais além das funções base.
-            </p>
+                control={form.control}
+                name={`roles.${role.id}`}
+                render={({ field }) => (
+                  <FormItem
+                    data-active={field.value}
+                    className={cn(
+                      'rounded-xl border bg-card/40 p-3 transition-colors',
+                      toneAccent[role.tone],
+                      field.value && 'ring-1 ring-primary/20',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-0.5">
+                        <FormLabel className="block text-sm font-medium text-foreground">{role.label}</FormLabel>
+                        <p className="text-xs text-muted-foreground">{role.description}</p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          disabled={busyKey !== null}
+                          aria-label={role.label}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            void toggleRole(role.id, !checked);
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
           </div>
-          <span className="account-access-block__count muted small">
-            {activePermissionCount} / {ACCOUNT_PERMISSION_CATALOG.length}
-          </span>
-        </header>
+        </section>
 
-        <div className="access-toggle-grid access-toggle-grid--compact" role="group" aria-label="Permissões da conta">
-          {ACCOUNT_PERMISSION_CATALOG.map((permission) => {
-            const active = hasPermissionIgnoreCase(permissions, permission.id);
+        <section className="space-y-3">
+          <header className="flex items-start justify-between gap-3">
+            <div className="space-y-1">
+              <h4 className="text-sm font-semibold text-foreground">Permissões extras</h4>
+              <p className="text-sm text-muted-foreground">
+                Capacidades adicionais além das funções base.
+              </p>
+            </div>
+            <span className="shrink-0 text-sm text-muted-foreground">
+              {activePermissionCount} / {ACCOUNT_PERMISSION_CATALOG.length}
+            </span>
+          </header>
 
-            return (
-              <button
+          <div className="grid gap-2">
+            {ACCOUNT_PERMISSION_CATALOG.map((permission) => (
+              <FormField
                 key={permission.id}
-                type="button"
-                className={`access-toggle-card access-toggle-card--permission${active ? ' is-active' : ''}`}
-                disabled={busyKey !== null}
-                aria-pressed={active}
-                title={permission.id}
-                onClick={() => void togglePermission(permission.id, active)}
-              >
-                <span className="access-toggle-card__row">
-                  <span className="access-toggle-card__copy">
-                    <strong className="access-toggle-card__label">{permission.label}</strong>
-                    <span className="access-toggle-card__desc">{permission.description}</span>
-                  </span>
-                  <span className={`access-toggle-card__switch${active ? ' is-on' : ''}`} aria-hidden="true">
-                    <span className="access-toggle-card__knob" />
-                  </span>
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-    </div>
+                control={form.control}
+                name={`permissions.${permission.id}`}
+                render={({ field }) => (
+                  <FormItem
+                    data-active={field.value}
+                    className={cn(
+                      'rounded-xl border border-border bg-card/40 p-3 transition-colors',
+                      field.value && 'bg-muted/60 ring-1 ring-primary/20',
+                    )}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 space-y-0.5">
+                        <FormLabel className="block text-sm font-medium text-foreground">{permission.label}</FormLabel>
+                        <p className="text-xs text-muted-foreground">{permission.description}</p>
+                      </div>
+                      <FormControl>
+                        <Switch
+                          checked={field.value}
+                          disabled={busyKey !== null}
+                          aria-label={permission.label}
+                          onCheckedChange={(checked) => {
+                            field.onChange(checked);
+                            void togglePermission(permission.id, !checked);
+                          }}
+                        />
+                      </FormControl>
+                    </div>
+                  </FormItem>
+                )}
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+    </Form>
   );
 }

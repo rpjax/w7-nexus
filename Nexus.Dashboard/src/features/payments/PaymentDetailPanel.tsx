@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import type { PaymentRow } from '../../api/types';
-import { StatusPill } from '../../components/finance/StatusPill';
 import {
   formatGatewayLabel,
   formatGatewayTransaction,
@@ -18,9 +17,14 @@ import {
   settlementStatusTone,
   distributionStatusLabel,
   distributionStatusTone,
+  statusToneToBadgeVariant,
 } from '../../utils/financeLabels';
 import { formatDateTime, shortId } from '../../utils/format';
 import type { PaymentScope } from './paymentPaths';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type PaymentDetailPanelProps = {
   payment: PaymentRow;
@@ -38,11 +42,13 @@ type ContextCardProps = {
 
 function ContextCard({ kicker, title, subtitle, empty = false }: ContextCardProps) {
   return (
-    <article className={`payment-context-card${empty ? ' payment-context-card--empty' : ''}`}>
-      <span className="payment-context-card__kicker">{kicker}</span>
-      <strong className="payment-context-card__title">{title}</strong>
-      {subtitle ? <span className="payment-context-card__subtitle muted small">{subtitle}</span> : null}
-    </article>
+    <Card className={cn(empty && 'border-dashed opacity-80')}>
+      <CardContent className="grid gap-1 p-4">
+        <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{kicker}</span>
+        <strong className="text-base leading-snug">{title}</strong>
+        {subtitle ? <span className="text-sm text-muted-foreground">{subtitle}</span> : null}
+      </CardContent>
+    </Card>
   );
 }
 
@@ -86,35 +92,39 @@ export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, ac
   const strawManTitle = formatPaymentParticipant(payment.strawManUsername, 'Sem laranja');
 
   return (
-    <div className="payment-detail-layout">
-      <div className="payment-detail-layout__main">
-        <header className="payment-detail-hero">
-          <div className="payment-detail-hero__main">
-            <div className="payment-detail-hero__topline">
-              <span className="payment-detail-hero__gateway">{formatGatewayLabel(payment.gateway)}</span>
-              <span className="payment-detail-hero__tx mono" title={payment.gatewayTransactionId}>
-                {formatGatewayTransaction(payment.gatewayTransactionId)}
-              </span>
+    <div className="mt-3 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(16rem,20rem)] lg:items-start">
+      <div className="grid gap-4">
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-background">
+          <CardContent className="flex flex-wrap items-start justify-between gap-4 p-5">
+            <div>
+              <div className="mb-1 flex flex-wrap items-center gap-2">
+                <Badge variant="info" className="uppercase tracking-wider">
+                  {formatGatewayLabel(payment.gateway)}
+                </Badge>
+                <span className="font-mono text-xs text-muted-foreground" title={payment.gatewayTransactionId}>
+                  {formatGatewayTransaction(payment.gatewayTransactionId)}
+                </span>
+              </div>
+              <p className="text-3xl font-bold tracking-tight text-foreground">{formatMoney(payment.amount)}</p>
+              <p className="mt-1 text-sm text-muted-foreground">{operationTitle}</p>
             </div>
-            <p className="payment-detail-hero__amount">{formatMoney(payment.amount)}</p>
-            <p className="payment-detail-hero__operation muted">{operationTitle}</p>
-          </div>
-          <div className="payment-detail-hero__pills">
-            <StatusPill label={paymentStatusLabel(payment.status)} tone={paymentStatusTone(payment.status)} />
-            <StatusPill
-              label={settlementStatusLabel(payment.settlementStatus)}
-              tone={settlementStatusTone(payment.settlementStatus)}
-            />
-            <StatusPill
-              label={distributionStatusLabel(payment.distributionStatus)}
-              tone={distributionStatusTone(payment.distributionStatus)}
-            />
-          </div>
-        </header>
+            <div className="flex flex-wrap gap-1.5">
+              <Badge variant={statusToneToBadgeVariant(paymentStatusTone(payment.status))}>
+                {paymentStatusLabel(payment.status)}
+              </Badge>
+              <Badge variant={statusToneToBadgeVariant(settlementStatusTone(payment.settlementStatus))}>
+                {settlementStatusLabel(payment.settlementStatus)}
+              </Badge>
+              <Badge variant={statusToneToBadgeVariant(distributionStatusTone(payment.distributionStatus))}>
+                {distributionStatusLabel(payment.distributionStatus)}
+              </Badge>
+            </div>
+          </CardContent>
+        </Card>
 
-        <section className="payment-detail-panel__section">
-          <h3 className="payment-detail-panel__section-title">Participantes</h3>
-          <div className="payment-context-grid">
+        <section className="grid gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Participantes</h3>
+          <div className="grid gap-3 md:grid-cols-3">
             <ContextCard kicker="Operação" title={operationTitle} />
             <ContextCard
               kicker="Operador"
@@ -132,9 +142,9 @@ export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, ac
         </section>
 
         {splits.length > 0 ? (
-          <section className="payment-detail-panel__section">
-            <h3 className="payment-detail-panel__section-title">Repasses</h3>
-            <ul className="payment-split-cards">
+          <section className="grid gap-2">
+            <h3 className="text-sm font-semibold text-foreground">Repasses</h3>
+            <ul className="flex flex-col gap-2">
               {splits.map((split) => {
                 const isViewer = viewerAccountId && split.accountId === viewerAccountId;
                 const participant = formatSplitParticipant(split);
@@ -144,23 +154,32 @@ export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, ac
                 return (
                   <li
                     key={`${split.accountId}-${split.percentage}`}
-                    className={`payment-split-card${isViewer ? ' payment-split-card--highlight' : ''}`}
+                    className={cn(
+                      'rounded-lg border border-border/40 bg-muted/20 p-4',
+                      isViewer && 'border-warning/40 bg-warning/5',
+                    )}
                   >
-                    <div className="payment-split-card__head">
-                      <span className="payment-split-card__avatar" aria-hidden="true">
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-3">
+                      <span
+                        className="inline-flex size-8 items-center justify-center rounded-full border border-primary/25 bg-primary/15 text-xs font-bold text-foreground"
+                        aria-hidden="true"
+                      >
                         {participantInitials(participant)}
                       </span>
-                      <div className="payment-split-card__identity">
-                        <strong>{participant}</strong>
-                        {role ? <span className="payment-split-card__role muted small">{role}</span> : null}
+                      <div className="min-w-0 grid gap-0.5">
+                        <strong className="truncate">{participant}</strong>
+                        {role ? <span className="text-sm text-muted-foreground">{role}</span> : null}
                       </div>
-                      <div className="payment-split-card__amounts">
+                      <div className="grid justify-items-end gap-0.5">
                         <strong>{formatMoney(split.amount)}</strong>
-                        <span className="muted small">{split.percentage.toFixed(2)}%</span>
+                        <span className="text-sm text-muted-foreground">{split.percentage.toFixed(2)}%</span>
                       </div>
                     </div>
-                    <div className="payment-split-card__bar" aria-hidden="true">
-                      <span style={{ width: `${width}%` }} />
+                    <div className="mt-2 h-1 overflow-hidden rounded-full bg-muted" aria-hidden="true">
+                      <span
+                        className="block h-full rounded-full bg-gradient-to-r from-primary/85 to-primary/55"
+                        style={{ width: `${width}%` }}
+                      />
                     </div>
                   </li>
                 );
@@ -169,43 +188,70 @@ export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, ac
           </section>
         ) : null}
 
-        <section className="payment-detail-panel__section">
-          <h3 className="payment-detail-panel__section-title">Linha do tempo</h3>
-          <ol className="payment-timeline">
+        <section className="grid gap-2">
+          <h3 className="text-sm font-semibold text-foreground">Linha do tempo</h3>
+          <ol className="grid">
             {timeline.map((event, index) => (
               <li
                 key={event.key}
-                className={`payment-timeline__item${event.tone === 'warn' ? ' payment-timeline__item--warn' : ''}${index === timeline.length - 1 ? ' payment-timeline__item--last' : ''}`}
+                className={cn(
+                  'relative grid grid-cols-[1rem_minmax(0,1fr)] gap-3 pb-3',
+                  index !== timeline.length - 1 && 'before:absolute before:bottom-0 before:left-[0.45rem] before:top-4 before:w-0.5 before:bg-border/60',
+                )}
               >
-                <span className="payment-timeline__dot" aria-hidden="true" />
-                <div className="payment-timeline__content">
-                  <span className="payment-timeline__label">{event.label}</span>
-                  <span className="payment-timeline__value">{event.value}</span>
+                <span
+                  className={cn(
+                    'mt-0.5 size-3 rounded-full bg-primary shadow-[0_0_0_3px] shadow-primary/15',
+                    event.tone === 'warn' && 'bg-warning shadow-warning/15',
+                  )}
+                  aria-hidden="true"
+                />
+                <div className="grid gap-0.5">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {event.label}
+                  </span>
+                  <span className="text-sm leading-relaxed">{event.value}</span>
                 </div>
               </li>
             ))}
           </ol>
         </section>
 
-        <section className="payment-detail-panel__section payment-detail-panel__section--technical">
-          <button
+        <section className="grid gap-2 pt-1">
+          <Button
             type="button"
-            className="payment-technical-toggle"
+            variant="ghost"
+            size="sm"
+            className="h-auto w-fit gap-1.5 p-0 text-muted-foreground hover:text-foreground"
             aria-expanded={technicalOpen}
             onClick={() => setTechnicalOpen((open) => !open)}
           >
             Detalhes técnicos
             <span aria-hidden="true">{technicalOpen ? '▾' : '▸'}</span>
-          </button>
+          </Button>
           {technicalOpen ? (
-            <div className="payment-technical-grid mono small">
-              <div><span>ID pagamento</span><span title={payment.id}>{shortId(payment.id, 18)}</span></div>
-              <div><span>ID operação</span><span title={payment.operationId}>{shortId(payment.operationId, 18)}</span></div>
-              <div><span>ID operador</span><span title={payment.operatorId ?? ''}>{payment.operatorId ? shortId(payment.operatorId, 18) : '—'}</span></div>
-              <div><span>ID laranja</span><span title={payment.strawManId}>{shortId(payment.strawManId, 18)}</span></div>
-              <div className="payment-technical-grid__wide">
-                <span>Transação gateway</span>
-                <span title={payment.gatewayTransactionId}>{payment.gatewayTransactionId}</span>
+            <div className="rounded-lg border border-dashed border-border/40 bg-muted/20 p-3 font-mono text-xs">
+              <div className="grid gap-2">
+                <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:items-baseline sm:gap-3">
+                  <span className="text-muted-foreground">ID pagamento</span>
+                  <span title={payment.id}>{shortId(payment.id, 18)}</span>
+                </div>
+                <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:items-baseline sm:gap-3">
+                  <span className="text-muted-foreground">ID operação</span>
+                  <span title={payment.operationId}>{shortId(payment.operationId, 18)}</span>
+                </div>
+                <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:items-baseline sm:gap-3">
+                  <span className="text-muted-foreground">ID operador</span>
+                  <span title={payment.operatorId ?? ''}>{payment.operatorId ? shortId(payment.operatorId, 18) : '—'}</span>
+                </div>
+                <div className="grid gap-1 sm:grid-cols-[7rem_1fr] sm:items-baseline sm:gap-3">
+                  <span className="text-muted-foreground">ID laranja</span>
+                  <span title={payment.strawManId}>{shortId(payment.strawManId, 18)}</span>
+                </div>
+                <div className="grid gap-1">
+                  <span className="text-muted-foreground">Transação gateway</span>
+                  <span title={payment.gatewayTransactionId}>{payment.gatewayTransactionId}</span>
+                </div>
               </div>
             </div>
           ) : null}
@@ -213,7 +259,7 @@ export function PaymentDetailPanel({ payment, scope: _scope, viewerAccountId, ac
       </div>
 
       {actionsSlot ? (
-        <aside className="payment-detail-layout__aside">
+        <aside className="sticky top-3 self-start">
           {actionsSlot}
         </aside>
       ) : null}

@@ -1,0 +1,38 @@
+---
+description: Enforce hexagonal + role ports when editing Nexus.Api C# code
+globs: Nexus.Api/**/*.cs,Refactor/Nexus.Api/**/*.cs
+alwaysApply: false
+---
+
+# Nexus.Api domain work
+
+Follow [`docs/architecture-blueprint.md`](docs/architecture-blueprint.md).
+
+## When adding a feature
+
+1. Place code under the correct bounded context (`Accounts`, `Payments`, `Operations`, …)
+2. Mutate via Application use case → aggregate → repository port
+3. Split by role at the Application/Presentation boundary only
+4. Prefer `Ports/In/<Role>/…/I<Action>UseCase` + `UseCases/<Role>/…/<Action>Handler`
+5. Keep reads on `I*ReadRepository` / query handlers; writes on aggregate repositories
+
+## Reject these patterns
+
+```csharp
+// BAD — god service / role as root capability bag
+public interface IAdministrator { /* dozens of methods */ }
+
+// BAD — controller talking to repository or mutating aggregate
+public async Task<IActionResult> Refund(string id) =>
+    Ok(await _repo.Save(payment.Refund()));
+```
+
+```csharp
+// GOOD — narrow port + handler returns IOperationResult<T>
+public interface IRefundPaymentUseCase
+{
+    Task<IOperationResult<RefundPaymentResult>> ExecuteAsync(
+        RefundPaymentCommand command,
+        CancellationToken cancellationToken = default);
+}
+```

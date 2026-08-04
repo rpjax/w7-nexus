@@ -1,3 +1,7 @@
+import { Badge } from '@/components/ui/badge';
+import { channelToneClass } from '@/lib/channel-tones';
+import { cn } from '@/lib/utils';
+
 type HostPatternChipsProps = {
   patterns: string[];
   max?: number;
@@ -10,11 +14,21 @@ export function HostPatternChips({ patterns, max = 4 }: HostPatternChipsProps) {
   const hidden = patterns.length - visible.length;
 
   return (
-    <div className="scripts-chips">
+    <div className="flex flex-wrap gap-1.5">
       {visible.map((pattern) => (
-        <span key={pattern} className="scripts-chip scripts-chip--host">{pattern}</span>
+        <Badge
+          key={pattern}
+          variant="outline"
+          className={cn(channelToneClass('accent'), 'font-mono text-xs font-normal text-foreground')}
+        >
+          {pattern}
+        </Badge>
       ))}
-      {hidden > 0 ? <span className="scripts-chip scripts-chip--muted">+{hidden}</span> : null}
+      {hidden > 0 ? (
+        <Badge variant="secondary" className="text-xs font-normal">
+          +{hidden}
+        </Badge>
+      ) : null}
     </div>
   );
 }

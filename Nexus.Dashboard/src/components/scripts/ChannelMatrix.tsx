@@ -1,5 +1,26 @@
 import type { ChannelSummary, ReleaseSummary } from '../../api/scripts/types';
 import { truncateHash } from '../../features/scripts/formatRelativeTime';
+import { channelToneClass } from '@/lib/channel-tones';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { cn } from '@/lib/utils';
 
 type ChannelMatrixProps = {
   channels: ChannelSummary[];
@@ -11,10 +32,16 @@ type ChannelMatrixProps = {
   compact?: boolean;
 };
 
-const ROUTE_CLASS: Record<string, string> = {
-  prod: 'scripts-matrix__row--prod',
-  staging: 'scripts-matrix__row--staging',
-  development: 'scripts-matrix__row--dev',
+const CHANNEL_BORDER: Record<string, string> = {
+  prod: 'border-l-success',
+  staging: 'border-l-warning',
+  development: 'border-l-primary',
+};
+
+const CHANNEL_DOT: Record<string, string> = {
+  prod: 'bg-success',
+  staging: 'bg-warning',
+  development: 'bg-primary',
 };
 
 const DEFAULT_CHANNEL_ORDER = ['prod', 'staging', 'development'];
@@ -26,26 +53,39 @@ function orderChannels(channels: ChannelSummary[]): ChannelSummary[] {
   ];
 }
 
-function ChannelIdentity({ channel, compact }: { channel: ChannelSummary; compact: boolean }) {
-  if (compact) {
-    return (
-      <div className="scripts-matrix__channel scripts-matrix__channel--overview">
-        <div className="scripts-matrix__channel-main">
-          <span className="scripts-matrix__channel-dot" aria-hidden="true" />
-          <strong className="scripts-matrix__channel-name">{channel.displayName}</strong>
-        </div>
-        <span className="scripts-matrix__route mono">{channel.routeValue}</span>
-      </div>
-    );
-  }
+function channelBorderClass(routeValue: string) {
+  return CHANNEL_BORDER[routeValue] ?? 'border-l-muted-foreground/40';
+}
 
+function channelDotClass(routeValue: string) {
+  return CHANNEL_DOT[routeValue] ?? 'bg-muted-foreground/50';
+}
+
+function ChannelDot({ routeValue }: { routeValue: string }) {
   return (
-    <div className="scripts-matrix__channel">
-      <div className="scripts-matrix__channel-main">
-        <span className="scripts-matrix__channel-dot" aria-hidden="true" />
-        <strong>{channel.displayName}</strong>
+    <span
+      className={cn('size-2 shrink-0 rounded-full', channelDotClass(routeValue))}
+      aria-hidden="true"
+    />
+  );
+}
+
+function DeprecatedBadge() {
+  return (
+    <Badge variant="destructive" className="text-[0.65rem] font-normal">
+      Deprecated
+    </Badge>
+  );
+}
+
+function ChannelIdentity({ channel, compact }: { channel: ChannelSummary; compact: boolean }) {
+  return (
+    <div className={cn('flex flex-col gap-0.5', compact && 'gap-1')}>
+      <div className="flex items-center gap-2">
+        <ChannelDot routeValue={channel.routeValue} />
+        <strong className={cn('text-sm', compact && 'text-sm')}>{channel.displayName}</strong>
       </div>
-      <span className="scripts-matrix__route mono">{channel.routeValue}</span>
+      <span className="font-mono text-xs text-muted-foreground">{channel.routeValue}</span>
     </div>
   );
 }
@@ -53,44 +93,24 @@ function ChannelIdentity({ channel, compact }: { channel: ChannelSummary; compac
 function CurrentRelease({ channel, compact }: { channel: ChannelSummary; compact: boolean }) {
   if (!channel.version) {
     return (
-      <span className="scripts-matrix__empty" aria-label="Sem release">
+      <span className="text-sm text-muted-foreground" aria-label="Sem release">
         Sem release
       </span>
     );
   }
 
-  if (compact) {
-    return (
-      <div className="scripts-matrix__release-stack">
-        <div className="scripts-matrix__release-main">
-          <span className="scripts-matrix__version mono">{channel.version}</span>
-          {channel.isDeprecated ? (
-            <span className="scripts-badge scripts-badge--deprecated">Deprecated</span>
-          ) : null}
-        </div>
-        {channel.hash ? (
-          <span className="scripts-matrix__hash muted small mono" title={channel.hash}>
-            {truncateHash(channel.hash)}
-          </span>
-        ) : null}
-      </div>
-    );
-  }
-
   return (
-    <>
-      <div className="scripts-matrix__release-main">
-        <span className="scripts-matrix__version mono">{channel.version}</span>
-        {channel.isDeprecated ? (
-          <span className="scripts-badge scripts-badge--deprecated">Deprecated</span>
-        ) : null}
+    <div className={cn('flex flex-col gap-0.5', compact && 'gap-1')}>
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="font-mono text-sm">{channel.version}</span>
+        {channel.isDeprecated ? <DeprecatedBadge /> : null}
       </div>
       {channel.hash ? (
-        <span className="scripts-matrix__hash muted small mono" title={channel.hash}>
+        <span className="font-mono text-xs text-muted-foreground" title={channel.hash}>
           {truncateHash(channel.hash)}
         </span>
       ) : null}
-    </>
+    </div>
   );
 }
 
@@ -108,7 +128,7 @@ export function ChannelMatrix({
 
   if (promotionMode) {
     return (
-      <div className="scripts-promo-stage">
+      <div className="flex flex-col gap-3">
         {orderedChannels.map((channel) => {
           const selectedReleaseId = promotionSelections?.[channel.routeValue] ?? releases?.[0]?.id ?? '';
           const selectedRelease = releases!.find((release) => release.id === selectedReleaseId) ?? null;
@@ -119,81 +139,90 @@ export function ChannelMatrix({
           );
 
           return (
-            <article
+            <Card
               key={channel.routeValue}
-              className={`scripts-promo-card ${ROUTE_CLASS[channel.routeValue] ?? 'scripts-matrix__row--custom'}`}
+              className={cn('border-l-4 py-3', channelBorderClass(channel.routeValue))}
             >
-              <header className="scripts-promo-card__head">
-                <div className="scripts-promo-card__identity">
-                  <span className="scripts-matrix__channel-dot" aria-hidden="true" />
-                  <span className="scripts-matrix__route mono">{channel.routeValue}</span>
-                  <span className="scripts-promo-card__name">{channel.displayName}</span>
+              <CardHeader className="flex-row items-center justify-between space-y-0 px-4 pb-2">
+                <div className="flex items-center gap-2">
+                  <ChannelDot routeValue={channel.routeValue} />
+                  <span className="font-mono text-xs text-muted-foreground">{channel.routeValue}</span>
+                  <span className="text-sm font-medium">{channel.displayName}</span>
                 </div>
                 {isCurrentSelection ? (
-                  <span className="scripts-matrix__status">Atual</span>
+                  <Badge variant="outline" className="text-xs font-normal">
+                    Atual
+                  </Badge>
                 ) : null}
-              </header>
+              </CardHeader>
 
-              <div className="scripts-promo-card__current">
-                <span className="scripts-promo-card__label muted small">Em produção no canal</span>
-                <div className="scripts-promo-card__current-value">
-                  {channel.version ? (
-                    <>
-                      <span className="scripts-matrix__version mono">{channel.version}</span>
-                      {channel.hash ? (
-                        <span className="scripts-matrix__hash muted small mono" title={channel.hash}>
-                          · {truncateHash(channel.hash)}
-                        </span>
-                      ) : null}
-                    </>
-                  ) : (
-                    <span className="scripts-promo-card__none muted">Nenhum release</span>
-                  )}
+              <CardContent className="flex flex-col gap-3 px-4 pt-0">
+                <div>
+                  <span className="text-xs text-muted-foreground">Em produção no canal</span>
+                  <div className="mt-1 flex flex-wrap items-center gap-1.5">
+                    {channel.version ? (
+                      <>
+                        <span className="font-mono text-sm">{channel.version}</span>
+                        {channel.hash ? (
+                          <span className="font-mono text-xs text-muted-foreground" title={channel.hash}>
+                            · {truncateHash(channel.hash)}
+                          </span>
+                        ) : null}
+                      </>
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Nenhum release</span>
+                    )}
+                  </div>
                 </div>
-              </div>
 
-              <div className="scripts-promo-card__controls">
-                <label className="scripts-promo-card__label muted small" htmlFor={`promo-${channel.routeValue}`}>
-                  Promover para
-                </label>
-                <div className="scripts-promo-card__control-row">
-                  <select
-                    id={`promo-${channel.routeValue}`}
-                    className="nexus-input scripts-matrix__select scripts-promo-card__select"
-                    value={selectedReleaseId}
-                    onChange={(e) => onPromotionSelect?.(channel.routeValue, e.target.value)}
-                  >
-                    {releases!.map((release) => (
-                      <option key={release.id} value={release.id}>
-                        {release.version}{release.isDeprecated ? ' (deprecated)' : ''}
-                      </option>
-                    ))}
-                  </select>
-                  {isCurrentSelection ? (
-                    <span className="scripts-promo-card__noop muted small">Já nesta versão</span>
-                  ) : (
-                    <button
-                      type="button"
-                      className="btn btn-scripts-accent btn-sm scripts-promo-card__promote"
-                      disabled={!canPromote || !selectedReleaseId}
-                      title={
-                        !canPromote
-                          ? 'Publique um release antes de promover'
-                          : `Promover ${selectedRelease?.version ?? 'release'} em ${channel.displayName}`
-                      }
-                      onClick={() => onPromote!(channel)}
+                <div className="flex flex-col gap-1.5">
+                  <Label htmlFor={`promo-${channel.routeValue}`} className="text-xs text-muted-foreground">
+                    Promover para
+                  </Label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Select
+                      value={selectedReleaseId}
+                      onValueChange={(value) => onPromotionSelect?.(channel.routeValue, value)}
                     >
-                      Promover
-                    </button>
-                  )}
+                      <SelectTrigger id={`promo-${channel.routeValue}`} className="min-w-[10rem] flex-1">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {releases!.map((release) => (
+                          <SelectItem key={release.id} value={release.id}>
+                            {release.version}{release.isDeprecated ? ' (deprecated)' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {isCurrentSelection ? (
+                      <span className="text-xs text-muted-foreground">Já nesta versão</span>
+                    ) : (
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="secondary"
+                        className={cn(channelToneClass('accent', 'md'))}
+                        disabled={!canPromote || !selectedReleaseId}
+                        title={
+                          !canPromote
+                            ? 'Publique um release antes de promover'
+                            : `Promover ${selectedRelease?.version ?? 'release'} em ${channel.displayName}`
+                        }
+                        onClick={() => onPromote!(channel)}
+                      >
+                        Promover
+                      </Button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </article>
+              </CardContent>
+            </Card>
           );
         })}
 
         {!canPromote ? (
-          <p className="scripts-matrix__footnote muted small">
+          <p className="text-xs text-muted-foreground">
             Publique ao menos um release para habilitar promoções entre canais.
           </p>
         ) : null}
@@ -202,68 +231,77 @@ export function ChannelMatrix({
   }
 
   return (
-    <div className={`scripts-matrix ${compact ? 'scripts-matrix--compact' : ''}`}>
-      <div className="scripts-matrix__header muted small" aria-hidden={compact ? undefined : true}>
-        <span>Canal</span>
-        <span>Release promovido</span>
-        {onPromote ? <span className="scripts-matrix__header-action">Ação</span> : null}
-      </div>
-
-      {orderedChannels.map((channel) => {
-        const selectedReleaseId = releases?.[0]?.id ?? '';
-        const isOnLatestRelease = Boolean(
-          channel.currentReleaseId
-          && selectedReleaseId
-          && channel.currentReleaseId === selectedReleaseId,
-        );
-        const showCurrentStatus = Boolean(onPromote && isOnLatestRelease);
-        const showPromoteAction = Boolean(onPromote && !showCurrentStatus);
-
-        return (
-          <div
-            key={channel.routeValue}
-            className={`scripts-matrix__row ${ROUTE_CLASS[channel.routeValue] ?? 'scripts-matrix__row--custom'}`}
-          >
-            <ChannelIdentity channel={channel} compact={compact} />
-
-            <div className="scripts-matrix__release">
-              <CurrentRelease channel={channel} compact={compact} />
-            </div>
-
-            {showCurrentStatus ? (
-              <div className="scripts-matrix__action">
-                <span className="scripts-matrix__status">Atual</span>
-              </div>
-            ) : null}
-
-            {showPromoteAction ? (
-              <div className="scripts-matrix__action">
-                <button
-                  type="button"
-                  className={`btn btn-scripts-outline btn-sm ${compact ? 'scripts-matrix__promote-btn' : ''}`}
-                  disabled={!canPromote}
-                  title={
-                    !canPromote
-                      ? 'Publique um release antes de promover'
-                      : channel.version
-                        ? `Trocar release em ${channel.displayName}`
-                        : `Promover release em ${channel.displayName}`
-                  }
-                  onClick={() => onPromote!(channel)}
-                >
-                  {compact ? 'Promover' : 'Promover →'}
-                </button>
-              </div>
-            ) : null}
-          </div>
-        );
-      })}
-
-      {onPromote && !canPromote ? (
-        <p className="scripts-matrix__footnote muted small">
-          Publique ao menos um release para habilitar promoções entre canais.
-        </p>
+    <Table>
+      {!compact ? (
+        <TableHeader>
+          <TableRow>
+            <TableHead>Canal</TableHead>
+            <TableHead>Release promovido</TableHead>
+            {onPromote ? <TableHead className="text-right">Ação</TableHead> : null}
+          </TableRow>
+        </TableHeader>
       ) : null}
-    </div>
+      <TableBody>
+        {orderedChannels.map((channel) => {
+          const selectedReleaseId = releases?.[0]?.id ?? '';
+          const isOnLatestRelease = Boolean(
+            channel.currentReleaseId
+            && selectedReleaseId
+            && channel.currentReleaseId === selectedReleaseId,
+          );
+          const showCurrentStatus = Boolean(onPromote && isOnLatestRelease);
+          const showPromoteAction = Boolean(onPromote && !showCurrentStatus);
+
+          return (
+            <TableRow
+              key={channel.routeValue}
+              className={cn('border-l-4', channelBorderClass(channel.routeValue), compact && 'h-auto')}
+            >
+              <TableCell className={cn(compact && 'py-2.5')}>
+                <ChannelIdentity channel={channel} compact={compact} />
+              </TableCell>
+
+              <TableCell className={cn(compact && 'py-2.5')}>
+                <CurrentRelease channel={channel} compact={compact} />
+              </TableCell>
+
+              {onPromote ? (
+                <TableCell className={cn('text-right', compact && 'py-2.5')}>
+                  {showCurrentStatus ? (
+                    <Badge variant="outline" className="text-xs font-normal">
+                      Atual
+                    </Badge>
+                  ) : null}
+
+                  {showPromoteAction ? (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      disabled={!canPromote}
+                      title={
+                        !canPromote
+                          ? 'Publique um release antes de promover'
+                          : channel.version
+                            ? `Trocar release em ${channel.displayName}`
+                            : `Promover release em ${channel.displayName}`
+                      }
+                      onClick={() => onPromote!(channel)}
+                    >
+                      {compact ? 'Promover' : 'Promover →'}
+                    </Button>
+                  ) : null}
+                </TableCell>
+              ) : null}
+            </TableRow>
+          );
+        })}
+      </TableBody>
+      {onPromote && !canPromote ? (
+        <caption className="mt-2 text-left text-xs text-muted-foreground">
+          Publique ao menos um release para habilitar promoções entre canais.
+        </caption>
+      ) : null}
+    </Table>
   );
 }

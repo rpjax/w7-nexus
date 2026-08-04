@@ -1,7 +1,6 @@
 import { useNavigate, useParams } from 'react-router-dom';
 import { AdminOperationCard } from '../../components/admin/AdminOperationCard';
 import { OperationDetailShell } from '../../features/operations/OperationDetailShell';
-import { listPath } from '../../features/operations/operationPaths';
 import { useOperationDetail } from '../../features/operations/useOperationDetail';
 import { useOperationScopeActions } from '../../features/operations/useOperationScopeActions';
 import { teamDetailPath } from '../../features/teams/teamPaths';
@@ -24,7 +23,8 @@ export function OperationAdminOperationDetailPage() {
   return (
     <>
       <OperationDetailShell
-        listPath={listPath('operation-admin')}
+        scope="operation-admin"
+        operationName={operation?.name}
         loading={loading}
         notFound={notFound}
       >

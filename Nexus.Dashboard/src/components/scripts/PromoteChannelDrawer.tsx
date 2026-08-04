@@ -1,4 +1,24 @@
 import type { ChannelSummary, ReleaseSummary } from '../../api/scripts/types';
+import { channelToneClass } from '@/lib/channel-tones';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Card, CardContent } from '@/components/ui/card';
+import { cn } from '@/lib/utils';
 
 type PromoteChannelDrawerProps = {
   open: boolean;
@@ -25,82 +45,98 @@ export function PromoteChannelDrawer({
   onClose,
   onConfirm,
 }: PromoteChannelDrawerProps) {
-  if (!open || !channel) return null;
+  if (!channel) return null;
 
   const selected = releases.find((r) => r.id === selectedReleaseId);
   const beforeVersion = channel.version ?? '—';
   const afterVersion = selected?.version ?? '—';
 
   return (
-    <div className="scripts-drawer-backdrop" onClick={onClose}>
-      <aside className="scripts-drawer scripts-drawer--promote" onClick={(e) => e.stopPropagation()}>
-        <header className="scripts-drawer__header">
-          <div className="scripts-drawer__header-main">
-            <p className="scripts-drawer__kicker">Promover · {scriptName}</p>
-            <h3>{channel.displayName}</h3>
-          </div>
-          <button type="button" className="account-picker-close scripts-drawer__close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </header>
+    <Sheet open={open} onOpenChange={(next) => !next && onClose()}>
+      <SheetContent side="right" className="flex w-full flex-col gap-0 overflow-y-auto sm:max-w-md">
+        <SheetHeader>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">
+            Promover · {scriptName}
+          </p>
+          <SheetTitle>{channel.displayName}</SheetTitle>
+          <SheetDescription className="sr-only">
+            Promover release no canal {channel.displayName}
+          </SheetDescription>
+        </SheetHeader>
 
-        <div className="scripts-drawer__body">
-          <div className="scripts-promote-compare">
-            <div className="scripts-promote-card">
-              <span className="muted small">Atual</span>
-              <strong className="mono">{beforeVersion}</strong>
-            </div>
-            <span className="scripts-promote-arrow" aria-hidden="true">→</span>
-            <div className="scripts-promote-card scripts-promote-card--next">
-              <span className="muted small">Novo</span>
-              <strong className="mono">{afterVersion}</strong>
-            </div>
-          </div>
-
-          <div className="field">
-            <label htmlFor="promoteReleaseSelect">Release</label>
-            <select
-              id="promoteReleaseSelect"
-              className="nexus-input"
-              value={selectedReleaseId}
-              onChange={(e) => onSelectRelease(e.target.value)}
-            >
-              {releases.map((release) => (
-                <option key={release.id} value={release.id}>
-                  {release.version}{release.isDeprecated ? ' (deprecated)' : ''}
-                </option>
-              ))}
-            </select>
+        <div className="flex flex-1 flex-col gap-4 px-4">
+          <div className="flex items-center justify-center gap-3">
+            <Card className="flex-1 py-3">
+              <CardContent className="flex flex-col gap-1 px-4">
+                <span className="text-xs text-muted-foreground">Atual</span>
+                <strong className="font-mono text-sm">{beforeVersion}</strong>
+              </CardContent>
+            </Card>
+            <span className="text-muted-foreground" aria-hidden="true">→</span>
+            <Card className={cn('flex-1 py-3', channelToneClass('accent', 'md'))}>
+              <CardContent className="flex flex-col gap-1 px-4">
+                <span className="text-xs text-muted-foreground">Novo</span>
+                <strong className="font-mono text-sm text-warning">{afterVersion}</strong>
+              </CardContent>
+            </Card>
           </div>
 
-          <div className="scripts-impact-panel">
-            <h4>Impacto</h4>
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="promoteReleaseSelect">Release</Label>
+            <Select value={selectedReleaseId} onValueChange={onSelectRelease}>
+              <SelectTrigger id="promoteReleaseSelect" className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {releases.map((release) => (
+                  <SelectItem key={release.id} value={release.id}>
+                    {release.version}{release.isDeprecated ? ' (deprecated)' : ''}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="rounded-lg border border-border/50 bg-muted/20 p-3">
+            <h4 className="text-sm font-medium">Impacto</h4>
             {hostPatterns.length > 0 ? (
-              <ul className="scripts-impact-list">
+              <ul className="mt-2 flex flex-col gap-1">
                 {hostPatterns.map((host) => (
-                  <li key={host}><code>{host}</code></li>
+                  <li key={host}>
+                    <code className="font-mono text-xs">{host}</code>
+                  </li>
                 ))}
               </ul>
             ) : (
-              <p className="muted small">Este script só é resolvido por nome — promoção afeta <code>?name={scriptName}</code>.</p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                Este script só é resolvido por nome — promoção afeta <code className="font-mono">?name={scriptName}</code>.
+              </p>
             )}
           </div>
 
-          <div className="scripts-cache-warning">
-            <strong>Cache invalidado</strong>
-            <p className="muted small">
+          <div className={cn('rounded-lg border p-3', channelToneClass('staging', 'md'))}>
+            <strong className="text-sm">Cache invalidado</strong>
+            <p className="mt-1 text-xs text-muted-foreground">
               O ScriptCache (L1, TTL ~60s) será limpo. Clientes podem ver a versão anterior por até 1 minuto.
             </p>
           </div>
         </div>
 
-        <footer className="scripts-drawer__footer">
-          <button type="button" className="btn btn-scripts-outline" onClick={onClose} disabled={busy}>Cancelar</button>
-          <button type="button" className="btn btn-scripts-accent" onClick={onConfirm} disabled={busy || !selectedReleaseId}>
+        <SheetFooter className="flex-row justify-end gap-2 border-t border-border/50">
+          <Button type="button" variant="outline" onClick={onClose} disabled={busy}>
+            Cancelar
+          </Button>
+          <Button
+            type="button"
+            variant="secondary"
+            className={channelToneClass('accent', 'md')}
+            onClick={onConfirm}
+            disabled={busy || !selectedReleaseId}
+          >
             {busy ? 'Promovendo…' : 'Confirmar promoção'}
-          </button>
-        </footer>
-      </aside>
-    </div>
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

@@ -1,6 +1,37 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { HostPatternEditor } from './HostPatternEditor';
 import { ResolutionModeBadge } from './ResolutionModeBadge';
+
+const createScriptSchema = z.object({
+  name: z.string().trim().min(1, 'Informe o nome do script.'),
+  description: z.string(),
+  priority: z.number().int().min(0, 'Prioridade deve ser zero ou maior.'),
+  hostPatterns: z.array(z.string()),
+});
+
+type CreateScriptValues = z.infer<typeof createScriptSchema>;
 
 type CreateScriptModalProps = {
   open: boolean;
@@ -15,141 +46,178 @@ type CreateScriptModalProps = {
 };
 
 export function CreateScriptModal({ open, busy, onClose, onSubmit }: CreateScriptModalProps) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
-  const [priority, setPriority] = useState(0);
-  const [hostPatterns, setHostPatterns] = useState<string[]>([]);
+  const form = useForm<CreateScriptValues>({
+    resolver: zodResolver(createScriptSchema),
+    defaultValues: {
+      name: '',
+      description: '',
+      priority: 0,
+      hostPatterns: [],
+    },
+  });
+
+  const hostPatterns = form.watch('hostPatterns');
 
   useEffect(() => {
     if (!open) {
-      setName('');
-      setDescription('');
-      setPriority(0);
-      setHostPatterns([]);
+      form.reset({
+        name: '',
+        description: '',
+        priority: 0,
+        hostPatterns: [],
+      });
     }
-  }, [open]);
+  }, [open, form]);
 
-  if (!open) return null;
+  function handleSubmit(values: CreateScriptValues) {
+    onSubmit({
+      name: values.name.trim(),
+      hostPatterns: values.hostPatterns,
+      priority: values.priority,
+      description: values.description.trim() || null,
+    });
+  }
 
   return (
-    <div className="dialog-backdrop dialog-backdrop--modal" onClick={onClose}>
-      <div
-        className="dialog-card scripts-modal"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="create-script-title"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <header className="scripts-modal__header">
-          <div>
-            <p className="scripts-modal__kicker">Admin · Scripts</p>
-            <h3 id="create-script-title">Novo script</h3>
-            <p className="scripts-modal__lead muted small">
-              Registre um patch de runtime no inventário central.
-            </p>
-          </div>
-          <button type="button" className="account-picker-close" onClick={onClose} aria-label="Fechar">
-            <span aria-hidden="true">×</span>
-          </button>
-        </header>
+    <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Admin · Scripts</p>
+          <DialogTitle>Novo script</DialogTitle>
+          <DialogDescription>
+            Registre um patch de runtime no inventário central.
+          </DialogDescription>
+        </DialogHeader>
 
-        <div className="scripts-modal__body">
-          <div className="form-grid scripts-modal__form">
-            <div className="field scripts-modal__field">
-              <label htmlFor="scriptName">Nome</label>
-              <input
-                id="scriptName"
-                className="nexus-input scripts-modal__input"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="runtime, olx, …"
-                autoFocus
+        <Form {...form}>
+          <form className="space-y-4" onSubmit={form.handleSubmit(handleSubmit)}>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-1">
+                    <FormLabel htmlFor="scriptName">Nome</FormLabel>
+                    <FormControl>
+                      <Input
+                        id="scriptName"
+                        placeholder="runtime, olx, …"
+                        autoFocus
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-1">
+                    <FormLabel htmlFor="scriptPriority">Prioridade</FormLabel>
+                    <FormControl>
+                      <div className="flex items-center gap-1">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => field.onChange(Math.max(0, field.value - 1))}
+                          aria-label="Diminuir prioridade"
+                        >
+                          −
+                        </Button>
+                        <Input
+                          id="scriptPriority"
+                          type="number"
+                          className="text-center"
+                          min={0}
+                          title="Menor valor injeta primeiro em lookups por host"
+                          {...field}
+                          onChange={(event) => field.onChange(Number(event.target.value))}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          disabled={busy}
+                          onClick={() => field.onChange(field.value + 1)}
+                          aria-label="Aumentar prioridade"
+                        >
+                          +
+                        </Button>
+                      </div>
+                    </FormControl>
+                    <p className="text-xs text-muted-foreground">Menor valor = injeta primeiro.</p>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="sm:col-span-2">
+                    <FormLabel htmlFor="scriptDesc">Descrição</FormLabel>
+                    <FormControl>
+                      <Textarea
+                        id="scriptDesc"
+                        rows={2}
+                        placeholder="Opcional — contexto operacional do patch"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
             </div>
 
-            <div className="field scripts-modal__field">
-              <label htmlFor="scriptPriority">Prioridade</label>
-              <div className="scripts-priority-stepper scripts-modal__priority">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  disabled={busy}
-                  onClick={() => setPriority((value) => Math.max(0, value - 1))}
-                  aria-label="Diminuir prioridade"
-                >
-                  −
-                </button>
-                <input
-                  id="scriptPriority"
-                  type="number"
-                  className="nexus-input scripts-priority-stepper__input scripts-modal__input"
-                  value={priority}
-                  min={0}
-                  onChange={(e) => setPriority(Number(e.target.value))}
-                  title="Menor valor injeta primeiro em lookups por host"
-                />
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  disabled={busy}
-                  onClick={() => setPriority((value) => value + 1)}
-                  aria-label="Aumentar prioridade"
-                >
-                  +
-                </button>
+            <section className="flex flex-col gap-3" aria-labelledby="script-hosts-label">
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <h4 id="script-hosts-label" className="text-sm font-medium">
+                    Host patterns
+                    <span className="ml-2 text-xs font-normal text-muted-foreground">opcional</span>
+                  </h4>
+                  <p className="text-xs text-muted-foreground">
+                    Define em quais hosts o script entra no resolve por URL.
+                  </p>
+                </div>
+                <ResolutionModeBadge hostPatterns={hostPatterns} />
               </div>
-              <p className="scripts-modal__hint muted small">Menor valor = injeta primeiro.</p>
-            </div>
-
-            <div className="field scripts-modal__field scripts-modal__field--full">
-              <label htmlFor="scriptDesc">Descrição</label>
-              <textarea
-                id="scriptDesc"
-                className="nexus-input scripts-modal__input"
-                rows={2}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Opcional — contexto operacional do patch"
+              <FormField
+                control={form.control}
+                name="hostPatterns"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormControl>
+                      <HostPatternEditor
+                        patterns={field.value}
+                        onChange={field.onChange}
+                        disabled={busy}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
               />
-            </div>
-          </div>
+            </section>
 
-          <section className="scripts-modal__hosts" aria-labelledby="script-hosts-label">
-            <div className="scripts-modal__hosts-head">
-              <div>
-                <h4 id="script-hosts-label" className="scripts-modal__section-title">
-                  Host patterns
-                  <span className="scripts-modal__optional">opcional</span>
-                </h4>
-                <p className="scripts-modal__hint muted small">
-                  Define em quais hosts o script entra no resolve por URL.
-                </p>
-              </div>
-              <ResolutionModeBadge hostPatterns={hostPatterns} />
-            </div>
-            <HostPatternEditor patterns={hostPatterns} onChange={setHostPatterns} disabled={busy} />
-          </section>
-        </div>
-
-        <footer className="scripts-modal__footer dialog-actions">
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={busy}>
-            Cancelar
-          </button>
-          <button
-            type="button"
-            className="btn btn-primary"
-            disabled={busy || !name.trim()}
-            onClick={() => onSubmit({
-              name: name.trim(),
-              hostPatterns,
-              priority,
-              description: description.trim() || null,
-            })}
-          >
-            {busy ? 'Criando…' : 'Criar script'}
-          </button>
-        </footer>
-      </div>
-    </div>
+            <DialogFooter>
+              <Button type="button" variant="ghost" onClick={onClose} disabled={busy}>
+                Cancelar
+              </Button>
+              <Button type="submit" disabled={busy}>
+                {busy ? 'Criando…' : 'Criar script'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
   );
 }

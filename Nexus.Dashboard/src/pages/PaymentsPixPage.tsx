@@ -1,15 +1,33 @@
 import { useMemo, useState } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 import { searchAdministratorAccountsPicker } from '../api/accountPickerSources';
 import { searchAdministratorOperationsPicker } from '../api/operationPickerSources';
 import { generatePix } from '../api/payments';
 import type { PixChargeResult } from '../api/types';
-import { AccountPickerModal } from '../components/AccountPickerModal';
-import { PixEntityField } from '../components/finance/PixEntityField';
-import { Icon } from '../components/IconButton';
-import { OperationPickerModal } from '../components/OperationPickerModal';
-import { PageHeading } from '../layouts/PageHeading';
+import { AccountPickerDialog } from '@/components/data/entity-picker-dialog';
+import { OperationPickerDialog } from '@/components/data/entity-picker-dialog';
+import { Copy, Link2 } from 'lucide-react';
+import { PageHeader } from '@/components/layout/page-header';
 import { formatMoney } from '../utils/financeLabels';
 import { shortId } from '../utils/format';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
+import { EntityCombobox } from '@/components/data/entity-combobox';
+import { cn } from '@/lib/utils';
 
 function parseAmountInput(raw: string): number {
   const normalized = raw.replace(',', '.').trim();
@@ -18,50 +36,62 @@ function parseAmountInput(raw: string): number {
   return Number.isFinite(value) ? value : 0;
 }
 
+const pixFormSchema = z.object({
+  operationId: z.string().trim().min(1, 'Selecione uma operação.'),
+  operationName: z.string().nullable(),
+  amountInput: z.string().trim().min(1, 'Informe um valor maior que zero.').refine(
+    (value) => parseAmountInput(value) > 0,
+    'Informe um valor maior que zero.',
+  ),
+  operatorId: z.string().nullable(),
+  operatorName: z.string().nullable(),
+});
+
+type PixFormValues = z.infer<typeof pixFormSchema>;
+
 export function PaymentsPixPage() {
-  const [operationId, setOperationId] = useState('');
-  const [operationName, setOperationName] = useState<string | null>(null);
-  const [amountInput, setAmountInput] = useState('');
-  const [operatorId, setOperatorId] = useState<string | null>(null);
-  const [operatorName, setOperatorName] = useState<string | null>(null);
-  const [error, setError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [lastResult, setLastResult] = useState<PixChargeResult | null>(null);
   const [pixCopied, setPixCopied] = useState(false);
-  const [generateBusy, setGenerateBusy] = useState(false);
   const [operationPickerOpen, setOperationPickerOpen] = useState(false);
   const [operatorPickerOpen, setOperatorPickerOpen] = useState(false);
+  const [operationOptions, setOperationOptions] = useState<{ id: string; label: string; description?: string }[]>([]);
+  const [operatorOptions, setOperatorOptions] = useState<{ id: string; label: string; description?: string }[]>([]);
 
+  const form = useForm<PixFormValues>({
+    resolver: zodResolver(pixFormSchema),
+    defaultValues: {
+      operationId: '',
+      operationName: null,
+      amountInput: '',
+      operatorId: null,
+      operatorName: null,
+    },
+  });
+
+  const amountInput = form.watch('amountInput');
+  const operationId = form.watch('operationId');
+  const operationName = form.watch('operationName');
   const amount = useMemo(() => parseAmountInput(amountInput), [amountInput]);
-  const canGenerate = Boolean(operationId.trim()) && amount > 0 && !generateBusy;
 
-  async function handleGenerate() {
-    setError('');
+  async function handleGenerate(values: PixFormValues) {
+    setSubmitError('');
     setLastResult(null);
     setPixCopied(false);
-    if (!operationId.trim()) {
-      setError('Selecione uma operação.');
-      return;
-    }
-    if (amount <= 0) {
-      setError('Informe um valor maior que zero.');
-      return;
-    }
-    setGenerateBusy(true);
+    const parsedAmount = parseAmountInput(values.amountInput);
     try {
       const result = await generatePix({
-        operationId: operationId.trim(),
-        amount,
-        operatorId,
+        operationId: values.operationId.trim(),
+        amount: parsedAmount,
+        operatorId: values.operatorId,
       });
       if (!result.ok) {
-        setError(result.error);
+        setSubmitError(result.error);
         return;
       }
       setLastResult(result.data);
     } catch (ex) {
-      setError(ex instanceof Error ? ex.message : 'Ocorreu um erro inesperado. Tente novamente.');
-    } finally {
-      setGenerateBusy(false);
+      setSubmitError(ex instanceof Error ? ex.message : 'Ocorreu um erro inesperado. Tente novamente.');
     }
   }
 
@@ -71,200 +101,254 @@ export function PaymentsPixPage() {
     setPixCopied(true);
   }
 
-  function clearOperation() {
-    setOperationId('');
-    setOperationName(null);
-  }
-
-  function clearOperator() {
-    setOperatorId(null);
-    setOperatorName(null);
-  }
-
   return (
-    <div className="ops-page pix-page">
-      <PageHeading
+    <div className="space-y-6">
+      <PageHeader
         kicker="Financeiro"
         title="Pagamentos PIX"
-        subtitle="Gere cobrança PIX vinculada a uma operação. O laranja é definido automaticamente pela credencial selecionada."
-        backLink={{ to: '/dashboard/payments', label: 'Registros de pagamentos' }}
+        description="Gere cobrança PIX vinculada a uma operação. O laranja é definido automaticamente pela credencial selecionada."
+        breadcrumbs={[
+          { label: 'Dashboard', href: '/dashboard' },
+          { label: 'Registros de pagamentos', href: '/dashboard/payments' },
+          { label: 'Gerar PIX' },
+        ]}
       />
 
-      <section className="pix-workspace" aria-labelledby="pix-form-title">
-        <header className="pix-workspace__hero">
-          <div className="pix-workspace__hero-main">
-            <span className="pix-workspace__badge">Cobrança instantânea</span>
-            <p className="pix-workspace__amount" aria-live="polite">
-              {amount > 0 ? formatMoney(amount) : 'R$ 0,00'}
-            </p>
-            <p className="pix-workspace__hero-hint muted small">
-              {operationName
-                ? `Operação ${operationName}`
-                : 'Selecione a operação e o valor para gerar o PIX.'}
-            </p>
-          </div>
-          <div className="pix-workspace__hero-mark" aria-hidden="true">
-            <span className="pix-workspace__pix-icon">PIX</span>
-          </div>
-        </header>
-
-        <div className="pix-workspace__divider" aria-hidden="true" />
-
-        {error ? (
-          <div className="pix-alert pix-alert--error" role="alert">
-            <p className="pix-alert__title">Falha ao gerar cobrança</p>
-            <p className="pix-alert__text">{error}</p>
-          </div>
-        ) : null}
-
-        <div className="pix-workspace__body">
-          <section className="admin-op-section pix-section">
-            <div className="admin-op-section__head">
-              <div className="admin-op-section__head-text">
-                <span className="admin-op-section__kicker">Passo 1</span>
-                <h2 id="pix-form-title" className="admin-op-section-title">Contexto</h2>
-                <p className="admin-op-section-desc muted small">
-                  A cobrança será registrada no contexto da operação escolhida.
-                </p>
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(handleGenerate)}>
+          <Card className="border-border/60 bg-card/80" aria-labelledby="pix-form-title">
+            <CardHeader>
+              <div className="flex items-start justify-between gap-4">
+                <div className="space-y-2">
+                  <Badge variant="info">Cobrança instantânea</Badge>
+                  <p className="text-3xl font-bold tracking-tight text-foreground" aria-live="polite">
+                    {amount > 0 ? formatMoney(amount) : 'R$ 0,00'}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {operationName
+                      ? `Operação ${operationName}`
+                      : 'Selecione a operação e o valor para gerar o PIX.'}
+                  </p>
+                </div>
+                <div
+                  className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-xs font-bold tracking-wider text-primary"
+                  aria-hidden="true"
+                >
+                  PIX
+                </div>
               </div>
-            </div>
-            <div className="admin-op-section__body">
-              <PixEntityField
-                label="Operação"
-                emptyLabel="Selecionar operação"
-                name={operationName}
-                id={operationId || null}
-                onPick={() => setOperationPickerOpen(true)}
-                onClear={clearOperation}
-                accent="blue"
-              />
-            </div>
-          </section>
+            </CardHeader>
 
-          <section className="admin-op-section pix-section">
-            <div className="admin-op-section__head">
-              <div className="admin-op-section__head-text">
-                <span className="admin-op-section__kicker">Passo 2</span>
-                <h2 className="admin-op-section-title">Valor</h2>
-                <p className="admin-op-section-desc muted small">
-                  Informe o montante da cobrança em reais.
-                </p>
-              </div>
-            </div>
-            <div className="admin-op-section__body">
-              <label className="pix-amount-field" htmlFor="pixAmount">
-                <span className="pix-amount-field__prefix">R$</span>
-                <input
-                  id="pixAmount"
-                  type="text"
-                  inputMode="decimal"
-                  className="nexus-input pix-amount-field__input"
-                  value={amountInput}
-                  onChange={(e) => setAmountInput(e.target.value)}
-                  placeholder="0,00"
-                  autoComplete="off"
+            <Separator />
+
+            <CardContent className="space-y-6 pt-6">
+              {submitError ? (
+                <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3" role="alert">
+                  <p className="text-sm font-medium text-destructive">Falha ao gerar cobrança</p>
+                  <p className="mt-1 text-sm text-destructive/90">{submitError}</p>
+                </div>
+              ) : null}
+
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <Badge variant="outline">Passo 1</Badge>
+                  <h2 id="pix-form-title" className="text-base font-semibold text-foreground">Contexto</h2>
+                  <p className="text-sm text-muted-foreground">
+                    A cobrança será registrada no contexto da operação escolhida.
+                  </p>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="operationId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Operação</FormLabel>
+                      <FormControl>
+                        <EntityCombobox
+                          value={field.value || null}
+                          onChange={(value) => {
+                            field.onChange(value ?? '');
+                            if (!value) form.setValue('operationName', null);
+                          }}
+                          options={operationOptions}
+                          placeholder="Selecionar operação"
+                          searchPlaceholder="Buscar operação…"
+                          emptyLabel="Nenhuma operação. Use o botão abaixo para buscar."
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOperationPickerOpen(true)}
+                      >
+                        Buscar operação…
+                      </Button>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-              </label>
-            </div>
-          </section>
+              </section>
 
-          <section className="admin-op-section pix-section">
-            <div className="admin-op-section__head">
-              <div className="admin-op-section__head-text">
-                <span className="admin-op-section__kicker">Passo 3</span>
-                <h2 className="admin-op-section-title">Operador</h2>
-                <p className="admin-op-section-desc muted small">
-                  Opcional. Com operador, o repasse segue a equipe e a estratégia de credenciais dela.
-                  Sem operador, usa a estratégia da operação e divide entre administradores.
-                </p>
-              </div>
-            </div>
-            <div className="admin-op-section__body">
-              <PixEntityField
-                label="Operador"
-                hint="Filtra repasse e credenciais pela equipe do operador."
-                optional
-                emptyLabel="Nenhum operador"
-                name={operatorName}
-                id={operatorId}
-                onPick={() => setOperatorPickerOpen(true)}
-                onClear={clearOperator}
-                accent="green"
-              />
-            </div>
-          </section>
-        </div>
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <Badge variant="outline">Passo 2</Badge>
+                  <h2 className="text-base font-semibold text-foreground">Valor</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Informe o montante da cobrança em reais.
+                  </p>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="amountInput"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel htmlFor="pixAmount">Valor</FormLabel>
+                      <FormControl>
+                        <label
+                          className={cn(
+                            'flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2',
+                          )}
+                          htmlFor="pixAmount"
+                        >
+                          <span className="text-sm font-medium text-muted-foreground">R$</span>
+                          <Input
+                            id="pixAmount"
+                            type="text"
+                            inputMode="decimal"
+                            className="border-0 bg-transparent shadow-none focus-visible:ring-0"
+                            placeholder="0,00"
+                            autoComplete="off"
+                            {...field}
+                          />
+                        </label>
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
 
-        <footer className="pix-workspace__footer">
-          <span className="pix-workspace__endpoint muted small">POST /api/charges/administrator/pix</span>
-          <button
-            type="button"
-            className="btn btn-primary btn-with-icon pix-workspace__submit"
-            onClick={() => void handleGenerate()}
-            disabled={!canGenerate}
-          >
-            <Icon name="link" />
-            {generateBusy ? 'Gerando…' : 'Gerar PIX'}
-          </button>
-        </footer>
-      </section>
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <Badge variant="outline">Passo 3</Badge>
+                  <h2 className="text-base font-semibold text-foreground">Operador</h2>
+                  <p className="text-sm text-muted-foreground">
+                    Opcional. Com operador, o repasse segue a equipe e a estratégia de credenciais dela.
+                    Sem operador, usa a estratégia da operação e divide entre administradores.
+                  </p>
+                </div>
+                <FormField
+                  control={form.control}
+                  name="operatorId"
+                  render={({ field }) => (
+                    <FormItem>
+                      <div className="flex items-center gap-2">
+                        <FormLabel>Operador</FormLabel>
+                        <Badge variant="outline">opcional</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Filtra repasse e credenciais pela equipe do operador.
+                      </p>
+                      <FormControl>
+                        <EntityCombobox
+                          value={field.value}
+                          onChange={(value) => {
+                            field.onChange(value);
+                            if (!value) form.setValue('operatorName', null);
+                          }}
+                          options={operatorOptions}
+                          placeholder="Nenhum operador"
+                          searchPlaceholder="Buscar operador…"
+                          emptyLabel="Nenhum operador. Use o botão abaixo para buscar."
+                        />
+                      </FormControl>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setOperatorPickerOpen(true)}
+                      >
+                        Buscar operador…
+                      </Button>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </section>
+            </CardContent>
+
+            <CardFooter className="justify-between gap-3">
+              <span className="text-sm text-muted-foreground">POST /api/charges/administrator/pix</span>
+              <Button
+                type="submit"
+                disabled={form.formState.isSubmitting || !operationId.trim() || amount <= 0}
+              >
+                <Link2 className="size-4" />
+                {form.formState.isSubmitting ? 'Gerando…' : 'Gerar PIX'}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
+      </Form>
 
       {lastResult ? (
-        <section className="pix-result" aria-live="polite">
-          <header className="pix-result__head">
-            <div>
-              <span className="pix-result__kicker">Cobrança pronta</span>
-              <h2 className="pix-result__title">Código PIX gerado</h2>
-              <p className="pix-result__meta muted small">
-                ID do pagamento: <span className="mono" title={lastResult.id}>{shortId(lastResult.id, 28)}</span>
-              </p>
+        <Card className="border-border/60 bg-card/80" aria-live="polite">
+          <CardHeader>
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-1">
+                <Badge variant="success">Cobrança pronta</Badge>
+                <CardTitle>Código PIX gerado</CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  ID do pagamento:{' '}
+                  <span className="font-mono" title={lastResult.id}>{shortId(lastResult.id, 28)}</span>
+                </p>
+              </div>
+              <Badge variant="warning">Pendente</Badge>
             </div>
-            <span className="pix-result__status">Pendente</span>
-          </header>
-          <div className="pix-result__code-wrap">
-            <textarea
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <Textarea
               readOnly
               rows={5}
-              className="nexus-input pix-result__code"
               value={lastResult.pixCode}
               aria-label="Código PIX copia e cola"
+              className="font-mono text-xs"
             />
-            <button
-              type="button"
-              className="btn btn-primary btn-with-icon pix-result__copy"
-              onClick={() => void copyPixCode()}
-            >
-              <Icon name="copy" />
+            <Button type="button" onClick={() => void copyPixCode()}>
+              <Copy className="size-4" />
               {pixCopied ? 'Copiado' : 'Copiar código'}
-            </button>
-          </div>
-          {pixCopied ? (
-            <p className="pix-result__copied feedback success">Código PIX copiado para a área de transferência.</p>
-          ) : null}
-        </section>
+            </Button>
+            {pixCopied ? (
+              <p className="text-sm text-success">Código PIX copiado para a área de transferência.</p>
+            ) : null}
+          </CardContent>
+        </Card>
       ) : null}
 
-      <OperationPickerModal
+      <OperationPickerDialog
         open={operationPickerOpen}
         onClose={() => setOperationPickerOpen(false)}
         searchOperations={searchAdministratorOperationsPicker}
         title="Selecionar operação"
         subtitle="Todas as operações do sistema — a cobrança PIX será criada no contexto da operação escolhida."
         onSelected={(row) => {
-          setOperationId(row.id);
-          setOperationName(row.name);
+          form.setValue('operationId', row.id, { shouldValidate: true });
+          form.setValue('operationName', row.name);
+          setOperationOptions([{ id: row.id, label: row.name, description: row.id }]);
         }}
       />
 
-      <AccountPickerModal
+      <AccountPickerDialog
         open={operatorPickerOpen}
         onClose={() => setOperatorPickerOpen(false)}
         searchAccounts={searchAdministratorAccountsPicker}
         title="Conta do operador"
         subtitle="Opcional — define equipe, repasse e credenciais da cobrança."
         onSelected={(row) => {
-          setOperatorId(row.id);
-          setOperatorName(row.username);
+          form.setValue('operatorId', row.id);
+          form.setValue('operatorName', row.username);
+          setOperatorOptions([{ id: row.id, label: row.username, description: row.id }]);
         }}
       />
     </div>
