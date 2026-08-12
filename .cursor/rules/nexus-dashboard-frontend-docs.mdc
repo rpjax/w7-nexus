@@ -1,0 +1,16 @@
+---
+description: Enforce Nexus frontend documentation standards when editing frontend docs
+globs: docs/frontend-*.md
+alwaysApply: false
+---
+
+# Frontend documentation work
+
+When editing `docs/frontend-standards.md` or `docs/frontend-patterns.md`:
+
+- Keep the docs Nexus-specific, not inherited from another product
+- Reference real routes, pages, components, and patterns from the active frontend root (`Nexus.Dashboard/`, `Refactor/web/`, or future `web/`)
+- Keep `frontend-standards.md` as constitution (must / never)
+- Keep `frontend-patterns.md` as recipes and decision trees
+- When a reusable UI pattern becomes canonical, add it to `frontend-patterns.md` in the same change
+- Do not add references to nonexistent docs, routes, products, or UI surfaces

@@ -1,0 +1,29 @@
+---
+description: Enforce Nexus frontend standards for Dashboard, Refactor/web, and future web/
+globs: Nexus.Dashboard/**/*,Refactor/web/**/*,web/**/*
+alwaysApply: false
+---
+
+# Nexus frontend work
+
+Source of truth: [`docs/frontend-standards.md`](docs/frontend-standards.md) and [`docs/frontend-patterns.md`](docs/frontend-patterns.md)
+
+Applies to any of these frontend roots:
+
+- `Nexus.Dashboard/` — current production dashboard
+- `Refactor/web/` — refactor frontend
+- `web/` — future post-refactor frontend root
+
+Before changing UI, UX, layout, or React code in those trees, read and obey the frontend docs.
+
+## Non-negotiables
+
+- Use only the existing shadcn-style primitives in `src/components/ui/`
+- Do not introduce a second UI kit or competing visual language
+- Prefer the existing shell/layout/list/detail patterns before inventing new scaffolds
+- Use revealing UI: primary path first, advanced detail on interaction
+- Complex data must be structured (table, tabs, KPI strip, detail route), not dumped as raw JSON/text
+- Do not ship god pages or god components; split by job, section, or route depth
+- Show explicit loading, empty, success, and error states
+- Prefer canonical examples from the active frontend root: `DashboardLayout`, `ListPageLayout`, `DataTable`, `AdminOperationsPage`, `AdminPaymentsPage`, `ScriptsCommandCenterPage`, `ScriptStudioPage`
+- Homogeneous collections must use dense `DataTable` + filters + pagination — never card/button stacks as the primary list (see `docs/frontend-patterns.md` §2.1.1)

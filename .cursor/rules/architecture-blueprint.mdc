@@ -7,7 +7,7 @@ alwaysApply: true
 
 Source of truth: [`docs/architecture-blueprint.md`](docs/architecture-blueprint.md)
 
-Before creating or substantially changing backend domains in `Nexus.Api` (or `Refactor/Nexus.Api`), **read and obey that document**. Do not invent a competing layout.
+Before creating or substantially changing backend domains in `Nexus.Api`, `Refactor/Nexus.Api`, or a future `api/` root, **read and obey that document**. Do not invent a competing layout.
 
 ## Non-negotiables
 

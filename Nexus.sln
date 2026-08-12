@@ -7,6 +7,12 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Api", "Nexus.Api\Nexu
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexus.Tests", "Nexus.Tests\Nexus.Tests.csproj", "{B2C3D4E5-F6A7-8901-BCDE-F12345678901}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Refactor", "Refactor", "{7417E454-5362-6DD4-359B-4192C288EE39}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Nexus.Api", "Nexus.Api", "{CAAFF4AC-1EBB-0284-4468-56022CCDA1EE}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Refactor.Nexus.Api", "Refactor\Nexus.Api\Refactor.Nexus.Api.csproj", "{D09C0DA5-8ED0-47E7-B63B-5A8952884364}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -41,8 +47,24 @@ Global
 		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|x64.Build.0 = Release|Any CPU
 		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|x86.ActiveCfg = Release|Any CPU
 		{B2C3D4E5-F6A7-8901-BCDE-F12345678901}.Release|x86.Build.0 = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|x64.Build.0 = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Debug|x86.Build.0 = Debug|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|x64.ActiveCfg = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|x64.Build.0 = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|x86.ActiveCfg = Release|Any CPU
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{CAAFF4AC-1EBB-0284-4468-56022CCDA1EE} = {7417E454-5362-6DD4-359B-4192C288EE39}
+		{D09C0DA5-8ED0-47E7-B63B-5A8952884364} = {CAAFF4AC-1EBB-0284-4468-56022CCDA1EE}
 	EndGlobalSection
 EndGlobal

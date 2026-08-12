@@ -1,6 +1,6 @@
 # Nexus Architecture Blueprint
 
-This document defines the default architecture blueprint for backend domains in `Nexus.Api`.
+This document defines the default architecture blueprint for backend domains in `Nexus.Api`, `Refactor/Nexus.Api`, and a future `api/` root if/when introduced.
 
 It is intended to be:
 
@@ -15,7 +15,11 @@ If a new domain is created and there is no strong reason to do otherwise, follow
 
 ## Official Status
 
-This document is the **default architecture standard** for new `Nexus.Api` domains and for any code being substantially touched.
+This document is the **default architecture standard** for new backend domains and for any code being substantially touched in:
+
+- `Nexus.Api/`
+- `Refactor/Nexus.Api/`
+- future `api/` root, if/when introduced
 
 - Follow it for greenfield work.
 - Treat existing code that diverges as debt to migrate opportunistically, not as the model to copy.

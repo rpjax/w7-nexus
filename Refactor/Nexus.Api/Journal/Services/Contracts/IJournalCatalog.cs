@@ -1,0 +1,78 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Reflection;
+using Refactor.Nexus.Api.Journal.Attributes;
+using Refactor.Nexus.Api.Journal.Catalog;
+using Refactor.Nexus.Api.Journal.Models;
+
+namespace Refactor.Nexus.Api.Journal.Services.Contracts;
+
+/// <summary>
+/// Application-facing registry of known Journal fact schemas and their enablement.
+/// </summary>
+/// <remarks>
+/// <para>
+/// Descriptors live in process memory only. Enablement toggles may be driven at
+/// boot/runtime via <see cref="SetEnabled"/>; the catalog itself is not a database table
+/// and is not the ASP.NET / host logging pipeline.
+/// </para>
+/// <para>
+/// <see cref="IJournalWriter"/> resolves descriptors by CLR type on
+/// <c>Append&lt;T&gt;</c> and consults <see cref="IsTypeEnabled"/> before enqueue.
+/// All schema versions of a fact <c>Type</c> share one enablement toggle.
+/// Canonical facts seed enabled; <see cref="JournalFactAttribute"/> facts seed off until Apply.
+/// </para>
+/// </remarks>
+public interface IJournalCatalog
+{
+    /// <summary>
+    /// When true, Append of an unregistered CLR type throws.
+    /// </summary>
+    bool RejectUnregisteredTypes { get; set; }
+
+    /// <summary>
+    /// All registered descriptors (stable order by Type, SchemaVersion).
+    /// </summary>
+    IReadOnlyList<JournalEntryDescriptor> Types { get; }
+
+    /// <summary>
+    /// Registers a fully built descriptor. Duplicate fact Type+version or CLR type throws.
+    /// </summary>
+    void Register(JournalEntryDescriptor descriptor);
+
+    /// <summary>
+    /// Builds a descriptor from Journal/Canonical fact attributes on <paramref name="clrType"/> and registers it.
+    /// </summary>
+    void Register(Type clrType);
+
+    /// <summary>
+    /// Builds and registers from attributes on <typeparamref name="T"/>.
+    /// </summary>
+    void Register<T>();
+
+    /// <summary>
+    /// Scans assemblies for types annotated with Journal/Canonical fact attributes and registers them.
+    /// </summary>
+    void RegisterFromAssemblies(params Assembly[] assemblies);
+
+    bool TryGet(string type, int schemaVersion, [NotNullWhen(true)] out JournalEntryDescriptor? descriptor);
+
+    bool TryGet(Type clrType, [NotNullWhen(true)] out JournalEntryDescriptor? descriptor);
+
+    bool TryGet<T>([NotNullWhen(true)] out JournalEntryDescriptor? descriptor);
+
+    /// <summary>True when the fact type is canonical (always on; not toggleable).</summary>
+    bool IsCanonical(string type);
+
+    /// <summary>
+    /// Enablement gate for a fact type key (all schema versions share the toggle).
+    /// </summary>
+    bool IsTypeEnabled(string type);
+
+    /// <summary>Toggles a non-canonical fact. Throws for unknown or canonical types.</summary>
+    void SetEnabled(string type, bool enabled);
+
+    /// <summary>
+    /// Returns whether <paramref name="entry"/>'s type is enabled.
+    /// </summary>
+    bool IsEnabled(JournalEntry entry);
+}

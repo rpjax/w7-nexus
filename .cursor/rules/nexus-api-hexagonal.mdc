@@ -1,12 +1,18 @@
 ---
-description: Enforce hexagonal + role ports when editing Nexus.Api C# code
-globs: Nexus.Api/**/*.cs,Refactor/Nexus.Api/**/*.cs
+description: Enforce hexagonal + role ports when editing Nexus API C# code
+globs: Nexus.Api/**/*.cs,Refactor/Nexus.Api/**/*.cs,api/**/*.cs
 alwaysApply: false
 ---
 
-# Nexus.Api domain work
+# Nexus API domain work
 
 Follow [`docs/architecture-blueprint.md`](docs/architecture-blueprint.md).
+
+Applies to any of these backend roots:
+
+- `Nexus.Api/` — current API
+- `Refactor/Nexus.Api/` — refactor API
+- `api/` — future post-refactor API root, if/when introduced
 
 ## When adding a feature
 

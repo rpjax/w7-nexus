@@ -1,0 +1,33 @@
+---
+description: Dense DataTable is mandatory for homogeneous collections in Nexus frontends
+globs: Nexus.Dashboard/**/*,Refactor/web/**/*,web/**/*
+alwaysApply: false
+---
+
+# Dense data tables (mandatory)
+
+Source of truth: [`docs/frontend-patterns.md`](docs/frontend-patterns.md) §2.1 and §2.1.1.
+
+When UI shows a **homogeneous collection** (accounts, payments, operations, logs, etc.):
+
+## Required
+
+1. Use `DataTable` + `Table` primitives — never button-stacks or card lists as the primary view.
+2. Toolbar with **search**, high-value **filters**, and **page size**.
+3. `ListPagination` driven by server `limit`/`offset` (or equivalent). No unbounded dumps.
+4. **Compact density** by default: short rows, truncated secondary text, badges for enums/status.
+5. Fill useful **horizontal** space with columns; put deep work in detail pane/route on row click.
+6. Fill useful **vertical** space: scrollable table body, sticky header, sticky pagination footer when the panel is tall.
+7. Selected row must be visually obvious in list+detail layouts.
+8. Mobile: keep the table (horizontal scroll OK). Do not invent a second competing list pattern.
+
+## Primitives
+
+Port missing pieces into the active root:
+
+- `components/ui/table`
+- `components/ui/select` (filters / page size)
+- `components/data/data-table`
+- `components/data/list-pagination`
+
+Canonical refactor example: `Refactor/web/src/pages/AccountsPage.tsx`.
