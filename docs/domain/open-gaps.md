@@ -97,11 +97,12 @@ Cada gap tem: **o que quebra**, **cenário concreto** que expõe a quebra, e **s
 
 **Decisão:**
 - **Base do nível 3** = valor *calculado* (remanescente pós Laranja+Acionista sobre o líquido X), **não** objeto armazenado.
-- `operador_pct + recrutador_pct ≤ 100%` é invariante de **autor único** — o **deal de agenciamento** define os dois números; validada no ato de salvar o deal (fail-fast). Sem multi-autor competindo → 130% não pode ocorrer.
-- Waterfall não passa de 100% por construção; não há "dono de invariante" cross-mandato a inventar.
-- **`demais` configurável (líderes)** = adiado com equipes. **Princípio gravado:** quando voltar, não criar bucket multi-autor — usar waterfall (deal primeiro; líderes do remanescente).
+- `operador_pct + recrutador_pct ≤ 100%` é invariante de **autor único** — o **deal de agenciamento** define os dois números; validada ao salvar o deal (fail-fast). Sem multi-autor competindo → 130% não pode ocorrer.
+- Sobra (`< 100%`) → **Residual da Organização** (linha 5 do waterfall). Beneficiário canônico do resto, do arredondamento na materialização e da sobra de reconciliação.
+- Waterfall não passa de 100% por construção.
+- O antigo “demais / líderes de equipe” virou **Cut de Gestão da Op** (linha 3, G11) — cut fixo flat, um por op. **Sem entidade Equipe.**
 
-**Status:** resolvido — ver [money.md](./money.md) (Rateio do nível 3), [glossary.md](./glossary.md) (Base do nível 3 / Split intenção).
+**Status:** resolvido — ver [money.md](./money.md) (Waterfall completo / nível 3), [glossary.md](./glossary.md).
 
 ---
 
@@ -189,7 +190,7 @@ Claim = { beneficiário, valor, moeda, origem (GUID Cobrança), localização (C
 - **Beneficiário ≠ localização** (eixos ortogonais): beneficiário é uma *parte* (Operador, Laranja, Acionista, Recrutador, **ou a própria Organização** para o residual); localização é a *Conta* onde a grana dele está agora.
 - **Claim com localização** (decidido): o claim sabe em qual Conta está; o hop **relocaliza** o claim. Responde G4 (“quanto está preso na Conta queimada”). **Não é o átomo:** a Conta continua número burro (sem FK), mas `soma claims == saldo` é **invariante** garantida no use case (ver G6) — não drift tolerado.
 - **Invariante de nascimento:** na materialização, `soma dos claims criados = X` (todo R$ tem dono desde o segundo zero; sem grana órfã).
-- **Status mínimo:** `ativo → pago`; mais `perdido` (write-off, G6) e estado de exposição em Conta queimada (G4). Sem “liquidando/em trânsito” a menos que doa.
+- **Status (G13):** `ativo` (conta na invariante) → `repassado` / `perdido` / `estornado` / `arquivado` (terminais, saem da soma). Exposição é query, não status.
 
 **Materialização (refinada com o fluxo real do Contador):**
 - Acontece no **fim de período** (dia/semana/ciclo da Org), em **lote**, **um pagamento por vez**.
@@ -213,9 +214,72 @@ Claim = { beneficiário, valor, moeda, origem (GUID Cobrança), localização (C
 
 ---
 
+### G11 — Divisões internas de Operação: mandato escopado + capacidades — RESOLVIDO
+
+**Dor:** delegar gestão com granularidade ("gerir tudo" / "gerir uma op" / "gerir só meu contexto"). Não é "equipes".
+
+**Decisão:**
+- **Mandato = conjunto de (capacidade × escopo).** Dois eixos de escopo: **Operação** (nenhuma/algumas/todas) e **Carteira** (recrutados diretos). Divisão interna da op **emerge** da interseção — **sem entidade "Equipe"**.
+- **Granularidade domada:** capacidades atômicas + escopo, compostas em **presets nomeados** (papéis existentes viram bundles); fine-tune por exceção; Admin = preset raiz.
+- **Três amarras:** (1) **atenuação** (sub-mandato ⊆ concedente); (2) **auditabilidade** (grant = evento, ES); (3) **anti-atomização prematura**.
+- **Autoridade aninha; dinheiro não:** recrutador↔recrutado direto = cut nível-1 flat; gestão de op = **cut fixo** opcional (linha 3 do waterfall), decidido de cima; nunca % empilhado por subordinado.
+- **Linhagem de recrutamento** pode ser multi-nível (gated/auditada), mas **inerte**: dinheiro nível-1 só, visão downline direto só. (Refina o antigo "sem árvore".)
+- **Revogação por causa:** queimado/traiu → suspende em cascata; saída voluntária → re-parent. Nunca retroativo.
+
+**Status:** resolvido — ver [actors-and-mandates.md](./actors-and-mandates.md) (Mandato: capacidades × escopo), [operations.md](./operations.md) (Divisão interna), [money.md](./money.md) (Cut de Gestão da Op).
+
+---
+
+### G12 — Auditabilidade: event sourcing + log de auditoria — RESOLVIDO
+
+**Decisão — duas frentes complementares:**
+- **ES** = fonte da verdade do estado (fatos que mudam estado; replay; append-only).
+- **Log de auditoria** = accountability/forense, captura **toda ação incl. leituras** (o que o ES nunca vê). Registrar **leituras** é o trabalho-chave aqui: é o que torna **detectável** a inferência de estrutura (risco residual do G3).
+- **Acoplados por correlação** (mesmo padrão do dois-livros): escrita → ES + log; leitura → só log; ligados por id.
+- **Log = joia da coroa:** vê tudo → leitura ~só Admin (`ler_log_auditoria`) + **tamper-evidence** (hash-chain; nem Admin reescreve em silêncio).
+- **Refino adiado:** retenção/footprint; formato de tamper-evidence; catálogo fino de "leitura sensível".
+
+**Status:** resolvido — ver [auditability.md](./auditability.md), [visibility.md](./visibility.md) (Log de auditoria — quem lê).
+
+---
+
+### G13 — Endurecimento para implementação (revisão adversarial) — RESOLVIDO
+
+Revisão adversarial (3 revisores simulando engenheiros implementando só a partir dos docs) fechou os edge cases e ambiguidades que faltavam para o guia ser à prova de balas.
+
+**Dinheiro ([money.md](./money.md)):**
+- Máquina de estados do Claim (`ativo` conta na invariante; `repassado`/`perdido`/`estornado`/`arquivado` terminais, cada saída casada com o livro-mundo).
+- Repasse final **remove** o claim da Conta (não "fica marcado pago").
+- Hop canônico = origem → **N destinos** (+ perda implícita); cut de Laranja é um caso do hop (com transferência ou in-place); redenominação reparte por chave de distribuição (não câmbio).
+- Arredondamento resolvido **na materialização** (Residual da Org), sem drift interno.
+- Reconciliação por (Conta × moeda), saldo real **org-scoped**; sobra em moeda nova → claim Residual Org.
+- Idempotência da materialização; estorno/chargeback; pagamento tardio pós-terminal; correção em cascata via compensatório; caps do waterfall; `saldo:perdido` dispara write-off no mesmo UC; quota por (Conta×moeda); seleção da Conta de emissão.
+
+**Atores/mandatos ([actors-and-mandates.md](./actors-and-mandates.md)):**
+- Composição = união de (capacidade×escopo).
+- Capacidades `conceder_mandato` / `recrutar` / `conceder_recrutamento` (distintas de `onboard`).
+- Atenuação **contínua**: estreitar o concedente poda sub-mandatos em cascata.
+- **Agenciamento ≠ mandato** na revogação (carteira/`recrutador_pct` têm regra própria; futuro → Org).
+- Recrutador-raiz (Org/Admin, `pct=0`) resolve bootstrap.
+- Exclusão ponta × gestão na mesma op (protege a estimativa).
+- Ciclo/attrition do Operador; handle aposentado (nunca reusado); Admin semente.
+- Laranja e Acionista **são Membros com login** (Acionista = read-only).
+
+**Operações ([operations.md](./operations.md)):** transições do ciclo + guardas; efeito de Pausada/Encerrada sobre Script/Store/assign; operation key **1:1** com a op.
+
+**Visibilidade ([visibility.md](./visibility.md)):** dois regimes (beneficiário fixo vs gestão por escopo; matriz = atalho de presets); "split completo" do Gestor inclui recrutador **dentro da op dele**, não o grafo global; Contador/Gateways org-wide por default (risco residual aceito); estimativa por-claim; reveal de perda e de troca de moeda; log só Admin.
+
+**Auditabilidade:** ES também tamper-evident (hash-chain), igual ao log.
+
+**Refinos conscientemente adiados (não bloqueiam):** ciclo de quota (calendário vs rolling); formato exato de tamper-evidence; catálogo fino de "leitura sensível"; retenção/footprint de log/ES. (Equipes/`demais` **não** estão adiados — resolvidos em G11: sem entidade Equipe; cut de gestão = linha 3.)
+
+**Status:** resolvido — endurecimento aplicado em todos os docs.
+
+---
+
 ## Ordem sugerida de ataque
 
-1. ~~G3~~ ~~G8~~ ~~G1~~ ~~G2~~ ~~G9~~ ~~G5~~ ~~G4~~ ~~G6~~ ~~G7~~ ~~G10~~ **todos resolvidos**. 🎉
-2. `money.md` reescrito no modelo de dois livros; docs de resumo reconciliados; auditoria de consistência cruzada feita.
+1. ~~G3~~ ~~G8~~ ~~G1~~ ~~G2~~ ~~G9~~ ~~G5~~ ~~G4~~ ~~G6~~ ~~G7~~ ~~G10~~ ~~G11~~ ~~G12~~ ~~G13~~ **todos resolvidos**. 🎉
+2. Núcleo do domínio fechado e endurecido para implementação. Próximo = implementação (`Refactor/Nexus.Api`).
 
 Quotas: conceito ainda vale nas Contas do livro-mundo; detalhe de ciclo depois.

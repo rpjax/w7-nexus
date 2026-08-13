@@ -24,9 +24,9 @@ Extratos need-to-know: beneficiário **não** vê valor ao vivo (vaza path). Flu
 
 ## Domínio
 
-- [visibility.md](../domain/visibility.md)
-- [money.md](../domain/money.md) — estado; G10
-- [open-gaps.md](../domain/open-gaps.md) — G8/G10
+- [visibility.md](../domain/visibility.md) — dois regimes; G10/G13
+- [auditability.md](../domain/auditability.md) — leituras no log
+- [open-gaps.md](../domain/open-gaps.md) — G8/G10/G12
 
 ## Critérios de pronto
 

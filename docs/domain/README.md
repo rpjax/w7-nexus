@@ -4,7 +4,7 @@ Documentação **conceitual de produto/negócio**. Não descreve código, APIs n
 
 Contexto: exercício recreativo de modelagem (seminário / RPG de código). A linguagem abaixo é a do *mundo fictício* do produto.
 
-**Status: NÚCLEO FECHADO.** Todos os gaps críticos **G1–G9 resolvidos** (ver [open-gaps.md](./open-gaps.md)). Modelo de dinheiro = **dois livros** (Livro-mundo + Ledger claim-cêntrico), reescrito em [money.md](./money.md). Pendente só: refinos adiados de propósito (equipes, ciclo de quota, integração API de hops) e polimento contínuo.
+**Status: NÚCLEO FECHADO E ENDURECIDO PARA IMPLEMENTAÇÃO.** Gaps **G1–G13 resolvidos** (ver [open-gaps.md](./open-gaps.md)), incluindo uma revisão adversarial (G13) que fechou edge cases e ambiguidades para o doc servir como **guia de implementação à prova de balas**. Modelo de dinheiro = **dois livros**; mandato = **capacidade × escopo**; auditabilidade = **ES + log**. Refinos adiados de propósito estão listados no open-gaps. Próximo passo = implementação.
 
 ## Como usamos estes docs
 
@@ -18,14 +18,14 @@ Contexto: exercício recreativo de modelagem (seminário / RPG de código). A li
 | Doc | Responde |
 |-----|----------|
 | [vision.md](./vision.md) | Por que Nexus existe, filosofia, fronteiras |
-| [actors-and-mandates.md](./actors-and-mandates.md) | Quem existe no mundo, confiança, papéis |
-| [operations.md](./operations.md) | O que é uma Operação e o que ela isola |
-| [money.md](./money.md) | Cobrança, split (direitos), cadeia de repasse |
-| [visibility.md](./visibility.md) | O que cada ator vê (extratos / need-to-know) |
+| [actors-and-mandates.md](./actors-and-mandates.md) | Quem existe no mundo, confiança, papéis, **mandato (capacidades × escopo)** |
+| [operations.md](./operations.md) | O que é uma Operação, o que ela isola, **divisão interna** |
+| [money.md](./money.md) | Cobrança, dois livros, split (waterfall), materialização, hops, multi-moeda |
+| [visibility.md](./visibility.md) | O que cada ator vê (extratos / need-to-know / log) |
+| [auditability.md](./auditability.md) | **Event sourcing + log de auditoria** (accountability, tamper-evidence) |
 | [domain-map.md](./domain-map.md) | Mapa-resumo do domínio completo |
 | [glossary.md](./glossary.md) | Termos canônicos (evitar sinônimos soltos) |
-| [open-gaps.md](./open-gaps.md) | Gaps críticos (G1–G10) — histórico de decisões; núcleo fechado |
-| [../implementation/](../implementation/) | **Processo de implementação** — etapas, ordem, DoD (código) |
+| [open-gaps.md](./open-gaps.md) | Log de decisões dos gaps críticos (G1–G13) |
 
 ## Critério de “domínio completo” (esta conversa)
 
@@ -75,15 +75,15 @@ Itens **conhecidos e de propósito fora** do fechamento atual — não esquecido
 
 | Item | Por quê adiado |
 |------|----------------|
-| **Equipes** / **Líder de equipe** | Assignment de Laranja “por equipe” ficou incerto; Operação basta na v1 |
 | Override de % Recrutador/Operador **por Operação** | Vínculo global resolve; override só se doer |
-| Árvore de sub-recrutadores | Rejeitada (pirâmide) |
 | Ordem de split configurável | Rejeitada (invariante) |
 | Portal rico de Acionista / ver outros sócios | Extrato mínimo; default não vê pares |
 | Integração API automática de hops/saque | v1 = book-keeping manual pelo Contador |
 | SQL/analytics genérico no Store | Object store keyed + CRUD/pesquisa |
 | Chat / rede social interna | Fora da promessa |
 | Detalhe fino de canais/releases de Script | Existe no ecossistema de delivery; domínio só exige entidade Script + key + delivery à ponta |
+| Ciclo de quota (calendário vs rolling) | Conceito de quota decidido; detalhe de ciclo depois |
+| Formato exato de tamper-evidence; catálogo fino de “leitura sensível”; retenção/footprint de log/ES | G12 núcleo fechado; refino de implementação |
 
 Quando um item acima doer de verdade, volta para a fila de decisão — não inventar agora.
 
@@ -93,10 +93,10 @@ Quando um item acima doer de verdade, volta para a fila de decisão — não inv
 - “Internal staff” **não** é um papel — é conceito de confiança; papéis revelam o sistema.
 - Operação é fronteira de isolamento (identidade, gente, lucro local, dados do script).
 - Dinheiro: cobranças com ciclo de vida rastreável + divisão configurável em **quem/%**.
-- Ordem de split **fixa (waterfall)**: (1) Laranja(s) nível 1 → (2) Acionistas → (3) nível 3 (Operador + Recrutador + residual Org). Aplicada sobre o **líquido X** na materialização; sem pool.
+- Ordem de split **fixa (waterfall)**: (1) Laranja(s) nível 1 → (2) Acionistas → (3) **Gestão da Op** (cut fixo opcional, flat) → (4) agenciamento (Operador + Recrutador) → (5) **Residual da Org**. Aplicada sobre o **líquido X**; sem pool.
 - **Software sob medida, singleton:** um Nexus = uma organização (a websete/Grupo Thal); não é produto de prateleira / multi-tenant.
-- Recrutamento: só direto (sem árvore); competência de recrutar **concedida**; vínculo **global** na Org + assign do Operador às ops separado; visão só da própria carteira.
-- Acionistas: beneficiários (não role) com participação global no nível 2; Admin configura a lista.
+- Recrutamento: competência **concedida**; linhagem **pode** ser multi-nível (gated/auditada) mas **inerte** (dinheiro e visão só nível-1 / downline direto); vínculo **global** na Org + assign às ops separado.
+- Acionistas: beneficiários do nível 2 (não mandato de gestão); **Membros com login read-only**; Admin configura a lista.
 - Dono: fora do produto (infra/código/deploy). Admin: papel irrestrito no hub. Need-to-know não se aplica ao Admin.
 - Operador: identidade mínima = ID + handle único (login) + payout + vínculo com Recrutador; sem nome civil.
 - Resultado da Operação = movimentação financeira rastreada atribuível a ela (base do split); sem segundo KPI de domínio.
@@ -109,7 +109,9 @@ Quando um item acima doer de verdade, volta para a fila de decisão — não inv
 - Attrition (G4): estados de Conta em **dois eixos** (emissão/saldo), estados de Laranja; claim preso = exposição; perda **mecânica**; causa categorizada p/ intel.
 - **Multi-moeda (G10):** Nexus **nunca converte** (só "X de Y"); Conta é **multi-moeda**; invariante `soma claims == saldo` **por moeda**; hop pode redenominar (valor declarado pelo Contador).
 - **Visibilidade do beneficiário (G10):** vê **estimativa congelada** (base = materialização inicial), **sem** update ao vivo (que vazaria o path); Contador marca **visível** no hop final → vira **pendente/a receber** + **relatório controlado** (nunca hop-by-hop).
+- **Mandato escopado (G11):** divisão interna de op = **mandato (capacidade × escopo)** em dois eixos (Operação × Carteira); **sem entidade "Equipe"**. Presets nomeados + fine-tune por exceção; atenuação; **autoridade aninha, dinheiro não** (cut de gestão flat, nunca pirâmide); revogação por causa.
+- **Auditabilidade (G12):** duas frentes — **event sourcing** (verdade do estado) + **log de auditoria** (accountability incl. **leituras**); acoplados por correlação; log = joia da coroa (leitura ~só Admin + **tamper-evidence**).
 - **Contador** + **Admin** registram fluxo financeiro; Contador usa quotas para rotas viáveis. Nexus é o ledger, **não executa**.
-- Staff: **Gateways** + **Contador** + **Gestor de Operações**. Líder de equipe: adiado.
-- Nível 3: **sem pool** — base calculada; `operador_pct` + `recrutador_pct` ≤ 100% (deal de agenciamento, autor único); resto = residual da Org.
+- Staff / presets: **Gateways** + **Contador** + **Gestor de Operações**. **Não existe entidade Equipe** (G11) — divisão interna = mandato (capacidade × escopo).
+- Nível 3 (agenciamento): base calculada pós-gestão; `operador_pct` + `recrutador_pct` ≤ 100% (deal, autor único); resto = **Residual da Organização**.
 - Visões: matriz need-to-know em [visibility.md](./visibility.md) (Acionista não vê outros sócios; Operador vê a própria Operação nas cobranças dele).

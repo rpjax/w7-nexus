@@ -5,36 +5,36 @@
 
 ## Objetivo
 
-Fechar o nascimento do **ledger**: Contador materializa líquido X + Conta de aterrissagem → `%` morre → **Claims**. Livro-mundo recebe saldo/TX; ledger recebe claims; invariante de nascimento.
+Nascimento do **ledger**: Contador materializa líquido X + Conta de aterrissagem → `%` morre → **Claims**. Livro-mundo recebe saldo/TX; invariante de nascimento; Residual da Org recebe resto e arredondamento.
 
 ## Escopo
 
 | Entra | Não entra |
 |-------|-----------|
-| Materialização fim de período (lote UX pode ser N chamadas “1 pagamento”) | Hops / cut mid-path (07) |
-| Waterfall → claims (Laranja emissão, Acionistas, Op, Recrutador, residual Org) | Estimativa visível polida (08) |
+| Materialização fim de período (lote UX = N chamadas “1 pagamento”) | Hops / cut mid-path (07) |
+| Waterfall → claims (Laranja, Acionistas, Gestão da Op, Op, Recrutador, **Residual Org**) | Estimativa visível polida (08) |
 | Claim: beneficiário, valor, moeda, origem GUID, localização, status `ativo` | Write-off / reconciliação (09) |
-| Invariante: `soma claims criados == X` e `soma claims == saldo` na Conta/moeda | |
+| Invariante: `soma claims criados == X` e `soma claims ativos == saldo` na Conta/moeda | Materialização parcial / multi-aterrissagem |
 
 ## Use cases (mínimo)
 
-- Materializar pagamento (Contador/Admin): input X + Conta aterrissagem + Cobrança Paga.
+- Materializar pagamento (Contador/Admin): input X + Conta aterrissagem + Cobrança Paga. Idempotente; no máximo uma vez.
 - Listar claims por Conta / por Cobrança / por beneficiário (Contador).
 
 ## Regras críticas
 
 - Caixa e ledger no **mesmo** UC.
-- X já pós-taxa gateway.
-- Conta de aterrissagem pode ≠ Conta de emissão; cut nível-1 já fixado na intenção.
-- Sem pool / “poço” persistido — só claims.
+- X já pós-taxa gateway. Aterrissagem = **uma** Conta/moeda.
+- Cut nível-1 já fixado na intenção (emissão ≠ aterrissagem).
+- Arredondamento **na materialização** → Residual da Org (ou última linha não-zero). Sem pool persistido.
 
 ## Domínio
 
-- [money.md](../domain/money.md) — Materialização, Claim, Rateio nível 3, Multi-denominação
-- [open-gaps.md](../domain/open-gaps.md) — G5, G9, G10
+- [money.md](../domain/money.md) — Materialização, Claim, Waterfall, Multi-denominação, G13
+- [open-gaps.md](../domain/open-gaps.md) — G5, G9, G10, G13
 
 ## Critérios de pronto
 
-- [ ] Teste: materializar cria claims que somam X e saldo da Conta/moeda casa.
-- [ ] Tentativa de materializar parcial / duas vezes o mesmo pagamento = rejeitada.
-- [ ] Residual Org é beneficiário real (não limbo).
+- [ ] Materializar cria claims que somam X e saldo da Conta/moeda casa (só `ativo` na invariante).
+- [ ] Re-materializar o mesmo pagamento é rejeitado (exceto compensatório explícito).
+- [ ] Residual da Org recebe resto do deal `< 100%` e o centavo de arredondamento.

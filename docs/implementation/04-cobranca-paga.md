@@ -12,9 +12,10 @@ Nascimento e lifecycle da Cobrança até **Paga** — ainda **sem** materializa�
 | Entra | Não entra |
 |-------|-----------|
 | API: Operação + Operador + valor → Cobrança | Materialização / Claims (06) |
-| Conta de Gateway de **emissão** (fixa cut nível-1) | Hops |
-| Intenção de split em % (snapshot na geração) | Execução de pagamento pelo Nexus |
-| Aberta → Paga (webhook) | Attrition completo |
+| Conta de Gateway de **emissão** (fixa cut nível-1) | Hops; execução de pagamento pelo Nexus |
+| Intenção de split em % (snapshot; waterfall 5 linhas) | Attrition completo |
+| Seleção da Conta: Nexus escolhe no pool (quota); **API pode forçar** Conta do conjunto (G13) | |
+| Aberta → Paga (webhook) | |
 | Terminais: Expirada / Cancelada / Falhou | |
 
 ## Use cases (mínimo)
@@ -30,6 +31,7 @@ Nascimento e lifecycle da Cobrança até **Paga** — ainda **sem** materializa�
 
 ## Critérios de pronto
 
-- [ ] Split intenção imutável na base após geração.
+- [ ] Split intenção imutável na base após geração (waterfall: Laranja → Acionistas → Gestão da Op → agenciamento → Residual Org).
 - [ ] Cut nível-1 amarrado ao Laranja da **conta de emissão**, independente de aterrissagem futura.
 - [ ] Paga é fato externo; não cria Claims ainda.
+- [ ] Sem quota disponível → emissão rejeitada; override de Conta só se estiver no conjunto da Op.

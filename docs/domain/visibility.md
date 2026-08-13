@@ -7,7 +7,16 @@ O que cada ator **vê**. Princípio: **mínimo ao mandato** — com exceção ex
 - **Ponta / mandato estreito:** só a fatia da própria competência — sem montar organograma.
 - **Cargo de confiança:** visão ampla **no domínio do cargo** (financeiro ou ops), porque o mundo real exige braço direito.
 - **Admin:** irrestrito.
-- Inferência estatística ao longo do tempo (ex.: Contador contar handles únicos em splits) é **risco residual aceito** de cargo de confiança — o hub não entrega catálogo/organograma de bandeja.
+- Inferência estatística ao longo do tempo (ex.: Contador contar handles únicos em splits) é **risco residual aceito** de cargo de confiança — o hub não entrega catálogo/organograma de bandeja, e o **log de auditoria** (ver abaixo) é o que permite *detectar* a inferência quando ela acontece.
+
+### Visão = escopo do Mandato (G11)
+
+O que um ator vê é **derivado do escopo do seu Mandato** (ver [actors-and-mandates.md](./actors-and-mandates.md) — capacidades × escopo), não de um rótulo fixo:
+
+- Mandato de **Operação** sobre a op X → vê tudo dentro de X (no que suas capacidades permitirem).
+- Mandato de **Carteira** → vê só a fatia dele (seus recrutados diretos), onde quer que estejam.
+- **Autoridade aninha, mas visão nunca sobe nem vaza lateral:** você vê pra baixo/dentro do teu escopo; nunca quem está acima nem os pares.
+- Cada **capacidade de leitura** exercida gera entrada no **log de auditoria**.
 
 ## Matriz — DECIDIDA (fila #11 + G3)
 
@@ -48,6 +57,46 @@ O que cada ator **vê**. Princípio: **mínimo ao mandato** — com exceção ex
 **No reveal**, o beneficiário vê um **relatório controlado** — o suficiente pra entender por que recebeu ligeiramente menos (ou perdeu tudo): um descritivo de alto nível, **nunca hop-by-hop**, sem Contas intermediárias, sem identidade de Laranjas, sem organograma. Prestação de contas que constrói confiança sem revelar o path.
 
 Cargos de confiança (Contador, Gestor, Admin) **não** passam por isso — veem o real direto.
+
+## Log de auditoria — quem lê (G12)
+
+O **log de auditoria** é o único lugar que vê **todas** as ações de todos os mandatos — quem lê o log monta o organograma inteiro. Por isso:
+
+- Leitura do log = capacidade `ler_log_auditoria`, escopo org — **praticamente só Admin**. **Não** é relatório distribuível; nem Contador nem Gestor leem por padrão.
+- É **tamper-evident** (encadeado por hash): nem Admin reescreve a história em silêncio.
+- Toda **leitura de dado sensível** (split, extrato de terceiro, rotas, carteira, contas) **gera** entrada de log — é assim que a inferência de estrutura (risco residual aceito) fica **detectável**.
+
+Detalhe completo: [auditability.md](./auditability.md).
+
+## Regras precisas de visibilidade (endurecimento G13)
+
+### Dois regimes de visão (a matriz é atalho, não a fonte da verdade)
+
+Existem **dois regimes** e o doc antes só nomeava um:
+
+1. **Visão de beneficiário (ponta):** fixa e cega, por *tipo de participação* (Operador/Laranja/Acionista/Recrutador-na-fatia-dele). Não deriva de mandato de gestão. É o regime da tabela de "estreitos".
+2. **Visão de gestão:** **derivada do escopo do Mandato** (união dos escopos — ver [actors-and-mandates.md](./actors-and-mandates.md)). É o regime de Gestor/Contador/Admin/custom.
+
+**A matriz acima é o atalho dos presets padrão.** Para um Membro com mandato custom (capacidade×escopo fora dos presets) ou com **múltiplos** mandatos, a visão é a **união** dos escopos das capacidades de leitura que ele detém — a matriz não é consultada como lei, é ilustração.
+
+### Gestor: "split completo" vs grafo de recrutamento
+
+- O Gestor vê o **split completo das ops sob mandato dele** — incluindo, **dentro dessas ops**, quem é o Operador e qual Recrutador recebe o `recrutador_pct` daquele operador. Isso é need-to-know **dentro do escopo dele**.
+- O que continua vetado (mesmo pra ele) é o **grafo de recrutamento GLOBAL** da Org (quem recruta quem fora das ops dele; a árvore inteira). "Não entregar organograma de bandeja" = o mapa org-wide, não a fatia da própria op.
+
+### Escopo de Contador e Gateways
+
+- **Contador** e **Gateways** são, por padrão, **org-wide** no seu domínio (financeiro / trilhos). É o **risco residual aceito** (inferência ao longo do tempo — detectável via log). O modelo capacidade×escopo **permite** estreitá-los (ex.: um Contador por conjunto de ops), mas o default é org.
+
+### Estimativa / pendente — precisão
+
+- **Granularidade:** a estimativa é **por-claim** (por Cobrança/beneficiário), não um agregado difuso. "Materialização inicial" = o valor do claim no nascimento (materialização é única; "inicial" reforça "no nascimento, antes de qualquer cut/hop").
+- **Troca de moeda no reveal:** se o pendente aterrissa em moeda diferente da estimativa (ex.: estimou BRL, recebe USDT), o relatório controlado **declara a mudança de denominação** ("liquidado em USDT") — não a apresenta como "recebeu menos" (não há régua comum; ver [money.md](./money.md)).
+- **Reveal de perda:** se um claim de baixa-confiança vira `perdido`/`estornado` **antes** do hop final, o Contador (ou Admin) dispara o **relatório controlado da perda** — o beneficiário não fica preso na estimativa congelada para sempre.
+
+### Log — quem lê (preciso)
+
+- `ler_log_auditoria` (escopo org): **somente Admin** na v1 ("praticamente" = sem outro leitor padrão; qualquer exceção seria um mandato custom explícito, auditado).
 
 ## Notas
 

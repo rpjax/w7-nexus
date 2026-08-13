@@ -14,7 +14,7 @@ Contexto: alvo de código atual = `Refactor/Nexus.Api` (+ `Refactor/web` quando 
 2. Antes de codar: ler o doc da etapa + docs de domínio linkados.
 3. Ao fechar a etapa: marcar status aqui e no próprio `0N-*.md` (`pendente` → `em curso` → `feito`).
 4. Descobertas de domínio no meio do caminho → voltam para `docs/domain/` (não “só no chat”).
-5. Adiados de domínio (equipes, API automática de hops, etc.) **não** entram nas etapas v1 salvo decisão explícita.
+5. Adiados de domínio (ciclo fino de quota, API automática de hops, retenção de log) **não** entram nas etapas v1 salvo decisão explícita. **Não** há etapa “equipes” — G11.
 
 ## Princípios do processo
 
@@ -23,7 +23,7 @@ Contexto: alvo de código atual = `Refactor/Nexus.Api` (+ `Refactor/web` quando 
 | **Domínio manda** | Use cases e invariantes vêm de `docs/domain/`; código não inventa regra de negócio. |
 | **Fatias verticais** | Preferir caminho ponta a ponta fino (API → handler → persistência → leitura) a “camada inteira”. |
 | **Dois livros cedo** | Conta (mundo) e Claim (ledger) nascem separados no modelo; UCs de movimento escrevem nos dois. |
-| **Invariante na fronteira** | `soma claims == saldo` (por Conta, por moeda) garantida no use case — não por FK. |
+| **Invariante na fronteira** | `soma claims **ativos** == saldo` (por Conta, por moeda) garantida no use case — não por FK. |
 | **Mínimo viável por etapa** | Sem ES “completo” se append-only + projeções simples bastarem; evoluir depois. |
 | **Singleton** | Um deploy = uma organização; sem `tenant_id`. |
 
@@ -40,7 +40,7 @@ Ver também: [00-principles.md](./00-principles.md).
 | 4 | [04-cobranca-paga.md](./04-cobranca-paga.md) | Cobrança, Conta Gateway emissão, webhook Paga | pendente | 3 |
 | 5 | [05-contas-livro-mundo.md](./05-contas-livro-mundo.md) | Contas multi-moeda, saldo, transações, quotas (conceito) | pendente | 1 |
 | 6 | [06-materializacao-claims.md](./06-materializacao-claims.md) | Materialização → Claims; waterfall; invariante nascimento | pendente | 4, 5 |
-| 7 | [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md) | Hops, cut mid-path, bundle, pago, cut in-place | pendente | 6 |
+| 7 | [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md) | Hops 1→N, cut mid-path, bundle, `repassado`, cut in-place | pendente | 6 |
 | 8 | [08-visibilidade-extrato.md](./08-visibilidade-extrato.md) | Estimativa → pendente; relatório controlado; matriz need-to-know | pendente | 6, 7 |
 | 9 | [09-attrition-reconciliacao.md](./09-attrition-reconciliacao.md) | Estados Conta/Laranja, write-off, reconciliação, causa | pendente | 5, 6, 7 |
 
@@ -56,7 +56,8 @@ Etapas **5** pode avançar em paralelo com **2–4** (Contas não dependem de Co
 | [domain/operations.md](../domain/operations.md) | Operação, Script, Store |
 | [domain/visibility.md](../domain/visibility.md) | Extratos |
 | [domain/glossary.md](../domain/glossary.md) | Termos canônicos |
-| [domain/open-gaps.md](../domain/open-gaps.md) | Decisões G1–G10 (histórico; canônico = money/actors/…) |
+| [domain/open-gaps.md](../domain/open-gaps.md) | Decisões G1–G13 (histórico; canônico = money/actors/…) |
+| [domain/auditability.md](../domain/auditability.md) | ES + log (G12) |
 
 ## Fora deste folder
 

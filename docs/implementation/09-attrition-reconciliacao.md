@@ -5,36 +5,36 @@
 
 ## Objetivo
 
-Fechar o ciclo “mundo real falha”: estados de Conta/Laranja, claim preso, write-off com causa, reconciliação como **única** porta Nexus ↔ realidade, eventos compensatórios.
+Estados de Conta/Laranja/Operador, claim preso, write-off com causa, reconciliação como **única** porta Nexus ↔ realidade, eventos compensatórios (incl. estorno).
 
 ## Escopo
 
 | Entra | Não entra |
 |-------|-----------|
 | Eixos Conta: emissão ok\|bloqueada; saldo acessível\|congelado\|perdido | Absorção central de perda pela Org (feature futura) |
-| Estado Laranja: ativo → queimado \| saiu \| traiu (sinaliza, não hard-burn) | Módulo analytics separado |
-| Cobranças Abertas não morrem automático se emissão bloqueada | Reescrever conta de emissão de Cobrança já enviada |
+| Estado Laranja/Operador: ativo → queimado \| saiu \| traiu | Módulo analytics separado |
+| `saldo: perdido` **dispara write-off** de todos os `ativo` no mesmo UC | Reescrever conta de emissão de Cobrança já enviada |
 | Write-off → claim `perdido` + causa | Delete/mutate fato passado |
-| Reconciliação: falta (rateio default) / sobra (beneficiário real) | Bypass de invariantes |
-| Query exposição (claims presos) | |
+| Reconciliação por (Conta × moeda): falta proporcional (default) / sobra → **Residual da Org** | Bypass de invariantes |
+| Estorno/chargeback → `estornado` | |
+| Query exposição (claims `ativo` em Conta congelada/perdida) | |
 
 ## Use cases (mínimo)
 
-- Atualizar estado Conta / Laranja.
-- Write-off claims (com causa).
-- Reconciliar Conta/moeda com saldo observado.
-- Evento compensatório (corrigir fato errado).
+- Atualizar estado Conta / Laranja / Operador.
+- Write-off (implícito em `saldo: perdido`).
+- Reconciliar Conta/moeda com saldo observado org-scoped.
+- Evento compensatório (correção; estorno).
 
 ## Domínio
 
-- [money.md](../domain/money.md) — Attrition, Perdas e reconciliação
-- [actors-and-mandates.md](../domain/actors-and-mandates.md) — Laranja / attrition
-- [glossary.md](../domain/glossary.md) — Causa, Reconciliação, Write-off, Claim preso
-- [open-gaps.md](../domain/open-gaps.md) — G4, G6
+- [money.md](../domain/money.md) — Attrition, Perdas e reconciliação, G13
+- [actors-and-mandates.md](../domain/actors-and-mandates.md) — Laranja / Operador attrition
+- [glossary.md](../domain/glossary.md) — Causa, Reconciliação, Write-off, Estorno, Residual da Organização
 
 ## Critérios de pronto
 
-- [ ] Pós-write-off e pós-reconciliação: invariante `soma claims == saldo` mantida.
-- [ ] Sobra nunca fica “desconhecida”.
-- [ ] Incidência mecânica: perda cai em quem tinha claim na Conta.
-- [ ] Causa obrigatória nos eventos de attrition/write-off/reconciliação relevantes.
+- [ ] Pós-write-off e pós-reconciliação: `soma claims ativos == saldo`.
+- [ ] Sobra cria/credita Residual da Org — nunca “desconhecida”.
+- [ ] Incidência mecânica: perda cai em quem tinha claim `ativo` na Conta.
+- [ ] Causa obrigatória nos eventos relevantes (incl. `estorno`).

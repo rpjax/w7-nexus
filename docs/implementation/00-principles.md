@@ -32,7 +32,7 @@ Uma etapa está **feita** quando:
 - UI polida de dashboard.
 - Event sourcing “completo” (projeções sofisticadas, replay UI) — v1 pode ser append-only + estado atual.
 - Integração automática banco/gateway (v1 = Contador declara).
-- Multi-tenant, equipes, líderes, API automática de hops.
+- Multi-tenant, API automática de hops. (Sem etapa “equipes” — G11.)
 
 ## Fatia vertical mínima
 

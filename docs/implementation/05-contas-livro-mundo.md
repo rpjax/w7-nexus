@@ -15,7 +15,8 @@ Modelar o **livro-mundo**: Conta burra, multi-moeda, saldo numérico + transaç�
 | Saldo **por moeda** | Conversão FX pelo Nexus |
 | Transações (±) como registro observado | Ledger semântico |
 | Owner Laranja em Conta de Gateway | Attrition completo (09) — estados mínimos ok |
-| Quotas (conceito + campo/ciclo simples) | Detalhe calendário vs rolling (adiado fino) |
+| Contas de payout (destino de **repasse**, fora do escopo-org) | Quota ciclo fino (calendário vs rolling) |
+| Quotas por (Conta × moeda) | |
 | Eixos de estado Conta: emissão / saldo (mesmo sem fluxos 09) | |
 
 ## Use cases (mínimo)

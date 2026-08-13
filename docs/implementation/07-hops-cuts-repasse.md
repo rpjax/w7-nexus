@@ -5,40 +5,40 @@
 
 ## Objetivo
 
-Movimentação pós-materialização: hop escreve **dois livros**; cut proporcional no bundle; marcar pago; cut in-place (só ledger) quando não há TX de caixa.
+Hop canônico **origem → N destinos**; cut proporcional no bundle; cut in-place (só ledger); repasse tira o claim do escopo-org (`repassado`).
 
 ## Escopo
 
 | Entra | Não entra |
 |-------|-----------|
-| Hop A→B (destino líquido declarado) | API automática banco/gateway |
-| Bundle efêmero (subconjunto de claims) | Persistência de “batch” |
-| Cut mid-path % proporcional + 1× por Laranja no fluxo | Absorção central de perda pela Org |
-| Hop que redenomina (valor declarado; sem FX Nexus) | UI path designer rica |
-| Repasse: localização final + status `pago` | Relatório controlado ao beneficiário (08) |
-| Cut in-place (ledger sozinho) | |
+| Hop 1→N (destino já líquido; perda = origem − Σ destinos) | API automática banco/gateway |
+| Bundle efêmero por-hop, por moeda | Persistência de “batch” |
+| Cut mid-path % proporcional; 1× por (Laranja × GUID de origem) | Absorção central de perda pela Org |
+| Cut com transferência vs **in-place** | UI path designer rica |
+| Hop que redenomina (valor declarado; proporção = chave, não câmbio) | Relatório controlado (08) |
+| Repasse: destino fora do escopo-org; claim → `repassado` (sai da soma) | Status `pago` que permanece na Conta org |
 
 ## Use cases (mínimo)
 
-- Registrar hop (Contador/Admin) — claims + saldos.
-- Registrar hop com cut de Laranja.
-- Marcar claim(s) pagos / hop de repasse.
-- (Opcional na mesma etapa) cut in-place sem movimento de caixa.
+- Registrar hop (Contador/Admin) — claims + saldos; re-verifica invariante ao commit.
+- Registrar hop com cut de Laranja (transferência ou in-place).
+- Repasse final (claim `repassado`).
 
 ## Invariantes
 
-- Caixa nunca sozinho.
-- Após hop (mesma moeda): soma claims por Conta/moeda == saldo.
-- Cut rateia em **todos** os claims do bundle (sem escolha manual de quem paga).
-- Escopo de “1× por Laranja”: decidir na implementação e **documentar em domain** se ainda ambíguo (sugestão: por GUID de Cobrança de origem nos claims do bundle — confirmar).
+- Caixa nunca sozinho (exceto cut in-place: ledger sozinho, número da Conta igual).
+- Após hop (mesma moeda): `soma claims ativos == saldo` por Conta/moeda.
+- Cut rateia em **todos** os claims do bundle.
+- 1× por Laranja **no fluxo** = por (Laranja × GUID); cut de emissão conta.
 
 ## Domínio
 
-- [money.md](../domain/money.md) — Hops, Cut mid-path, Quotas, Multi-denominação
-- [glossary.md](../domain/glossary.md) — Bundle, Hop, Cut mid-path
+- [money.md](../domain/money.md) — Hops, Cut mid-path, Quotas, Multi-denominação, G13
+- [glossary.md](../domain/glossary.md) — Bundle, Hop, Status do Claim
 
 ## Critérios de pronto
 
 - [ ] Exemplo 100 / cut 10% → claims 20→18, 50→45… + claim Laranja 10.
 - [ ] Hop com perda (100→95) encolhe claims proporcionalmente.
 - [ ] Redenominação: consome moeda origem, nasce destino com valor declarado.
+- [ ] Repasse remove claim da soma; saldo da Conta org decrementa no mesmo UC.
