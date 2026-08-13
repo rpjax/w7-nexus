@@ -1,8 +1,11 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Refactor.Nexus.Api.Accounts.Composition;
+using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence;
 using Refactor.Nexus.Api.Authentication.Composition;
 using Refactor.Nexus.Api.Infrastructure.Persistence;
+using Refactor.Nexus.Api.Journal.Composition;
+using Refactor.Nexus.Api.Journal.Storage;
 using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -34,10 +37,14 @@ builder.Services
 builder.Services.AddAuthorization();
 builder.Services.AddRefactorAccounts(builder.Configuration);
 builder.Services.AddRefactorAuthentication();
+builder.Services.AddJournal();
+builder.Services.DiscoverJournalFacts();
 
 var app = builder.Build();
 
 await app.Services.InitializeAccountsDatabaseAsync();
+await app.Services.InitializeJournalDatabaseAsync();
+await app.Services.SeedAdministratorIfNeededAsync();
 
 app.UseHttpsRedirection();
 app.UseAuthentication();

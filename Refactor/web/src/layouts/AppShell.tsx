@@ -118,7 +118,7 @@ export function AppShell() {
   const location = useLocation();
   const admin = isAdministrator(user?.roles);
   const [mobileOpen, setMobileOpen] = useState(false);
-  const roles = (user?.roles ?? []).map(roleLabel).join(' · ') || 'Sessão ativa';
+  const roles = (user?.roles ?? []).map(roleLabel).join(' · ') || 'Identidade';
 
   useEffect(() => {
     setMobileOpen(false);

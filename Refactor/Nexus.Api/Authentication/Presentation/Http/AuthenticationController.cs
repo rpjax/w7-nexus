@@ -8,7 +8,6 @@ using Refactor.Nexus.Api.Authentication.Application.Ports.In.Unauthenticated.Com
 using Refactor.Nexus.Api.Authentication.Application.UseCases.Authenticated.Queries.GetMyProfile;
 using Refactor.Nexus.Api.Authentication.Application.UseCases.Unauthenticated.Commands.SignIn;
 using Refactor.Nexus.Api.Authentication.Application.UseCases.Unauthenticated.Commands.SignUpAdmin;
-using Refactor.Nexus.Api.Authentication.Application.UseCases.Unauthenticated.Commands.SignUpUser;
 using Refactor.Nexus.Api.Authentication.Presentation.Http.Contracts;
 using Refactor.Nexus.Api.Shared.Controllers;
 
@@ -19,7 +18,6 @@ public sealed class AuthenticationController : ApiControllerBase
 {
     private const string AdministratorCreateTokenHeader = "X-Administrator-Create-Token";
 
-    private readonly ISignUpUserUseCase _signUpUser;
     private readonly ISignUpAdminUseCase _signUpAdmin;
     private readonly ISignInUseCase _signIn;
     private readonly IGetMyProfileUseCase _getMyProfile;
@@ -27,31 +25,17 @@ public sealed class AuthenticationController : ApiControllerBase
     private readonly IChangeMyUsernameUseCase _changeMyUsername;
 
     public AuthenticationController(
-        ISignUpUserUseCase signUpUser,
         ISignUpAdminUseCase signUpAdmin,
         ISignInUseCase signIn,
         IGetMyProfileUseCase getMyProfile,
         IChangeMyPasswordUseCase changeMyPassword,
         IChangeMyUsernameUseCase changeMyUsername)
     {
-        _signUpUser = signUpUser;
         _signUpAdmin = signUpAdmin;
         _signIn = signIn;
         _getMyProfile = getMyProfile;
         _changeMyPassword = changeMyPassword;
         _changeMyUsername = changeMyUsername;
-    }
-
-    [HttpPost("sign-up/usuario")]
-    public async Task<ActionResult> SignUpUserAsync(
-        [FromBody] SignUpRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await _signUpUser.HandleAsync(
-            new SignUpUserCommand(request.Username, request.Password),
-            cancellationToken);
-
-        return ToOperationResult(result);
     }
 
     [HttpPost("sign-up/admin")]

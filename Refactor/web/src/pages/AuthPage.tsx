@@ -1,9 +1,8 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { KeyRound, Shield, UserRound } from 'lucide-react';
+import { KeyRound, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
-import type { SignUpAccountType } from '@/api/auth';
 import { useAuth } from '@/auth/AuthContext';
 import { BrandLockup } from '@/components/brand/BrandMark';
 import { Button } from '@/components/ui/button';
@@ -18,34 +17,24 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 const signInSchema = z.object({
-  username: z.string().trim().min(1, 'Usuário é obrigatório.'),
+  username: z.string().trim().min(1, 'Handle é obrigatório.'),
   password: z.string().min(1, 'Senha é obrigatória.'),
 });
 
 const signUpSchema = z.object({
-  accountType: z.enum(['usuario', 'admin']),
-  username: z.string().trim().min(1, 'Usuário é obrigatório.'),
+  username: z.string().trim().min(1, 'Handle é obrigatório.'),
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres.'),
   confirmPassword: z.string().min(1, 'Confirme a senha.'),
-  masterKey: z.string().optional(),
+  masterKey: z.string().trim().min(1, 'A chave mestra é obrigatória.'),
 }).superRefine((values, ctx) => {
   if (values.password !== values.confirmPassword) {
     ctx.addIssue({
       code: 'custom',
       message: 'As senhas não coincidem.',
       path: ['confirmPassword'],
-    });
-  }
-  if (values.accountType === 'admin' && !values.masterKey?.trim()) {
-    ctx.addIssue({
-      code: 'custom',
-      message: 'A chave mestra é obrigatória para administrador.',
-      path: ['masterKey'],
     });
   }
 });
@@ -68,7 +57,6 @@ export function AuthPage() {
   const signUpForm = useForm<SignUpValues>({
     resolver: zodResolver(signUpSchema),
     defaultValues: {
-      accountType: 'usuario',
       username: '',
       password: '',
       confirmPassword: '',
@@ -88,10 +76,9 @@ export function AuthPage() {
 
   async function handleSignUp(values: SignUpValues) {
     const result = await signUp({
-      accountType: values.accountType as SignUpAccountType,
       username: values.username.trim(),
       password: values.password,
-      masterKey: values.accountType === 'admin' ? values.masterKey?.trim() : undefined,
+      masterKey: values.masterKey.trim(),
     });
     if (!result.ok) {
       toast.error(result.error);
@@ -100,8 +87,6 @@ export function AuthPage() {
     const redirect = searchParams.get('redirect');
     navigate(redirect?.startsWith('/') ? redirect : '/dashboard', { replace: true });
   }
-
-  const accountType = signUpForm.watch('accountType');
 
   return (
     <div
@@ -130,7 +115,7 @@ export function AuthPage() {
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/70" />
-              Usuário livre; administrador exige chave mestra.
+              Cadastro público fechado; contas comuns só via Admin.
             </li>
           </ul>
         </section>
@@ -148,7 +133,7 @@ export function AuthPage() {
                 value="sign-up"
                 className="rounded-lg data-active:bg-background data-active:text-foreground data-active:shadow-sm"
               >
-                Criar conta
+                Bootstrap admin
               </TabsTrigger>
             </TabsList>
 
@@ -160,12 +145,12 @@ export function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Usuário</FormLabel>
+                        <FormLabel>Handle</FormLabel>
                         <FormControl>
                           <Input
                             className={fieldClass}
                             autoComplete="username"
-                            placeholder="seu.usuario"
+                            placeholder="seu.handle"
                             {...field}
                           />
                         </FormControl>
@@ -208,88 +193,42 @@ export function AuthPage() {
             <TabsContent value="sign-up" className="mt-0 outline-none">
               <Form {...signUpForm}>
                 <form className="space-y-5" onSubmit={signUpForm.handleSubmit(handleSignUp)}>
+                  <FormDescription>
+                    Emergência: cria o primeiro administrador com a chave mestra do servidor. O caminho normal é o seed no deploy.
+                  </FormDescription>
                   <FormField
                     control={signUpForm.control}
-                    name="accountType"
+                    name="masterKey"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Tipo de conta</FormLabel>
+                        <FormLabel className="inline-flex items-center gap-1.5">
+                          <Shield className="size-3.5 text-muted-foreground" />
+                          Chave mestra
+                        </FormLabel>
                         <FormControl>
-                          <ToggleGroup
-                            type="single"
-                            variant="outline"
-                            value={field.value}
-                            onValueChange={(value) => {
-                              if (value) field.onChange(value as SignUpAccountType);
-                            }}
-                            className="grid w-full grid-cols-2 gap-2"
-                          >
-                            <ToggleGroupItem
-                              value="usuario"
-                              className={cn(
-                                'h-auto w-full flex-col gap-1 rounded-lg px-3 py-3 data-[state=on]:border-primary/50 data-[state=on]:bg-primary/15 data-[state=on]:text-foreground',
-                              )}
-                            >
-                              <UserRound className="size-4 text-primary" />
-                              <span className="text-xs font-medium">Usuário</span>
-                            </ToggleGroupItem>
-                            <ToggleGroupItem
-                              value="admin"
-                              className={cn(
-                                'h-auto w-full flex-col gap-1 rounded-lg px-3 py-3 data-[state=on]:border-primary/50 data-[state=on]:bg-primary/15 data-[state=on]:text-foreground',
-                              )}
-                            >
-                              <Shield className="size-4 text-primary" />
-                              <span className="text-xs font-medium">Admin</span>
-                            </ToggleGroupItem>
-                          </ToggleGroup>
+                          <Input
+                            className={fieldClass}
+                            type="password"
+                            autoComplete="off"
+                            placeholder="Token de criação"
+                            {...field}
+                          />
                         </FormControl>
-                        <FormDescription>
-                          {accountType === 'admin'
-                            ? 'Administrador requer a chave mestra do servidor.'
-                            : 'Conta padrão, sem papel administrativo.'}
-                        </FormDescription>
                         <FormMessage />
                       </FormItem>
                     )}
                   />
-
-                  {accountType === 'admin' ? (
-                    <FormField
-                      control={signUpForm.control}
-                      name="masterKey"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel className="inline-flex items-center gap-1.5">
-                            <KeyRound className="size-3.5 text-muted-foreground" />
-                            Chave mestra
-                          </FormLabel>
-                          <FormControl>
-                            <Input
-                              className={fieldClass}
-                              type="password"
-                              autoComplete="off"
-                              placeholder="Token de criação"
-                              {...field}
-                            />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  ) : null}
-
                   <FormField
                     control={signUpForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Usuário</FormLabel>
+                        <FormLabel>Handle</FormLabel>
                         <FormControl>
                           <Input
                             className={fieldClass}
                             autoComplete="username"
-                            placeholder="seu.usuario"
+                            placeholder="admin.handle"
                             {...field}
                           />
                         </FormControl>
@@ -341,7 +280,7 @@ export function AuthPage() {
                     className="mt-1 h-11 w-full text-sm font-semibold"
                     disabled={signUpForm.formState.isSubmitting}
                   >
-                    {signUpForm.formState.isSubmitting ? 'Aguarde…' : 'Criar conta'}
+                    {signUpForm.formState.isSubmitting ? 'Aguarde…' : 'Criar administrador'}
                   </Button>
                 </form>
               </Form>

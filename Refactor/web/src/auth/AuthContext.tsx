@@ -10,8 +10,6 @@ import {
 import {
   signIn as apiSignIn,
   signUpAsAdmin,
-  signUpAsUsuario,
-  type SignUpAccountType,
 } from '@/api/auth';
 import { setAccessToken } from '@/auth/accessToken';
 import { isIsoDateExpired, isTokenExpired, userFromAccessToken } from '@/auth/jwt';
@@ -21,10 +19,9 @@ import type { AuthUser, StoredSession } from '@/auth/types';
 type AuthResult = { ok: true } | { ok: false; error: string };
 
 type SignUpParams = {
-  accountType: SignUpAccountType;
   username: string;
   password: string;
-  masterKey?: string;
+  masterKey: string;
 };
 
 type AuthContextValue = {
@@ -126,11 +123,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signUp = useCallback(async (params: SignUpParams): Promise<AuthResult> => {
-    const { accountType, username, password, masterKey } = params;
+    const { username, password, masterKey } = params;
 
-    const result = accountType === 'admin'
-      ? await signUpAsAdmin(username, password, masterKey ?? '')
-      : await signUpAsUsuario(username, password);
+    const result = await signUpAsAdmin(username, password, masterKey);
 
     if (!result.ok) return { ok: false, error: result.error };
 

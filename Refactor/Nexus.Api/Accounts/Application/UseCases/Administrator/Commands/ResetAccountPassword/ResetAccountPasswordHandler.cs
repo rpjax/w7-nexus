@@ -1,6 +1,7 @@
 using Aidan.Core.Errors;
 using Refactor.Nexus.Api.Accounts.Application.Authorization.Administrator;
 using Refactor.Nexus.Api.Accounts.Application.DTOs;
+using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
@@ -8,6 +9,7 @@ using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Security;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Shared;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 using Refactor.Nexus.Api.Accounts.Domain.Errors;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Commands.ResetAccountPassword;
 
@@ -26,17 +28,20 @@ public sealed class ResetAccountPasswordHandler : IResetAccountPasswordUseCase
     private readonly IAdministratorAccessPolicy _accessPolicy;
     private readonly IAccountRepository _accountRepository;
     private readonly IPasswordHasher _passwordHasher;
+    private readonly IJournalWriter _journal;
 
     public ResetAccountPasswordHandler(
         IRequestContext requestContext,
         IAdministratorAccessPolicy accessPolicy,
         IAccountRepository accountRepository,
-        IPasswordHasher passwordHasher)
+        IPasswordHasher passwordHasher,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _accessPolicy = accessPolicy;
         _accountRepository = accountRepository;
         _passwordHasher = passwordHasher;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ResetAccountPasswordResult>> HandleAsync(
@@ -77,6 +82,7 @@ public sealed class ResetAccountPasswordHandler : IResetAccountPasswordUseCase
             return OperationResult<ResetAccountPasswordResult>.Failure(mutation.Errors);
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
+        _journal.RecordPasswordReset(account);
 
         return OperationResult<ResetAccountPasswordResult>.Success(new ResetAccountPasswordResult
         {

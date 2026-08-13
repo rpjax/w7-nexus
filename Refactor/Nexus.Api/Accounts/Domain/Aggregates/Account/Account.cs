@@ -6,6 +6,10 @@ using Refactor.Nexus.Api.Authorization;
 
 namespace Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 
+/// <summary>
+/// Identidade de login da organização (uma pessoa). <see cref="Username"/> é o <c>handle</c>
+/// de produto: único no deploy e nunca reutilizado após troca (reserva em retired_handles).
+/// </summary>
 public sealed class Account
 {
     private readonly List<string> _roles;
@@ -32,6 +36,8 @@ public sealed class Account
     }
 
     public AccountId Id { get; }
+
+    /// <summary>Handle de login (canônico de produto). Infra persiste como username.</summary>
     public string Username { get; private set; }
     public string PasswordHash { get; private set; }
     public AccountStatus Status { get; private set; }
@@ -189,12 +195,8 @@ public sealed class Account
             .WithMessage(message)
             .Build());
 
-    private static string DescribeRole(string role) => role switch
-    {
-        Authorization.Roles.Administrator => "administrador",
-        Authorization.Roles.Operator => "operador",
-        Authorization.Roles.StrawMan => "laranja",
-        Authorization.Roles.OlxOperator => "operador OLX",
-        _ => role,
-    };
+    private static string DescribeRole(string role) =>
+        string.Equals(role, Authorization.Roles.Administrator, StringComparison.OrdinalIgnoreCase)
+            ? "administrador"
+            : role;
 }

@@ -22,20 +22,11 @@ type ChangeUsernameResponse = {
   username: string;
 };
 
-export type SignUpAccountType = 'usuario' | 'admin';
-
 export async function signIn(username: string, password: string) {
   return apiClient.post<SignInResponse>('/api/authentication/sign-in', {
     username,
     password,
   }, { fallbackError: 'Não foi possível entrar. Verifique sua conexão e tente novamente.' });
-}
-
-export async function signUpAsUsuario(username: string, password: string) {
-  return apiClient.post<SignUpResponse>('/api/authentication/sign-up/usuario', {
-    username,
-    password,
-  }, { fallbackError: 'Não foi possível criar a conta. Tente novamente.' });
 }
 
 export async function signUpAsAdmin(username: string, password: string, masterKey: string) {
@@ -64,5 +55,5 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
 export async function changeMyUsername(newUsername: string) {
   return apiClient.post<ChangeUsernameResponse>('/api/authentication/me/username', {
     newUsername,
-  }, { fallbackError: 'Não foi possível alterar o usuário.' });
+  }, { fallbackError: 'Não foi possível alterar o handle.' });
 }

@@ -1,11 +1,14 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Authorization.Administrator;
+using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 using Refactor.Nexus.Api.Accounts.Domain.Errors;
+using Refactor.Nexus.Api.Authorization;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Commands.GrantAccountRole;
 
@@ -18,15 +21,18 @@ public sealed class GrantAccountRoleHandler : IGrantAccountRoleUseCase
     private readonly IRequestContext _requestContext;
     private readonly IAdministratorAccessPolicy _accessPolicy;
     private readonly IAccountRepository _accountRepository;
+    private readonly IJournalWriter _journal;
 
     public GrantAccountRoleHandler(
         IRequestContext requestContext,
         IAdministratorAccessPolicy accessPolicy,
-        IAccountRepository accountRepository)
+        IAccountRepository accountRepository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _accessPolicy = accessPolicy;
         _accountRepository = accountRepository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<GrantAccountRoleResult>> HandleAsync(
@@ -47,11 +53,20 @@ public sealed class GrantAccountRoleHandler : IGrantAccountRoleUseCase
         if (account is null)
             return OperationResult<GrantAccountRoleResult>.Failure(NotFoundError(command.AccountId));
 
+        if (!Roles.IsGrantable(command.Role))
+        {
+            return OperationResult<GrantAccountRoleResult>.Failure(Error.Create()
+                .WithCode(AccountErrorCodes.RoleNotGrantable)
+                .WithMessage($"A funcao '{command.Role}' nao e concedivel nesta etapa. Apenas '{Roles.Administrator}' pode ser atribuida.")
+                .Build());
+        }
+
         var mutation = account.AddRole(command.Role);
         if (mutation.IsFailure)
             return OperationResult<GrantAccountRoleResult>.Failure(mutation.Errors);
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
+        _journal.RecordRoleGranted(account, command.Role.Trim());
         return OperationResult<GrantAccountRoleResult>.Success(new GrantAccountRoleResult());
     }
 

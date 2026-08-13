@@ -10,7 +10,9 @@ public static class AccountErrorCodes
     public const string UsernameEmpty = "Account.USERNAME_EMPTY";
     public const string UsernameUnchanged = "Account.USERNAME_UNCHANGED";
     public const string UsernameAlreadyTaken = "Account.USERNAME_ALREADY_TAKEN";
+    public const string HandleRetired = "Account.HANDLE_RETIRED";
     public const string UsernameInvalidFormat = "Account.USERNAME_INVALID_FORMAT";
+    public const string RoleNotGrantable = "Account.ROLE_NOT_GRANTABLE";
     public const string AccountTypeInvalid = "Account.ACCOUNT_TYPE_INVALID";
     public const string PasswordHashEmpty = "Account.PASSWORD_HASH_EMPTY";
     public const string PasswordTooShort = "Account.PASSWORD_TOO_SHORT";

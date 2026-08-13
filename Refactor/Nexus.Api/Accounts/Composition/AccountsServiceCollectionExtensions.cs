@@ -17,6 +17,7 @@ using Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Queries.Get
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Queries.SearchAccounts;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Authenticated.Commands.ChangeMyPassword;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Authenticated.Commands.ChangeMyUsername;
+using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence;
 using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence.Repositories;
 using Refactor.Nexus.Api.Accounts.Infrastructure.Security;
 using Refactor.Nexus.Api.Authorization;
@@ -53,6 +54,7 @@ public static class AccountsServiceCollectionExtensions
         services.AddScoped<IChangeMyUsernameUseCase, ChangeMyUsernameHandler>();
 
         services.AddScoped<IAccountsDatabaseInitializer, AccountsDatabaseInitializer>();
+        services.AddScoped<SeedAdministrator>();
 
         return services;
     }

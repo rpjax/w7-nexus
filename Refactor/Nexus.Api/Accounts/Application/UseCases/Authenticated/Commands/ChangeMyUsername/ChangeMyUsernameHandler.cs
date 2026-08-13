@@ -1,10 +1,12 @@
 using Aidan.Core.Errors;
+using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Authenticated.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 using Refactor.Nexus.Api.Accounts.Domain.Errors;
 using Refactor.Nexus.Api.Authentication.Application.UseCases.Shared;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Authenticated.Commands.ChangeMyUsername;
 
@@ -20,15 +22,18 @@ public sealed class ChangeMyUsernameHandler : IChangeMyUsernameUseCase
     private readonly IRequestContext _requestContext;
     private readonly IAccountRepository _accountRepository;
     private readonly IAccountReadRepository _accountReadRepository;
+    private readonly IJournalWriter _journal;
 
     public ChangeMyUsernameHandler(
         IRequestContext requestContext,
         IAccountRepository accountRepository,
-        IAccountReadRepository accountReadRepository)
+        IAccountReadRepository accountReadRepository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _accountRepository = accountRepository;
         _accountReadRepository = accountReadRepository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ChangeMyUsernameResult>> HandleAsync(
@@ -67,11 +72,13 @@ public sealed class ChangeMyUsernameHandler : IChangeMyUsernameUseCase
         if (validationErrors.Count > 0)
             return OperationResult<ChangeMyUsernameResult>.Failure(validationErrors);
 
+        var previousHandle = account.Username;
         var mutation = account.ChangeUsername(newUsername);
         if (mutation.IsFailure)
             return OperationResult<ChangeMyUsernameResult>.Failure(mutation.Errors);
 
-        await _accountRepository.UpdateAsync(account, cancellationToken);
+        await _accountRepository.UpdateChangingHandleAsync(account, previousHandle, cancellationToken);
+        _journal.RecordHandleChanged(account, previousHandle);
 
         return OperationResult<ChangeMyUsernameResult>.Success(new ChangeMyUsernameResult
         {

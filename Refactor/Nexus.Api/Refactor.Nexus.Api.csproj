@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <InternalsVisibleTo Include="Refactor.Nexus.Api.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Folder Include="Accounts\" />
   </ItemGroup>
 

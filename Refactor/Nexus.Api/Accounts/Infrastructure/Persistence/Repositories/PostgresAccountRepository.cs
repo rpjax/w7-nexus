@@ -74,6 +74,50 @@ public sealed class PostgresAccountRepository : IAccountRepository, IAccountRead
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
+    public async Task UpdateChangingHandleAsync(
+        Account account,
+        string previousHandle,
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+
+        const string updateSql = """
+            update accounts
+            set username = @username,
+                password_hash = @password_hash,
+                status = @status,
+                roles = @roles,
+                permissions = @permissions,
+                last_updated_at = @last_updated_at
+            where id = @id;
+            """;
+
+        var record = ToRecord(account);
+        await using (var command = new NpgsqlCommand(updateSql, connection, transaction))
+        {
+            BindRecord(command, record, includeCreatedAt: false);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        const string retireSql = """
+            insert into retired_handles (handle_lower, original_handle, retired_from, retired_at)
+            values (lower(@handle), @original, @retired_from, @retired_at)
+            on conflict (handle_lower) do nothing;
+            """;
+
+        await using (var command = new NpgsqlCommand(retireSql, connection, transaction))
+        {
+            command.Parameters.AddWithValue("handle", previousHandle);
+            command.Parameters.AddWithValue("original", previousHandle.Trim());
+            command.Parameters.AddWithValue("retired_from", account.Id.Value);
+            command.Parameters.AddWithValue("retired_at", DateTime.UtcNow);
+            await command.ExecuteNonQueryAsync(cancellationToken);
+        }
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
     public async Task<Account?> FindByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
         const string sql = """
@@ -92,6 +136,45 @@ public sealed class PostgresAccountRepository : IAccountRepository, IAccountRead
             return null;
 
         return ToAccount(ToRecord(reader));
+    }
+
+    public async Task<bool> IsHandleRetiredAsync(string handle, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            select exists(
+                select 1 from retired_handles where handle_lower = lower(@handle)
+            );
+            """;
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("handle", handle);
+        return (bool)(await command.ExecuteScalarAsync(cancellationToken) ?? false);
+    }
+
+    public async Task<bool> IsHandleTakenAsync(string handle, CancellationToken cancellationToken = default)
+    {
+        if (await FindByUsernameAsync(handle, cancellationToken) is not null)
+            return true;
+
+        return await IsHandleRetiredAsync(handle, cancellationToken);
+    }
+
+    public async Task RetireHandleAsync(string handle, AccountId retiredFrom, CancellationToken cancellationToken = default)
+    {
+        const string sql = """
+            insert into retired_handles (handle_lower, original_handle, retired_from, retired_at)
+            values (lower(@handle), @original, @retired_from, @retired_at)
+            on conflict (handle_lower) do nothing;
+            """;
+
+        await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
+        await using var command = new NpgsqlCommand(sql, connection);
+        command.Parameters.AddWithValue("handle", handle);
+        command.Parameters.AddWithValue("original", handle.Trim());
+        command.Parameters.AddWithValue("retired_from", retiredFrom.Value);
+        command.Parameters.AddWithValue("retired_at", DateTime.UtcNow);
+        await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
     public async Task<(IReadOnlyList<Account> Items, int Total)> SearchAsync(

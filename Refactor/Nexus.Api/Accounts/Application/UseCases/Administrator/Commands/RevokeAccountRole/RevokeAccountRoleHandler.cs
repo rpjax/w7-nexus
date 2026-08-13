@@ -1,10 +1,12 @@
 using Aidan.Core.Errors;
 using Refactor.Nexus.Api.Accounts.Application.Authorization.Administrator;
+using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Shared;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Commands.RevokeAccountRole;
 
@@ -18,17 +20,20 @@ public sealed class RevokeAccountRoleHandler : IRevokeAccountRoleUseCase
     private readonly IAdministratorAccessPolicy _accessPolicy;
     private readonly IAccountRepository _accountRepository;
     private readonly IAccountReadRepository _accountReadRepository;
+    private readonly IJournalWriter _journal;
 
     public RevokeAccountRoleHandler(
         IRequestContext requestContext,
         IAdministratorAccessPolicy accessPolicy,
         IAccountRepository accountRepository,
-        IAccountReadRepository accountReadRepository)
+        IAccountReadRepository accountReadRepository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _accessPolicy = accessPolicy;
         _accountRepository = accountRepository;
         _accountReadRepository = accountReadRepository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<RevokeAccountRoleResult>> HandleAsync(
@@ -62,6 +67,7 @@ public sealed class RevokeAccountRoleHandler : IRevokeAccountRoleUseCase
             return OperationResult<RevokeAccountRoleResult>.Failure(mutation.Errors);
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
+        _journal.RecordRoleRevoked(account, command.Role.Trim());
         return OperationResult<RevokeAccountRoleResult>.Success(new RevokeAccountRoleResult());
     }
 

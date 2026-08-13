@@ -99,7 +99,7 @@ export function ProfilePage() {
       return;
     }
 
-    toast.success('Usuário atualizado.');
+    toast.success('Handle atualizado. O nome anterior ficou reservado.');
     const nextUsername = result.data?.username ?? values.newUsername.trim();
     setProfile((current) => (current ? { ...current, username: nextUsername } : current));
     patchUser({ username: nextUsername });
@@ -136,7 +136,7 @@ export function ProfilePage() {
       <PageHeader
         kicker="Conta"
         title="Meu perfil"
-        description="Atualize identidade e credenciais da sessão atual."
+        description="Atualize o handle e a senha da sessão atual. Handle aposentado não volta ao pool."
       />
 
       <Card className="border-border/60 bg-card/90">
@@ -166,13 +166,13 @@ export function ProfilePage() {
                         <Badge key={role} variant="secondary">{roleLabel(role)}</Badge>
                       ))
                     ) : (
-                      <span className="text-sm text-muted-foreground">Sem papéis</span>
+                      <span className="text-sm text-muted-foreground">Sem mandato</span>
                     )}
                   </div>
                 </div>
               </div>
               <p className="max-w-xs text-xs leading-relaxed text-muted-foreground sm:text-right">
-                Alterações de usuário e senha valem imediatamente nesta sessão.
+                Alterações de handle e senha valem nesta sessão. O handle antigo não pode ser reutilizado.
               </p>
             </>
           )}
@@ -186,7 +186,7 @@ export function ProfilePage() {
               <UserRound className="size-4" />
             </div>
             <CardTitle className="text-base">Identidade</CardTitle>
-            <CardDescription>Defina o nome de usuário usado no login.</CardDescription>
+            <CardDescription>O handle é o login único. Trocar aposenta o nome antigo.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...usernameForm}>
@@ -196,7 +196,7 @@ export function ProfilePage() {
                   name="newUsername"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Usuário</FormLabel>
+                      <FormLabel>Handle</FormLabel>
                       <FormControl>
                         <Input autoComplete="username" {...field} />
                       </FormControl>
@@ -205,7 +205,7 @@ export function ProfilePage() {
                   )}
                 />
                 <Button type="submit" disabled={usernameForm.formState.isSubmitting}>
-                  {usernameForm.formState.isSubmitting ? 'Salvando…' : 'Salvar usuário'}
+                  {usernameForm.formState.isSubmitting ? 'Salvando…' : 'Salvar handle'}
                 </Button>
               </form>
             </Form>

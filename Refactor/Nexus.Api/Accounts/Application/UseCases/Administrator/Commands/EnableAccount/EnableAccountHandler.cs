@@ -1,11 +1,13 @@
 using Aidan.Core.Errors;
 using Refactor.Nexus.Api.Accounts.Application.Authorization.Administrator;
 using Refactor.Nexus.Api.Accounts.Application.DTOs;
+using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Shared;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Commands.EnableAccount;
 
@@ -21,15 +23,18 @@ public sealed class EnableAccountHandler : IEnableAccountUseCase
     private readonly IRequestContext _requestContext;
     private readonly IAdministratorAccessPolicy _accessPolicy;
     private readonly IAccountRepository _accountRepository;
+    private readonly IJournalWriter _journal;
 
     public EnableAccountHandler(
         IRequestContext requestContext,
         IAdministratorAccessPolicy accessPolicy,
-        IAccountRepository accountRepository)
+        IAccountRepository accountRepository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _accessPolicy = accessPolicy;
         _accountRepository = accountRepository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<EnableAccountResult>> HandleAsync(
@@ -61,6 +66,7 @@ public sealed class EnableAccountHandler : IEnableAccountUseCase
             return OperationResult<EnableAccountResult>.Failure(mutation.Errors);
 
         await _accountRepository.UpdateAsync(account, cancellationToken);
+        _journal.RecordEnabled(account);
 
         return OperationResult<EnableAccountResult>.Success(new EnableAccountResult
         {

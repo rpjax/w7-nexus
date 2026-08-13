@@ -76,20 +76,6 @@ export async function revokeAdministratorAccountRole(accountId: string, role: st
   }, { fallbackError: 'Não foi possível remover a função.' });
 }
 
-export async function grantAdministratorAccountPermission(accountId: string, permission: string) {
-  return apiClient.post('/api/accounts/administrator/permissions', {
-    accountId,
-    permission,
-  }, { fallbackError: 'Não foi possível conceder a permissão.' });
-}
-
-export async function revokeAdministratorAccountPermission(accountId: string, permission: string) {
-  return apiClient.delete('/api/accounts/administrator/permissions', {
-    accountId,
-    permission,
-  }, { fallbackError: 'Não foi possível remover a permissão.' });
-}
-
 export async function disableAdministratorAccount(accountId: string) {
   return apiClient.post<AccountMutationResponse>('/api/accounts/administrator/disable', {
     accountId,

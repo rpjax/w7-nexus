@@ -37,6 +37,13 @@ public sealed class AccountsDatabaseInitializer : IAccountsDatabaseInitializer
 
             create unique index if not exists ix_accounts_username_lower
                 on accounts (lower(username));
+
+            create table if not exists retired_handles (
+                handle_lower varchar(64) primary key,
+                original_handle varchar(64) not null,
+                retired_from uuid not null,
+                retired_at timestamptz not null
+            );
             """;
 
         await command.ExecuteNonQueryAsync(cancellationToken);

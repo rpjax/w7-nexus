@@ -55,8 +55,8 @@ export function HomePage() {
         title={`Olá, ${username}`}
         description={
           admin
-            ? 'Gerencie contas e mantenha sua sessão em dia. Os demais módulos entram nas próximas ondas.'
-            : 'Acompanhe sua conta e atualize credenciais quando precisar.'
+            ? 'Gerencie identidades e o preset Admin. Mandatos de produto entram na próxima etapa.'
+            : 'Acompanhe sua identidade e atualize handle e senha quando precisar.'
         }
       />
 
@@ -82,7 +82,7 @@ export function HomePage() {
                   <StatusBadge status={profile?.status} />
                 </div>
                 <div className="space-y-2">
-                  <span className="text-sm text-muted-foreground">Papéis</span>
+                  <span className="text-sm text-muted-foreground">Preset</span>
                   <div className="flex flex-wrap gap-1.5">
                     {roles.length > 0 ? (
                       roles.map((role) => (
@@ -91,7 +91,7 @@ export function HomePage() {
                         </Badge>
                       ))
                     ) : (
-                      <span className="text-sm text-muted-foreground">Nenhum papel</span>
+                      <span className="text-sm text-muted-foreground">Só identidade</span>
                     )}
                   </div>
                 </div>
@@ -107,7 +107,7 @@ export function HomePage() {
             </div>
             <CardTitle className="text-base">Meu perfil</CardTitle>
             <CardDescription>
-              Altere usuário e senha da conta autenticada.
+              Altere handle e senha da conta autenticada.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -128,7 +128,7 @@ export function HomePage() {
               </div>
               <CardTitle className="text-base">Contas</CardTitle>
               <CardDescription>
-                Busque contas, conceda papéis e controle status.
+                Busque identidades, conceda Admin e controle status.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -146,12 +146,12 @@ export function HomePage() {
       <Card className="border-border/50 bg-transparent">
         <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="text-sm font-medium">Próximas ondas</p>
+            <p className="text-sm font-medium">Próxima etapa</p>
             <p className="text-xs text-muted-foreground">
-              Operações, pagamentos e gateways entram depois desta base de contas.
+              Mandato (capacidade × escopo): Operador, Recrutador, Laranja, Gateways, Contador, Gestor de Operações.
             </p>
           </div>
-          <Badge variant="outline">V1 · Contas</Badge>
+          <Badge variant="outline">01 · Identidade</Badge>
         </CardContent>
       </Card>
     </div>

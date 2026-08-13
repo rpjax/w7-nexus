@@ -9,10 +9,8 @@ import {
   disableAdministratorAccount,
   enableAdministratorAccount,
   getAdministratorAccount,
-  grantAdministratorAccountPermission,
   grantAdministratorAccountRole,
   resetAdministratorAccountPassword,
-  revokeAdministratorAccountPermission,
   revokeAdministratorAccountRole,
   searchAdministratorAccounts,
   type CreateAccountType,
@@ -38,6 +36,7 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -55,10 +54,9 @@ import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
-  ACCOUNT_PERMISSION_CATALOG,
   ACCOUNT_ROLE_CATALOG,
-  hasPermissionIgnoreCase,
   hasRoleIgnoreCase,
+  isAdministrator,
   roleLabel,
 } from '@/utils/accountAccess';
 import { cn } from '@/lib/utils';
@@ -159,7 +157,7 @@ export function AccountsPage() {
   const columns = useMemo<ColumnDef<AccountDetails>[]>(() => [
     {
       accessorKey: 'username',
-      header: 'Usuário',
+      header: 'Handle',
       cell: ({ row }) => (
         <div className="min-w-[8rem] max-w-[12rem]">
           <p className="truncate font-medium leading-tight">{row.original.username}</p>
@@ -177,28 +175,17 @@ export function AccountsPage() {
     },
     {
       accessorKey: 'roles',
-      header: 'Papéis',
+      header: 'Preset',
       cell: ({ row }) => (
         <div className="flex max-w-[11rem] flex-wrap gap-0.5">
-          {row.original.roles.length > 0 ? (
-            row.original.roles.map((role) => (
-              <Badge key={role} variant="secondary" className="h-5 px-1.5 text-[0.65rem]">
-                {roleLabel(role)}
-              </Badge>
-            ))
+          {isAdministrator(row.original.roles) ? (
+            <Badge variant="secondary" className="h-5 px-1.5 text-[0.65rem]">
+              {roleLabel('Administrator')}
+            </Badge>
           ) : (
-            <span className="text-xs text-muted-foreground">—</span>
+            <span className="text-xs text-muted-foreground">Identidade</span>
           )}
         </div>
-      ),
-    },
-    {
-      id: 'permissions',
-      header: 'Perm.',
-      cell: ({ row }) => (
-        <span className="tabular-nums text-xs text-muted-foreground">
-          {row.original.permissions.length}
-        </span>
       ),
     },
     {
@@ -272,20 +259,6 @@ export function AccountsPage() {
     await refreshSelected(account.id);
   }
 
-  async function togglePermission(account: AccountDetails, permission: string, enabled: boolean) {
-    const key = `perm:${permission}`;
-    setBusyKey(key);
-    const result = enabled
-      ? await grantAdministratorAccountPermission(account.id, permission)
-      : await revokeAdministratorAccountPermission(account.id, permission);
-    setBusyKey(null);
-    if (!result.ok) {
-      toast.error(result.error);
-      return;
-    }
-    await refreshSelected(account.id);
-  }
-
   async function handleDisableEnable(account: AccountDetails) {
     const isDisabled = account.status === 'Disabled';
     setBusyKey('status');
@@ -331,7 +304,7 @@ export function AccountsPage() {
         kicker="Administração"
         kickerVariant="admin"
         title="Contas"
-        description="Busque, inspecione e gerencie acesso, status e senhas."
+        description="Identidades do hub (handle único). Só o preset Admin existe nesta etapa; mandatos entram depois."
         actions={(
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus data-icon="inline-start" />
@@ -371,7 +344,7 @@ export function AccountsPage() {
                 <Input
                   value={keyword}
                   onChange={(event) => setKeyword(event.target.value)}
-                  placeholder="Buscar usuário ou ID"
+                  placeholder="Buscar handle ou ID"
                   className="h-8 pl-8"
                 />
               </div>
@@ -405,7 +378,7 @@ export function AccountsPage() {
                     <SelectValue placeholder="Papel" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="all">Todos papéis</SelectItem>
+                    <SelectItem value="all">Todos os presets</SelectItem>
                     {ACCOUNT_ROLE_CATALOG.map((role) => (
                       <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
                     ))}
@@ -526,7 +499,10 @@ export function AccountsPage() {
 
                 <TabsContent value="access" className="space-y-5">
                   <section className="space-y-2">
-                    <h3 className="text-sm font-medium">Papéis</h3>
+                    <h3 className="text-sm font-medium">Admin</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Preset raiz. Operador, Laranja, Recrutador, Gateways, Contador e Gestor de Operações são mandato (capacidade × escopo) — ainda não concedíveis.
+                    </p>
                     <div className="space-y-2">
                       {ACCOUNT_ROLE_CATALOG.map((role) => {
                         const enabled = hasRoleIgnoreCase(selected.roles, role.id);
@@ -547,38 +523,6 @@ export function AccountsPage() {
                             <span className="min-w-0">
                               <span className="block text-sm font-medium">{role.label}</span>
                               <span className="block text-xs text-muted-foreground">{role.description}</span>
-                              {busyKey === key ? (
-                                <span className="mt-1 block text-xs text-primary">Atualizando…</span>
-                              ) : null}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </section>
-
-                  <section className="space-y-2">
-                    <h3 className="text-sm font-medium">Permissões</h3>
-                    <div className="space-y-2">
-                      {ACCOUNT_PERMISSION_CATALOG.map((permission) => {
-                        const enabled = hasPermissionIgnoreCase(selected.permissions, permission.id);
-                        const key = `perm:${permission.id}`;
-                        return (
-                          <label
-                            key={permission.id}
-                            className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 px-3 py-2.5 hover:bg-muted/30"
-                          >
-                            <Checkbox
-                              checked={enabled}
-                              disabled={busyKey !== null}
-                              onCheckedChange={(checked) => {
-                                void togglePermission(selected, permission.id, checked === true);
-                              }}
-                              className="mt-0.5"
-                            />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-medium">{permission.label}</span>
-                              <span className="block text-xs text-muted-foreground">{permission.description}</span>
                               {busyKey === key ? (
                                 <span className="mt-1 block text-xs text-primary">Atualizando…</span>
                               ) : null}
@@ -628,7 +572,7 @@ export function AccountsPage() {
               <div className="space-y-1">
                 <p className="font-medium">Selecione uma conta</p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Escolha um item na lista para gerenciar papéis, permissões, status e senha.
+                  Escolha um item na lista para gerenciar o preset Admin, status e senha.
                 </p>
               </div>
             </CardContent>
@@ -641,7 +585,7 @@ export function AccountsPage() {
           <DialogHeader>
             <DialogTitle>Nova conta</DialogTitle>
             <DialogDescription>
-              Crie um usuário livre ou um administrador com chave mestra.
+              Cria uma identidade (handle). Conta comum não recebe mandato nesta etapa; Admin exige a chave mestra.
             </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
@@ -662,10 +606,15 @@ export function AccountsPage() {
                         }}
                         className="grid w-full grid-cols-2 gap-2"
                       >
-                        <ToggleGroupItem value="usuario" className="w-full">Usuário</ToggleGroupItem>
+                        <ToggleGroupItem value="usuario" className="w-full">Conta</ToggleGroupItem>
                         <ToggleGroupItem value="admin" className="w-full">Admin</ToggleGroupItem>
                       </ToggleGroup>
                     </FormControl>
+                    <FormDescription>
+                      {field.value === 'admin'
+                        ? 'Preset raiz. O último Admin não pode ser desabilitado nem revogado.'
+                        : 'Só identidade de login. Mandatos (Operador, Recrutador, …) vêm na etapa 02.'}
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -690,7 +639,7 @@ export function AccountsPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuário</FormLabel>
+                    <FormLabel>Handle</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>

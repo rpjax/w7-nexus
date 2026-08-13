@@ -34,7 +34,7 @@ Ver também: [00-principles.md](./00-principles.md).
 | # | Doc | Foco | Status | Depende de |
 |---|-----|------|--------|------------|
 | 0 | [00-principles.md](./00-principles.md) | Regras do processo, DoD, fora de escopo v1 | **feito** (meta) | — |
-| 1 | [01-foundation.md](./01-foundation.md) | Base existente: Accounts, Auth, Authorization, Journal | **em curso** (já no Refactor) | — |
+| 1 | [01-foundation.md](./01-foundation.md) | Base: Account = identidade, Auth, Authorization, Journal (escritas) | **feito** | — |
 | 2 | [02-members-roles.md](./02-members-roles.md) | Membros, papéis de domínio, deals, Acionistas | pendente | 1 |
 | 3 | [03-operations.md](./03-operations.md) | Operação + operation key; Script/Store mínimos | pendente | 2 |
 | 4 | [04-cobranca-paga.md](./04-cobranca-paga.md) | Cobrança, Conta Gateway emissão, webhook Paga | pendente | 3 |

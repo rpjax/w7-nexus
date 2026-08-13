@@ -45,7 +45,13 @@ internal static class AccountRegistrationPolicy
             {
                 errors.Add(BuildError(
                     AccountErrorCodes.UsernameAlreadyTaken,
-                    $"O nome de usuario '{normalizedUsername}' ja esta em uso. Escolha outro nome."));
+                    $"O handle '{normalizedUsername}' ja esta em uso. Escolha outro."));
+            }
+            else if (await accountReadRepository.IsHandleRetiredAsync(normalizedUsername, cancellationToken))
+            {
+                errors.Add(BuildError(
+                    AccountErrorCodes.HandleRetired,
+                    $"O handle '{normalizedUsername}' esta aposentado e nao pode ser reutilizado."));
             }
         }
 
@@ -106,7 +112,13 @@ internal static class AccountRegistrationPolicy
         {
             errors.Add(BuildError(
                 AccountErrorCodes.UsernameAlreadyTaken,
-                $"O nome de usuario '{normalizedUsername}' ja esta em uso. Escolha outro nome."));
+                $"O handle '{normalizedUsername}' ja esta em uso. Escolha outro."));
+        }
+        else if (await accountReadRepository.IsHandleRetiredAsync(normalizedUsername, cancellationToken))
+        {
+            errors.Add(BuildError(
+                AccountErrorCodes.HandleRetired,
+                $"O handle '{normalizedUsername}' esta aposentado e nao pode ser reutilizado."));
         }
 
         return errors;
