@@ -6,7 +6,7 @@ Este domínio descreve um **produto fictício** de um seminário / RPG de códig
 
 ## Natureza do produto — DECIDIDO (G7)
 
-Nexus é **software sob medida** para **uma única Organização** — não é produto de prateleira, SaaS nem multi-tenant. **Um Nexus = uma organização** (singleton por deploy). "Global" sempre significa global àquela org; handle único é único no deploy. Um eventual segundo "capítulo" seria **outro deploy** — melhor isolamento (raio de explosão menor), coerente com a blindagem. `tenant_id` e abstrações de multi-org são **anti-requisito** (YAGNI + segurança).
+Nexus é **software sob medida** para **uma única Organização** — não é produto de prateleira, SaaS nem multi-tenant. **Um Nexus = uma organização** (singleton por deploy). "Global" sempre significa global àquela org; username único é único no deploy. Um eventual segundo "capítulo" seria **outro deploy** — melhor isolamento (raio de explosão menor), coerente com a blindagem. `tenant_id` e abstrações de multi-org são **anti-requisito** (YAGNI + segurança).
 
 ## Problema
 

@@ -45,13 +45,13 @@ internal static class AccountRegistrationPolicy
             {
                 errors.Add(BuildError(
                     AccountErrorCodes.UsernameAlreadyTaken,
-                    $"O handle '{normalizedUsername}' ja esta em uso. Escolha outro."));
+                    $"O nome de usuario '{normalizedUsername}' ja esta em uso. Escolha outro."));
             }
-            else if (await accountReadRepository.IsHandleRetiredAsync(normalizedUsername, cancellationToken))
+            else if (await accountReadRepository.IsUsernameRetiredAsync(normalizedUsername, cancellationToken))
             {
                 errors.Add(BuildError(
-                    AccountErrorCodes.HandleRetired,
-                    $"O handle '{normalizedUsername}' esta aposentado e nao pode ser reutilizado."));
+                    AccountErrorCodes.UsernameRetired,
+                    $"O nome de usuario '{normalizedUsername}' nao esta mais disponivel."));
             }
         }
 
@@ -112,13 +112,13 @@ internal static class AccountRegistrationPolicy
         {
             errors.Add(BuildError(
                 AccountErrorCodes.UsernameAlreadyTaken,
-                $"O handle '{normalizedUsername}' ja esta em uso. Escolha outro."));
+                $"O nome de usuario '{normalizedUsername}' ja esta em uso. Escolha outro."));
         }
-        else if (await accountReadRepository.IsHandleRetiredAsync(normalizedUsername, cancellationToken))
+        else if (await accountReadRepository.IsUsernameRetiredAsync(normalizedUsername, cancellationToken))
         {
             errors.Add(BuildError(
-                AccountErrorCodes.HandleRetired,
-                $"O handle '{normalizedUsername}' esta aposentado e nao pode ser reutilizado."));
+                AccountErrorCodes.UsernameRetired,
+                $"O nome de usuario '{normalizedUsername}' nao esta mais disponivel."));
         }
 
         return errors;

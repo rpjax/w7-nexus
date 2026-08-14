@@ -1,11 +1,17 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
+  Handshake,
   Home,
+  Layers,
   LogOut,
   Menu,
+  PieChart,
+  Receipt,
+  ScrollText,
   Shield,
   UserRound,
+  Wallet,
   X,
 } from 'lucide-react';
 import { useAuth } from '@/auth/AuthContext';
@@ -33,8 +39,13 @@ const NAV_ITEMS: NavItem[] = [
   { to: '/dashboard', label: 'Início', icon: Home, end: true },
   { to: '/dashboard/profile', label: 'Perfil', icon: UserRound },
   { to: '/dashboard/accounts', label: 'Contas', icon: Shield, adminOnly: true },
+  { to: '/dashboard/world-accounts', label: 'Livro-mundo', icon: Wallet, adminOnly: true },
+  { to: '/dashboard/operations', label: 'Operações', icon: Layers, adminOnly: true },
+  { to: '/dashboard/charges', label: 'Cobranças', icon: Receipt, adminOnly: true },
+  { to: '/dashboard/claims', label: 'Claims', icon: ScrollText, adminOnly: true },
+  { to: '/dashboard/deals', label: 'Deals', icon: Handshake, adminOnly: true },
+  { to: '/dashboard/shareholders', label: 'Acionistas', icon: PieChart, adminOnly: true },
 ];
-
 function SideNavItems({
   admin,
   onNavigate,

@@ -55,4 +55,11 @@ public sealed class LastAdministratorGuardTests
 
         Assert.Null(error);
     }
+
+    [Fact]
+    public void Cannot_revoke_own_administrator_has_dedicated_error()
+    {
+        var error = AccountAdministratorGuards.CannotRevokeOwnAdministratorError();
+        Assert.Equal(AccountErrorCodes.CannotRevokeOwnAdministrator, error.Code);
+    }
 }

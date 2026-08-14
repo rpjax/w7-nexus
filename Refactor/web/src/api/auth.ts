@@ -55,5 +55,5 @@ export async function changeMyPassword(currentPassword: string, newPassword: str
 export async function changeMyUsername(newUsername: string) {
   return apiClient.post<ChangeUsernameResponse>('/api/authentication/me/username', {
     newUsername,
-  }, { fallbackError: 'Não foi possível alterar o handle.' });
+  }, { fallbackError: 'Não foi possível alterar o usuário.' });
 }

@@ -61,10 +61,18 @@ export const apiClient = {
     }, options);
   },
 
-  delete<T>(path: string, body: unknown, options?: RequestOptions) {
+  put<T>(path: string, body: unknown, options?: RequestOptions) {
+    return request<T>(path, {
+      method: 'PUT',
+      body: JSON.stringify(body),
+      headers: options?.headers,
+    }, options);
+  },
+
+  delete<T>(path: string, body?: unknown, options?: RequestOptions) {
     return request<T>(path, {
       method: 'DELETE',
-      body: JSON.stringify(body),
+      body: body === undefined ? undefined : JSON.stringify(body),
       headers: options?.headers,
     }, options);
   },

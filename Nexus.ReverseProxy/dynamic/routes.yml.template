@@ -5,16 +5,14 @@ http:
       service: frontend
       entryPoints:
         - websecure
-      tls:
-        certResolver: letsencrypt
+      tls: ${TLS_BLOCK}
 
     backend:
       rule: "Host(`${BACKEND_HOST}`)"
       service: backend
       entryPoints:
         - websecure
-      tls:
-        certResolver: letsencrypt
+      tls: ${TLS_BLOCK}
 
   services:
     frontend:

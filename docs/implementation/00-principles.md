@@ -46,6 +46,18 @@ Port In → Handler → Domain (invariantes) → Port Out (repo)
 
 Evitar: “criar todas as pastas Infrastructure do bounded context” sem um UC que as use.
 
+## Persistência (ES-by-default)
+
+**Padrão:** agregado de domínio com identidade e ciclo de vida é **event-sourced** (estado = fold). Correção = evento compensatório.
+
+**Exceções:** senha/token; corpo Script/Store; Journal/log de auditoria (accountability, inclusive leituras — **não** é ES).
+
+**Dois livros, os dois com ES (quando a fatia chegar):** Claim/ledger (06+) e Conta livro-mundo (05: saldo = fold das TX observadas). Sem ownership na Conta.
+
+Accounts, Mandates (`MemberMandate`, `AgencyDeal`, `ShareholderStake`), Operations, Charge, **WorldAccount** e **Claim** (ledger) usam Marten atrás de `I*Repository` (schema compartilhado `nexus_es`, stream ids prefixados). Journal **não** duplica fatos de domínio desses agregados.
+
+O stub SQL **EmissionRail** foi substituído na etapa 05 pelo agregado `WorldAccount`.
+
 ## Dois livros (lembrete operacional)
 
 - **Modelo:** Conta (saldo + TX) sem ownership; Claim no ledger com localização.

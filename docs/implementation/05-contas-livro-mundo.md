@@ -1,6 +1,6 @@
 # 05 — Contas (livro-mundo)
 
-**Status:** pendente  
+**Status:** feito  
 **Depende de:** [01-foundation.md](./01-foundation.md) (paralelo possível com 02–04)
 
 ## Objetivo
@@ -39,6 +39,13 @@ Modelar o **livro-mundo**: Conta burra, multi-moeda, saldo numérico + transaç�
 
 ## Critérios de pronto
 
-- [ ] Conta multi-moeda sem inventar “uma conta = uma moeda”.
-- [ ] Nenhum campo de ownership/beneficiário na entidade Conta.
-- [ ] Pronto para materialização creditar saldo + TX na mesma Conta de aterrissagem.
+- [x] Conta multi-moeda sem inventar “uma conta = uma moeda”.
+- [x] Nenhum campo de ownership/beneficiário na entidade Conta.
+- [x] Pronto para materialização creditar saldo + TX na mesma Conta de aterrissagem.
+
+## Entrega (Refactor)
+
+- BC `WorldAccounts/`: agregado `WorldAccount` event-sourced (Marten, stream `world-account-{id}`; identidade de login continua em `Accounts/` / `account-*`).
+- HTTP `/api/world-accounts/administrator` (Admin ou `gerir_gateways`); UI Livro-mundo.
+- Charging emite contra Conta de Gateway bound na Op; quota consumida no agregado; campo `EmissionRailId` no evento da Cobrança permanece (id da Conta).
+- Stub SQL `emission_rails` backfill + drop no startup.

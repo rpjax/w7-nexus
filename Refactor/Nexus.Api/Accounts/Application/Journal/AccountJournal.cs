@@ -10,7 +10,7 @@ internal static class AccountJournal
         journal.Append(new AccountCreated
         {
             AccountId = account.Id.Value,
-            Handle = account.Username,
+            Username = account.Username,
             IsAdministrator = account.IsAdministrator
         });
     }
@@ -20,7 +20,7 @@ internal static class AccountJournal
         journal.Append(new AccountDisabled
         {
             AccountId = account.Id.Value,
-            Handle = account.Username
+            Username = account.Username
         });
     }
 
@@ -29,7 +29,7 @@ internal static class AccountJournal
         journal.Append(new AccountEnabled
         {
             AccountId = account.Id.Value,
-            Handle = account.Username
+            Username = account.Username
         });
     }
 
@@ -59,13 +59,13 @@ internal static class AccountJournal
         });
     }
 
-    public static void RecordHandleChanged(this IJournalWriter journal, Account account, string previousHandle)
+    public static void RecordUsernameChanged(this IJournalWriter journal, Account account, string previousUsername)
     {
-        journal.Append(new AccountHandleChanged
+        journal.Append(new AccountUsernameChanged
         {
             AccountId = account.Id.Value,
-            PreviousHandle = previousHandle,
-            NewHandle = account.Username
+            PreviousUsername = previousUsername,
+            NewUsername = account.Username
         });
     }
 }

@@ -13,8 +13,8 @@ Termos canônicos do domínio de produto. Se a conversa usar sinônimo, atualiza
 | **Mandato interno** | Confiança localizada numa competência (“internal staff” na conversa) | Um role chamado InternalStaff |
 | **Admin** | Papel no hub: administra o sistema com **acesso irrestrito** | Dono (fora do produto); Acionista |
 | **Dono** | Fora do domínio de produto: quem tem infra/código/deploy no mundo do RPG. O Nexus não modela isso | Admin; Acionista |
-| **Operador** | Papel de ponta; login = **handle/nickname único**; payout + vínculo com Recrutador; sem identidade civil no hub | Recrutador; Laranja |
-| **Handle** | Nickname único usado como login do Membro na ponta (ao menos Operador) | ID interno; nome civil (não guardado) |
+| **Operador** | Papel de ponta; login = **username único**; payout + vínculo com Recrutador; sem identidade civil no hub | Recrutador; Laranja |
+| **Username** | Nome de login único do Membro (na UI: **usuário**; nickname de produto, não nome civil) | ID interno; nome civil (não guardado) |
 | **Recrutador** (sargento) | Traz/agencia Operadores; vê só downline direta; linhagem pode ser multi-nível mas inerte | Gestor de Operações; “líder de equipe” (não existe — G11) |
 | **Gateways** | Papel de mandato interno: Laranjas, contas de gateway, % de trilho, **quotas** das Contas | Contador; Admin |
 | **Contador** | Papel de mandato interno: book-keeping pós-Paga (saque, hops, repasse); registra a realidade no hub; Nexus **guia**, não executa | Gateways; Admin |
@@ -28,7 +28,7 @@ Termos canônicos do domínio de produto. Se a conversa usar sinônimo, atualiza
 | **Ledger** | O outro livro: toda a semântica — Claims, cuts, materialização, `repassado`, ajustes, linhagem/eventos. O Nexus **é** o ledger do Contador (não sincroniza com externo) | Livro-mundo; saldo bruto |
 | **Claim** | Unidade do ledger: `{ beneficiário, valor, moeda, origem (GUID), localização (Conta), status }`; nasce na materialização quando o % morre | Ownership-em-Conta (morto); % de split |
 | **Moeda / Denominação** | Unidade de um valor (BRL, USDT, BTC…). O Nexus **nunca converte** — só registra "X de Y" | Câmbio/FX calculado pelo Nexus |
-| **Conta** | Entidade do livro-mundo (gateway, banco, crypto…): **saldo por moeda + transações**, fungível, **multi-moeda**; **não** modela “de quem é” | Tesouraria abstrata; portadora de ownership; conta mono-moeda forçada |
+| **Conta** | Entidade do livro-mundo (gateway, banco, crypto…): **saldo por moeda + transações**, fungível, **multi-moeda**; **não** modela “de quem é”. No código: agregado `WorldAccount` (não confundir com `Accounts.Account`, identidade de login) | Tesouraria abstrata; portadora de ownership; conta mono-moeda forçada; Account de login |
 | **Conta de Gateway** | Tipo de Conta: credenciais/gateway; **um** Laranja owner; alvo de **emissão** da Cobrança (≠ necessariamente aterrissagem) | Conta banco/crypto de hop |
 | **Saldo** | Número na Conta **por moeda** (livro-mundo), **escopo-org**. **Invariante:** por Conta e por moeda `soma dos claims **ativos** naquela moeda == saldo naquela moeda`; grana **pessoal** do dono é invisível ao Nexus | Saldo real do banco (inclui grana pessoal); saldo único cross-moeda |
 | **Hop** | Fato do Contador: move R$ entre Contas (livro-mundo ±) **e relocaliza claims** (ledger); destino já líquido; cut mid-path = **% proporcional** sobre claims do bundle | Materialização do pagamento |
@@ -51,7 +51,7 @@ Termos canônicos do domínio de produto. Se a conversa usar sinônimo, atualiza
 | **Estado de Conta** | **Dois eixos independentes**: `emissão: ok\|bloqueada` e `saldo: acessível\|congelado\|perdido` | Enum único de status |
 | **Estado de Laranja** | `ativo → queimado \| saiu (voluntário) \| traiu`; queimar sinaliza (não hard-burn) as contas dele | Estado da Conta (nível diferente) |
 | **Causa** | Categoria anexada a eventos de attrition/write-off/estorno: `bloqueio_bancario\|apreensao\|traicao\|saida_voluntaria\|erro_operacional\|estorno\|desconhecido`; base da intel/reputação | Módulo de analytics separado |
-| **Residual da Organização** | Beneficiário canônico do resto do waterfall (linha 5), do centavo de arredondamento na materialização, da sobra de reconciliação, e da fatia do recrutador-raiz (`pct=0`) / carteira suspensa até re-agenciar | Tesouraria abstrata; “Equipe”; limbo “desconhecido” |
+| **Residual da Organização** | Beneficiário canônico do resto do waterfall (linha 5), do centavo de arredondamento na materialização, da sobra de reconciliação, e da fatia do recrutador-raiz (`pct=0`) / carteira suspensa até re-agenciar. No código: `OrganizationParty.Id` (GUID estável; **não** é `Accounts.Account`) | Tesouraria abstrata; “Equipe”; limbo “desconhecido”; Account de login |
 | **Claim preso (exposição)** | Claim localizado em Conta com saldo congelado/perdido; query = soma dos claims ali | Perda já realizada (só após write-off) |
 | **Participação / Corte** | No plano %: direito na materialização; mid-path: cut concreto no hop | — |
 | **Base do nível 3** | Valor **calculado** na materialização (remanescente pós Laranja + Acionista + **Gestão da Op**) sobre o qual as % do nível 3 incidem; **não** é bucket armazenado | "Poço P" como objeto/pool persistido |

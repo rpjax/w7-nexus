@@ -98,7 +98,7 @@ Quando um item acima doer de verdade, volta para a fila de decisão — não inv
 - Recrutamento: competência **concedida**; linhagem **pode** ser multi-nível (gated/auditada) mas **inerte** (dinheiro e visão só nível-1 / downline direto); vínculo **global** na Org + assign às ops separado.
 - Acionistas: beneficiários do nível 2 (não mandato de gestão); **Membros com login read-only**; Admin configura a lista.
 - Dono: fora do produto (infra/código/deploy). Admin: papel irrestrito no hub. Need-to-know não se aplica ao Admin.
-- Operador: identidade mínima = ID + handle único (login) + payout + vínculo com Recrutador; sem nome civil.
+- Operador: identidade mínima = ID + username único (login) + payout + vínculo com Recrutador; sem nome civil.
 - Resultado da Operação = movimentação financeira rastreada atribuível a ela (base do split); sem segundo KPI de domínio.
 - **Script** e **Store** são entidades **desacopladas**, ligadas à Operação só por **operation key** (agrupa/filtra; impede mistura). Script: delivery à ponta; Nexus não executa.
 - Operação: ciclo Rascunho→Ativa→Pausada→Encerrada; gestão por Admin + **Gestor de Operações**.

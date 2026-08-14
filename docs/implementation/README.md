@@ -35,12 +35,12 @@ Ver também: [00-principles.md](./00-principles.md).
 |---|-----|------|--------|------------|
 | 0 | [00-principles.md](./00-principles.md) | Regras do processo, DoD, fora de escopo v1 | **feito** (meta) | — |
 | 1 | [01-foundation.md](./01-foundation.md) | Base: Account = identidade, Auth, Authorization, Journal (escritas) | **feito** | — |
-| 2 | [02-members-roles.md](./02-members-roles.md) | Membros, papéis de domínio, deals, Acionistas | pendente | 1 |
-| 3 | [03-operations.md](./03-operations.md) | Operação + operation key; Script/Store mínimos | pendente | 2 |
-| 4 | [04-cobranca-paga.md](./04-cobranca-paga.md) | Cobrança, Conta Gateway emissão, webhook Paga | pendente | 3 |
-| 5 | [05-contas-livro-mundo.md](./05-contas-livro-mundo.md) | Contas multi-moeda, saldo, transações, quotas (conceito) | pendente | 1 |
-| 6 | [06-materializacao-claims.md](./06-materializacao-claims.md) | Materialização → Claims; waterfall; invariante nascimento | pendente | 4, 5 |
-| 7 | [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md) | Hops 1→N, cut mid-path, bundle, `repassado`, cut in-place | pendente | 6 |
+| 2 | [02-members-roles.md](./02-members-roles.md) | Membros, papéis de domínio, deals, Acionistas | **feito** | 1 |
+| 3 | [03-operations.md](./03-operations.md) | Operação + operation key; Script/Store mínimos | **feito** | 2 |
+| 4 | [04-cobranca-paga.md](./04-cobranca-paga.md) | Cobrança, Conta Gateway emissão, webhook Paga | **feito** | 3 |
+| 5 | [05-contas-livro-mundo.md](./05-contas-livro-mundo.md) | Contas multi-moeda, saldo, transações, quotas (conceito) | **feito** | 1 |
+| 6 | [06-materializacao-claims.md](./06-materializacao-claims.md) | Materialização → Claims; waterfall; invariante nascimento | **feito** | 4, 5 |
+| 7 | [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md) | Hops 1→N, cut mid-path, bundle, `repassado`, cut in-place | **feito** | 6 |
 | 8 | [08-visibilidade-extrato.md](./08-visibilidade-extrato.md) | Estimativa → pendente; relatório controlado; matriz need-to-know | pendente | 6, 7 |
 | 9 | [09-attrition-reconciliacao.md](./09-attrition-reconciliacao.md) | Estados Conta/Laranja, write-off, reconciliação, causa | pendente | 5, 6, 7 |
 

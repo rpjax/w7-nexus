@@ -393,6 +393,7 @@ $RECYCLE.BIN/
 .env.local
 .env.*.local
 Refactor/deploy/dockup.json
+Refactor/deploy/out/
 dockup/*.dockup.json
 dockup/out/
 *.local.json

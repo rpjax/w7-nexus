@@ -2,14 +2,12 @@ using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Authorization.Administrator;
 using Refactor.Nexus.Api.Accounts.Application.DTOs;
-using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Security;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 using Refactor.Nexus.Api.Accounts.Domain.Errors;
-using Refactor.Nexus.Api.Journal.Services.Contracts;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Commands.CreateAccount;
 
@@ -38,7 +36,6 @@ public sealed class CreateAccountHandler : ICreateAccountUseCase
     private readonly IAccountReadRepository _accountReadRepository;
     private readonly IPasswordHasher _passwordHasher;
     private readonly IAdministratorCreationTokenService _administratorCreationTokenService;
-    private readonly IJournalWriter _journal;
 
     public CreateAccountHandler(
         IRequestContext requestContext,
@@ -46,8 +43,7 @@ public sealed class CreateAccountHandler : ICreateAccountUseCase
         IAccountRepository accountRepository,
         IAccountReadRepository accountReadRepository,
         IPasswordHasher passwordHasher,
-        IAdministratorCreationTokenService administratorCreationTokenService,
-        IJournalWriter journal)
+        IAdministratorCreationTokenService administratorCreationTokenService)
     {
         _requestContext = requestContext;
         _accessPolicy = accessPolicy;
@@ -55,7 +51,6 @@ public sealed class CreateAccountHandler : ICreateAccountUseCase
         _accountReadRepository = accountReadRepository;
         _passwordHasher = passwordHasher;
         _administratorCreationTokenService = administratorCreationTokenService;
-        _journal = journal;
     }
 
     public async Task<IOperationResult<CreateAccountResult>> HandleAsync(
@@ -100,7 +95,6 @@ public sealed class CreateAccountHandler : ICreateAccountUseCase
             ResolveRoles(command.AccountType));
 
         account = await _accountRepository.CreateAsync(account, cancellationToken);
-        _journal.RecordCreated(account);
 
         return OperationResult<CreateAccountResult>.Success(new CreateAccountResult
         {
@@ -127,9 +121,9 @@ public sealed class CreateAccountHandler : ICreateAccountUseCase
 
             var existing = await _accountReadRepository.FindByUsernameAsync(username, cancellationToken);
             if (existing is not null)
-                errors.Add(BuildError(AccountErrorCodes.UsernameAlreadyTaken, $"O handle '{username}' ja esta em uso. Escolha outro."));
-            else if (await _accountReadRepository.IsHandleRetiredAsync(username, cancellationToken))
-                errors.Add(BuildError(AccountErrorCodes.HandleRetired, $"O handle '{username}' esta aposentado e nao pode ser reutilizado."));
+                errors.Add(BuildError(AccountErrorCodes.UsernameAlreadyTaken, $"O nome de usuario '{username}' ja esta em uso. Escolha outro."));
+            else if (await _accountReadRepository.IsUsernameRetiredAsync(username, cancellationToken))
+                errors.Add(BuildError(AccountErrorCodes.UsernameRetired, $"O nome de usuario '{username}' nao esta mais disponivel."));
         }
 
         if (string.IsNullOrEmpty(command.Password))

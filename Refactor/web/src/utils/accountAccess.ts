@@ -8,7 +8,7 @@ export type AccountRoleDefinition = {
   description: string;
 };
 
-/** Preset raiz. Demais papéis de produto são mandato (etapa 02), não roles soltos. */
+/** Preset raiz. Demais papéis de produto vivem em Mandates (capacidade × escopo). */
 export const ACCOUNT_ROLE_CATALOG: readonly AccountRoleDefinition[] = [
   {
     id: 'Administrator',

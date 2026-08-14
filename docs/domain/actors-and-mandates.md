@@ -144,7 +144,7 @@ Três coisas **diferentes**. Não colapsar no modelo de produto.
 | Nome | Tipo | Classe | Notas |
 |------|------|--------|--------|
 | **Admin** | Papel | Mandato interno | Acesso **irrestrito**; administrar o sistema |
-| **Operador** | Papel | Ponta | Login = handle único; visão mínima; payout + vínculo com Recrutador |
+| **Operador** | Papel | Ponta | Login = username único; visão mínima; payout + vínculo com Recrutador |
 | **Laranja** | Papel fino + trilho | Própria | Credenciais/gateway; vê só o próprio a receber |
 | **Recrutador** (“sargento”) | Papel | Mandato interno | Competência **concedida**; carteira direta; vínculo global |
 | **Gateways** | Papel | Mandato interno | Laranjas, contas de gateway, % do trilho (nível 1 inicial) |
@@ -194,7 +194,7 @@ O texto antigo dizia "sem árvore de sub-recrutadores". A regra real, mais preci
 | Campo | Obrigatório | Notas |
 |-------|-------------|--------|
 | **ID interno** | sim | Âncora estável do sistema |
-| **Handle / nickname** | sim | **Único**; é o **login** no Nexus |
+| **Username** | sim | **Único**; é o **login** no Nexus (na UI: usuário) |
 | **Meio de payout** | sim | Como recebe a parte do nível 3 |
 | **Vínculo com Recrutador** | sim | Agenciamento **global** na Org (quem trouxe / agencia) |
 
@@ -204,12 +204,12 @@ Nome civil, documentos e demais identidade “do mundo” — a ponta permanece 
 
 ### Login
 
-- Sim: o Operador entra no hub com o **handle único**.
+- Sim: o Operador entra no hub com o **username único**.
 - Visão: **mínimo privilégio** — ver [visibility.md](./visibility.md). Extrato: próprias cobranças (com Operação), própria fatia, status grosso.
 
 ### Implicação
 
-Handle é ao mesmo tempo **identidade de produto** e **credencial de acesso**. Colisões de nickname são regra de negócio (unicidade na Organização / no hub).
+Username é ao mesmo tempo **identidade de produto** e **credencial de acesso**. Colisões de nome são regra de negócio (unicidade na Organização / no hub).
 
 ### Ciclo de vida / attrition do Operador — DECIDIDO (G13)
 
@@ -218,13 +218,13 @@ Simetria com Laranja/Conta: o Operador também falha no mundo real.
 - **Estado:** `ativo → queimado | saiu (voluntário) | traiu` (mesma família de `causa` do G4).
 - **Cobranças Abertas** do Operador queimado: param de nascer novas; as existentes seguem até Paga/expiram (igual attrition de Conta).
 - **Claims** já materializados do Operador são **imutáveis** — continuam a receber repasse normalmente (a menos que write-off por causa real). Queimar o Operador **não** apaga o que ele já tem a receber.
-- **Handle é aposentado, nunca reusado:** após saída/queima o handle fica **reservado permanentemente** (integridade do event sourcing — o mesmo handle nunca aponta para duas pessoas na história).
+- **Username é aposentado, nunca reusado:** após saída/queima o username fica **reservado permanentemente** (integridade do event sourcing — o mesmo username nunca aponta para duas pessoas na história).
 
 ### Classes de identidade — quem é Membro (com login)
 
 | Ator | É Membro (login)? | Notas |
 |------|-------------------|-------|
-| **Operador** | Sim (ponta) | login = handle; visão cega mínima |
+| **Operador** | Sim (ponta) | login = username; visão cega mínima |
 | **Laranja** | **Sim** (ponta) | login mínimo; vê só o próprio a receber; credenciais de gateway |
 | **Recrutador / Gestor / Contador / Gateways / Admin** | Sim (mandato interno) | login + capacidades por preset/mandato |
 | **Acionista** | **Sim — Membro com login mínimo de leitura** | vê só a própria participação e fatia (ver [visibility.md](./visibility.md)); **não** tem mandato de gestão. (Resolve a contradição antiga "login é extra/futuro": na v1 o Acionista tem login read-only, porque a matriz de visão já lhe dá um extrato.) |
@@ -305,6 +305,6 @@ Queimar é o evento **mais comum**, não exceção. Modelado em dois níveis, am
 - Separação Membro vs Papel vs classe de confiança: **ok**.
 - Dono / Admin / Acionista: **decidido**.
 - Laranja: **decidido** (trilho + visão cega; Org + assign contextual).
-- Operador (identidade mínima + login por handle): **decidido**.
+- Operador (identidade mínima + login por username): **decidido**.
 - Recrutamento (competência concedida, linhagem multi-nível inerte, vínculo **global**, assign a ops separado): **decidido**.
 - Staff inicial: **Gateways** + **Contador** + **Gestor de Operações** (presets). **Sem entidade Equipe** (G11).

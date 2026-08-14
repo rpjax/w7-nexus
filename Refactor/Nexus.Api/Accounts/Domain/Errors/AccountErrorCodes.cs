@@ -10,7 +10,7 @@ public static class AccountErrorCodes
     public const string UsernameEmpty = "Account.USERNAME_EMPTY";
     public const string UsernameUnchanged = "Account.USERNAME_UNCHANGED";
     public const string UsernameAlreadyTaken = "Account.USERNAME_ALREADY_TAKEN";
-    public const string HandleRetired = "Account.HANDLE_RETIRED";
+    public const string UsernameRetired = "Account.USERNAME_RETIRED";
     public const string UsernameInvalidFormat = "Account.USERNAME_INVALID_FORMAT";
     public const string RoleNotGrantable = "Account.ROLE_NOT_GRANTABLE";
     public const string AccountTypeInvalid = "Account.ACCOUNT_TYPE_INVALID";
@@ -28,6 +28,7 @@ public static class AccountErrorCodes
     public const string AccountAlreadyActive = "Account.ACCOUNT_ALREADY_ACTIVE";
     public const string AccountDisabled = "Account.ACCOUNT_DISABLED";
     public const string CannotDisableSelf = "Account.CANNOT_DISABLE_SELF";
+    public const string CannotRevokeOwnAdministrator = "Account.CANNOT_REVOKE_OWN_ADMINISTRATOR";
     public const string CannotRemoveLastAdministrator = "Account.CANNOT_REMOVE_LAST_ADMINISTRATOR";
     public const string CurrentPasswordInvalid = "Account.CURRENT_PASSWORD_INVALID";
     public const string NewPasswordRequired = "Account.NEW_PASSWORD_REQUIRED";

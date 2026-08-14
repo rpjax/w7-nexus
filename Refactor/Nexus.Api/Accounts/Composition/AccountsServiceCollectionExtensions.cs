@@ -21,6 +21,7 @@ using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence;
 using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence.Repositories;
 using Refactor.Nexus.Api.Accounts.Infrastructure.Security;
 using Refactor.Nexus.Api.Authorization;
+using Refactor.Nexus.Api.Infrastructure.EventSourcing;
 using Refactor.Nexus.Api.Infrastructure.Persistence;
 
 namespace Refactor.Nexus.Api.Accounts.Composition;
@@ -29,10 +30,11 @@ public static class AccountsServiceCollectionExtensions
 {
     public static IServiceCollection AddRefactorAccounts(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddNexusEventStore(configuration);
         services.AddSingleton<INpgsqlConnectionFactory, NpgsqlConnectionFactory>();
-        services.AddScoped<PostgresAccountRepository>();
-        services.AddScoped<IAccountRepository>(provider => provider.GetRequiredService<PostgresAccountRepository>());
-        services.AddScoped<IAccountReadRepository>(provider => provider.GetRequiredService<PostgresAccountRepository>());
+        services.AddScoped<MartenAccountRepository>();
+        services.AddScoped<IAccountRepository>(provider => provider.GetRequiredService<MartenAccountRepository>());
+        services.AddScoped<IAccountReadRepository>(provider => provider.GetRequiredService<MartenAccountRepository>());
         services.AddScoped<IPasswordHasher, BcryptPasswordHasher>();
         services.AddScoped<IPasswordVerifier, BcryptPasswordVerifier>();
         services.AddScoped<IAdministratorCreationTokenService, ConfigurationAdministratorCreationTokenService>();

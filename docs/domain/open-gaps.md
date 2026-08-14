@@ -135,7 +135,7 @@ Cada gap tem: **o que quebra**, **cenário concreto** que expõe a quebra, e **s
 
 **Decisão:** **um Nexus = uma Organização** (singleton por deploy). Nexus é **software sob medida** para uma org específica (websete/Grupo Thal), **não** produto de prateleira / SaaS / multi-tenant.
 
-- "Global" = global à org; handle único = único no deploy; Acionista global sem ambiguidade.
+- "Global" = global à org; username único = único no deploy; Acionista global sem ambiguidade.
 - Segundo "capítulo" = **outro deploy** (isolamento melhor, raio de explosão menor — coerente com a blindagem).
 - `tenant_id` / abstração multi-org = **anti-requisito** (YAGNI + segurança). `Organização` = raiz conceitual implícita onde penduram regras globais.
 
@@ -262,7 +262,7 @@ Revisão adversarial (3 revisores simulando engenheiros implementando só a part
 - **Agenciamento ≠ mandato** na revogação (carteira/`recrutador_pct` têm regra própria; futuro → Org).
 - Recrutador-raiz (Org/Admin, `pct=0`) resolve bootstrap.
 - Exclusão ponta × gestão na mesma op (protege a estimativa).
-- Ciclo/attrition do Operador; handle aposentado (nunca reusado); Admin semente.
+- Ciclo/attrition do Operador; username aposentado (nunca reusado); Admin semente.
 - Laranja e Acionista **são Membros com login** (Acionista = read-only).
 
 **Operações ([operations.md](./operations.md)):** transições do ciclo + guardas; efeito de Pausada/Encerrada sobre Script/Store/assign; operation key **1:1** com a op.

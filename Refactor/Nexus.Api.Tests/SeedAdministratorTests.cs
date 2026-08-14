@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Logging.Abstractions;
-using Refactor.Nexus.Api.Accounts.Application.Journal;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Shared;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
 using Refactor.Nexus.Api.Accounts.Infrastructure.Persistence;
@@ -42,18 +41,16 @@ public sealed class SeedAdministratorTests
     public async Task Execute_creates_admin_once_then_skips()
     {
         var accounts = new InMemoryAccountRepository();
-        var journal = new RecordingJournalWriter();
         var seeder = new SeedAdministrator(
             accounts,
             accounts,
             new FakePasswordHasher(),
-            journal,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
             NullLogger<SeedAdministrator>.Instance);
 
         var settings = new SeedAdministratorSettings
         {
-            Handle = "seed.admin",
+            Username = "seed.admin",
             Password = "password1",
             CreationTokenConfigured = true
         };
@@ -63,7 +60,6 @@ public sealed class SeedAdministratorTests
 
         Assert.Equal(1, await accounts.CountByRoleAsync(Roles.Administrator));
         Assert.NotNull(await accounts.FindByUsernameAsync("seed.admin"));
-        Assert.Single(journal.Facts.OfType<AccountCreated>());
     }
 
     [Fact]
@@ -71,24 +67,21 @@ public sealed class SeedAdministratorTests
     {
         var accounts = new InMemoryAccountRepository();
         await accounts.CreateAsync(Account.Create("existing.admin", "hash", [Roles.Administrator]));
-        var journal = new RecordingJournalWriter();
         var seeder = new SeedAdministrator(
             accounts,
             accounts,
             new FakePasswordHasher(),
-            journal,
             new Microsoft.Extensions.Configuration.ConfigurationBuilder().Build(),
             NullLogger<SeedAdministrator>.Instance);
 
         await seeder.ExecuteAsync(new SeedAdministratorSettings
         {
-            Handle = "another.admin",
+            Username = "another.admin",
             Password = "password1",
             CreationTokenConfigured = true
         });
 
         Assert.Equal(1, await accounts.CountByRoleAsync(Roles.Administrator));
         Assert.Null(await accounts.FindByUsernameAsync("another.admin"));
-        Assert.Empty(journal.Facts);
     }
 }

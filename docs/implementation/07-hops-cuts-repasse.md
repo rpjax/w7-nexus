@@ -1,6 +1,6 @@
 # 07 — Hops, cuts mid-path e repasse
 
-**Status:** pendente  
+**Status:** feito  
 **Depende de:** [06-materializacao-claims.md](./06-materializacao-claims.md)
 
 ## Objetivo
@@ -38,7 +38,15 @@ Hop canônico **origem → N destinos**; cut proporcional no bundle; cut in-plac
 
 ## Critérios de pronto
 
-- [ ] Exemplo 100 / cut 10% → claims 20→18, 50→45… + claim Laranja 10.
-- [ ] Hop com perda (100→95) encolhe claims proporcionalmente.
-- [ ] Redenominação: consome moeda origem, nasce destino com valor declarado.
-- [ ] Repasse remove claim da soma; saldo da Conta org decrementa no mesmo UC.
+- [x] Exemplo 100 / cut 10% → claims 20→18, 50→45… + claim Laranja 10.
+- [x] Hop com perda (100→95) encolhe claims proporcionalmente.
+- [x] Redenominação: consome moeda origem, nasce destino com valor declarado.
+- [x] Repasse remove claim da soma; saldo da Conta org decrementa no mesmo UC.
+
+## Entrega (Refactor)
+
+- `HopAllocator` + agregado de auditoria `Hop` (`hop-{id}`); mutação continua em Claims + WorldAccounts.
+- `ILedgerCommit` atômico (Contas + Claims + Hop); `IMaterializationCommit` é wrapper da etapa 06.
+- UCs `RegisterHop` / `RepassClaims`; HTTP `POST /hops`, `POST /repasse`, `GET /hops`; UI Claims com hop/cut/repasse.
+- Cut mid-path kind `PathCut`; 1× por Laranja × `OriginChargeId` (inclui Laranja de emissão).
+

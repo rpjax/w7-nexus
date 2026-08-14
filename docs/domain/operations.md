@@ -107,7 +107,7 @@ Filosofia: igual ao Script — **desacoplada**. Objetos não “entram na Opera�
 
 - Toda Operação tem **exatamente uma** operation key canônica (relação 1:1 com o ID interno da op). A key é o identificador **estável e público-à-ponta** usado por Script e Store; o ID interno é o identificador de domínio usado internamente (ex.: amarração de Cobrança).
 - Como é 1:1, "backend da frente" (Cobrança por ID + Store/Script por key) **sempre** correlaciona sem ambiguidade. A distinção key/ID é de *fronteira* (a ponta nunca vê o ID interno, só a key), não de cardinalidade.
-- Uma key **nunca** é reusada por outra Operação (integridade histórica, como o handle).
+- Uma key **nunca** é reusada por outra Operação (integridade histórica, como o username).
 
 ### Quem usa
 

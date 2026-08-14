@@ -99,7 +99,7 @@ export function ProfilePage() {
       return;
     }
 
-    toast.success('Handle atualizado. O nome anterior ficou reservado.');
+    toast.success('Usuário atualizado. O nome anterior não pode ser reutilizado.');
     const nextUsername = result.data?.username ?? values.newUsername.trim();
     setProfile((current) => (current ? { ...current, username: nextUsername } : current));
     patchUser({ username: nextUsername });
@@ -136,7 +136,7 @@ export function ProfilePage() {
       <PageHeader
         kicker="Conta"
         title="Meu perfil"
-        description="Atualize o handle e a senha da sessão atual. Handle aposentado não volta ao pool."
+        description="Atualize o usuário e a senha da sessão atual. Um nome já usado não volta a ficar disponível."
       />
 
       <Card className="border-border/60 bg-card/90">
@@ -172,7 +172,7 @@ export function ProfilePage() {
                 </div>
               </div>
               <p className="max-w-xs text-xs leading-relaxed text-muted-foreground sm:text-right">
-                Alterações de handle e senha valem nesta sessão. O handle antigo não pode ser reutilizado.
+                Alterações de usuário e senha valem nesta sessão. O nome antigo não pode ser reutilizado.
               </p>
             </>
           )}
@@ -186,7 +186,7 @@ export function ProfilePage() {
               <UserRound className="size-4" />
             </div>
             <CardTitle className="text-base">Identidade</CardTitle>
-            <CardDescription>O handle é o login único. Trocar aposenta o nome antigo.</CardDescription>
+            <CardDescription>O usuário é o login único. Trocar o nome reserva o anterior para sempre.</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...usernameForm}>
@@ -196,7 +196,7 @@ export function ProfilePage() {
                   name="newUsername"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Handle</FormLabel>
+                      <FormLabel>Usuário</FormLabel>
                       <FormControl>
                         <Input autoComplete="username" {...field} />
                       </FormControl>
@@ -205,7 +205,7 @@ export function ProfilePage() {
                   )}
                 />
                 <Button type="submit" disabled={usernameForm.formState.isSubmitting}>
-                  {usernameForm.formState.isSubmitting ? 'Salvando…' : 'Salvar handle'}
+                  {usernameForm.formState.isSubmitting ? 'Salvando…' : 'Salvar usuário'}
                 </Button>
               </form>
             </Form>

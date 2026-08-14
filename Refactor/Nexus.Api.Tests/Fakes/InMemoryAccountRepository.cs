@@ -6,7 +6,7 @@ namespace Refactor.Nexus.Api.Tests.Fakes;
 internal sealed class InMemoryAccountRepository : IAccountRepository, IAccountReadRepository
 {
     private readonly Dictionary<Guid, Account> _accounts = [];
-    private readonly HashSet<string> _retiredHandles = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _retiredUsernames = new(StringComparer.OrdinalIgnoreCase);
 
     public Task<Account?> GetByIdAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
@@ -17,27 +17,29 @@ internal sealed class InMemoryAccountRepository : IAccountRepository, IAccountRe
     public Task<Account> CreateAsync(Account account, CancellationToken cancellationToken = default)
     {
         _accounts[account.Id.Value] = account;
+        account.ClearUncommitted();
         return Task.FromResult(account);
     }
 
     public Task UpdateAsync(Account account, CancellationToken cancellationToken = default)
     {
         _accounts[account.Id.Value] = account;
+        account.ClearUncommitted();
         return Task.CompletedTask;
     }
 
-    public async Task UpdateChangingHandleAsync(
+    public async Task UpdateChangingUsernameAsync(
         Account account,
-        string previousHandle,
+        string previousUsername,
         CancellationToken cancellationToken = default)
     {
         await UpdateAsync(account, cancellationToken);
-        await RetireHandleAsync(previousHandle, account.Id, cancellationToken);
+        await RetireUsernameAsync(previousUsername, account.Id, cancellationToken);
     }
 
-    public Task RetireHandleAsync(string handle, AccountId retiredFrom, CancellationToken cancellationToken = default)
+    public Task RetireUsernameAsync(string username, AccountId retiredFrom, CancellationToken cancellationToken = default)
     {
-        _retiredHandles.Add(handle.Trim());
+        _retiredUsernames.Add(username.Trim());
         return Task.CompletedTask;
     }
 
@@ -48,15 +50,15 @@ internal sealed class InMemoryAccountRepository : IAccountRepository, IAccountRe
         return Task.FromResult(match);
     }
 
-    public Task<bool> IsHandleRetiredAsync(string handle, CancellationToken cancellationToken = default) =>
-        Task.FromResult(_retiredHandles.Contains(handle.Trim()));
+    public Task<bool> IsUsernameRetiredAsync(string username, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_retiredUsernames.Contains(username.Trim()));
 
-    public async Task<bool> IsHandleTakenAsync(string handle, CancellationToken cancellationToken = default)
+    public async Task<bool> IsUsernameTakenAsync(string username, CancellationToken cancellationToken = default)
     {
-        if (await FindByUsernameAsync(handle, cancellationToken) is not null)
+        if (await FindByUsernameAsync(username, cancellationToken) is not null)
             return true;
 
-        return await IsHandleRetiredAsync(handle, cancellationToken);
+        return await IsUsernameRetiredAsync(username, cancellationToken);
     }
 
     public Task<(IReadOnlyList<Account> Items, int Total)> SearchAsync(

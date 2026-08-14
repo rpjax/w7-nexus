@@ -15,6 +15,16 @@ import {
   searchAdministratorAccounts,
   type CreateAccountType,
 } from '@/api/administrator/accounts';
+import {
+  getMemberMandate,
+  grantMandateCapability,
+  grantMandatePreset,
+  MANDATE_PRESETS,
+  presetLabel,
+  revokeMandateCapability,
+  revokeMandatePreset,
+  type MemberMandate,
+} from '@/api/administrator/mandates';
 import { useAuth } from '@/auth/AuthContext';
 import type { AccountDetails } from '@/auth/types';
 import { DataTable } from '@/components/data/data-table';
@@ -24,7 +34,6 @@ import { StatusBadge } from '@/components/StatusBadge';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import {
   Dialog,
   DialogContent,
@@ -51,11 +60,9 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   ACCOUNT_ROLE_CATALOG,
-  hasRoleIgnoreCase,
   isAdministrator,
   roleLabel,
 } from '@/utils/accountAccess';
@@ -106,7 +113,15 @@ export function AccountsPage() {
   const [selected, setSelected] = useState<AccountDetails | null>(null);
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState('');
+  const [appliedPresets, setAppliedPresets] = useState<string[]>([]);
+  const [mandateGrants, setMandateGrants] = useState<MemberMandate['grants']>([]);
+  const [specificOpIds, setSpecificOpIds] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
+  const [confirmAction, setConfirmAction] = useState<null | {
+    kind: 'grant-admin' | 'revoke-admin' | 'disable' | 'enable' | 'grant-preset' | 'revoke-preset';
+    account: AccountDetails;
+    presetId?: string;
+  }>(null);
 
   const createForm = useForm<CreateValues>({
     resolver: zodResolver(createSchema),
@@ -157,7 +172,7 @@ export function AccountsPage() {
   const columns = useMemo<ColumnDef<AccountDetails>[]>(() => [
     {
       accessorKey: 'username',
-      header: 'Handle',
+      header: 'Usuário',
       cell: ({ row }) => (
         <div className="min-w-[8rem] max-w-[12rem]">
           <p className="truncate font-medium leading-tight">{row.original.username}</p>
@@ -202,7 +217,65 @@ export function AccountsPage() {
   function selectAccount(account: AccountDetails) {
     setSelected(account);
     setResetPassword('');
+    setAppliedPresets([]);
+    setMandateGrants([]);
     void refreshSelected(account.id);
+  }
+
+  async function loadMandate(accountId: string) {
+    const result = await getMemberMandate(accountId);
+    if (!result.ok || !result.data) {
+      setAppliedPresets([]);
+      setMandateGrants([]);
+      return;
+    }
+    setAppliedPresets(result.data.appliedPresets ?? []);
+    setMandateGrants(result.data.grants ?? []);
+  }
+
+  async function grantSpecificGerirOperacao() {
+    if (!selected) return;
+    const ids = specificOpIds
+      .split(/[\s,;]+/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (ids.length === 0) {
+      toast.error('Informe ao menos um operation id.');
+      return;
+    }
+    setBusyKey('cap:specific');
+    const result = await grantMandateCapability({
+      accountId: selected.id,
+      capability: 'gerir_operacao',
+      scopeKind: 'OperationSpecific',
+      operationIds: ids,
+    });
+    setBusyKey(null);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success('Capacidade Specific concedida.');
+    setSpecificOpIds('');
+    await loadMandate(selected.id);
+  }
+
+  async function revokeGrant(grant: MemberMandate['grants'][number]) {
+    if (!selected) return;
+    setBusyKey(`cap:${grant.id}`);
+    const result = await revokeMandateCapability({
+      accountId: selected.id,
+      capability: grant.capability,
+      scopeKind: grant.scopeKind,
+      operationIds: grant.operationIds,
+    });
+    setBusyKey(null);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success('Capacidade revogada.');
+    await loadMandate(selected.id);
   }
 
   function applySearch() {
@@ -223,6 +296,7 @@ export function AccountsPage() {
     setItems((current) => current.map((item) => (
       item.id === accountId ? result.data!.account : item
     )));
+    await loadMandate(accountId);
   }
 
   async function handleCreate(values: CreateValues) {
@@ -256,6 +330,7 @@ export function AccountsPage() {
       toast.error(result.error);
       return;
     }
+    toast.success(enabled ? 'Preset Admin concedido.' : 'Preset Admin removido.');
     await refreshSelected(account.id);
   }
 
@@ -277,6 +352,44 @@ export function AccountsPage() {
         item.id === account.id ? result.data!.account : item
       )));
     }
+  }
+
+  async function togglePreset(account: AccountDetails, presetId: string, enabled: boolean) {
+    const key = `preset:${presetId}`;
+    setBusyKey(key);
+    const result = enabled
+      ? await grantMandatePreset(account.id, presetId)
+      : await revokeMandatePreset(account.id, presetId);
+    setBusyKey(null);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    toast.success(enabled ? 'Preset concedido.' : 'Preset removido.');
+    await loadMandate(account.id);
+  }
+
+  async function runConfirmedAction() {
+    if (!confirmAction) return;
+    const { kind, account, presetId } = confirmAction;
+    setConfirmAction(null);
+    if (kind === 'grant-admin') {
+      await toggleRole(account, 'Administrator', true);
+      return;
+    }
+    if (kind === 'revoke-admin') {
+      await toggleRole(account, 'Administrator', false);
+      return;
+    }
+    if (kind === 'grant-preset' && presetId) {
+      await togglePreset(account, presetId, true);
+      return;
+    }
+    if (kind === 'revoke-preset' && presetId) {
+      await togglePreset(account, presetId, false);
+      return;
+    }
+    await handleDisableEnable(account);
   }
 
   async function handleResetPassword(account: AccountDetails) {
@@ -304,7 +417,7 @@ export function AccountsPage() {
         kicker="Administração"
         kickerVariant="admin"
         title="Contas"
-        description="Identidades do hub (handle único). Só o preset Admin existe nesta etapa; mandatos entram depois."
+        description="Identidades de login. Admin é raiz; mandatos de produto (Recrutador, Operador, …) ficam no detalhe da conta."
         actions={(
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus data-icon="inline-start" />
@@ -344,7 +457,7 @@ export function AccountsPage() {
                 <Input
                   value={keyword}
                   onChange={(event) => setKeyword(event.target.value)}
-                  placeholder="Buscar handle ou ID"
+                  placeholder="Buscar usuário ou ID"
                   className="h-8 pl-8"
                 />
               </div>
@@ -462,105 +575,234 @@ export function AccountsPage() {
                 <ArrowLeft data-icon="inline-start" />
                 Voltar à lista
               </Button>
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="min-w-0 space-y-1.5">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <CardTitle className="break-words text-xl">{selected.username}</CardTitle>
-                    <StatusBadge status={selected.status} />
-                  </div>
-                  <CardDescription className="break-all font-mono text-xs">
-                    {selected.id}
-                  </CardDescription>
+              <div className="min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <CardTitle className="break-words text-xl">{selected.username}</CardTitle>
+                  <StatusBadge status={selected.status} />
+                  {isAdministrator(selected.roles) ? (
+                    <Badge variant="secondary">Admin</Badge>
+                  ) : null}
+                  {isSelf ? (
+                    <Badge variant="outline">Você</Badge>
+                  ) : null}
                 </div>
-                <Button
-                  type="button"
-                  size="sm"
-                  className="w-full shrink-0 sm:w-auto"
-                  variant={selected.status === 'Disabled' ? 'default' : 'destructive'}
-                  disabled={busyKey === 'status' || isSelf}
-                  onClick={() => void handleDisableEnable(selected)}
-                >
-                  {selected.status === 'Disabled' ? 'Reabilitar' : 'Desabilitar'}
-                </Button>
-              </div>
-              {isSelf ? (
-                <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
-                  Você não pode desabilitar a própria sessão.
+                <CardDescription className="text-xs">
+                  Conta criada em {formatDateTime(selected.createdAt)} · atualizada {formatDateTime(selected.lastUpdatedAt)}
+                </CardDescription>
+                <p className="truncate font-mono text-[0.65rem] text-muted-foreground" title={selected.id}>
+                  {selected.id}
                 </p>
-              ) : null}
+              </div>
             </CardHeader>
             <Separator />
-            <CardContent className="min-w-0 p-4 md:p-5">
-              <Tabs defaultValue="access">
-                <TabsList className="mb-4 grid w-full grid-cols-2">
-                  <TabsTrigger value="access">Acesso</TabsTrigger>
-                  <TabsTrigger value="security">Segurança</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="access" className="space-y-5">
-                  <section className="space-y-2">
-                    <h3 className="text-sm font-medium">Admin</h3>
-                    <p className="text-xs text-muted-foreground">
-                      Preset raiz. Operador, Laranja, Recrutador, Gateways, Contador e Gestor de Operações são mandato (capacidade × escopo) — ainda não concedíveis.
-                    </p>
-                    <div className="space-y-2">
-                      {ACCOUNT_ROLE_CATALOG.map((role) => {
-                        const enabled = hasRoleIgnoreCase(selected.roles, role.id);
-                        const key = `role:${role.id}`;
-                        return (
-                          <label
-                            key={role.id}
-                            className="flex cursor-pointer items-start gap-3 rounded-lg border border-border/60 px-3 py-2.5 hover:bg-muted/30"
-                          >
-                            <Checkbox
-                              checked={enabled}
-                              disabled={busyKey !== null}
-                              onCheckedChange={(checked) => {
-                                void toggleRole(selected, role.id, checked === true);
-                              }}
-                              className="mt-0.5"
-                            />
-                            <span className="min-w-0">
-                              <span className="block text-sm font-medium">{role.label}</span>
-                              <span className="block text-xs text-muted-foreground">{role.description}</span>
-                              {busyKey === key ? (
-                                <span className="mt-1 block text-xs text-primary">Atualizando…</span>
-                              ) : null}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </section>
-                </TabsContent>
-
-                <TabsContent value="security" className="space-y-3">
-                  <div>
-                    <h3 className="text-sm font-medium">Redefinir senha</h3>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Define uma nova senha administrativa para esta conta.
-                    </p>
+            <CardContent className="min-w-0 space-y-6 p-4 md:p-5">
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">Preset Admin</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Acesso irrestrito no hub (raiz de atenuação). Separado dos mandatos de produto.
+                  </p>
+                </div>
+                {isAdministrator(selected.roles) ? (
+                  <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-3">
+                    <p className="text-sm font-medium">Esta conta é Admin.</p>
+                    {isSelf ? (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        Você não pode remover o próprio Admin. Peça a outro administrador.
+                      </p>
+                    ) : (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="mt-3"
+                        disabled={busyKey !== null}
+                        onClick={() => setConfirmAction({ kind: 'revoke-admin', account: selected })}
+                      >
+                        Remover Admin…
+                      </Button>
+                    )}
                   </div>
+                ) : (
+                  <div className="rounded-lg border border-dashed border-border/60 px-3 py-3">
+                    <p className="text-sm text-muted-foreground">Só identidade de login — sem preset Admin.</p>
+                    <Button
+                      type="button"
+                      size="sm"
+                      className="mt-3"
+                      disabled={busyKey !== null || selected.status === 'Disabled'}
+                      onClick={() => setConfirmAction({ kind: 'grant-admin', account: selected })}
+                    >
+                      Conceder Admin…
+                    </Button>
+                  </div>
+                )}
+              </section>
+
+              <Separator />
+
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">Mandatos</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Presets de produto (capacidade × escopo). Operator exige deal ativo antes.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {appliedPresets.length === 0 ? (
+                    <span className="text-xs text-muted-foreground">Nenhum preset de mandato.</span>
+                  ) : (
+                    appliedPresets.map((preset) => (
+                      <Badge key={preset} variant="secondary">{presetLabel(preset)}</Badge>
+                    ))
+                  )}
+                </div>
+                <div className="space-y-2">
+                  {MANDATE_PRESETS.map((preset) => {
+                    const granted = appliedPresets.some(
+                      (item) => item.localeCompare(preset.id, undefined, { sensitivity: 'accent' }) === 0,
+                    );
+                    return (
+                      <div
+                        key={preset.id}
+                        className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
+                      >
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium">{preset.label}</p>
+                          <p className="text-[0.65rem] text-muted-foreground">{preset.id}</p>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={granted ? 'outline' : 'default'}
+                          disabled={busyKey !== null || selected.status === 'Disabled'}
+                          onClick={() => setConfirmAction({
+                            kind: granted ? 'revoke-preset' : 'grant-preset',
+                            account: selected,
+                            presetId: preset.id,
+                          })}
+                        >
+                          {granted ? 'Revogar…' : 'Conceder…'}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="space-y-2 rounded-lg border border-dashed border-border/60 px-3 py-3">
+                  <p className="text-sm font-medium">Fine-tune · gerir_operacao Specific</p>
+                  <p className="text-xs text-muted-foreground">
+                    Operation IDs (UUID), separados por vírgula. Preset Gestor continua em OperationAll.
+                  </p>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <Input
-                      type="password"
-                      value={resetPassword}
-                      onChange={(event) => setResetPassword(event.target.value)}
-                      placeholder="Nova senha (mín. 8)"
-                      className="sm:max-w-xs"
+                      value={specificOpIds}
+                      onChange={(event) => setSpecificOpIds(event.target.value)}
+                      placeholder="op-id-1, op-id-2"
+                      className="sm:flex-1"
                     />
                     <Button
                       type="button"
-                      variant="outline"
-                      className="w-full sm:w-auto"
-                      disabled={busyKey === 'reset'}
-                      onClick={() => void handleResetPassword(selected)}
+                      size="sm"
+                      disabled={busyKey !== null || selected.status === 'Disabled' || !specificOpIds.trim()}
+                      onClick={() => void grantSpecificGerirOperacao()}
                     >
-                      {busyKey === 'reset' ? 'Redefinindo…' : 'Redefinir'}
+                      Conceder
                     </Button>
                   </div>
-                </TabsContent>
-              </Tabs>
+                  <div className="space-y-1">
+                    {mandateGrants.length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Nenhum grant explícito.</p>
+                    ) : (
+                      mandateGrants.map((grant) => (
+                        <div
+                          key={grant.id}
+                          className="flex items-start justify-between gap-2 rounded border border-border/50 px-2 py-1.5 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <p className="font-medium">{grant.capability} · {grant.scopeKind}</p>
+                            {grant.operationIds?.length ? (
+                              <p className="truncate font-mono text-[0.65rem] text-muted-foreground">
+                                {grant.operationIds.join(', ')}
+                              </p>
+                            ) : null}
+                            {grant.sourcePreset ? (
+                              <p className="text-muted-foreground">via {presetLabel(grant.sourcePreset)}</p>
+                            ) : null}
+                          </div>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={busyKey !== null}
+                            onClick={() => void revokeGrant(grant)}
+                          >
+                            Revogar
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </section>
+
+              <Separator />
+
+              <section className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-medium">Senha</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Define uma nova senha para esta conta.
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row">
+                  <Input
+                    type="password"
+                    value={resetPassword}
+                    onChange={(event) => setResetPassword(event.target.value)}
+                    placeholder="Nova senha (mín. 8)"
+                    className="sm:max-w-xs"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="w-full sm:w-auto"
+                    disabled={busyKey === 'reset'}
+                    onClick={() => void handleResetPassword(selected)}
+                  >
+                    {busyKey === 'reset' ? 'Redefinindo…' : 'Redefinir'}
+                  </Button>
+                </div>
+              </section>
+
+              <Separator />
+
+              <section className="space-y-3">
+                <div>
+                  <h3 className="text-sm font-medium text-destructive">Zona de risco</h3>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Desabilitar bloqueia o login. O usuário permanece reservado.
+                  </p>
+                </div>
+                {isSelf ? (
+                  <p className="rounded-lg border border-border/60 bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
+                    Você não pode desabilitar a própria sessão.
+                  </p>
+                ) : (
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={selected.status === 'Disabled' ? 'default' : 'destructive'}
+                    disabled={busyKey === 'status'}
+                    onClick={() => setConfirmAction({
+                      kind: selected.status === 'Disabled' ? 'enable' : 'disable',
+                      account: selected,
+                    })}
+                  >
+                    {selected.status === 'Disabled' ? 'Reabilitar conta…' : 'Desabilitar conta…'}
+                  </Button>
+                )}
+              </section>
             </CardContent>
           </Card>
         ) : (
@@ -572,7 +814,7 @@ export function AccountsPage() {
               <div className="space-y-1">
                 <p className="font-medium">Selecione uma conta</p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Escolha um item na lista para gerenciar o preset Admin, status e senha.
+                  Escolha um item na lista para gerenciar Admin, senha e status.
                 </p>
               </div>
             </CardContent>
@@ -580,12 +822,89 @@ export function AccountsPage() {
         )}
       </div>
 
+      <Dialog
+        open={confirmAction !== null}
+        onOpenChange={(open) => {
+          if (!open) setConfirmAction(null);
+        }}
+      >
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {confirmAction?.kind === 'grant-admin' && 'Conceder Admin'}
+              {confirmAction?.kind === 'revoke-admin' && 'Remover Admin'}
+              {confirmAction?.kind === 'grant-preset' && `Conceder ${presetLabel(confirmAction.presetId ?? '')}`}
+              {confirmAction?.kind === 'revoke-preset' && `Revogar ${presetLabel(confirmAction.presetId ?? '')}`}
+              {confirmAction?.kind === 'disable' && 'Desabilitar conta'}
+              {confirmAction?.kind === 'enable' && 'Reabilitar conta'}
+            </DialogTitle>
+            <DialogDescription>
+              {confirmAction?.kind === 'grant-admin' && (
+                <>
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}passará a ter acesso irrestrito no hub.
+                </>
+              )}
+              {confirmAction?.kind === 'revoke-admin' && (
+                <>
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}deixará de ser Admin. Não dá para remover o último Admin do sistema.
+                </>
+              )}
+              {confirmAction?.kind === 'grant-preset' && (
+                <>
+                  Conceder o mandato{' '}
+                  <span className="font-medium text-foreground">{presetLabel(confirmAction.presetId ?? '')}</span>
+                  {' '}para{' '}
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>.
+                </>
+              )}
+              {confirmAction?.kind === 'revoke-preset' && (
+                <>
+                  Remover o mandato{' '}
+                  <span className="font-medium text-foreground">{presetLabel(confirmAction.presetId ?? '')}</span>
+                  {' '}de{' '}
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}(pode podar sub-mandatos).
+                </>
+              )}
+              {confirmAction?.kind === 'disable' && (
+                <>
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}não conseguirá entrar até ser reabilitada.
+                </>
+              )}
+              {confirmAction?.kind === 'enable' && (
+                <>
+                  Liberar o login de{' '}
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}novamente.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirmAction(null)}>
+              Cancelar
+            </Button>
+            <Button
+              type="button"
+              variant={confirmAction?.kind === 'disable' || confirmAction?.kind === 'revoke-admin' || confirmAction?.kind === 'revoke-preset' ? 'destructive' : 'default'}
+              disabled={busyKey !== null}
+              onClick={() => void runConfirmedAction()}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Nova conta</DialogTitle>
             <DialogDescription>
-              Cria uma identidade (handle). Conta comum não recebe mandato nesta etapa; Admin exige a chave mestra.
+              Cria uma identidade (usuário). Conta comum não recebe mandato nesta etapa; Admin exige a chave mestra.
             </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
@@ -639,7 +958,7 @@ export function AccountsPage() {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Handle</FormLabel>
+                    <FormLabel>Usuário</FormLabel>
                     <FormControl>
                       <Input autoComplete="off" {...field} />
                     </FormControl>

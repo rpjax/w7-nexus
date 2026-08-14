@@ -1,6 +1,6 @@
 # 03 — Operações, Script e Store (mínimo)
 
-**Status:** pendente  
+**Status:** feito  
 **Depende de:** [02-members-roles.md](./02-members-roles.md)
 
 ## Objetivo
@@ -33,7 +33,14 @@ Operação como fronteira de isolamento + **operation key 1:1** ligando Script/S
 
 ## Critérios de pronto
 
-- [ ] Pausada/Encerrada bloqueiam **nova** Cobrança; Encerrada não reabre.
-- [ ] Operation key **1:1** com a op; nunca reusada.
-- [ ] Objects de keys diferentes não se misturam.
-- [ ] Operação não é container pai obrigatório de Script/Store no modelo.
+- [x] Pausada/Encerrada bloqueiam **nova** Cobrança; Encerrada não reabre.
+- [x] Operation key **1:1** com a op; nunca reusada.
+- [x] Objects de keys diferentes não se misturam.
+- [x] Operação não é container pai obrigatório de Script/Store no modelo.
+
+## Entrega (Refactor)
+
+- BC `Operations/` (Domain/Application/Infrastructure/Presentation/Composition). `Operation` event-sourced (ciclo, assign, cut); Script/Store continuam SQL keyed.
+- Mandates: `OperationSpecific` desbloqueado; `IOperationDirectory` + tip×gestão.
+- HTTP Admin + edge (resolve Script / Store read).
+- UI Admin: lista/detalhe, assign, Script, Store; fine-tune Specific em Contas.

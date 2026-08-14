@@ -49,6 +49,12 @@ internal static class AccountAdministratorGuards
             .WithMessage("Voce nao pode desabilitar a propria conta.")
             .Build();
 
+    public static Error CannotRevokeOwnAdministratorError() =>
+        Error.Create()
+            .WithCode(AccountErrorCodes.CannotRevokeOwnAdministrator)
+            .WithMessage("Voce nao pode remover o preset Admin da propria conta. Peca a outro Admin.")
+            .Build();
+
     public static Error NotFoundError(string accountId) =>
         Error.Create()
             .WithCode(AccountErrorCodes.AccountNotFound)

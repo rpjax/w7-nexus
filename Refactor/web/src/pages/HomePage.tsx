@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Shield, UserRound } from 'lucide-react';
+import { ArrowRight, Layers, Receipt, Shield, UserRound } from 'lucide-react';
 import { getMyProfile } from '@/api/auth';
 import { useAuth } from '@/auth/AuthContext';
 import type { MyProfile } from '@/auth/types';
@@ -55,8 +55,8 @@ export function HomePage() {
         title={`Olá, ${username}`}
         description={
           admin
-            ? 'Gerencie identidades e o preset Admin. Mandatos de produto entram na próxima etapa.'
-            : 'Acompanhe sua identidade e atualize handle e senha quando precisar.'
+            ? 'Gerencie identidades, mandatos, deals de agenciamento e Acionistas.'
+            : 'Acompanhe sua identidade e atualize usuário e senha quando precisar.'
         }
       />
 
@@ -107,7 +107,7 @@ export function HomePage() {
             </div>
             <CardTitle className="text-base">Meu perfil</CardTitle>
             <CardDescription>
-              Altere handle e senha da conta autenticada.
+              Altere usuário e senha da conta autenticada.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -128,7 +128,7 @@ export function HomePage() {
               </div>
               <CardTitle className="text-base">Contas</CardTitle>
               <CardDescription>
-                Busque identidades, conceda Admin e controle status.
+                Identidades, Admin e mandatos de produto.
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -141,19 +141,64 @@ export function HomePage() {
             </CardContent>
           </Card>
         ) : null}
+
+        {admin ? (
+          <Card className="border-border/60 bg-card/90 transition-colors hover:border-primary/40 sm:col-span-2 xl:col-span-1">
+            <CardHeader className="pb-3">
+              <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Layers className="size-4" />
+              </div>
+              <CardTitle className="text-base">Operações</CardTitle>
+              <CardDescription>
+                Ciclo, assign, Script e Store por operation key.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full justify-between">
+                <Link to="/dashboard/operations">
+                  Abrir operações
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
+        {admin ? (
+          <Card className="border-border/60 bg-card/90 transition-colors hover:border-primary/40 sm:col-span-2 xl:col-span-1">
+            <CardHeader className="pb-3">
+              <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                <Receipt className="size-4" />
+              </div>
+              <CardTitle className="text-base">Cobranças</CardTitle>
+              <CardDescription>
+                Emissão, split snapshot e webhook Paga.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button asChild className="w-full justify-between">
+                <Link to="/dashboard/charges">
+                  Abrir cobranças
+                  <ArrowRight data-icon="inline-end" />
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        ) : null}
       </div>
 
-      <Card className="border-border/50 bg-transparent">
-        <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <p className="text-sm font-medium">Próxima etapa</p>
-            <p className="text-xs text-muted-foreground">
-              Mandato (capacidade × escopo): Operador, Recrutador, Laranja, Gateways, Contador, Gestor de Operações.
-            </p>
-          </div>
-          <Badge variant="outline">01 · Identidade</Badge>
-        </CardContent>
-      </Card>
+      {admin ? (
+        <Card className="border-border/50 bg-transparent">
+          <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium">Etapa 04 ativa</p>
+              <p className="text-xs text-muted-foreground">
+                Cobrança até Paga (ES). Próximo: livro-mundo (Contas).
+              </p>
+            </div>
+            <Badge variant="outline">04 · Cobrança</Badge>
+          </CardContent>
+        </Card>
+      ) : null}
     </div>
   );
 }

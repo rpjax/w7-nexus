@@ -7,7 +7,7 @@ O que cada ator **vê**. Princípio: **mínimo ao mandato** — com exceção ex
 - **Ponta / mandato estreito:** só a fatia da própria competência — sem montar organograma.
 - **Cargo de confiança:** visão ampla **no domínio do cargo** (financeiro ou ops), porque o mundo real exige braço direito.
 - **Admin:** irrestrito.
-- Inferência estatística ao longo do tempo (ex.: Contador contar handles únicos em splits) é **risco residual aceito** de cargo de confiança — o hub não entrega catálogo/organograma de bandeja, e o **log de auditoria** (ver abaixo) é o que permite *detectar* a inferência quando ela acontece.
+- Inferência estatística ao longo do tempo (ex.: Contador contar usernames únicos em splits) é **risco residual aceito** de cargo de confiança — o hub não entrega catálogo/organograma de bandeja, e o **log de auditoria** (ver abaixo) é o que permite *detectar* a inferência quando ela acontece.
 
 ### Visão = escopo do Mandato (G11)
 

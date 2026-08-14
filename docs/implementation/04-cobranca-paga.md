@@ -1,28 +1,28 @@
 # 04 — Cobrança e webhook Paga
 
-**Status:** pendente  
-**Depende de:** [03-operations.md](./03-operations.md), Contas de Gateway de emissão (pode stubear até [05](./05-contas-livro-mundo.md) fechar)
+**Status:** feito  
+**Depende de:** [03-operations.md](./03-operations.md), Contas de Gateway de emissão ([05](./05-contas-livro-mundo.md))
 
 ## Objetivo
 
-Nascimento e lifecycle da Cobrança até **Paga** — ainda **sem** materialização (Claims).
+Nascimento e lifecycle da Cobrança até **Paga** — materialização (Claims) é [06](./06-materializacao-claims.md).
 
 ## Escopo
 
 | Entra | Não entra |
 |-------|-----------|
 | API: Operação + Operador + valor → Cobrança | Materialização / Claims (06) |
-| Conta de Gateway de **emissão** (fixa cut nível-1) | Hops; execução de pagamento pelo Nexus |
+| Conta de Gateway de **emissão** (`WorldAccount`) | Hops; execução de pagamento pelo Nexus |
 | Intenção de split em % (snapshot; waterfall 5 linhas) | Attrition completo |
-| Seleção da Conta: Nexus escolhe no pool (quota); **API pode forçar** Conta do conjunto (G13) | |
+| Seleção da Conta: auto + override no conjunto da Op | PSP real (`IPaymentIssuer` no-op) |
 | Aberta → Paga (webhook) | |
 | Terminais: Expirada / Cancelada / Falhou | |
 
 ## Use cases (mínimo)
 
-- Gerar Cobrança (API + fallback painel se quiser depois).
-- Receber webhook Paga.
-- Consultar Cobrança (Admin/Contador/Operador — visões mínimas).
+- Gerar Cobrança (API + painel Admin).
+- Receber webhook Paga (secret).
+- Consultar Cobrança (Admin / Operador nas próprias).
 
 ## Domínio
 
@@ -31,7 +31,14 @@ Nascimento e lifecycle da Cobrança até **Paga** — ainda **sem** materializa�
 
 ## Critérios de pronto
 
-- [ ] Split intenção imutável na base após geração (waterfall: Laranja → Acionistas → Gestão da Op → agenciamento → Residual Org).
-- [ ] Cut nível-1 amarrado ao Laranja da **conta de emissão**, independente de aterrissagem futura.
-- [ ] Paga é fato externo; não cria Claims ainda.
-- [ ] Sem quota disponível → emissão rejeitada; override de Conta só se estiver no conjunto da Op.
+- [x] Split intenção imutável na base após geração (waterfall: Laranja → Acionistas → Gestão da Op → agenciamento → Residual Org).
+- [x] Cut nível-1 amarrado ao Laranja da **conta de emissão**, independente de aterrissagem futura.
+- [x] Paga é fato externo; não cria Claims ainda (materialização = etapa 06: `Paga → Materializada`).
+- [x] Sem quota disponível → emissão rejeitada; override de Conta só se estiver no conjunto da Op.
+
+## Entrega (Refactor)
+
+- BC `Charging/`: `Charge` event-sourced (Marten, schema compartilhado `nexus_es`); emissão contra `WorldAccount` (etapa 05) — o campo `EmissionRailId` no evento da Cobrança guarda o id da Conta.
+- HTTP `/api/charging/administrator`, `/authenticated`, `/webhooks/paid`.
+- UI Admin: Cobranças + bind de Conta de Gateway na página Operações.
+- Journal **não** é o stream da Cobrança.

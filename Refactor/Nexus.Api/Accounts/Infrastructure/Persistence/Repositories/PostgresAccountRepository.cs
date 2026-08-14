@@ -74,9 +74,9 @@ public sealed class PostgresAccountRepository : IAccountRepository, IAccountRead
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task UpdateChangingHandleAsync(
+    public async Task UpdateChangingUsernameAsync(
         Account account,
-        string previousHandle,
+        string previousUsername,
         CancellationToken cancellationToken = default)
     {
         await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
@@ -101,15 +101,15 @@ public sealed class PostgresAccountRepository : IAccountRepository, IAccountRead
         }
 
         const string retireSql = """
-            insert into retired_handles (handle_lower, original_handle, retired_from, retired_at)
-            values (lower(@handle), @original, @retired_from, @retired_at)
-            on conflict (handle_lower) do nothing;
+            insert into retired_usernames (username_lower, original_username, retired_from, retired_at)
+            values (lower(@username), @original, @retired_from, @retired_at)
+            on conflict (username_lower) do nothing;
             """;
 
         await using (var command = new NpgsqlCommand(retireSql, connection, transaction))
         {
-            command.Parameters.AddWithValue("handle", previousHandle);
-            command.Parameters.AddWithValue("original", previousHandle.Trim());
+            command.Parameters.AddWithValue("username", previousUsername);
+            command.Parameters.AddWithValue("original", previousUsername.Trim());
             command.Parameters.AddWithValue("retired_from", account.Id.Value);
             command.Parameters.AddWithValue("retired_at", DateTime.UtcNow);
             await command.ExecuteNonQueryAsync(cancellationToken);
@@ -138,40 +138,40 @@ public sealed class PostgresAccountRepository : IAccountRepository, IAccountRead
         return ToAccount(ToRecord(reader));
     }
 
-    public async Task<bool> IsHandleRetiredAsync(string handle, CancellationToken cancellationToken = default)
+    public async Task<bool> IsUsernameRetiredAsync(string username, CancellationToken cancellationToken = default)
     {
         const string sql = """
             select exists(
-                select 1 from retired_handles where handle_lower = lower(@handle)
+                select 1 from retired_usernames where username_lower = lower(@username)
             );
             """;
 
         await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("handle", handle);
+        command.Parameters.AddWithValue("username", username);
         return (bool)(await command.ExecuteScalarAsync(cancellationToken) ?? false);
     }
 
-    public async Task<bool> IsHandleTakenAsync(string handle, CancellationToken cancellationToken = default)
+    public async Task<bool> IsUsernameTakenAsync(string username, CancellationToken cancellationToken = default)
     {
-        if (await FindByUsernameAsync(handle, cancellationToken) is not null)
+        if (await FindByUsernameAsync(username, cancellationToken) is not null)
             return true;
 
-        return await IsHandleRetiredAsync(handle, cancellationToken);
+        return await IsUsernameRetiredAsync(username, cancellationToken);
     }
 
-    public async Task RetireHandleAsync(string handle, AccountId retiredFrom, CancellationToken cancellationToken = default)
+    public async Task RetireUsernameAsync(string username, AccountId retiredFrom, CancellationToken cancellationToken = default)
     {
         const string sql = """
-            insert into retired_handles (handle_lower, original_handle, retired_from, retired_at)
-            values (lower(@handle), @original, @retired_from, @retired_at)
-            on conflict (handle_lower) do nothing;
+            insert into retired_usernames (username_lower, original_username, retired_from, retired_at)
+            values (lower(@username), @original, @retired_from, @retired_at)
+            on conflict (username_lower) do nothing;
             """;
 
         await using var connection = await _connectionFactory.OpenConnectionAsync(cancellationToken);
         await using var command = new NpgsqlCommand(sql, connection);
-        command.Parameters.AddWithValue("handle", handle);
-        command.Parameters.AddWithValue("original", handle.Trim());
+        command.Parameters.AddWithValue("username", username);
+        command.Parameters.AddWithValue("original", username.Trim());
         command.Parameters.AddWithValue("retired_from", retiredFrom.Value);
         command.Parameters.AddWithValue("retired_at", DateTime.UtcNow);
         await command.ExecuteNonQueryAsync(cancellationToken);

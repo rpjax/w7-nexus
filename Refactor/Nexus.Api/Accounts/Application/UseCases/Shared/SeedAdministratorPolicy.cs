@@ -12,22 +12,22 @@ public static class SeedAdministratorPolicy
 {
     public static SeedAdministratorDecision Evaluate(
         int administratorCount,
-        string? handle,
+        string? username,
         string? password,
         bool creationTokenConfigured)
     {
         if (administratorCount > 0)
             return SeedAdministratorDecision.SkipAlreadyHasAdministrator;
 
-        var handleSet = !string.IsNullOrWhiteSpace(handle);
+        var usernameSet = !string.IsNullOrWhiteSpace(username);
         var passwordSet = !string.IsNullOrWhiteSpace(password);
-        if (!handleSet && !passwordSet)
+        if (!usernameSet && !passwordSet)
             return SeedAdministratorDecision.SkipNotConfigured;
 
         if (!creationTokenConfigured)
             return SeedAdministratorDecision.SkipMissingCreationTokenGuard;
 
-        if (!handleSet || !passwordSet)
+        if (!usernameSet || !passwordSet)
             return SeedAdministratorDecision.SkipNotConfigured;
 
         return SeedAdministratorDecision.Seed;

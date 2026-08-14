@@ -20,12 +20,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 
 const signInSchema = z.object({
-  username: z.string().trim().min(1, 'Handle é obrigatório.'),
+  username: z.string().trim().min(1, 'Usuário é obrigatório.'),
   password: z.string().min(1, 'Senha é obrigatória.'),
 });
 
 const signUpSchema = z.object({
-  username: z.string().trim().min(1, 'Handle é obrigatório.'),
+  username: z.string().trim().min(1, 'Usuário é obrigatório.'),
   password: z.string().min(8, 'A senha deve ter no mínimo 8 caracteres.'),
   confirmPassword: z.string().min(1, 'Confirme a senha.'),
   masterKey: z.string().trim().min(1, 'A chave mestra é obrigatória.'),
@@ -140,17 +140,20 @@ export function AuthPage() {
             <TabsContent value="sign-in" className="mt-0 outline-none">
               <Form {...signInForm}>
                 <form className="space-y-5" onSubmit={signInForm.handleSubmit(handleSignIn)}>
+                  <FormDescription>
+                    Em deploy local o Admin já nasce no seed: usuário <span className="font-medium text-foreground">admin</span>, senha <span className="font-medium text-foreground">adminadmin</span>.
+                  </FormDescription>
                   <FormField
                     control={signInForm.control}
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Handle</FormLabel>
+                        <FormLabel>Usuário</FormLabel>
                         <FormControl>
                           <Input
                             className={fieldClass}
                             autoComplete="username"
-                            placeholder="seu.handle"
+                            placeholder="admin"
                             {...field}
                           />
                         </FormControl>
@@ -194,7 +197,7 @@ export function AuthPage() {
               <Form {...signUpForm}>
                 <form className="space-y-5" onSubmit={signUpForm.handleSubmit(handleSignUp)}>
                   <FormDescription>
-                    Emergência: cria o primeiro administrador com a chave mestra do servidor. O caminho normal é o seed no deploy.
+                    Só use se o seed falhou. Chave mestra local: <span className="font-medium text-foreground">local-dev-master-key</span>. Se o Admin já existe, use a aba Entrar.
                   </FormDescription>
                   <FormField
                     control={signUpForm.control}
@@ -210,7 +213,7 @@ export function AuthPage() {
                             className={fieldClass}
                             type="password"
                             autoComplete="off"
-                            placeholder="Token de criação"
+                            placeholder="local-dev-master-key"
                             {...field}
                           />
                         </FormControl>
@@ -223,12 +226,12 @@ export function AuthPage() {
                     name="username"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Handle</FormLabel>
+                        <FormLabel>Usuário</FormLabel>
                         <FormControl>
                           <Input
                             className={fieldClass}
                             autoComplete="username"
-                            placeholder="admin.handle"
+                            placeholder="admin"
                             {...field}
                           />
                         </FormControl>

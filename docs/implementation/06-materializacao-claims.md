@@ -1,6 +1,6 @@
 # 06 — Materialização e Claims (ledger)
 
-**Status:** pendente  
+**Status:** feito  
 **Depende de:** [04-cobranca-paga.md](./04-cobranca-paga.md), [05-contas-livro-mundo.md](./05-contas-livro-mundo.md)
 
 ## Objetivo
@@ -35,6 +35,14 @@ Nascimento do **ledger**: Contador materializa líquido X + Conta de aterrissage
 
 ## Critérios de pronto
 
-- [ ] Materializar cria claims que somam X e saldo da Conta/moeda casa (só `ativo` na invariante).
-- [ ] Re-materializar o mesmo pagamento é rejeitado (exceto compensatório explícito).
-- [ ] Residual da Org recebe resto do deal `< 100%` e o centavo de arredondamento.
+- [x] Materializar cria claims que somam X e saldo da Conta/moeda casa (só `ativo` na invariante).
+- [x] Re-materializar o mesmo pagamento é idempotente (mesmo X/Conta); payload diferente é rejeitado (compensatório = etapa futura).
+- [x] Residual da Org recebe resto do deal `< 100%` e o centavo de arredondamento.
+
+## Entrega (Refactor)
+
+- BC `Ledger/`: agregado `Claim` event-sourced (`claim-{id}`); `WaterfallMaterializer`; UC `MaterializeCharge` (caixa + ledger na mesma sessão Marten).
+- Beneficiário Residual Org = `OrganizationParty.Id` (GUID estável, não é Account de login).
+- Cobrança: `Paga → Materializada` (`ChargeMaterialized` com X + Conta de aterrissagem). Mesmo payload = idempotente; X/Conta diferentes = rejeitado.
+- HTTP `/api/ledger/administrator/materializations` e `/claims`; UI Cobranças + página Claims.
+- Claims passam a se mover na etapa 07 (hops, cut, repasse); nesta etapa só nascem na aterrissagem.

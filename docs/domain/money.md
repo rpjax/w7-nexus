@@ -12,7 +12,7 @@ O modelo separa o que o mundo real separa:
 
 | Livro | O que modela | O que **não** modela |
 |-------|--------------|----------------------|
-| **Livro-mundo (Contas)** | Contas com **saldo fungível (número)** + transações (± saldo). Registro do que o Contador observou na realidade | Ownership, cuts, "de quem é", Cobrança, semântica |
+| **Livro-mundo (Contas)** | Contas com **saldo fungível** = fold das transações observadas (±). Stream de observações (ES na etapa 05). Sem ownership | Cuts, "de quem é", Cobrança, semântica de direito |
 | **Ledger (semântica)** | Toda rastreabilidade: **Claims**, materialização, cuts, `repassado`, ajustes, linhagem/eventos | O saldo bruto da Conta |
 
 | Camada | Relação entre os dois |
