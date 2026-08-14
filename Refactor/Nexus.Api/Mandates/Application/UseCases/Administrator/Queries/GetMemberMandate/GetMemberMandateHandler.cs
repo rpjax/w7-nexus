@@ -22,7 +22,9 @@ public sealed record MandateGrantView(
 public sealed record GetMemberMandateResult(
     string AccountId,
     IReadOnlyList<string> AppliedPresets,
-    IReadOnlyList<MandateGrantView> Grants);
+    IReadOnlyList<MandateGrantView> Grants,
+    string AttritionStatus,
+    string? AttritionCause);
 
 public interface IGetMemberMandateUseCase
 {
@@ -72,6 +74,8 @@ public sealed class GetMemberMandateHandler : IGetMemberMandateUseCase
                 g.Scope.OperationIds,
                 g.GrantedBy.ToString(),
                 g.GrantedAt,
-                g.SourcePreset)).ToList()));
+                g.SourcePreset)).ToList(),
+            mandate.AttritionStatus,
+            mandate.AttritionCause));
     }
 }

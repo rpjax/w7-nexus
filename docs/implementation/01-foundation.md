@@ -15,6 +15,8 @@ Estabilizar a base sobre a qual o domínio de produto se apoia: **Account = iden
 - Admin semente no deploy se zero Administrators (`NEXUS_SEED_ADMIN_USERNAME` / `NEXUS_SEED_ADMIN_PASSWORD`, com o token de criação já existente como guarda). `POST /api/authentication/sign-up/admin` permanece como bootstrap de emergência.
 - Journal **não** é event sourcing. Fatos de mutação de Account vivem no stream Marten (`accounts` identity). Journal fica log de sistema; sem hash-chain, sem log de leitura, sem HTTP de auditoria nesta etapa.
 
+**Nota G12 (parcial, GAP-28):** a capacidade `ler_log_auditoria` e `GET /api/journal/administrator/entries` existem depois desta etapa. Tamper-evidence (hash-chain), retenção e correlação ES↔log **não** entram na v1. O status desta etapa permanece **feito**.
+
 ## Já existe no código
 
 | Área | O quê |

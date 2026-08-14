@@ -23,6 +23,8 @@ export type MemberMandate = {
     grantedAt: string;
     sourcePreset: string | null;
   }>;
+  attritionStatus: string;
+  attritionCause: string | null;
 };
 
 export type AgencyDeal = {
@@ -80,6 +82,12 @@ export async function revokeMandateCapability(input: {
 }) {
   return apiClient.delete('/api/mandates/administrator/capabilities', input, {
     fallbackError: 'Não foi possível revogar a capacidade.',
+  });
+}
+
+export async function recordMemberAttrition(accountId: string, status: string, cause: string) {
+  return apiClient.post(`/api/mandates/administrator/members/${accountId}/attrition`, { status, cause }, {
+    fallbackError: 'Não foi possível registrar attrition.',
   });
 }
 

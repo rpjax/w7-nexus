@@ -77,7 +77,7 @@ public sealed class MandateDomainTests
     [Fact]
     public void Deal_rejects_sum_over_100()
     {
-        var created = AgencyDealAggregate.Create(MemberId.New(), MemberId.New(), 60, 50);
+        var created = AgencyDealAggregate.Open(MemberId.New(), MemberId.New(), 60, 50);
         Assert.True(created.IsFailure);
         Assert.Equal(MandateErrorCodes.DealPercentsInvalid, created.Errors.First().Code);
     }
@@ -85,14 +85,14 @@ public sealed class MandateDomainTests
     [Fact]
     public void Deal_accepts_sum_equal_100()
     {
-        var created = AgencyDealAggregate.Create(MemberId.New(), MemberId.New(), 70, 30);
+        var created = AgencyDealAggregate.Open(MemberId.New(), MemberId.New(), 70, 30);
         Assert.True(created.IsSuccess);
     }
 
     [Fact]
     public void Deal_accepts_sum_under_100_residual()
     {
-        var created = AgencyDealAggregate.Create(MemberId.New(), MemberId.New(), 40, 20);
+        var created = AgencyDealAggregate.Open(MemberId.New(), MemberId.New(), 40, 20);
         Assert.True(created.IsSuccess);
     }
 
@@ -122,7 +122,7 @@ public sealed class MandateDomainTests
     [Fact]
     public void Closed_deal_rejects_rate_change()
     {
-        var deal = AgencyDealAggregate.Create(MemberId.New(), MemberId.New(), 70, 20).Value!;
+        var deal = AgencyDealAggregate.Open(MemberId.New(), MemberId.New(), 70, 20).Value!;
         Assert.True(deal.Close().IsSuccess);
         var count = deal.UncommittedEvents.Count;
         var updated = deal.UpdatePercents(50, 20, deal.RecruiterId);
@@ -134,7 +134,7 @@ public sealed class MandateDomainTests
     [Fact]
     public void Stake_remove_replays_as_removed()
     {
-        var stake = ShareholderStakeAggregate.Create(MemberId.New(), 10).Value!;
+        var stake = ShareholderStakeAggregate.Open(MemberId.New(), 10).Value!;
         Assert.True(stake.Remove().IsSuccess);
         var replayed = EventFold.Replay<ShareholderStakeAggregate>(stake.UncommittedEvents);
         Assert.True(replayed.IsRemoved);

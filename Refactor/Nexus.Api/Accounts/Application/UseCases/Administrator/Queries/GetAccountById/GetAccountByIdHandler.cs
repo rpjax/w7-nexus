@@ -6,6 +6,7 @@ using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Accounts.Application.UseCases.Shared;
 using Refactor.Nexus.Api.Accounts.Domain.Aggregates.Account;
+using Refactor.Nexus.Api.Authorization;
 
 namespace Refactor.Nexus.Api.Accounts.Application.UseCases.Administrator.Queries.GetAccountById;
 
@@ -62,11 +63,17 @@ public sealed class GetAccountByIdHandler : IGetAccountByIdUseCase
         if (requesterResult.IsFailure || requesterResult.Value is not RequesterContext requester)
             return OperationResult<GetAccountByIdResult>.Failure(requesterResult.Errors);
 
+        if (requester.HasPermission(Permissions.AccountsRead))
+            return null;
+
         var authorization = await _accessPolicy.AuthorizeAsync(requester.Roles, cancellationToken);
+        if (!authorization.IsAuthorized)
+            return OperationResult<GetAccountByIdResult>.Unauthorized(
+                authorization.AuthorizationErrors.Count > 0
+                    ? authorization.AuthorizationErrors
+                    : authorization.Errors);
         if (authorization.IsFailure)
             return OperationResult<GetAccountByIdResult>.Failure(authorization.Errors);
-        if (!authorization.IsAuthorized)
-            return OperationResult<GetAccountByIdResult>.Unauthorized(authorization.AuthorizationErrors);
 
         return null;
     }

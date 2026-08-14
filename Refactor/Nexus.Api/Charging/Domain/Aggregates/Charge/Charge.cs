@@ -15,7 +15,8 @@ public enum ChargeStatus
     Materialized = 2,
     Expired = 3,
     Cancelled = 4,
-    Failed = 5
+    Failed = 5,
+    Reversed = 6
 }
 
 public sealed class Charge
@@ -44,7 +45,7 @@ public sealed class Charge
 
     [JsonIgnore]
     public IReadOnlyList<object> UncommittedEvents => _uncommitted;
-    public bool IsTerminal => Status is ChargeStatus.Materialized or ChargeStatus.Expired or ChargeStatus.Cancelled or ChargeStatus.Failed;
+    public bool IsTerminal => Status is ChargeStatus.Materialized or ChargeStatus.Expired or ChargeStatus.Cancelled or ChargeStatus.Failed or ChargeStatus.Reversed;
     public bool IsPaid => Status == ChargeStatus.Paid;
     public bool IsMaterialized => Status == ChargeStatus.Materialized;
 
@@ -157,6 +158,23 @@ public sealed class Charge
         return Result.Success();
     }
 
+    public IResult MarkReversed()
+    {
+        if (Status == ChargeStatus.Reversed)
+            return Result.Success();
+
+        if (Status != ChargeStatus.Materialized && Status != ChargeStatus.Paid)
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(ChargingErrorCodes.NotPaid)
+                .WithMessage("So Cobrança Paga ou Materializada pode ser estornada.")
+                .Build());
+        }
+
+        ApplyChange(new ChargeReversed(Id, DateTime.UtcNow));
+        return Result.Success();
+    }
+
     public void ClearUncommitted() => _uncommitted.Clear();
 
     public void Apply(ChargeOpened e)
@@ -213,6 +231,12 @@ public sealed class Charge
         LastUpdatedAt = e.OccurredAt;
     }
 
+    public void Apply(ChargeReversed e)
+    {
+        Status = ChargeStatus.Reversed;
+        LastUpdatedAt = e.OccurredAt;
+    }
+
     private IResult TransitionOpen(object @event)
     {
         if (Status != ChargeStatus.Open)
@@ -262,6 +286,9 @@ public sealed class Charge
                 break;
             case ChargeMaterialized materialized:
                 Apply(materialized);
+                break;
+            case ChargeReversed reversed:
+                Apply(reversed);
                 break;
             default:
                 throw new InvalidOperationException($"Evento desconhecido: {@event.GetType().Name}");

@@ -1,8 +1,21 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Layers, Receipt, Shield, UserRound } from 'lucide-react';
+import {
+  ArrowRight,
+  FileText,
+  Handshake,
+  Layers,
+  PieChart,
+  Receipt,
+  ScrollText,
+  Shield,
+  UserRound,
+  Users,
+  Wallet,
+} from 'lucide-react';
 import { getMyProfile } from '@/api/auth';
 import { useAuth } from '@/auth/AuthContext';
+import { useHubAccess, type HubAccess } from '@/auth/MandateContext';
 import type { MyProfile } from '@/auth/types';
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/StatusBadge';
@@ -10,25 +23,120 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
-import { isAdministrator, roleLabel } from '@/utils/accountAccess';
-import { toast } from 'sonner';
+import { roleLabel } from '@/utils/accountAccess';
+import { reportError } from '@/feedback';
+
+type Shortcut = {
+  to: string;
+  title: string;
+  description: string;
+  action: string;
+  icon: typeof UserRound;
+  show?: (access: HubAccess) => boolean;
+};
+
+const SHORTCUTS: Shortcut[] = [
+  {
+    to: '/dashboard/profile',
+    title: 'Meu perfil',
+    description: 'Altere usuário e senha desta sessão.',
+    action: 'Abrir perfil',
+    icon: UserRound,
+  },
+  {
+    to: '/dashboard/statement',
+    title: 'Extrato',
+    description: 'O que você tem a receber e o que já entrou.',
+    action: 'Abrir extrato',
+    icon: FileText,
+  },
+  {
+    to: '/dashboard/carteira',
+    title: 'Minha gente',
+    description: 'Pessoas da sua rede de agenciamento.',
+    action: 'Abrir minha gente',
+    icon: Users,
+    show: (a) => a.canRecruit || a.admin,
+  },
+  {
+    to: '/dashboard/operations',
+    title: 'Operações',
+    description: 'Ciclos e lojas que você acompanha.',
+    action: 'Abrir operações',
+    icon: Layers,
+    show: (a) => a.canManageOperations || a.admin,
+  },
+  {
+    to: '/dashboard/charges',
+    title: 'Cobranças',
+    description: 'Pedidos de pagamento em aberto e pagos.',
+    action: 'Abrir cobranças',
+    icon: Receipt,
+    show: (a) => a.canActAsOperator || a.canSeeFinance || a.canManageOperations || a.admin,
+  },
+  {
+    to: '/dashboard/claims',
+    title: 'Direitos',
+    description: 'O que cada um tem a receber no livro.',
+    action: 'Abrir direitos',
+    icon: ScrollText,
+    show: (a) => a.canSeeFinance || a.admin,
+  },
+  {
+    to: '/dashboard/world-accounts',
+    title: 'Livro-mundo',
+    description: 'Caixas globais e exposição.',
+    action: 'Abrir livro-mundo',
+    icon: Wallet,
+    show: (a) => a.canSeeFinance || a.canManageGateways || a.admin,
+  },
+  {
+    to: '/dashboard/accounts',
+    title: 'Membros',
+    description: 'Identidades e mandatos de produto.',
+    action: 'Abrir membros',
+    icon: Shield,
+    show: (a) => a.canGrant || a.admin,
+  },
+  {
+    to: '/dashboard/deals',
+    title: 'Agenciamento',
+    description: 'Vínculos e fatias da rede.',
+    action: 'Abrir agenciamento',
+    icon: Handshake,
+    show: (a) => a.canRecruit || a.admin,
+  },
+  {
+    to: '/dashboard/shareholders',
+    title: 'Acionistas',
+    description: 'Participação e distribuição societária.',
+    action: 'Abrir acionistas',
+    icon: PieChart,
+    show: (a) => a.admin,
+  },
+];
 
 export function HomePage() {
   const { user } = useAuth();
+  const access = useHubAccess();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
 
     async function load() {
       setLoading(true);
+      setError(null);
       const result = await getMyProfile();
       if (cancelled) return;
 
       if (!result.ok || !result.data?.profile) {
-        toast.error(result.ok ? 'Perfil indisponível.' : result.error);
+        const message = result.ok ? 'Perfil indisponível.' : result.error;
+        reportError(message);
         setProfile(null);
+        setError(message);
         setLoading(false);
         return;
       }
@@ -44,19 +152,18 @@ export function HomePage() {
   }, []);
 
   const roles = profile?.roles ?? user?.roles ?? [];
-  const admin = isAdministrator(roles);
   const username = profile?.username ?? user?.username ?? 'usuário';
+  const shortcuts = SHORTCUTS.filter((item) => !item.show || item.show(access));
 
   return (
     <div className="min-w-0 space-y-6">
       <PageHeader
-        kicker={admin ? 'Administração' : 'Conta'}
-        kickerVariant={admin ? 'admin' : 'default'}
+        kicker="Sessão"
         title={`Olá, ${username}`}
         description={
-          admin
-            ? 'Gerencie identidades, mandatos, deals de agenciamento e Acionistas.'
-            : 'Acompanhe sua identidade e atualize usuário e senha quando precisar.'
+          access.admin
+            ? 'Atalhos do painel: pessoas, cobrança, livro e rede.'
+            : 'Atalhos do que o seu mandato já permite ver e fazer.'
         }
       />
 
@@ -66,7 +173,7 @@ export function HomePage() {
             <CardDescription className="text-xs font-medium uppercase tracking-wide">
               Sessão
             </CardDescription>
-            <CardTitle className="text-base">Resumo da conta</CardTitle>
+            <CardTitle className="text-base">Resumo da sessão</CardTitle
           </CardHeader>
           <CardContent className="space-y-3">
             {loading ? (
@@ -75,6 +182,10 @@ export function HomePage() {
                 <Skeleton className="h-5 w-24" />
                 <Skeleton className="h-5 w-40" />
               </>
+            ) : error ? (
+              <p className="text-sm text-destructive" role="alert">
+                {error}
+              </p>
             ) : (
               <>
                 <div className="flex items-center justify-between gap-3">
@@ -100,105 +211,32 @@ export function HomePage() {
           </CardContent>
         </Card>
 
-        <Card className="border-border/60 bg-card/90 transition-colors hover:border-primary/40">
-          <CardHeader className="pb-3">
-            <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-              <UserRound className="size-4" />
-            </div>
-            <CardTitle className="text-base">Meu perfil</CardTitle>
-            <CardDescription>
-              Altere usuário e senha da conta autenticada.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Button asChild variant="outline" className="w-full justify-between">
-              <Link to="/dashboard/profile">
-                Abrir perfil
-                <ArrowRight data-icon="inline-end" />
-              </Link>
-            </Button>
-          </CardContent>
-        </Card>
-
-        {admin ? (
-          <Card className="border-border/60 bg-card/90 transition-colors hover:border-warning/40 sm:col-span-2 xl:col-span-1">
-            <CardHeader className="pb-3">
-              <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-warning/15 text-warning">
-                <Shield className="size-4" />
-              </div>
-              <CardTitle className="text-base">Contas</CardTitle>
-              <CardDescription>
-                Identidades, Admin e mandatos de produto.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full justify-between">
-                <Link to="/dashboard/accounts">
-                  Abrir contas
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
-
-        {admin ? (
-          <Card className="border-border/60 bg-card/90 transition-colors hover:border-primary/40 sm:col-span-2 xl:col-span-1">
-            <CardHeader className="pb-3">
-              <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <Layers className="size-4" />
-              </div>
-              <CardTitle className="text-base">Operações</CardTitle>
-              <CardDescription>
-                Ciclo, assign, Script e Store por operation key.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full justify-between">
-                <Link to="/dashboard/operations">
-                  Abrir operações
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
-        {admin ? (
-          <Card className="border-border/60 bg-card/90 transition-colors hover:border-primary/40 sm:col-span-2 xl:col-span-1">
-            <CardHeader className="pb-3">
-              <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                <Receipt className="size-4" />
-              </div>
-              <CardTitle className="text-base">Cobranças</CardTitle>
-              <CardDescription>
-                Emissão, split snapshot e webhook Paga.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button asChild className="w-full justify-between">
-                <Link to="/dashboard/charges">
-                  Abrir cobranças
-                  <ArrowRight data-icon="inline-end" />
-                </Link>
-              </Button>
-            </CardContent>
-          </Card>
-        ) : null}
+        {shortcuts.map((item) => {
+          const Icon = item.icon;
+          return (
+            <Card
+              key={item.to}
+              className="border-border/60 bg-card/90 transition-colors hover:border-primary/40"
+            >
+              <CardHeader className="pb-3">
+                <div className="mb-1 flex size-9 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                  <Icon className="size-4" />
+                </div>
+                <CardTitle className="text-base">{item.title}</CardTitle>
+                <CardDescription>{item.description}</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button asChild variant="outline" className="w-full justify-between">
+                  <Link to={item.to}>
+                    {item.action}
+                    <ArrowRight data-icon="inline-end" />
+                  </Link>
+                </Button>
+              </CardContent>
+            </Card>
+          );
+        })}
       </div>
-
-      {admin ? (
-        <Card className="border-border/50 bg-transparent">
-          <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-sm font-medium">Etapa 04 ativa</p>
-              <p className="text-xs text-muted-foreground">
-                Cobrança até Paga (ES). Próximo: livro-mundo (Contas).
-              </p>
-            </div>
-            <Badge variant="outline">04 · Cobrança</Badge>
-          </CardContent>
-        </Card>
-      ) : null}
     </div>
   );
 }

@@ -7,6 +7,7 @@ using Refactor.Nexus.Api.Operations.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Operations.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Operations.Domain.Aggregates.Operation;
 using OperationAggregate = Refactor.Nexus.Api.Operations.Domain.Aggregates.Operation.Operation;
+using StoreObject = Refactor.Nexus.Api.Operations.Domain.Aggregates.Store.StoreObject;
 
 namespace Refactor.Nexus.Api.Tests.Fakes;
 
@@ -110,6 +111,39 @@ internal sealed class InMemoryOperationRepository : IOperationRepository, IOpera
         IReadOnlyList<OperationAggregate> items = _streams.StreamIds
             .Select(id => EventFold.Replay<OperationAggregate>(_streams.Get(id)!))
             .Where(o => o.Id.Value != Guid.Empty)
+            .ToList();
+        return Task.FromResult(items);
+    }
+}
+
+internal sealed class InMemoryStoreObjectRepository : IStoreObjectRepository
+{
+    private readonly Dictionary<Guid, StoreObject> _items = [];
+
+    public Task<StoreObject?> GetByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
+        Task.FromResult(_items.TryGetValue(id, out var item) ? item : null);
+
+    public Task SaveAsync(StoreObject storeObject, CancellationToken cancellationToken = default)
+    {
+        _items[storeObject.Id] = storeObject;
+        return Task.CompletedTask;
+    }
+
+    public Task DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        _items.Remove(id);
+        return Task.CompletedTask;
+    }
+
+    public Task<IReadOnlyList<StoreObject>> ListByKeyAsync(
+        OperationKey key,
+        string? objectType,
+        CancellationToken cancellationToken = default)
+    {
+        IReadOnlyList<StoreObject> items = _items.Values
+            .Where(i => i.OperationKey.Value == key.Value)
+            .Where(i => string.IsNullOrWhiteSpace(objectType) || i.ObjectType == objectType)
+            .OrderByDescending(i => i.LastUpdatedAt)
             .ToList();
         return Task.FromResult(items);
     }

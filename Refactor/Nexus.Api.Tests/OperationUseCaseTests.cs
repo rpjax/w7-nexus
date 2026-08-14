@@ -1,5 +1,7 @@
 using Refactor.Nexus.Api.Operations.Application.UseCases.Administrator.Commands;
+using Refactor.Nexus.Api.Operations.Application.UseCases.Administrator.Queries;
 using Refactor.Nexus.Api.Operations.Domain.Aggregates.Operation;
+using Refactor.Nexus.Api.Operations.Domain.Aggregates.Store;
 using Refactor.Nexus.Api.Operations.Domain.Errors;
 using Refactor.Nexus.Api.Tests.Fakes;
 
@@ -83,15 +85,35 @@ public sealed class OperationUseCaseTests
         Assert.Null(loaded!.ManagementCutPercent);
     }
 
+    [Fact]
+    public async Task List_store_returns_saved_object_without_type_filter()
+    {
+        var fixture = Fixture.Build();
+        var created = await fixture.Create.HandleAsync(new CreateOperationCommand("Front Store", null));
+        var operationId = created.Value!.OperationId;
+        var operation = await fixture.Ops.GetByIdAsync(new OperationId(Guid.Parse(operationId)));
+        var stored = StoreObject.Create(operation!.Key, "note", """{"ok":true}""").Value!;
+        await fixture.Store.SaveAsync(stored);
+
+        var listed = await fixture.ListStore.HandleAsync(new ListStoreObjectsQuery(operationId, null));
+
+        Assert.True(listed.IsSuccess);
+        var item = Assert.Single(listed.Value!.Items);
+        Assert.Equal("note", item.ObjectType);
+        Assert.Contains("ok", item.PayloadJson);
+    }
+
     private sealed class Fixture
     {
         public Guid AdminId { get; } = Guid.NewGuid();
         public Guid OperatorId { get; } = Guid.NewGuid();
         public InMemoryOperationRepository Ops { get; } = new();
+        public InMemoryStoreObjectRepository Store { get; } = new();
         public CreateOperationHandler Create { get; }
         public TransitionOperationHandler Transition { get; }
         public AssignOperatorHandler Assign { get; }
         public ConfigureManagementCutHandler Cut { get; }
+        public ListStoreObjectsHandler ListStore { get; }
 
         private Fixture()
         {
@@ -101,6 +123,7 @@ public sealed class OperationUseCaseTests
             Transition = new TransitionOperationHandler(context, gate, Ops);
             Assign = new AssignOperatorHandler(context, gate, new FixedOperatorEligibility(OperatorId), Ops);
             Cut = new ConfigureManagementCutHandler(context, gate, Ops);
+            ListStore = new ListStoreObjectsHandler(context, gate, Ops, Store);
         }
 
         public static Fixture Build() => new();

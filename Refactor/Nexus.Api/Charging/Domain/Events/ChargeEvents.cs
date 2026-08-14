@@ -29,3 +29,5 @@ public sealed record ChargeMaterialized(
     string Currency,
     Guid LandingWorldAccountId,
     DateTime OccurredAt);
+
+public sealed record ChargeReversed(Guid ChargeId, DateTime OccurredAt);

@@ -2,6 +2,9 @@ using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using IResult = Aidan.Core.Patterns.IResult;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.WorldAccounts.Application.Journal;
+using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Ledger;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.WorldAccounts.Application.UseCases.Shared;
@@ -33,15 +36,18 @@ public sealed class OpenWorldAccountHandler : IOpenWorldAccountUseCase
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly IJournalWriter _journal;
 
     public OpenWorldAccountHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<OpenWorldAccountResult>> HandleAsync(
@@ -71,7 +77,7 @@ public sealed class OpenWorldAccountHandler : IOpenWorldAccountUseCase
             {
                 return OperationResult<OpenWorldAccountResult>.Failure(Error.Create()
                     .WithCode(WorldAccountErrorCodes.OrangeNotEligible)
-                    .WithMessage("Laranja invalido.")
+                    .WithMessage("Laranja inválido.")
                     .Build());
             }
 
@@ -84,7 +90,7 @@ public sealed class OpenWorldAccountHandler : IOpenWorldAccountUseCase
             {
                 return OperationResult<OpenWorldAccountResult>.Failure(Error.Create()
                     .WithCode(WorldAccountErrorCodes.OrangeNotEligible)
-                    .WithMessage("Conta precisa existir e atuar como Laranja.")
+                    .WithMessage("Escolha um membro que atua como Laranja. Um login comum não abre Gateway.")
                     .Build());
             }
         }
@@ -100,6 +106,7 @@ public sealed class OpenWorldAccountHandler : IOpenWorldAccountUseCase
             return OperationResult<OpenWorldAccountResult>.Failure(opened.Errors);
 
         await _repository.SaveAsync(opened.Value!, cancellationToken);
+        _journal.RecordOpened(opened.Value!.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<OpenWorldAccountResult>.Success(new OpenWorldAccountResult(opened.Value!.Id));
     }
 }
@@ -118,15 +125,18 @@ public sealed class LabelWorldAccountHandler : ILabelWorldAccountUseCase
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly IJournalWriter _journal;
 
     public LabelWorldAccountHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<LabelWorldAccountResult>> HandleAsync(
@@ -143,6 +153,7 @@ public sealed class LabelWorldAccountHandler : ILabelWorldAccountUseCase
             return OperationResult<LabelWorldAccountResult>.Failure(result.Errors);
 
         await _repository.SaveAsync(loaded.Account, cancellationToken);
+        _journal.RecordLabeled(loaded.Account.Id, Guid.Parse(loaded.Requester!.AccountId));
         return OperationResult<LabelWorldAccountResult>.Success(new LabelWorldAccountResult());
     }
 }
@@ -169,15 +180,18 @@ public sealed class ConfigureWorldAccountHandler : IConfigureWorldAccountUseCase
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly IJournalWriter _journal;
 
     public ConfigureWorldAccountHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ConfigureWorldAccountResult>> HandleAsync(
@@ -190,6 +204,16 @@ public sealed class ConfigureWorldAccountHandler : IConfigureWorldAccountUseCase
             return loaded.Failure;
 
         var account = loaded.Account!;
+        var changingEmission = !string.IsNullOrWhiteSpace(command.EmissionStatus);
+        var changingBalance = !string.IsNullOrWhiteSpace(command.BalanceStatus);
+        if (account.BalanceStatus == BalanceStatus.Lost && (changingEmission || changingBalance))
+        {
+            return OperationResult<ConfigureWorldAccountResult>.Failure(Error.Create()
+                .WithCode(WorldAccountErrorCodes.BalanceLost)
+                .WithMessage("Esta conta já está perdida; emissão e saldo não mudam daqui.")
+                .Build());
+        }
+
         Guid? orange = null;
         if (!string.IsNullOrWhiteSpace(command.OrangeMemberId))
         {
@@ -198,7 +222,7 @@ public sealed class ConfigureWorldAccountHandler : IConfigureWorldAccountUseCase
             {
                 return OperationResult<ConfigureWorldAccountResult>.Failure(Error.Create()
                     .WithCode(WorldAccountErrorCodes.OrangeNotEligible)
-                    .WithMessage("Conta precisa existir e atuar como Laranja.")
+                    .WithMessage("Escolha um membro que atua como Laranja. Um login comum não abre Gateway.")
                     .Build());
             }
 
@@ -230,12 +254,21 @@ public sealed class ConfigureWorldAccountHandler : IConfigureWorldAccountUseCase
         if (!string.IsNullOrWhiteSpace(command.BalanceStatus)
             && Enum.TryParse<BalanceStatus>(command.BalanceStatus, true, out var balance))
         {
+            if (balance == BalanceStatus.Lost)
+            {
+                return OperationResult<ConfigureWorldAccountResult>.Failure(Error.Create()
+                    .WithCode(WorldAccountErrorCodes.UseLostEndpoint)
+                    .WithMessage("Saldo perdido dispara write-off; use POST /api/ledger/administrator/accounts/{id}/lost.")
+                    .Build());
+            }
+
             var status = account.SetBalanceStatus(balance);
             if (status.IsFailure)
                 return OperationResult<ConfigureWorldAccountResult>.Failure(status.Errors);
         }
 
         await _repository.SaveAsync(account, cancellationToken);
+        _journal.RecordConfigured(account.Id, Guid.Parse(loaded.Requester!.AccountId));
         return OperationResult<ConfigureWorldAccountResult>.Success(new ConfigureWorldAccountResult());
     }
 }
@@ -260,15 +293,21 @@ public sealed class RecordWorldAccountObservationHandler : IRecordWorldAccountOb
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly ILedgerClaimObservationPort _ledgerClaims;
+    private readonly IJournalWriter _journal;
 
     public RecordWorldAccountObservationHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        ILedgerClaimObservationPort ledgerClaims,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _ledgerClaims = ledgerClaims;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<RecordWorldAccountObservationResult>> HandleAsync(
@@ -282,6 +321,27 @@ public sealed class RecordWorldAccountObservationHandler : IRecordWorldAccountOb
             _requestContext, _access, _repository, command.AccountId, cancellationToken);
         if (loaded.Failure is not null)
             return loaded.Failure;
+
+        if (loaded.Account!.BalanceStatus == BalanceStatus.Lost)
+        {
+            return OperationResult<RecordWorldAccountObservationResult>.Failure(Error.Create()
+                .WithCode(WorldAccountErrorCodes.BalanceLost)
+                .WithMessage("Esta conta já está perdida; crédito e débito não se aplicam.")
+                .Build());
+        }
+
+        var currency = (command.Currency ?? "").Trim().ToUpperInvariant();
+        var presence = await _ledgerClaims.GetPresenceAsync(loaded.Account!.Id, currency, cancellationToken);
+        if (presence.HasAny)
+        {
+            var message = presence.HasActive
+                ? "Ha claims ativos nesta Conta/moeda; movimento de caixa e reconciliacao, nao observacao."
+                : "Observacao so e seed; o ledger ja tocou esta Conta/moeda — use reconciliacao.";
+            return OperationResult<RecordWorldAccountObservationResult>.Failure(Error.Create()
+                .WithCode(WorldAccountErrorCodes.ObservationSeedOnly)
+                .WithMessage(message)
+                .Build());
+        }
 
         var direction = command.Direction.Trim();
         IResult mutation = direction.Equals("debit", StringComparison.OrdinalIgnoreCase)
@@ -297,13 +357,14 @@ public sealed class RecordWorldAccountObservationHandler : IRecordWorldAccountOb
             return OperationResult<RecordWorldAccountObservationResult>.Failure(mutation.Errors);
 
         await _repository.SaveAsync(loaded.Account!, cancellationToken);
+        _journal.RecordObservation(loaded.Account!.Id, Guid.Parse(loaded.Requester!.AccountId));
         return OperationResult<RecordWorldAccountObservationResult>.Success(new RecordWorldAccountObservationResult());
     }
 }
 
 internal static class WorldAccountCommandSupport
 {
-    public static async Task<(WorldAccountAggregate? Account, IOperationResult<T>? Failure)> LoadManagedAsync<T>(
+    public static async Task<(WorldAccountAggregate? Account, RequesterContext? Requester, IOperationResult<T>? Failure)> LoadManagedAsync<T>(
         IRequestContext requestContext,
         IWorldAccountAccess access,
         IWorldAccountRepository repository,
@@ -312,15 +373,15 @@ internal static class WorldAccountCommandSupport
     {
         var auth = await WorldAccountGuards.AuthorizeManageAsync<T>(requestContext, access, cancellationToken);
         if (auth.Failure is not null)
-            return (null, auth.Failure);
+            return (null, null, auth.Failure);
 
         if (!Guid.TryParse(accountId, out var id))
-            return (null, OperationResult<T>.Failure(WorldAccountGuards.NotFound(accountId)));
+            return (null, null, OperationResult<T>.Failure(WorldAccountGuards.NotFound(accountId)));
 
         var account = await repository.GetByIdAsync(id, cancellationToken);
         if (account is null)
-            return (null, OperationResult<T>.Failure(WorldAccountGuards.NotFound(accountId)));
+            return (null, null, OperationResult<T>.Failure(WorldAccountGuards.NotFound(accountId)));
 
-        return (account, null);
+        return (account, auth.Requester, null);
     }
 }

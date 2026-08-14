@@ -23,9 +23,8 @@ public sealed class MartenAccountRepository : IAccountRepository, IAccountReadRe
 
     public async Task<AccountAggregate?> GetByIdAsync(AccountId accountId, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var account = await session.Events.AggregateStreamAsync<AccountAggregate>(
-            EventStoreStreams.Account(accountId.Value), token: cancellationToken);
+        var account = await MartenLiveQuery.LoadAsync<AccountAggregate>(
+            _store, EventStoreStreams.Account(accountId.Value), cancellationToken);
         if (account is null || account.Id.Value == Guid.Empty)
             return null;
         await AttachSecretAsync(account, cancellationToken);
@@ -75,8 +74,7 @@ public sealed class MartenAccountRepository : IAccountRepository, IAccountReadRe
 
     public async Task<AccountAggregate?> FindByUsernameAsync(string username, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.QuerySession();
-        var match = (await session.Query<AccountAggregate>().ToListAsync(cancellationToken))
+        var match = (await MartenLiveQuery.ListAsync<AccountAggregate>(_store, "account-", cancellationToken))
             .FirstOrDefault(a => string.Equals(a.Username, username, StringComparison.OrdinalIgnoreCase));
         if (match is null)
             return null;
@@ -105,8 +103,8 @@ public sealed class MartenAccountRepository : IAccountRepository, IAccountReadRe
         int limit,
         CancellationToken cancellationToken = default)
     {
-        await using var session = _store.QuerySession();
-        IEnumerable<AccountAggregate> items = await session.Query<AccountAggregate>().ToListAsync(cancellationToken);
+        IEnumerable<AccountAggregate> items = await MartenLiveQuery.ListAsync<AccountAggregate>(
+            _store, "account-", cancellationToken);
         if (!string.IsNullOrWhiteSpace(keyword))
         {
             var term = keyword.Trim();
@@ -128,8 +126,7 @@ public sealed class MartenAccountRepository : IAccountRepository, IAccountReadRe
 
     public async Task<int> CountByRoleAsync(string role, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.QuerySession();
-        var items = await session.Query<AccountAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<AccountAggregate>(_store, "account-", cancellationToken);
         return items.Count(a => a.Roles.Contains(role, StringComparer.OrdinalIgnoreCase));
     }
 
@@ -176,8 +173,6 @@ public sealed class MartenAccountRepository : IAccountRepository, IAccountReadRe
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<AccountAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<AccountAggregate>().Identity(x => x.PersistenceId);
         options.Events.AddEventTypes(
         [
             typeof(AccountRegistered),

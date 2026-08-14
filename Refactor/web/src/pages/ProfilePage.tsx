@@ -13,6 +13,14 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
   Form,
   FormControl,
   FormField,
@@ -24,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
 import { roleLabel } from '@/utils/accountAccess';
-import { toast } from 'sonner';
+import { reportError, reportSuccess } from '@/feedback';
 
 const usernameSchema = z.object({
   newUsername: z.string().trim().min(3, 'Mínimo 3 caracteres.').max(64, 'Máximo 64 caracteres.'),
@@ -56,6 +64,9 @@ export function ProfilePage() {
   const { user, applyTokens, patchUser } = useAuth();
   const [profile, setProfile] = useState<MyProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const [pendingUsername, setPendingUsername] = useState<string | null>(null);
 
   const usernameForm = useForm<UsernameValues>({
     resolver: zodResolver(usernameSchema),
@@ -72,11 +83,15 @@ export function ProfilePage() {
 
     async function load() {
       setLoading(true);
+      setError(null);
       const result = await getMyProfile();
       if (cancelled) return;
 
       if (!result.ok || !result.data?.profile) {
-        toast.error(result.ok ? 'Perfil indisponível.' : result.error);
+        const message = result.ok ? 'Perfil indisponível.' : result.error;
+        reportError(message);
+        setProfile(null);
+        setError(message);
         setLoading(false);
         return;
       }
@@ -92,40 +107,57 @@ export function ProfilePage() {
     };
   }, [usernameForm]);
 
-  async function handleUsername(values: UsernameValues) {
-    const result = await changeMyUsername(values.newUsername.trim());
+  async function applyUsername(next: string) {
+    const result = await changeMyUsername(next);
     if (!result.ok) {
-      toast.error(result.error);
+      usernameForm.setError('root', { message: result.error });
+      reportError(result.error);
       return;
     }
 
-    toast.success('Usuário atualizado. O nome anterior não pode ser reutilizado.');
-    const nextUsername = result.data?.username ?? values.newUsername.trim();
+    reportSuccess('Usuário atualizado.');
+    const nextUsername = result.data?.username ?? next;
     setProfile((current) => (current ? { ...current, username: nextUsername } : current));
     patchUser({ username: nextUsername });
+  }
+
+  async function handleUsername(values: UsernameValues) {
+    const next = values.newUsername.trim();
+    if (next === (profile?.username ?? user?.username)) {
+      return;
+    }
+    setPendingUsername(next);
+  }
+
+  async function confirmUsernameChange() {
+    if (!pendingUsername) return;
+    const next = pendingUsername;
+    setPendingUsername(null);
+    await applyUsername(next);
   }
 
   async function handlePassword(values: PasswordValues) {
     const result = await changeMyPassword(values.currentPassword, values.newPassword);
     if (!result.ok) {
-      toast.error(result.error);
+      passwordForm.setError('root', { message: result.error });
+      reportError(result.error);
       return;
     }
 
     const tokens = result.data?.tokens;
     if (!tokens?.accessToken) {
-      toast.error('Senha alterada, mas o servidor não retornou novos tokens.');
+      reportError('Senha alterada, mas não foi possível renovar a sessão. Entre de novo.');
       return;
     }
 
     const applied = applyTokens(tokens);
     if (!applied.ok) {
-      toast.error(applied.error);
+      reportError(applied.error);
       return;
     }
 
     passwordForm.reset();
-    toast.success('Senha alterada.');
+    reportSuccess('Senha alterada. Outras sessões foram encerradas.');
   }
 
   const roles = profile?.roles ?? user?.roles ?? [];
@@ -134,9 +166,9 @@ export function ProfilePage() {
   return (
     <div className="min-w-0 space-y-6">
       <PageHeader
-        kicker="Conta"
+        kicker="Identidade"
         title="Meu perfil"
-        description="Atualize o usuário e a senha da sessão atual. Um nome já usado não volta a ficar disponível."
+        description="Atualize o usuário e a senha desta sessão."
       />
 
       <Card className="border-border/60 bg-card/90">
@@ -149,6 +181,10 @@ export function ProfilePage() {
                 <Skeleton className="h-4 w-56" />
               </div>
             </div>
+          ) : error ? (
+            <p className="text-sm text-destructive" role="alert">
+              {error}
+            </p>
           ) : (
             <>
               <div className="flex items-center gap-3">
@@ -171,10 +207,7 @@ export function ProfilePage() {
                   </div>
                 </div>
               </div>
-              <p className="max-w-xs text-xs leading-relaxed text-muted-foreground sm:text-right">
-                Alterações de usuário e senha valem nesta sessão. O nome antigo não pode ser reutilizado.
-              </p>
-            </>
+              </>
           )}
         </CardContent>
       </Card>
@@ -186,9 +219,16 @@ export function ProfilePage() {
               <UserRound className="size-4" />
             </div>
             <CardTitle className="text-base">Identidade</CardTitle>
-            <CardDescription>O usuário é o login único. Trocar o nome reserva o anterior para sempre.</CardDescription>
+            <CardDescription>
+              O usuário é o login único. Trocar o nome reserva o anterior.
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {error ? (
+              <p className="text-sm text-muted-foreground">
+                Não foi possível carregar o perfil. Tente de novo mais tarde.
+              </p>
+            ) : (
             <Form {...usernameForm}>
               <form className="space-y-4" onSubmit={usernameForm.handleSubmit(handleUsername)}>
                 <FormField
@@ -204,11 +244,17 @@ export function ProfilePage() {
                     </FormItem>
                   )}
                 />
+                {usernameForm.formState.errors.root?.message ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {usernameForm.formState.errors.root.message}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={usernameForm.formState.isSubmitting}>
                   {usernameForm.formState.isSubmitting ? 'Salvando…' : 'Salvar usuário'}
                 </Button>
               </form>
             </Form>
+            )}
           </CardContent>
         </Card>
 
@@ -218,9 +264,14 @@ export function ProfilePage() {
               <KeyRound className="size-4" />
             </div>
             <CardTitle className="text-base">Segurança</CardTitle>
-            <CardDescription>Troque a senha e renove os tokens da sessão.</CardDescription>
+            <CardDescription>Trocar a senha encerra outras sessões.</CardDescription>
           </CardHeader>
           <CardContent>
+            {error ? (
+              <p className="text-sm text-muted-foreground">
+                Não foi possível carregar o perfil. Tente de novo mais tarde.
+              </p>
+            ) : (
             <Form {...passwordForm}>
               <form className="space-y-4" onSubmit={passwordForm.handleSubmit(handlePassword)}>
                 <FormField
@@ -263,14 +314,40 @@ export function ProfilePage() {
                     </FormItem>
                   )}
                 />
+                {passwordForm.formState.errors.root?.message ? (
+                  <p className="text-sm text-destructive" role="alert">
+                    {passwordForm.formState.errors.root.message}
+                  </p>
+                ) : null}
                 <Button type="submit" disabled={passwordForm.formState.isSubmitting}>
                   {passwordForm.formState.isSubmitting ? 'Salvando…' : 'Salvar senha'}
                 </Button>
               </form>
             </Form>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={pendingUsername !== null} onOpenChange={(open) => { if (!open) setPendingUsername(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Trocar usuário?</DialogTitle>
+            <DialogDescription>
+              O login passa a ser <span className="font-medium text-foreground">{pendingUsername}</span>.
+              O nome atual deixa de ficar disponível.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setPendingUsername(null)}>
+              Cancelar
+            </Button>
+            <Button type="button" onClick={() => void confirmUsernameChange()}>
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

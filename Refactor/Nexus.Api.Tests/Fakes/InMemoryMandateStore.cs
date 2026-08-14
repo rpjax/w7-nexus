@@ -57,7 +57,9 @@ internal sealed class InMemoryMandateStore :
         _mandates[mandate.MemberId.Value] = MemberMandate.Rehydrate(
             mandate.MemberId,
             mandate.Grants.ToList(),
-            mandate.AppliedPresets.ToList());
+            mandate.AppliedPresets.ToList(),
+            mandate.AttritionStatus,
+            mandate.AttritionCause);
         mandate.ClearUncommitted();
         return Task.CompletedTask;
     }

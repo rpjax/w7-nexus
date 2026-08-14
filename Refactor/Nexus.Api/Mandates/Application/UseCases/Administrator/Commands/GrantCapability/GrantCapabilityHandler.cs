@@ -59,8 +59,8 @@ public sealed class GrantCapabilityHandler : IGrantCapabilityUseCase
         if (command is null)
             return OperationResult<GrantCapabilityResult>.Failure(MandateAdministratorGuards.RequestBodyRequired());
 
-        var (requester, failure) = await MandateAdministratorGuards.AuthorizeAdminWithRequesterAsync<GrantCapabilityResult>(
-            _requestContext, _accessPolicy, cancellationToken);
+        var (requester, failure) = await MandateAdministratorGuards.AuthorizeGrantorAsync<GrantCapabilityResult>(
+            _requestContext, _accountDirectory, _mandateReadRepository, cancellationToken);
         if (failure is not null)
             return failure;
 

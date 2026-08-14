@@ -192,7 +192,8 @@ public sealed class MaterializeChargeTests
                 Charges,
                 Accounts,
                 Claims,
-                new Commit(Charges, Accounts, Claims));
+                new Commit(Charges, Accounts, Claims),
+                new RecordingJournalWriter());
         }
 
         public static Task<Fixture> OpenAsync() => Task.FromResult(new Fixture(OpenCharge(paid: false), OpenLanding()));
@@ -225,6 +226,11 @@ public sealed class MaterializeChargeTests
 
         public Task<bool> IsEligibleOrangeAsync(Guid accountId, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+
+        public Task<IReadOnlyList<Guid>> ListCarteiraOperatorIdsAsync(
+            Guid recruiterId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Guid>>([]);
     }
 
     private sealed class AdminContext : IRequestContext

@@ -88,6 +88,11 @@ internal static class MandateJournal
         });
     }
 
+    public static void RecordCarteiraRead(this IJournalWriter journal, Guid memberId)
+    {
+        journal.Append(new MandateCarteiraRead { MemberId = memberId });
+    }
+
     public static void RecordStakeRemoved(this IJournalWriter journal, MemberId accountId)
     {
         journal.Append(new ShareholderStakeChanged

@@ -7,6 +7,14 @@ http:
         - websecure
       tls: ${TLS_BLOCK}
 
+    frontend-api:
+      rule: "Host(`${FRONTEND_HOST}`) && PathPrefix(`/api`)"
+      service: backend
+      priority: 100
+      entryPoints:
+        - websecure
+      tls: ${TLS_BLOCK}
+
     backend:
       rule: "Host(`${BACKEND_HOST}`)"
       service: backend

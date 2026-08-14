@@ -28,15 +28,28 @@ function buildHeaders(initHeaders?: HeadersInit): HeadersInit {
   return headers;
 }
 
+export type ApiResult<T> =
+  | { ok: true; data: T | null }
+  | { ok: false; error: string; status: number };
+
 async function request<T>(
   path: string,
   init: RequestInit,
   options?: RequestOptions,
-): Promise<{ ok: true; data: T | null } | { ok: false; error: string; status: number }> {
-  const response = await fetch(`${API_BASE}${path}`, {
-    ...init,
-    headers: buildHeaders(init.headers),
-  });
+): Promise<ApiResult<T>> {
+  let response: Response;
+  try {
+    response = await fetch(`${API_BASE}${path}`, {
+      ...init,
+      headers: buildHeaders(init.headers),
+    });
+  } catch {
+    return {
+      ok: false,
+      error: 'Não foi possível conectar à API. Verifique a rede e se o serviço está no ar.',
+      status: 0,
+    };
+  }
 
   if (!response.ok) {
     const fallback = options?.fallbackError ?? 'Não foi possível concluir a operação. Tente novamente em instantes.';
@@ -44,8 +57,12 @@ async function request<T>(
     return { ok: false, error, status: response.status };
   }
 
-  const data = await readJson<T>(response);
-  return { ok: true, data };
+  try {
+    const data = await readJson<T>(response);
+    return { ok: true, data };
+  } catch {
+    return { ok: false, error: 'A resposta do servidor não pôde ser lida.', status: response.status };
+  }
 }
 
 export const apiClient = {

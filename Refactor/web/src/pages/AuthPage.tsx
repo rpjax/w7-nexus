@@ -1,6 +1,7 @@
+import { useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { KeyRound, Shield } from 'lucide-react';
+import { ChevronDown, KeyRound, Shield } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 import { useAuth } from '@/auth/AuthContext';
@@ -16,8 +17,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 const signInSchema = z.object({
   username: z.string().trim().min(1, 'Usuário é obrigatório.'),
@@ -44,10 +44,15 @@ type SignUpValues = z.infer<typeof signUpSchema>;
 
 const fieldClass = 'h-10 rounded-lg bg-background/45 px-3 text-sm';
 
+function humanizeAuthError(message: string): string {
+  return message.replace(/\bUsuario\b/gi, 'Usuário');
+}
+
 export function AuthPage() {
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const [helpOpen, setHelpOpen] = useState(false);
 
   const signInForm = useForm<SignInValues>({
     resolver: zodResolver(signInSchema),
@@ -64,14 +69,18 @@ export function AuthPage() {
     },
   });
 
+  function goHome() {
+    const redirect = searchParams.get('redirect');
+    navigate(redirect?.startsWith('/') ? redirect : '/dashboard', { replace: true });
+  }
+
   async function handleSignIn(values: SignInValues) {
     const result = await signIn(values.username.trim(), values.password);
     if (!result.ok) {
-      toast.error(result.error);
+      signInForm.setError('root', { message: humanizeAuthError(result.error) });
       return;
     }
-    const redirect = searchParams.get('redirect');
-    navigate(redirect?.startsWith('/') ? redirect : '/dashboard', { replace: true });
+    goHome();
   }
 
   async function handleSignUp(values: SignUpValues) {
@@ -81,11 +90,10 @@ export function AuthPage() {
       masterKey: values.masterKey.trim(),
     });
     if (!result.ok) {
-      toast.error(result.error);
+      signUpForm.setError('root', { message: humanizeAuthError(result.error) });
       return;
     }
-    const redirect = searchParams.get('redirect');
-    navigate(redirect?.startsWith('/') ? redirect : '/dashboard', { replace: true });
+    goHome();
   }
 
   return (
@@ -111,184 +119,198 @@ export function AuthPage() {
           <ul className="relative hidden space-y-3 text-sm text-muted-foreground min-[720px]:block">
             <li className="flex items-start gap-3">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary" />
-              Sessão com token de acesso.
+              Sessão segura neste dispositivo.
             </li>
             <li className="flex items-start gap-3">
               <span className="mt-1.5 size-1.5 shrink-0 rounded-full bg-primary/70" />
-              Cadastro público fechado; contas comuns só via Admin.
+              Cadastro público fechado; membros comuns só via Admin.
             </li>
           </ul>
         </section>
 
         <section className="relative flex flex-col justify-center px-6 py-8 sm:px-8 min-[720px]:px-10 min-[720px]:py-12">
-          <Tabs defaultValue="sign-in" className="w-full gap-5">
-            <TabsList className="grid h-11 w-full grid-cols-2 rounded-xl bg-muted/70 p-1">
-              <TabsTrigger
-                value="sign-in"
-                className="rounded-lg data-active:bg-background data-active:text-foreground data-active:shadow-sm"
+          <Form {...signInForm}>
+            <form className="space-y-5" onSubmit={signInForm.handleSubmit(handleSignIn)}>
+              <div className="space-y-1">
+                <h2 className="text-lg font-semibold tracking-tight">Entrar</h2>
+                <FormDescription>Use o usuário e a senha da sua identidade.</FormDescription>
+              </div>
+              {signInForm.formState.errors.root?.message ? (
+                <p className="text-sm text-destructive" role="alert">
+                  {signInForm.formState.errors.root.message}
+                </p>
+              ) : null}
+              <FormField
+                control={signInForm.control}
+                name="username"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Usuário</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={fieldClass}
+                        autoComplete="username"
+                        placeholder="seu usuário"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={signInForm.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        className={fieldClass}
+                        type="password"
+                        autoComplete="current-password"
+                        placeholder="••••••••"
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button
+                type="submit"
+                size="lg"
+                className="mt-1 h-11 w-full text-sm font-semibold"
+                disabled={signInForm.formState.isSubmitting}
               >
-                Entrar
-              </TabsTrigger>
-              <TabsTrigger
-                value="sign-up"
-                className="rounded-lg data-active:bg-background data-active:text-foreground data-active:shadow-sm"
-              >
-                Bootstrap admin
-              </TabsTrigger>
-            </TabsList>
+                <KeyRound data-icon="inline-start" />
+                {signInForm.formState.isSubmitting ? 'Aguarde…' : 'Entrar'}
+              </Button>
+            </form>
+          </Form>
 
-            <TabsContent value="sign-in" className="mt-0 outline-none">
-              <Form {...signInForm}>
-                <form className="space-y-5" onSubmit={signInForm.handleSubmit(handleSignIn)}>
-                  <FormDescription>
-                    Em deploy local o Admin já nasce no seed: usuário <span className="font-medium text-foreground">admin</span>, senha <span className="font-medium text-foreground">adminadmin</span>.
-                  </FormDescription>
-                  <FormField
-                    control={signInForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Usuário</FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            autoComplete="username"
-                            placeholder="admin"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signInForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha</FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            type="password"
-                            autoComplete="current-password"
-                            placeholder="••••••••"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="mt-1 h-11 w-full text-sm font-semibold"
-                    disabled={signInForm.formState.isSubmitting}
-                  >
-                    <KeyRound data-icon="inline-start" />
-                    {signInForm.formState.isSubmitting ? 'Aguarde…' : 'Entrar'}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
+          <div className="mt-8 border-t border-border/40 pt-5">
+            <button
+              type="button"
+              className="flex w-full items-center justify-between gap-2 text-left text-sm text-muted-foreground hover:text-foreground"
+              aria-expanded={helpOpen}
+              onClick={() => setHelpOpen((open) => !open)}
+            >
+              Problemas para entrar?
+              <ChevronDown className={cn('size-4 shrink-0 transition-transform', helpOpen && 'rotate-180')} />
+            </button>
 
-            <TabsContent value="sign-up" className="mt-0 outline-none">
-              <Form {...signUpForm}>
-                <form className="space-y-5" onSubmit={signUpForm.handleSubmit(handleSignUp)}>
-                  <FormDescription>
-                    Só use se o seed falhou. Chave mestra local: <span className="font-medium text-foreground">local-dev-master-key</span>. Se o Admin já existe, use a aba Entrar.
-                  </FormDescription>
-                  <FormField
-                    control={signUpForm.control}
-                    name="masterKey"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="inline-flex items-center gap-1.5">
-                          <Shield className="size-3.5 text-muted-foreground" />
-                          Chave mestra
-                        </FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            type="password"
-                            autoComplete="off"
-                            placeholder="local-dev-master-key"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Usuário</FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            autoComplete="username"
-                            placeholder="admin"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Senha</FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            type="password"
-                            autoComplete="new-password"
-                            placeholder="Mínimo 8 caracteres"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={signUpForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirmar senha</FormLabel>
-                        <FormControl>
-                          <Input
-                            className={fieldClass}
-                            type="password"
-                            autoComplete="new-password"
-                            placeholder="Repita a senha"
-                            {...field}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button
-                    type="submit"
-                    size="lg"
-                    className="mt-1 h-11 w-full text-sm font-semibold"
-                    disabled={signUpForm.formState.isSubmitting}
-                  >
-                    {signUpForm.formState.isSubmitting ? 'Aguarde…' : 'Criar administrador'}
-                  </Button>
-                </form>
-              </Form>
-            </TabsContent>
-          </Tabs>
+            {helpOpen ? (
+              <div className="mt-4 space-y-5">
+                <p className="text-sm text-muted-foreground">
+                  Em ambiente local, o Admin já nasce no seed. Só use o formulário abaixo se o seed
+                  falhou.
+                </p>
+                <Form {...signUpForm}>
+                  <form className="space-y-5" onSubmit={signUpForm.handleSubmit(handleSignUp)}>
+                    <div className="space-y-1">
+                      <h2 className="text-lg font-semibold tracking-tight">Criar administrador</h2>
+                      <FormDescription>
+                        Emergência: exige a chave mestra do ambiente. Se o Admin já existe, volte a
+                        Entrar.
+                      </FormDescription>
+                    </div>
+                    {signUpForm.formState.errors.root?.message ? (
+                      <p className="text-sm text-destructive" role="alert">
+                        {signUpForm.formState.errors.root.message}
+                      </p>
+                    ) : null}
+                    <FormField
+                      control={signUpForm.control}
+                      name="masterKey"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="inline-flex items-center gap-1.5">
+                            <Shield className="size-3.5 text-muted-foreground" />
+                            Chave mestra
+                          </FormLabel>
+                          <FormControl>
+                            <Input
+                              className={fieldClass}
+                              type="password"
+                              autoComplete="off"
+                              placeholder="Chave do ambiente"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={signUpForm.control}
+                      name="username"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Usuário</FormLabel>
+                          <FormControl>
+                            <Input
+                              className={fieldClass}
+                              autoComplete="username"
+                              placeholder="usuário do admin"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={signUpForm.control}
+                      name="password"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Senha</FormLabel>
+                          <FormControl>
+                            <Input
+                              className={fieldClass}
+                              type="password"
+                              autoComplete="new-password"
+                              placeholder="Mínimo 8 caracteres"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={signUpForm.control}
+                      name="confirmPassword"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Confirmar senha</FormLabel>
+                          <FormControl>
+                            <Input
+                              className={fieldClass}
+                              type="password"
+                              autoComplete="new-password"
+                              placeholder="Repita a senha"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <Button
+                      type="submit"
+                      size="lg"
+                      className="mt-1 h-11 w-full text-sm font-semibold"
+                      disabled={signUpForm.formState.isSubmitting}
+                    >
+                      {signUpForm.formState.isSubmitting ? 'Aguarde…' : 'Criar administrador'}
+                    </Button>
+                  </form>
+                </Form>
+              </div>
+            ) : null}
+          </div>
         </section>
       </div>
     </div>

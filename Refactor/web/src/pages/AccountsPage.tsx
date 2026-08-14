@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { type ColumnDef } from '@tanstack/react-table';
 import { useForm } from 'react-hook-form';
+import { Link } from 'react-router-dom';
 import { z } from 'zod';
 import { ArrowLeft, Plus, RefreshCw, Search, Users } from 'lucide-react';
 import {
@@ -21,10 +22,12 @@ import {
   grantMandatePreset,
   MANDATE_PRESETS,
   presetLabel,
+  recordMemberAttrition,
   revokeMandateCapability,
   revokeMandatePreset,
   type MemberMandate,
 } from '@/api/administrator/mandates';
+import { listOperations, type Operation } from '@/api/administrator/operations';
 import { useAuth } from '@/auth/AuthContext';
 import type { AccountDetails } from '@/auth/types';
 import { DataTable } from '@/components/data/data-table';
@@ -51,7 +54,9 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import {
   Select,
   SelectContent,
@@ -64,12 +69,52 @@ import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import {
   ACCOUNT_ROLE_CATALOG,
   isAdministrator,
-  roleLabel,
 } from '@/utils/accountAccess';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
+import { reportError, reportSuccess } from '@/feedback';
 
 const PAGE_SIZE_OPTIONS = [10, 20, 50] as const;
+
+const ATTRITION_STATUS_OPTIONS = [
+  { id: 'burned', label: 'Queimado' },
+  { id: 'left', label: 'Saiu' },
+  { id: 'betrayed', label: 'Traiu' },
+] as const;
+
+const ATTRITION_CAUSE_OPTIONS = [
+  { id: 'bloqueio_bancario', label: 'Bloqueio bancário' },
+  { id: 'apreensao', label: 'Apreensão' },
+  { id: 'traicao', label: 'Traição' },
+  { id: 'saida_voluntaria', label: 'Saída voluntária' },
+  { id: 'erro_operacional', label: 'Erro operacional' },
+  { id: 'estorno', label: 'Estorno' },
+  { id: 'desconhecido', label: 'Desconhecido' },
+] as const;
+
+const CAUSES_BY_STATUS: Record<string, readonly string[]> = {
+  burned: ['bloqueio_bancario', 'apreensao', 'erro_operacional', 'estorno', 'desconhecido'],
+  betrayed: ['traicao'],
+  left: ['saida_voluntaria'],
+};
+
+function causesForStatus(status: string) {
+  const ids = CAUSES_BY_STATUS[status] ?? CAUSES_BY_STATUS.burned;
+  return ATTRITION_CAUSE_OPTIONS.filter((item) => ids.includes(item.id));
+}
+
+function capabilityLabel(capability: string): string {
+  if (capability === 'gerir_operacao') return 'Gerir operação';
+  if (capability === 'recrutar') return 'Recrutar';
+  return capability.replaceAll('_', ' ');
+}
+
+function attritionStatusLabel(value: string): string {
+  return ATTRITION_STATUS_OPTIONS.find((item) => item.id === value)?.label ?? value;
+}
+
+function attritionCauseLabel(value: string): string {
+  return ATTRITION_CAUSE_OPTIONS.find((item) => item.id === value)?.label ?? value;
+}
 
 function formatDateTime(value: string): string {
   const date = new Date(value);
@@ -115,10 +160,18 @@ export function AccountsPage() {
   const [resetPassword, setResetPassword] = useState('');
   const [appliedPresets, setAppliedPresets] = useState<string[]>([]);
   const [mandateGrants, setMandateGrants] = useState<MemberMandate['grants']>([]);
+  const [attritionStatus, setAttritionStatus] = useState('active');
+  const [attritionCause, setAttritionCause] = useState<string | null>(null);
+  const [attritionPick, setAttritionPick] = useState('burned');
+  const [attritionCausePick, setAttritionCausePick] = useState('apreensao');
+  const [listMandates, setListMandates] = useState<Record<string, string[]>>({});
   const [specificOpIds, setSpecificOpIds] = useState('');
+  const [selectedOperationIds, setSelectedOperationIds] = useState<string[]>([]);
+  const [operations, setOperations] = useState<Operation[]>([]);
+  const [operationsUnavailable, setOperationsUnavailable] = useState(false);
   const [createOpen, setCreateOpen] = useState(false);
   const [confirmAction, setConfirmAction] = useState<null | {
-    kind: 'grant-admin' | 'revoke-admin' | 'disable' | 'enable' | 'grant-preset' | 'revoke-preset';
+    kind: 'grant-admin' | 'revoke-admin' | 'disable' | 'enable' | 'grant-preset' | 'revoke-preset' | 'attrition' | 'reset';
     account: AccountDetails;
     presetId?: string;
   }>(null);
@@ -145,6 +198,7 @@ export function AccountsPage() {
     const nextRole = overrides?.role ?? roleFilter;
     const nextPage = overrides?.page ?? page;
     const nextPageSize = overrides?.pageSize ?? pageSize;
+    const mandatePresetFilter = MANDATE_PRESETS.some((preset) => preset.id === nextRole);
 
     setLoading(true);
     const result = await searchAdministratorAccounts({
@@ -152,22 +206,54 @@ export function AccountsPage() {
       offset: (nextPage - 1) * nextPageSize,
       keyword: nextKeyword.trim() || undefined,
       status: nextStatus === 'all' ? undefined : nextStatus,
-      role: nextRole === 'all' ? undefined : nextRole,
+      role: nextRole === 'all' || mandatePresetFilter ? undefined : nextRole,
     });
     setLoading(false);
 
     if (!result.ok || !result.data) {
-      toast.error(result.ok ? 'Resposta inválida.' : result.error);
+      reportError(result.ok ? 'Resposta inválida.' : result.error);
       return;
     }
 
-    setItems(result.data.items ?? []);
-    setTotal(result.data.total);
+    let rows = result.data.items ?? [];
+    const mandateMap: Record<string, string[]> = {};
+    await Promise.all(rows.map(async (account) => {
+      const mandate = await getMemberMandate(account.id);
+      if (mandate.ok && mandate.data) {
+        mandateMap[account.id] = mandate.data.appliedPresets ?? [];
+      }
+    }));
+    setListMandates(mandateMap);
+
+    if (mandatePresetFilter) {
+      rows = rows.filter((account) =>
+        (mandateMap[account.id] ?? []).some(
+          (preset) => preset.localeCompare(nextRole, undefined, { sensitivity: 'accent' }) === 0,
+        ),
+      );
+    }
+
+    setItems(rows);
+    setTotal(mandatePresetFilter ? rows.length : result.data.total);
   }, [keyword, page, pageSize, roleFilter, statusFilter]);
 
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    void (async () => {
+      const result = await listOperations();
+      if (!result.ok || !result.data) {
+        reportError(result.ok ? 'Não foi possível listar operações.' : result.error);
+        setOperationsUnavailable(true);
+        setOperations([]);
+        return;
+      }
+      setOperationsUnavailable(false);
+      setOperations(result.data.items ?? []);
+    })();
+  }, []);
 
   const columns = useMemo<ColumnDef<AccountDetails>[]>(() => [
     {
@@ -190,18 +276,25 @@ export function AccountsPage() {
     },
     {
       accessorKey: 'roles',
-      header: 'Preset',
-      cell: ({ row }) => (
-        <div className="flex max-w-[11rem] flex-wrap gap-0.5">
-          {isAdministrator(row.original.roles) ? (
-            <Badge variant="secondary" className="h-5 px-1.5 text-[0.65rem]">
-              {roleLabel('Administrator')}
-            </Badge>
-          ) : (
-            <span className="text-xs text-muted-foreground">Identidade</span>
-          )}
-        </div>
-      ),
+      header: 'Poder',
+      cell: ({ row }) => {
+        const presets = listMandates[row.original.id] ?? [];
+        return (
+          <div className="flex max-w-[14rem] flex-wrap gap-0.5">
+            {isAdministrator(row.original.roles) ? (
+              <Badge variant="secondary" className="h-5 px-1.5 text-[0.65rem]">Admin</Badge>
+            ) : null}
+            {presets.map((preset) => (
+              <Badge key={preset} variant="outline" className="h-5 px-1.5 text-[0.65rem]">
+                {presetLabel(preset)}
+              </Badge>
+            ))}
+            {!isAdministrator(row.original.roles) && presets.length === 0 ? (
+              <span className="text-xs text-muted-foreground">Só login</span>
+            ) : null}
+          </div>
+        );
+      },
     },
     {
       accessorKey: 'lastUpdatedAt',
@@ -212,35 +305,47 @@ export function AccountsPage() {
         </span>
       ),
     },
-  ], []);
+  ], [listMandates]);
 
   function selectAccount(account: AccountDetails) {
     setSelected(account);
     setResetPassword('');
     setAppliedPresets([]);
     setMandateGrants([]);
+    setAttritionStatus('active');
+    setAttritionCause(null);
     void refreshSelected(account.id);
   }
 
   async function loadMandate(accountId: string) {
     const result = await getMemberMandate(accountId);
     if (!result.ok || !result.data) {
+      reportError(result.ok ? 'Mandato indisponível.' : result.error);
       setAppliedPresets([]);
       setMandateGrants([]);
+      setAttritionStatus('active');
+      setAttritionCause(null);
       return;
     }
     setAppliedPresets(result.data.appliedPresets ?? []);
     setMandateGrants(result.data.grants ?? []);
+    setAttritionStatus(result.data.attritionStatus ?? 'active');
+    setAttritionCause(result.data.attritionCause ?? null);
+    setListMandates((current) => ({
+      ...current,
+      [accountId]: result.data?.appliedPresets ?? [],
+    }));
   }
 
   async function grantSpecificGerirOperacao() {
     if (!selected) return;
-    const ids = specificOpIds
-      .split(/[\s,;]+/)
-      .map((part) => part.trim())
-      .filter(Boolean);
+    const ids = operationsUnavailable
+      ? specificOpIds.split(/[\s,;]+/).map((part) => part.trim()).filter(Boolean)
+      : selectedOperationIds;
     if (ids.length === 0) {
-      toast.error('Informe ao menos um operation id.');
+      reportError(operationsUnavailable
+        ? 'Informe ao menos um ID de operação.'
+        : 'Selecione ao menos uma operação.');
       return;
     }
     setBusyKey('cap:specific');
@@ -252,11 +357,12 @@ export function AccountsPage() {
     });
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success('Capacidade Specific concedida.');
+    reportSuccess('Poder de gerir operação concedido.');
     setSpecificOpIds('');
+    setSelectedOperationIds([]);
     await loadMandate(selected.id);
   }
 
@@ -271,10 +377,10 @@ export function AccountsPage() {
     });
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success('Capacidade revogada.');
+    reportSuccess('Capacidade revogada.');
     await loadMandate(selected.id);
   }
 
@@ -289,7 +395,7 @@ export function AccountsPage() {
   async function refreshSelected(accountId: string) {
     const result = await getAdministratorAccount(accountId);
     if (!result.ok || !result.data?.account) {
-      toast.error(result.ok ? 'Conta indisponível.' : result.error);
+      reportError(result.ok ? 'Conta indisponível.' : result.error);
       return;
     }
     setSelected(result.data.account);
@@ -307,15 +413,22 @@ export function AccountsPage() {
       masterKey: values.masterKey?.trim(),
     });
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
     createForm.reset({ accountType: 'usuario', username: '', password: '', masterKey: '' });
     setCreateOpen(false);
-    toast.success('Conta criada.');
-    await load();
+    reportSuccess('Membro criado.');
+    setKeyword('');
+    setPage(1);
+    await load({ keyword: '', page: 1 });
     if (result.data?.account) {
-      setSelected(result.data.account);
+      const created = result.data.account;
+      setItems((current) => (
+        current.some((item) => item.id === created.id) ? current : [created, ...current]
+      ));
+      setSelected(created);
+      void loadMandate(created.id);
     }
   }
 
@@ -327,10 +440,10 @@ export function AccountsPage() {
       : await revokeAdministratorAccountRole(account.id, role);
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success(enabled ? 'Preset Admin concedido.' : 'Preset Admin removido.');
+    reportSuccess(enabled ? 'Preset Admin concedido.' : 'Preset Admin removido.');
     await refreshSelected(account.id);
   }
 
@@ -342,10 +455,10 @@ export function AccountsPage() {
       : await disableAdministratorAccount(account.id);
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success(isDisabled ? 'Conta reabilitada.' : 'Conta desabilitada.');
+    reportSuccess(isDisabled ? 'Login reabilitado.' : 'Login desabilitado.');
     if (result.data?.account) {
       setSelected(result.data.account);
       setItems((current) => current.map((item) => (
@@ -362,11 +475,24 @@ export function AccountsPage() {
       : await revokeMandatePreset(account.id, presetId);
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success(enabled ? 'Preset concedido.' : 'Preset removido.');
+    reportSuccess(enabled ? 'Preset concedido.' : 'Preset removido.');
     await loadMandate(account.id);
+  }
+
+  async function handleAttrition() {
+    if (!selected) return;
+    setBusyKey('attrition');
+    const result = await recordMemberAttrition(selected.id, attritionPick, attritionCausePick);
+    setBusyKey(null);
+    if (!result.ok) {
+      reportError(result.error);
+      return;
+    }
+    reportSuccess('Baixa registrada. O login continua até você desabilitar o membro.');
+    await loadMandate(selected.id);
   }
 
   async function runConfirmedAction() {
@@ -389,39 +515,56 @@ export function AccountsPage() {
       await togglePreset(account, presetId, false);
       return;
     }
+    if (kind === 'attrition') {
+      await handleAttrition();
+      return;
+    }
+    if (kind === 'reset') {
+      await handleResetPassword(account);
+      return;
+    }
     await handleDisableEnable(account);
   }
 
   async function handleResetPassword(account: AccountDetails) {
     if (resetPassword.trim().length < 8) {
-      toast.error('A nova senha deve ter no mínimo 8 caracteres.');
+      reportError('A nova senha deve ter no mínimo 8 caracteres.');
       return;
     }
     setBusyKey('reset');
     const result = await resetAdministratorAccountPassword(account.id, resetPassword);
     setBusyKey(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
     setResetPassword('');
-    toast.success('Senha redefinida.');
+    reportSuccess('Senha redefinida.');
   }
 
   const accountType = createForm.watch('accountType');
   const isSelf = selected?.id === user?.accountId;
+  const causeOptions = causesForStatus(attritionPick);
+  const powerSuspended = attritionStatus !== 'active';
+
+  useEffect(() => {
+    const options = causesForStatus(attritionPick);
+    if (!options.some((item) => item.id === attritionCausePick)) {
+      setAttritionCausePick(options[0]?.id ?? 'apreensao');
+    }
+  }, [attritionPick, attritionCausePick]);
 
   return (
     <div className="min-w-0 space-y-5">
       <PageHeader
         kicker="Administração"
         kickerVariant="admin"
-        title="Contas"
-        description="Identidades de login. Admin é raiz; mandatos de produto (Recrutador, Operador, …) ficam no detalhe da conta."
+        title="Membros"
+        description="Identidades de login. Admin é raiz; mandatos de produto (Recrutador, Operador, …) ficam no detalhe. Queimar tira o poder visível; desabilitar só corta o login."
         actions={(
           <Button type="button" onClick={() => setCreateOpen(true)}>
             <Plus data-icon="inline-start" />
-            Nova conta
+            Novo membro
           </Button>
         )}
       />
@@ -495,6 +638,9 @@ export function AccountsPage() {
                     {ACCOUNT_ROLE_CATALOG.map((role) => (
                       <SelectItem key={role.id} value={role.id}>{role.label}</SelectItem>
                     ))}
+                    {MANDATE_PRESETS.map((preset) => (
+                      <SelectItem key={preset.id} value={preset.id}>{preset.label}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
 
@@ -544,7 +690,9 @@ export function AccountsPage() {
               selectedRowId={selected?.id}
               getRowId={(row) => row.id}
               onRowClick={selectAccount}
-              emptyMessage="Nenhuma conta encontrada com esses filtros."
+              emptyMessage={keyword.trim()
+                ? 'Nenhum membro com essa busca. Limpe o filtro ou crie um novo.'
+                : 'Nenhum membro nesta lista. Crie o primeiro ou afrouxa os filtros.'}
               className="h-full"
             />
           </CardContent>
@@ -587,7 +735,7 @@ export function AccountsPage() {
                   ) : null}
                 </div>
                 <CardDescription className="text-xs">
-                  Conta criada em {formatDateTime(selected.createdAt)} · atualizada {formatDateTime(selected.lastUpdatedAt)}
+                  Membro desde {formatDateTime(selected.createdAt)} · atualizado {formatDateTime(selected.lastUpdatedAt)}
                 </CardDescription>
                 <p className="truncate font-mono text-[0.65rem] text-muted-foreground" title={selected.id}>
                   {selected.id}
@@ -605,7 +753,7 @@ export function AccountsPage() {
                 </div>
                 {isAdministrator(selected.roles) ? (
                   <div className="rounded-lg border border-border/60 bg-muted/20 px-3 py-3">
-                    <p className="text-sm font-medium">Esta conta é Admin.</p>
+                    <p className="text-sm font-medium">Este membro é Admin.</p>
                     {isSelf ? (
                       <p className="mt-1 text-xs text-muted-foreground">
                         Você não pode remover o próprio Admin. Peça a outro administrador.
@@ -643,17 +791,26 @@ export function AccountsPage() {
 
               <section className="space-y-3">
                 <div className="space-y-1">
-                  <h3 className="text-sm font-medium">Mandatos</h3>
+                  <h3 className="text-sm font-medium">Poder</h3>
                   <p className="text-xs text-muted-foreground">
-                    Presets de produto (capacidade × escopo). Operator exige deal ativo antes.
+                    Presets de produto. Operador exige um deal ativo em{' '}
+                    <Link to="/dashboard/deals" className="underline underline-offset-2">Deals</Link>
+                    . Queimado ou traição tira o poder da ficha; o login só cai se você desabilitar abaixo.
                   </p>
                 </div>
+                {powerSuspended ? (
+                  <p className="rounded-md border border-border/60 bg-muted/30 px-3 py-2 text-xs">
+                    Poder suspenso: {attritionStatusLabel(attritionStatus)}
+                    {attritionCause ? ` · ${attritionCauseLabel(attritionCause)}` : ''}.
+                    Recrutador e outros presets não aparecem ativos.
+                  </p>
+                ) : null}
                 <div className="flex flex-wrap gap-1.5">
                   {appliedPresets.length === 0 ? (
-                    <span className="text-xs text-muted-foreground">Nenhum preset de mandato.</span>
+                    <span className="text-xs text-muted-foreground">Nenhum mandato ativo.</span>
                   ) : (
                     appliedPresets.map((preset) => (
-                      <Badge key={preset} variant="secondary">{presetLabel(preset)}</Badge>
+                      <Badge key={preset} variant="secondary" title={preset}>{presetLabel(preset)}</Badge>
                     ))
                   )}
                 </div>
@@ -667,15 +824,12 @@ export function AccountsPage() {
                         key={preset.id}
                         className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-2"
                       >
-                        <div className="min-w-0">
-                          <p className="text-sm font-medium">{preset.label}</p>
-                          <p className="text-[0.65rem] text-muted-foreground">{preset.id}</p>
-                        </div>
+                        <p className="text-sm font-medium" title={preset.id}>{preset.label}</p>
                         <Button
                           type="button"
                           size="sm"
                           variant={granted ? 'outline' : 'default'}
-                          disabled={busyKey !== null || selected.status === 'Disabled'}
+                          disabled={busyKey !== null || selected.status === 'Disabled' || (powerSuspended && !granted)}
                           onClick={() => setConfirmAction({
                             kind: granted ? 'revoke-preset' : 'grant-preset',
                             account: selected,
@@ -690,59 +844,160 @@ export function AccountsPage() {
                 </div>
 
                 <div className="space-y-2 rounded-lg border border-dashed border-border/60 px-3 py-3">
-                  <p className="text-sm font-medium">Fine-tune · gerir_operacao Specific</p>
+                  <p className="text-sm font-medium">Ajuste fino · gerir operação</p>
                   <p className="text-xs text-muted-foreground">
-                    Operation IDs (UUID), separados por vírgula. Preset Gestor continua em OperationAll.
+                    {operationsUnavailable
+                      ? 'Lista de operações indisponível — cole IDs separados por vírgula. Gestor continua em todas as operações.'
+                      : 'Marque as operações pelo nome. Gestor continua em todas as operações.'}
                   </p>
-                  <div className="flex flex-col gap-2 sm:flex-row">
-                    <Input
-                      value={specificOpIds}
-                      onChange={(event) => setSpecificOpIds(event.target.value)}
-                      placeholder="op-id-1, op-id-2"
-                      className="sm:flex-1"
-                    />
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={busyKey !== null || selected.status === 'Disabled' || !specificOpIds.trim()}
-                      onClick={() => void grantSpecificGerirOperacao()}
-                    >
-                      Conceder
-                    </Button>
-                  </div>
+                  {operationsUnavailable ? (
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Input
+                        value={specificOpIds}
+                        onChange={(event) => setSpecificOpIds(event.target.value)}
+                        placeholder="id-op-1, id-op-2"
+                        className="sm:flex-1"
+                      />
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={busyKey !== null || selected.status === 'Disabled' || powerSuspended || !specificOpIds.trim()}
+                        onClick={() => void grantSpecificGerirOperacao()}
+                      >
+                        Conceder
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {operations.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">Nenhuma operação cadastrada.</p>
+                      ) : (
+                        <div className="max-h-40 space-y-1.5 overflow-y-auto">
+                          {operations.map((operation) => {
+                            const checked = selectedOperationIds.includes(operation.operationId);
+                            return (
+                              <label
+                                key={operation.operationId}
+                                className="flex items-center gap-2 rounded-md px-1 py-0.5 text-sm"
+                              >
+                                <Checkbox
+                                  checked={checked}
+                                  onCheckedChange={(value) => {
+                                    setSelectedOperationIds((current) => (
+                                      value === true
+                                        ? [...current, operation.operationId]
+                                        : current.filter((id) => id !== operation.operationId)
+                                    ));
+                                  }}
+                                />
+                                <span className="min-w-0 truncate">{operation.name}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        size="sm"
+                        disabled={busyKey !== null || selected.status === 'Disabled' || powerSuspended || selectedOperationIds.length === 0}
+                        onClick={() => void grantSpecificGerirOperacao()}
+                      >
+                        Conceder
+                      </Button>
+                    </div>
+                  )}
                   <div className="space-y-1">
                     {mandateGrants.length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum grant explícito.</p>
+                      <p className="text-xs text-muted-foreground">Nenhum poder explícito além dos presets.</p>
                     ) : (
-                      mandateGrants.map((grant) => (
-                        <div
-                          key={grant.id}
-                          className="flex items-start justify-between gap-2 rounded border border-border/50 px-2 py-1.5 text-xs"
-                        >
-                          <div className="min-w-0">
-                            <p className="font-medium">{grant.capability} · {grant.scopeKind}</p>
-                            {grant.operationIds?.length ? (
-                              <p className="truncate font-mono text-[0.65rem] text-muted-foreground">
-                                {grant.operationIds.join(', ')}
-                              </p>
-                            ) : null}
-                            {grant.sourcePreset ? (
-                              <p className="text-muted-foreground">via {presetLabel(grant.sourcePreset)}</p>
-                            ) : null}
-                          </div>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="outline"
-                            disabled={busyKey !== null}
-                            onClick={() => void revokeGrant(grant)}
+                      mandateGrants.map((grant) => {
+                        const opNames = (grant.operationIds ?? []).map((id) =>
+                          operations.find((operation) => operation.operationId === id)?.name ?? id.slice(0, 8),
+                        );
+                        return (
+                          <div
+                            key={grant.id}
+                            className="flex items-start justify-between gap-2 rounded border border-border/50 px-2 py-1.5 text-xs"
                           >
-                            Revogar
-                          </Button>
-                        </div>
-                      ))
+                            <div className="min-w-0">
+                              <p className="font-medium">
+                                {capabilityLabel(grant.capability)}
+                                {opNames.length ? ` · ${opNames.join(', ')}` : ''}
+                              </p>
+                              {grant.sourcePreset ? (
+                                <p className="text-muted-foreground">via {presetLabel(grant.sourcePreset)}</p>
+                              ) : null}
+                            </div>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={busyKey !== null}
+                              onClick={() => void revokeGrant(grant)}
+                            >
+                              Revogar
+                            </Button>
+                          </div>
+                        );
+                      })
                     )}
                   </div>
+                </div>
+              </section>
+
+              <Separator />
+
+              <section className="space-y-3">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-medium">Baixa</h3>
+                  <p className="text-xs text-muted-foreground">
+                    Queimado e traição derrubam o mandato visível (e a cascata de quem este membro concedeu).
+                    Saída voluntária sobe a gente para o concedente. Não bloqueia o login sozinho; não mexe em dinheiro.
+                  </p>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Situação:{' '}
+                  {attritionStatus === 'active'
+                    ? 'Ativo'
+                    : attritionStatusLabel(attritionStatus)}
+                  {attritionCause ? ` · ${attritionCauseLabel(attritionCause)}` : ''}
+                </p>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <Label className="text-xs">Como sai</Label>
+                    <Select value={attritionPick} onValueChange={setAttritionPick}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ATTRITION_STATUS_OPTIONS.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="min-w-0 flex-1 space-y-1">
+                    <Label className="text-xs">Causa</Label>
+                    <Select value={attritionCausePick} onValueChange={setAttritionCausePick}>
+                      <SelectTrigger className="w-full">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {causeOptions.map((option) => (
+                          <SelectItem key={option.id} value={option.id}>{option.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    disabled={busyKey !== null || selected.status === 'Disabled'}
+                    onClick={() => setConfirmAction({ kind: 'attrition', account: selected })}
+                  >
+                    Registrar baixa…
+                  </Button>
                 </div>
               </section>
 
@@ -768,9 +1023,9 @@ export function AccountsPage() {
                     variant="outline"
                     className="w-full sm:w-auto"
                     disabled={busyKey === 'reset'}
-                    onClick={() => void handleResetPassword(selected)}
+                    onClick={() => setConfirmAction({ kind: 'reset', account: selected })}
                   >
-                    {busyKey === 'reset' ? 'Redefinindo…' : 'Redefinir'}
+                    {busyKey === 'reset' ? 'Redefinindo…' : 'Redefinir…'}
                   </Button>
                 </div>
               </section>
@@ -799,7 +1054,7 @@ export function AccountsPage() {
                       account: selected,
                     })}
                   >
-                    {selected.status === 'Disabled' ? 'Reabilitar conta…' : 'Desabilitar conta…'}
+                    {selected.status === 'Disabled' ? 'Reabilitar login…' : 'Desabilitar login…'}
                   </Button>
                 )}
               </section>
@@ -812,9 +1067,11 @@ export function AccountsPage() {
                 <Users className="size-5" />
               </div>
               <div className="space-y-1">
-                <p className="font-medium">Selecione uma conta</p>
+                <p className="font-medium">Selecione um membro</p>
                 <p className="max-w-sm text-sm text-muted-foreground">
-                  Escolha um item na lista para gerenciar Admin, senha e status.
+                  {items.length === 0
+                    ? 'A lista está vazia com os filtros atuais. Limpe a busca ou crie um membro.'
+                    : 'Escolha um item na lista para gerenciar Admin, mandatos, senha e login.'}
                 </p>
               </div>
             </CardContent>
@@ -831,12 +1088,14 @@ export function AccountsPage() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {confirmAction?.kind === 'grant-admin' && 'Conceder Admin'}
+              {confirmAction?.kind === 'grant-admin' && 'Tornar Admin'}
               {confirmAction?.kind === 'revoke-admin' && 'Remover Admin'}
               {confirmAction?.kind === 'grant-preset' && `Conceder ${presetLabel(confirmAction.presetId ?? '')}`}
               {confirmAction?.kind === 'revoke-preset' && `Revogar ${presetLabel(confirmAction.presetId ?? '')}`}
-              {confirmAction?.kind === 'disable' && 'Desabilitar conta'}
-              {confirmAction?.kind === 'enable' && 'Reabilitar conta'}
+              {confirmAction?.kind === 'attrition' && `Registrar ${attritionStatusLabel(attritionPick).toLowerCase()}`}
+              {confirmAction?.kind === 'disable' && 'Desabilitar login'}
+              {confirmAction?.kind === 'enable' && 'Reabilitar login'}
+              {confirmAction?.kind === 'reset' && 'Redefinir senha'}
             </DialogTitle>
             <DialogDescription>
               {confirmAction?.kind === 'grant-admin' && (
@@ -856,7 +1115,10 @@ export function AccountsPage() {
                   Conceder o mandato{' '}
                   <span className="font-medium text-foreground">{presetLabel(confirmAction.presetId ?? '')}</span>
                   {' '}para{' '}
-                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>.
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {confirmAction.presetId === 'Operator' ? (
+                    <>. Se falhar, abra <Link to="/dashboard/deals" className="underline">Deals</Link> e cadastre um deal ativo.</>
+                  ) : '.'}
                 </>
               )}
               {confirmAction?.kind === 'revoke-preset' && (
@@ -868,10 +1130,22 @@ export function AccountsPage() {
                   {' '}(pode podar sub-mandatos).
                 </>
               )}
+              {confirmAction?.kind === 'attrition' && (
+                <>
+                  Marcar{' '}
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}como {attritionStatusLabel(attritionPick).toLowerCase()}
+                  {' '}({attritionCauseLabel(attritionCausePick)}).
+                  {attritionPick === 'left'
+                    ? ' A gente que este membro concedeu sobe para o concedente.'
+                    : ' O poder visível (Recrutador e demais presets) cai, inclusive o que este membro concedeu.'}
+                  {' '}Não bloqueia o login sozinho; não mexe em dinheiro. Para cortar o acesso, desabilite o login depois.
+                </>
+              )}
               {confirmAction?.kind === 'disable' && (
                 <>
                   <span className="font-medium text-foreground">{confirmAction.account.username}</span>
-                  {' '}não conseguirá entrar até ser reabilitada.
+                  {' '}não conseguirá entrar até ser reabilitado. Isto não tira Recrutador sozinho — use a baixa para o mandato.
                 </>
               )}
               {confirmAction?.kind === 'enable' && (
@@ -879,6 +1153,13 @@ export function AccountsPage() {
                   Liberar o login de{' '}
                   <span className="font-medium text-foreground">{confirmAction.account.username}</span>
                   {' '}novamente.
+                </>
+              )}
+              {confirmAction?.kind === 'reset' && (
+                <>
+                  A senha de{' '}
+                  <span className="font-medium text-foreground">{confirmAction.account.username}</span>
+                  {' '}será substituída pela que você digitou.
                 </>
               )}
             </DialogDescription>
@@ -889,11 +1170,18 @@ export function AccountsPage() {
             </Button>
             <Button
               type="button"
-              variant={confirmAction?.kind === 'disable' || confirmAction?.kind === 'revoke-admin' || confirmAction?.kind === 'revoke-preset' ? 'destructive' : 'default'}
+              variant={confirmAction?.kind === 'disable' || confirmAction?.kind === 'revoke-admin' || confirmAction?.kind === 'revoke-preset' || confirmAction?.kind === 'attrition' ? 'destructive' : 'default'}
               disabled={busyKey !== null}
               onClick={() => void runConfirmedAction()}
             >
-              Confirmar
+              {confirmAction?.kind === 'grant-admin' && 'Tornar Admin'}
+              {confirmAction?.kind === 'revoke-admin' && 'Remover Admin'}
+              {confirmAction?.kind === 'grant-preset' && 'Conceder'}
+              {confirmAction?.kind === 'revoke-preset' && 'Revogar'}
+              {confirmAction?.kind === 'attrition' && attritionStatusLabel(attritionPick)}
+              {confirmAction?.kind === 'disable' && 'Desabilitar'}
+              {confirmAction?.kind === 'enable' && 'Reabilitar'}
+              {confirmAction?.kind === 'reset' && 'Redefinir senha'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -902,9 +1190,9 @@ export function AccountsPage() {
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Nova conta</DialogTitle>
+            <DialogTitle>Novo membro</DialogTitle>
             <DialogDescription>
-              Cria uma identidade (usuário). Conta comum não recebe mandato nesta etapa; Admin exige a chave mestra.
+              Cria um login. Usuário comum não recebe mandato agora; Admin exige a chave mestra.
             </DialogDescription>
           </DialogHeader>
           <Form {...createForm}>
@@ -925,14 +1213,14 @@ export function AccountsPage() {
                         }}
                         className="grid w-full grid-cols-2 gap-2"
                       >
-                        <ToggleGroupItem value="usuario" className="w-full">Conta</ToggleGroupItem>
+                        <ToggleGroupItem value="usuario" className="w-full">Usuário</ToggleGroupItem>
                         <ToggleGroupItem value="admin" className="w-full">Admin</ToggleGroupItem>
                       </ToggleGroup>
                     </FormControl>
                     <FormDescription>
                       {field.value === 'admin'
                         ? 'Preset raiz. O último Admin não pode ser desabilitado nem revogado.'
-                        : 'Só identidade de login. Mandatos (Operador, Recrutador, …) vêm na etapa 02.'}
+                        : 'Só identidade de login. Mandatos (Operador, Recrutador, …) você concede depois, na ficha.'}
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
@@ -984,7 +1272,7 @@ export function AccountsPage() {
                   Cancelar
                 </Button>
                 <Button type="submit" disabled={createForm.formState.isSubmitting}>
-                  {createForm.formState.isSubmitting ? 'Criando…' : 'Criar conta'}
+                  {createForm.formState.isSubmitting ? 'Criando…' : 'Criar membro'}
                 </Button>
               </DialogFooter>
             </form>

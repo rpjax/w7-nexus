@@ -48,6 +48,12 @@ export async function openWorldAccount(input: {
   });
 }
 
+export async function labelWorldAccount(accountId: string, label: string) {
+  return apiClient.put(`/api/world-accounts/administrator/${accountId}/label`, { label }, {
+    fallbackError: 'Não foi possível alterar o rótulo.',
+  });
+}
+
 export async function configureWorldAccount(
   accountId: string,
   input: {

@@ -1,37 +1,85 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { PieChart } from 'lucide-react';
+import { type ColumnDef } from '@tanstack/react-table';
+import { searchAdministratorAccounts } from '@/api/administrator/accounts';
 import {
   listShareholders,
   removeShareholder,
   upsertShareholder,
   type Shareholder,
 } from '@/api/administrator/mandates';
+import type { AccountDetails } from '@/auth/types';
+import { DataTable } from '@/components/data/data-table';
 import { PageHeader } from '@/components/layout/page-header';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
-import { toast } from 'sonner';
+import { reportError, reportSuccess } from '@/feedback';
+
+const STAKE_SUM_ASCII = 'A soma das participacoes de Acionistas nao pode exceder 100%.';
+const STAKE_SUM_PT = 'A soma das participações de Acionistas não pode exceder 100%.';
+
+function usernameLabel(accounts: AccountDetails[], id: string): string {
+  const match = accounts.find((item) => item.id === id);
+  return match ? match.username : `${id.slice(0, 8)}…`;
+}
+
+function stakeErrorMessage(raw: string): string {
+  if (raw === STAKE_SUM_ASCII || raw.includes('participacoes de Acionistas') || raw.includes('exceder 100%')) {
+    return STAKE_SUM_PT;
+  }
+  return raw;
+}
 
 export function ShareholdersPage() {
   const [items, setItems] = useState<Shareholder[]>([]);
+  const [accounts, setAccounts] = useState<AccountDetails[]>([]);
   const [totalPercent, setTotalPercent] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [accountId, setAccountId] = useState('');
   const [percentage, setPercentage] = useState('10');
+  const [confirm, setConfirm] = useState<null | 'save' | { remove: string }>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
-    const result = await listShareholders();
+    const [shareResult, accountsResult] = await Promise.all([
+      listShareholders(),
+      searchAdministratorAccounts({ limit: 200, offset: 0 }),
+    ]);
     setLoading(false);
-    if (!result.ok || !result.data) {
-      toast.error(result.ok ? 'Resposta inválida.' : result.error);
+    if (!shareResult.ok || !shareResult.data) {
+      const message = shareResult.ok ? 'Resposta inválida.' : shareResult.error;
+      setLoadError(message);
+      reportError(message);
       return;
     }
-    setItems(result.data.items ?? []);
-    setTotalPercent(result.data.totalPercent ?? 0);
+    setLoadError(null);
+    setItems(shareResult.data.items ?? []);
+    setTotalPercent(shareResult.data.totalPercent ?? 0);
+    if (!accountsResult.ok || !accountsResult.data) {
+      reportError(accountsResult.ok ? 'Não foi possível listar usuários.' : accountsResult.error);
+    } else {
+      setAccounts(accountsResult.data.items ?? []);
+    }
   }, []);
 
   useEffect(() => {
@@ -42,11 +90,12 @@ export function ShareholdersPage() {
     setBusy(true);
     const result = await upsertShareholder(accountId.trim(), Number(percentage));
     setBusy(false);
+    setConfirm(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(stakeErrorMessage(result.error));
       return;
     }
-    toast.success('Participação salva.');
+    reportSuccess('Participação salva.');
     setAccountId('');
     await load();
   }
@@ -55,13 +104,49 @@ export function ShareholdersPage() {
     setBusy(true);
     const result = await removeShareholder(id);
     setBusy(false);
+    setConfirm(null);
     if (!result.ok) {
-      toast.error(result.error);
+      reportError(result.error);
       return;
     }
-    toast.success('Participação removida.');
+    reportSuccess('Participação removida.');
     await load();
   }
+
+  const columns = useMemo<ColumnDef<Shareholder>[]>(() => [
+    {
+      id: 'account',
+      header: 'Usuário',
+      cell: ({ row }) => (
+        <span className="font-medium">{usernameLabel(accounts, row.original.accountId)}</span>
+      ),
+    },
+    {
+      accessorKey: 'percentage',
+      header: '%',
+      cell: ({ row }) => (
+        <span className="tabular-nums">{row.original.percentage}%</span>
+      ),
+    },
+    {
+      id: 'actions',
+      header: '',
+      cell: ({ row }) => (
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          disabled={busy}
+          onClick={(event) => {
+            event.stopPropagation();
+            setConfirm({ remove: row.original.accountId });
+          }}
+        >
+          Remover…
+        </Button>
+      ),
+    },
+  ], [accounts, busy]);
 
   return (
     <div className="min-w-0 space-y-5">
@@ -69,26 +154,37 @@ export function ShareholdersPage() {
         kicker="Administração"
         kickerVariant="admin"
         title="Acionistas"
-        description="Beneficiários do nível 2 (login read-only). Soma das participações ≤ 100%. Não é mandato de gestão."
+        description="Fatia residual da Org: percentual do que sobra depois do agenciamento. Não dá poder de gestão — Admin continua a mandar na casa. Soma das participações ≤ 100%."
       />
 
       <div className="grid gap-4 lg:grid-cols-[22rem_minmax(0,1fr)]">
         <Card className="border-border/60 bg-card/90">
           <CardHeader>
             <CardTitle className="text-base">Incluir / atualizar</CardTitle>
-            <CardDescription>Account id (UUID) + percentual global.</CardDescription>
+            <CardDescription>Usuário da lista + percentual da fatia residual.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             <div className="space-y-1.5">
-              <Label htmlFor="share-account">Conta</Label>
-              <Input id="share-account" value={accountId} onChange={(e) => setAccountId(e.target.value)} />
+              <Label>Usuário</Label>
+              <Select value={accountId} onValueChange={setAccountId}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Selecionar usuário" />
+                </SelectTrigger>
+                <SelectContent>
+                  {accounts.map((account) => (
+                    <SelectItem key={account.id} value={account.id}>
+                      {account.username}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="share-pct">Participação %</Label>
               <Input id="share-pct" type="number" value={percentage} onChange={(e) => setPercentage(e.target.value)} />
             </div>
-            <Button type="button" disabled={busy} onClick={() => void handleSave()}>
-              Salvar
+            <Button type="button" disabled={busy || !accountId} onClick={() => setConfirm('save')}>
+              Salvar…
             </Button>
           </CardContent>
         </Card>
@@ -101,25 +197,51 @@ export function ShareholdersPage() {
             </CardTitle>
           </CardHeader>
           <Separator />
-          <CardContent className="space-y-3 p-4">
-            {loading ? <p className="text-sm text-muted-foreground">Carregando…</p> : null}
-            {!loading && items.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Nenhum Acionista cadastrado.</p>
-            ) : null}
-            {items.map((item) => (
-              <div key={item.accountId} className="flex items-center justify-between gap-3 rounded-lg border border-border/60 px-3 py-3 text-sm">
-                <div className="min-w-0">
-                  <p className="font-medium">{item.percentage}%</p>
-                  <p className="truncate font-mono text-[0.65rem] text-muted-foreground">{item.accountId}</p>
-                </div>
-                <Button type="button" size="sm" variant="outline" disabled={busy} onClick={() => void handleRemove(item.accountId)}>
-                  Remover
-                </Button>
-              </div>
-            ))}
+          <CardContent className="p-0">
+            <DataTable
+              columns={columns}
+              data={items}
+              loading={loading}
+              errorMessage={loadError}
+              emptyMessage="Nenhum acionista cadastrado. Inclua um usuário e o percentual à esquerda — a soma das fatias não pode passar de 100%."
+              getRowId={(row) => row.accountId}
+            />
           </CardContent>
         </Card>
       </div>
+
+      <Dialog open={confirm !== null} onOpenChange={(open) => { if (!open) setConfirm(null); }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>{confirm === 'save' ? 'Salvar participação' : 'Remover participação'}</DialogTitle>
+            <DialogDescription>
+              {confirm === 'save' ? (
+                <>
+                  {usernameLabel(accounts, accountId)} passará a ter {percentage}% da fatia residual da Org.
+                </>
+              ) : confirm && typeof confirm === 'object' ? (
+                <>
+                  Remover {usernameLabel(accounts, confirm.remove)} ({items.find((item) => item.accountId === confirm.remove)?.percentage ?? '—'}%) da soma de Acionistas. Sem poder de gestão — só a fatia residual.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setConfirm(null)}>Cancelar</Button>
+            <Button
+              type="button"
+              variant={confirm === 'save' ? 'default' : 'destructive'}
+              disabled={busy}
+              onClick={() => {
+                if (confirm === 'save') void handleSave();
+                else if (confirm && typeof confirm === 'object') void handleRemove(confirm.remove);
+              }}
+            >
+              Confirmar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -38,6 +38,7 @@ public sealed class MandateUseCaseTests
 
         Assert.True(result.IsFailure);
         Assert.Equal(MandateErrorCodes.OperatorRequiresDeal, result.Errors.First().Code);
+        Assert.Contains("Deals", result.Errors.First().Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -180,6 +181,47 @@ public sealed class MandateUseCaseTests
         Assert.Equal(MandateErrorCodes.DealCannotCloseWhileOperatorPreset, close.Errors.First().Code);
         Assert.True(await store.HasActiveDealForOperatorAsync(operatorId));
     }
+
+    [Fact]
+    public async Task Nested_grant_succeeds_with_conceder_mandato_without_admin_role()
+    {
+        var store = new InMemoryMandateStore();
+        var directory = new InMemoryAccountDirectory();
+        var adminId = MemberId.New();
+        var recruiterId = MemberId.New();
+        var leafId = MemberId.New();
+        directory.Add(adminId, isAdministrator: true);
+        directory.Add(recruiterId);
+        directory.Add(leafId);
+
+        Assert.True((await new GrantPresetHandler(
+            new FakeRequestContext(adminId),
+            new AlwaysAdminPolicy(),
+            directory,
+            store,
+            store,
+            store).HandleAsync(new GrantPresetCommand(recruiterId.ToString(), PresetIds.Recruiter))).IsSuccess);
+
+        var nested = await new GrantPresetHandler(
+            new FakeRequestContext(recruiterId, admin: false),
+            new AlwaysAdminPolicy(),
+            directory,
+            store,
+            store,
+            store).HandleAsync(new GrantPresetCommand(leafId.ToString(), PresetIds.Recruiter));
+        Assert.True(nested.IsSuccess);
+
+        var stranger = MemberId.New();
+        directory.Add(stranger);
+        var denied = await new GrantPresetHandler(
+            new FakeRequestContext(stranger, admin: false),
+            new AlwaysAdminPolicy(),
+            directory,
+            store,
+            store,
+            store).HandleAsync(new GrantPresetCommand(leafId.ToString(), PresetIds.Operator));
+        Assert.False(denied.IsAuthorized);
+    }
 }
 
 file sealed class AlwaysAdminPolicy : IMandateAccessPolicy
@@ -193,13 +235,18 @@ file sealed class AlwaysAdminPolicy : IMandateAccessPolicy
 file sealed class FakeRequestContext : IRequestContext
 {
     private readonly MemberId _accountId;
+    private readonly bool _admin;
 
-    public FakeRequestContext(MemberId accountId) => _accountId = accountId;
+    public FakeRequestContext(MemberId accountId, bool admin = true)
+    {
+        _accountId = accountId;
+        _admin = admin;
+    }
 
     public Task<IResult<RequesterContext>> GetCurrentAsync(CancellationToken cancellationToken = default)
     {
         IResult<RequesterContext> result = Result<RequesterContext>.Success(
-            new RequesterContext(_accountId.ToString(), [Roles.Administrator], []));
+            new RequesterContext(_accountId.ToString(), _admin ? [Roles.Administrator] : [], []));
         return Task.FromResult(result);
     }
 }

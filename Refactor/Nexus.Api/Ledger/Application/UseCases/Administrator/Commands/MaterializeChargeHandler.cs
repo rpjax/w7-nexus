@@ -1,6 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Charging.Domain.Aggregates.Charge;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
@@ -38,6 +40,7 @@ public sealed class MaterializeChargeHandler : IMaterializeChargeUseCase
     private readonly IWorldAccountRepository _accounts;
     private readonly IClaimRepository _claims;
     private readonly IMaterializationCommit _commit;
+    private readonly IJournalWriter _journal;
 
     public MaterializeChargeHandler(
         IRequestContext requestContext,
@@ -45,7 +48,8 @@ public sealed class MaterializeChargeHandler : IMaterializeChargeUseCase
         IChargeRepository charges,
         IWorldAccountRepository accounts,
         IClaimRepository claims,
-        IMaterializationCommit commit)
+        IMaterializationCommit commit,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
@@ -53,6 +57,7 @@ public sealed class MaterializeChargeHandler : IMaterializeChargeUseCase
         _accounts = accounts;
         _claims = claims;
         _commit = commit;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<MaterializeChargeResult>> HandleAsync(
@@ -136,6 +141,7 @@ public sealed class MaterializeChargeHandler : IMaterializeChargeUseCase
             return Fail(LedgerErrorCodes.InvariantBroken, "Invariante soma claims != saldo apos materializacao.");
 
         await _commit.SaveAsync(charge, account, opened, cancellationToken);
+        _journal.RecordChargeMaterialized(charge.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<MaterializeChargeResult>.Success(
             new MaterializeChargeResult(charge.Id, charge.Status.ToString(), opened.Select(c => c.Id).ToList()));
     }

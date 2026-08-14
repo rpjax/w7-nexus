@@ -1,5 +1,7 @@
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.UseCases.Shared;
@@ -33,12 +35,14 @@ public sealed class ListHopsHandler : IListHopsUseCase
     private readonly IRequestContext _requestContext;
     private readonly ILedgerAccess _access;
     private readonly IHopRepository _hops;
+    private readonly IJournalWriter _journal;
 
-    public ListHopsHandler(IRequestContext requestContext, ILedgerAccess access, IHopRepository hops)
+    public ListHopsHandler(IRequestContext requestContext, ILedgerAccess access, IHopRepository hops, IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _hops = hops;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ListHopsResult>> HandleAsync(
@@ -51,6 +55,7 @@ public sealed class ListHopsHandler : IListHopsUseCase
 
         Guid? accountId = Guid.TryParse(query.AccountId, out var parsed) ? parsed : null;
         var items = await _hops.ListAsync(accountId, cancellationToken);
+        _journal.RecordHopsListed(Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<ListHopsResult>.Success(new ListHopsResult(items.Select(ToView).ToList()));
     }
 

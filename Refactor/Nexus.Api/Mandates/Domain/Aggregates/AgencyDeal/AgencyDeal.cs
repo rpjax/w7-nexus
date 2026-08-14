@@ -31,7 +31,7 @@ public sealed class AgencyDeal
     public IReadOnlyList<object> UncommittedEvents => _uncommitted;
     public void ClearUncommitted() => _uncommitted.Clear();
 
-    public static IResult<AgencyDeal> Create(MemberId recruiterId, MemberId operatorId, decimal operatorPercent, decimal recruiterPercent)
+    public static IResult<AgencyDeal> Open(MemberId recruiterId, MemberId operatorId, decimal operatorPercent, decimal recruiterPercent)
     {
         var validation = ValidatePercents(operatorPercent, recruiterPercent);
         if (validation.IsFailure)

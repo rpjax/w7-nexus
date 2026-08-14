@@ -16,7 +16,8 @@ public sealed class ShareholderStake
     }
 
     public MemberId AccountId { get; private set; }
-    public Guid PersistenceId => AccountId.Value;
+    public Guid Id => AccountId.Value;
+    public Guid PersistenceId => Id;
     public decimal Percentage { get; private set; }
     public DateTime CreatedAt { get; private set; }
     public DateTime LastUpdatedAt { get; private set; }
@@ -26,7 +27,7 @@ public sealed class ShareholderStake
     public IReadOnlyList<object> UncommittedEvents => _uncommitted;
     public void ClearUncommitted() => _uncommitted.Clear();
 
-    public static IResult<ShareholderStake> Create(MemberId accountId, decimal percentage)
+    public static IResult<ShareholderStake> Open(MemberId accountId, decimal percentage)
     {
         var validation = ValidatePercentage(percentage);
         if (validation.IsFailure)

@@ -58,6 +58,11 @@ public sealed class AuthenticationController : ApiControllerBase
         [FromBody] SignInRequest request,
         CancellationToken cancellationToken)
     {
+        if (request is null)
+        {
+            return BadRequest();
+        }
+
         var result = await _signIn.HandleAsync(
             new SignInCommand(request.Username, request.Password),
             cancellationToken);

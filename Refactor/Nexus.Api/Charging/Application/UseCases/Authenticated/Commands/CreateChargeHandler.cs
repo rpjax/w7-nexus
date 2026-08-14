@@ -1,6 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Charging.Application.Journal;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Authorization;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Issuing;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Mandates;
@@ -38,6 +40,7 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
     private readonly IOperationEmissionSetRepository _sets;
     private readonly IChargeRepository _charges;
     private readonly IPaymentIssuer _issuer;
+    private readonly IJournalWriter _journal;
 
     public CreateChargeHandler(
         IRequestContext requestContext,
@@ -46,7 +49,8 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
         IWorldAccountRepository accounts,
         IOperationEmissionSetRepository sets,
         IChargeRepository charges,
-        IPaymentIssuer issuer)
+        IPaymentIssuer issuer,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _mandates = mandates;
@@ -55,6 +59,7 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
         _sets = sets;
         _charges = charges;
         _issuer = issuer;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<CreateChargeResult>> HandleAsync(
@@ -83,13 +88,21 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
         }
 
         Guid operatorId = requesterId;
-        if (isAdmin && !string.IsNullOrWhiteSpace(command.OperatorMemberId))
+        if (isAdmin)
         {
+            if (string.IsNullOrWhiteSpace(command.OperatorMemberId))
+            {
+                return OperationResult<CreateChargeResult>.Failure(Error.Create()
+                    .WithCode(ChargingErrorCodes.OperatorNotAssigned)
+                    .WithMessage("Associe um operador à operação e escolha-o aqui.")
+                    .Build());
+            }
+
             if (!Guid.TryParse(command.OperatorMemberId, out operatorId))
             {
                 return OperationResult<CreateChargeResult>.Failure(Error.Create()
                     .WithCode(ChargingErrorCodes.OperatorNotAssigned)
-                    .WithMessage("Operador invalido.")
+                    .WithMessage("Operador inválido.")
                     .Build());
             }
         }
@@ -107,7 +120,7 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
         {
             return OperationResult<CreateChargeResult>.Failure(Error.Create()
                 .WithCode(ChargingErrorCodes.OperationNotActive)
-                .WithMessage("So Operacao Ativa aceita nova Cobrança.")
+                .WithMessage("Só operação Ativa aceita nova cobrança.")
                 .Build());
         }
 
@@ -118,7 +131,7 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
         {
             return OperationResult<CreateChargeResult>.Failure(Error.Create()
                 .WithCode(ChargingErrorCodes.OperatorNotAssigned)
-                .WithMessage("Operador nao esta assigned nesta Operacao.")
+                .WithMessage("Esse operador não está associado a esta operação.")
                 .Build());
         }
 
@@ -197,6 +210,7 @@ public sealed class CreateChargeHandler : ICreateChargeUseCase
 
         await _accounts.SaveAsync(selected, cancellationToken);
         await _charges.SaveAsync(charge, cancellationToken);
+        _journal.RecordChargeCreated(charge.Id, Guid.Parse(requester.AccountId));
 
         return OperationResult<CreateChargeResult>.Success(
             new CreateChargeResult(charge.Id, charge.Status.ToString(), charge.ExternalReference));

@@ -1,5 +1,7 @@
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.WorldAccounts.Application.Journal;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.WorldAccounts.Application.UseCases.Shared;
@@ -30,15 +32,18 @@ public sealed class ListWorldAccountsHandler : IListWorldAccountsUseCase
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly IJournalWriter _journal;
 
     public ListWorldAccountsHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ListWorldAccountsResult>> HandleAsync(CancellationToken cancellationToken = default)
@@ -49,6 +54,7 @@ public sealed class ListWorldAccountsHandler : IListWorldAccountsUseCase
             return auth.Failure;
 
         var items = await _repository.ListAsync(cancellationToken);
+        _journal.RecordListed(Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<ListWorldAccountsResult>.Success(
             new ListWorldAccountsResult(items.Select(WorldAccountViews.ToView).ToList()));
     }
@@ -65,15 +71,18 @@ public sealed class GetWorldAccountHandler : IGetWorldAccountUseCase
     private readonly IRequestContext _requestContext;
     private readonly IWorldAccountAccess _access;
     private readonly IWorldAccountRepository _repository;
+    private readonly IJournalWriter _journal;
 
     public GetWorldAccountHandler(
         IRequestContext requestContext,
         IWorldAccountAccess access,
-        IWorldAccountRepository repository)
+        IWorldAccountRepository repository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _repository = repository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<WorldAccountView>> HandleAsync(
@@ -92,6 +101,7 @@ public sealed class GetWorldAccountHandler : IGetWorldAccountUseCase
         if (account is null)
             return OperationResult<WorldAccountView>.Failure(WorldAccountGuards.NotFound(query.AccountId));
 
+        _journal.RecordRead(account.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<WorldAccountView>.Success(WorldAccountViews.ToView(account));
     }
 }

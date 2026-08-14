@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation } from 'react-router-dom';
 import {
+  FileText,
   Handshake,
   Home,
   Layers,
@@ -11,6 +12,7 @@ import {
   ScrollText,
   Shield,
   UserRound,
+  Users,
   Wallet,
   X,
 } from 'lucide-react';
@@ -19,7 +21,8 @@ import { BrandGlyph } from '@/components/brand/BrandMark';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
-import { isAdministrator, roleLabel } from '@/utils/accountAccess';
+import { roleLabel } from '@/utils/accountAccess';
+import { useHubAccess, type HubAccess } from '@/auth/MandateContext';
 import { cn } from '@/lib/utils';
 
 function userInitial(username: string | undefined): string {
@@ -32,63 +35,136 @@ type NavItem = {
   label: string;
   icon: typeof Home;
   end?: boolean;
-  adminOnly?: boolean;
+  show?: (access: HubAccess) => boolean;
 };
 
-const NAV_ITEMS: NavItem[] = [
-  { to: '/dashboard', label: 'Início', icon: Home, end: true },
-  { to: '/dashboard/profile', label: 'Perfil', icon: UserRound },
-  { to: '/dashboard/accounts', label: 'Contas', icon: Shield, adminOnly: true },
-  { to: '/dashboard/world-accounts', label: 'Livro-mundo', icon: Wallet, adminOnly: true },
-  { to: '/dashboard/operations', label: 'Operações', icon: Layers, adminOnly: true },
-  { to: '/dashboard/charges', label: 'Cobranças', icon: Receipt, adminOnly: true },
-  { to: '/dashboard/claims', label: 'Claims', icon: ScrollText, adminOnly: true },
-  { to: '/dashboard/deals', label: 'Deals', icon: Handshake, adminOnly: true },
-  { to: '/dashboard/shareholders', label: 'Acionistas', icon: PieChart, adminOnly: true },
+type NavSection = {
+  label: string;
+  items: NavItem[];
+};
+
+const DOCUMENT_TITLES: { path: string; end?: boolean; title: string }[] = [
+  { path: '/dashboard', end: true, title: 'Início' },
+  { path: '/dashboard/profile', title: 'Perfil' },
+  { path: '/dashboard/statement', title: 'Extrato' },
+  { path: '/dashboard/carteira', title: 'Minha gente' },
+  { path: '/dashboard/accounts', title: 'Membros' },
+  { path: '/dashboard/world-accounts', title: 'Livro-mundo' },
+  { path: '/dashboard/operations', title: 'Operações' },
+  { path: '/dashboard/charges', title: 'Cobranças' },
+  { path: '/dashboard/claims', title: 'Direitos' },
+  { path: '/dashboard/deals', title: 'Agenciamento' },
+  { path: '/dashboard/shareholders', title: 'Acionistas' },
 ];
+
+function documentTitleFor(pathname: string): string {
+  const match = DOCUMENT_TITLES.find((item) =>
+    item.end ? pathname === item.path : pathname === item.path || pathname.startsWith(`${item.path}/`),
+  );
+  const label = match?.title ?? 'Página não encontrada';
+  return `${label} · Nexus`;
+}
+
+const NAV_SECTIONS: NavSection[] = [
+  {
+    label: 'Eu',
+    items: [
+      { to: '/dashboard', label: 'Início', icon: Home, end: true },
+      { to: '/dashboard/profile', label: 'Perfil', icon: UserRound },
+      { to: '/dashboard/statement', label: 'Extrato', icon: FileText },
+    ],
+  },
+  {
+    label: 'Dinheiro',
+    items: [
+      { to: '/dashboard/operations', label: 'Operações', icon: Layers, show: (a) => a.canManageOperations || a.admin },
+      {
+        to: '/dashboard/charges',
+        label: 'Cobranças',
+        icon: Receipt,
+        show: (a) => a.canActAsOperator || a.canSeeFinance || a.canManageOperations || a.admin,
+      },
+      { to: '/dashboard/claims', label: 'Direitos', icon: ScrollText, show: (a) => a.canSeeFinance || a.admin },
+      {
+        to: '/dashboard/world-accounts',
+        label: 'Livro-mundo',
+        icon: Wallet,
+        show: (a) => a.canSeeFinance || a.canManageGateways || a.admin,
+      },
+    ],
+  },
+  {
+    label: 'Pessoas',
+    items: [
+      { to: '/dashboard/carteira', label: 'Minha gente', icon: Users, show: (a) => a.canRecruit || a.admin },
+      { to: '/dashboard/accounts', label: 'Membros', icon: Shield, show: (a) => a.canGrant || a.admin },
+      { to: '/dashboard/deals', label: 'Agenciamento', icon: Handshake, show: (a) => a.canRecruit || a.admin },
+      { to: '/dashboard/shareholders', label: 'Acionistas', icon: PieChart, show: (a) => a.admin },
+    ],
+  },
+];
+
+function visibleItems(items: NavItem[], access: HubAccess): NavItem[] {
+  return items.filter((item) => !item.show || item.show(access));
+}
+
 function SideNavItems({
-  admin,
+  access,
   onNavigate,
 }: {
-  admin: boolean;
+  access: HubAccess;
   onNavigate?: () => void;
 }) {
+  const sections = NAV_SECTIONS.map((section) => ({
+    ...section,
+    items: visibleItems(section.items, access),
+  })).filter((section) => section.items.length > 0);
+
   return (
-    <nav className="flex flex-col gap-1">
-      {NAV_ITEMS.filter((item) => !item.adminOnly || admin).map((item) => {
-        const Icon = item.icon;
-        return (
-          <NavLink
-            key={item.to}
-            to={item.to}
-            end={item.end}
-            onClick={onNavigate}
-            className={({ isActive }) =>
-              cn(
-                'group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
-                isActive
-                  ? 'bg-primary/15 text-foreground ring-1 ring-primary/25'
-                  : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
-              )
-            }
-          >
-            <Icon className="size-4 shrink-0 opacity-80" />
-            {item.label}
-          </NavLink>
-        );
-      })}
+    <nav className="flex flex-col gap-5" aria-label="Navegação do painel">
+      {sections.map((section) => (
+        <div key={section.label}>
+          <p className="mb-1.5 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
+            {section.label}
+          </p>
+          <div className="flex flex-col gap-0.5">
+            {section.items.map((item) => {
+              const Icon = item.icon;
+              return (
+                <NavLink
+                  key={item.to}
+                  to={item.to}
+                  end={item.end}
+                  onClick={onNavigate}
+                  className={({ isActive }) =>
+                    cn(
+                      'group flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors',
+                      isActive
+                        ? 'bg-primary/15 text-foreground ring-1 ring-primary/25'
+                        : 'text-muted-foreground hover:bg-muted/50 hover:text-foreground',
+                    )
+                  }
+                >
+                  <Icon className="size-4 shrink-0 opacity-80" />
+                  {item.label}
+                </NavLink>
+              );
+            })}
+          </div>
+        </div>
+      ))}
     </nav>
   );
 }
 
 function SidebarBody({
-  admin,
+  access,
   username,
   roles,
   onNavigate,
   onSignOut,
 }: {
-  admin: boolean;
+  access: HubAccess;
   username?: string;
   roles: string;
   onNavigate?: () => void;
@@ -96,13 +172,8 @@ function SidebarBody({
 }) {
   return (
     <>
-      <div className="flex flex-1 flex-col gap-4 p-3">
-        <div>
-          <p className="mb-2 px-3 text-[0.65rem] font-semibold uppercase tracking-[0.18em] text-muted-foreground/80">
-            Navegação
-          </p>
-          <SideNavItems admin={admin} onNavigate={onNavigate} />
-        </div>
+      <div className="flex flex-1 flex-col gap-4 overflow-y-auto p-3">
+        <SideNavItems access={access} onNavigate={onNavigate} />
       </div>
 
       <div className="border-t border-border/60 p-3">
@@ -111,7 +182,7 @@ function SidebarBody({
             <AvatarFallback>{userInitial(username)}</AvatarFallback>
           </Avatar>
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium">{username ?? 'Conta'}</p>
+            <p className="truncate text-sm font-medium">{username ?? 'Usuário'}</p>
             <p className="truncate text-xs text-muted-foreground">{roles}</p>
           </div>
         </div>
@@ -126,8 +197,8 @@ function SidebarBody({
 
 export function AppShell() {
   const { user, signOut } = useAuth();
+  const access = useHubAccess();
   const location = useLocation();
-  const admin = isAdministrator(user?.roles);
   const [mobileOpen, setMobileOpen] = useState(false);
   const roles = (user?.roles ?? []).map(roleLabel).join(' · ') || 'Identidade';
 
@@ -136,13 +207,27 @@ export function AppShell() {
   }, [location.pathname]);
 
   useEffect(() => {
+    document.title = documentTitleFor(location.pathname);
+  }, [location.pathname]);
+
+  useEffect(() => {
     if (!mobileOpen) return;
     const previous = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setMobileOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
     return () => {
       document.body.style.overflow = previous;
+      window.removeEventListener('keydown', onKeyDown);
     };
   }, [mobileOpen]);
+
+  function handleSignOut() {
+    signOut();
+    window.location.assign('/auth');
+  }
 
   return (
     <div className="relative flex min-h-dvh w-full min-w-0 overflow-x-hidden">
@@ -158,10 +243,10 @@ export function AppShell() {
         </div>
         <Separator />
         <SidebarBody
-          admin={admin}
+          access={access}
           username={user?.username}
           roles={roles}
-          onSignOut={signOut}
+          onSignOut={handleSignOut}
         />
       </aside>
 
@@ -169,12 +254,12 @@ export function AppShell() {
         <div className="fixed inset-0 z-50 lg:hidden">
           <button
             type="button"
-            className="absolute inset-0 bg-background/70 backdrop-blur-sm"
+            className="absolute inset-0 bg-background/80 backdrop-blur-sm"
             aria-label="Fechar menu"
             onClick={() => setMobileOpen(false)}
           />
           <aside
-            className="absolute inset-y-0 left-0 flex w-[min(18.5rem,calc(100vw-3rem))] flex-col border-r border-border/70 bg-[#080d1a] shadow-2xl"
+            className="absolute inset-y-0 left-0 flex w-[min(18.5rem,calc(100vw-5.5rem))] flex-col border-r border-border/70 bg-[#080d1a] shadow-2xl"
             role="dialog"
             aria-modal="true"
             aria-label="Menu de navegação"
@@ -201,13 +286,13 @@ export function AppShell() {
             </div>
             <Separator />
             <SidebarBody
-              admin={admin}
+              access={access}
               username={user?.username}
               roles={roles}
               onNavigate={() => setMobileOpen(false)}
               onSignOut={() => {
                 setMobileOpen(false);
-                signOut();
+                handleSignOut();
               }}
             />
           </aside>

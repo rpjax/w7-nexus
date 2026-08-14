@@ -10,6 +10,7 @@ export type LedgerClaim = {
   status: string;
   kind: string;
   openedAt: string;
+  visible: boolean;
 };
 
 export async function materializeCharge(input: {
@@ -23,6 +24,12 @@ export async function materializeCharge(input: {
     input,
     { fallbackError: 'Não foi possível materializar a cobrança.' },
   );
+}
+
+export async function getClaim(claimId: string) {
+  return apiClient.get<LedgerClaim>(`/api/ledger/administrator/claims/${claimId}`, {
+    fallbackError: 'Não foi possível carregar o claim.',
+  });
 }
 
 export async function listClaims(filters?: { chargeId?: string; accountId?: string; beneficiaryId?: string }) {
@@ -56,6 +63,8 @@ export async function registerHop(input: {
   claimIds?: string[];
   destinations: { accountId: string; amount: number; currency: string }[];
   cut?: { orangeMemberId: string; percent: number; inPlace: boolean; orangeAccountId?: string };
+  keepRemainderAtOrigin?: boolean;
+  lossCause?: string;
 }) {
   return apiClient.post<{ hopId: string; lossAmount: number; claimIds: string[] }>(
     '/api/ledger/administrator/hops',
@@ -82,4 +91,62 @@ export async function listHops(accountId?: string) {
     `/api/ledger/administrator/hops${query}`,
     { fallbackError: 'Não foi possível listar hops.' },
   );
+}
+
+export async function revealClaim(claimId: string, summary: string) {
+  return apiClient.post<{
+    claimId: string;
+    visible: boolean;
+    releasedAmount: number;
+    releasedCurrency: string;
+    summary: string;
+  }>(`/api/ledger/administrator/claims/${claimId}/reveal`, { summary }, { fallbackError: 'Não foi possível revelar o claim.' });
+}
+
+export async function markAccountLost(accountId: string, cause: string) {
+  return apiClient.post<{ accountId: string; writtenOff: number }>(
+    `/api/ledger/administrator/accounts/${accountId}/lost`,
+    { cause },
+    { fallbackError: 'Não foi possível marcar a conta como perdida.' },
+  );
+}
+
+export async function reconcileAccount(input: {
+  accountId: string;
+  currency: string;
+  observedBalance: number;
+  cause: string;
+  claimId?: string;
+}) {
+  return apiClient.post<{ accountId: string; nexusBalance: number; observedBalance: number }>(
+    `/api/ledger/administrator/accounts/${input.accountId}/reconcile`,
+    {
+      currency: input.currency,
+      observedBalance: input.observedBalance,
+      cause: input.cause,
+      claimId: input.claimId,
+    },
+    { fallbackError: 'Não foi possível reconciliar a conta.' },
+  );
+}
+
+export async function reverseCharge(chargeId: string, cause = 'estorno') {
+  return apiClient.post<{ chargeId: string; reversedClaims: number }>(
+    `/api/ledger/administrator/charges/${chargeId}/reverse`,
+    { cause },
+    { fallbackError: 'Não foi possível estornar a cobrança.' },
+  );
+}
+
+export type ExposureLine = {
+  accountId: string;
+  currency: string;
+  amount: number;
+  balanceStatus: string;
+};
+
+export async function listExposure() {
+  return apiClient.get<{ items: ExposureLine[] }>('/api/ledger/administrator/exposure', {
+    fallbackError: 'Não foi possível listar a exposição.',
+  });
 }

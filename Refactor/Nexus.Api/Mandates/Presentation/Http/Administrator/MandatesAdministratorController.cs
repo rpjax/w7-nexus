@@ -4,6 +4,7 @@ using Refactor.Nexus.Api.Mandates.Application.Ports.In.Administrator.Commands;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.CloseAgencyDeal;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.GrantCapability;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.GrantPreset;
+using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RecordMemberAttrition;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RemoveShareholderStake;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RevokeCapability;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RevokePreset;
@@ -32,6 +33,7 @@ public sealed class MandatesAdministratorController : ApiControllerBase
     private readonly IGetMemberMandateUseCase _getMemberMandate;
     private readonly IListAgencyDealsUseCase _listAgencyDeals;
     private readonly IListShareholdersUseCase _listShareholders;
+    private readonly IRecordMemberAttritionUseCase _attrition;
 
     public MandatesAdministratorController(
         IGrantPresetUseCase grantPreset,
@@ -44,7 +46,8 @@ public sealed class MandatesAdministratorController : ApiControllerBase
         IRemoveShareholderStakeUseCase removeShareholderStake,
         IGetMemberMandateUseCase getMemberMandate,
         IListAgencyDealsUseCase listAgencyDeals,
-        IListShareholdersUseCase listShareholders)
+        IListShareholdersUseCase listShareholders,
+        IRecordMemberAttritionUseCase attrition)
     {
         _grantPreset = grantPreset;
         _revokePreset = revokePreset;
@@ -57,6 +60,7 @@ public sealed class MandatesAdministratorController : ApiControllerBase
         _getMemberMandate = getMemberMandate;
         _listAgencyDeals = listAgencyDeals;
         _listShareholders = listShareholders;
+        _attrition = attrition;
     }
 
     [HttpGet("members/{accountId}")]
@@ -113,4 +117,13 @@ public sealed class MandatesAdministratorController : ApiControllerBase
     public async Task<ActionResult> RemoveShareholderAsync(string accountId, CancellationToken cancellationToken) =>
         ToOperationResult(await _removeShareholderStake.HandleAsync(
             new RemoveShareholderStakeCommand(accountId), cancellationToken));
+
+    [HttpPost("members/{accountId}/attrition")]
+    public async Task<ActionResult> RecordAttritionAsync(
+        string accountId,
+        [FromBody] MemberAttritionRequest request,
+        CancellationToken cancellationToken) =>
+        ToOperationResult(await _attrition.HandleAsync(
+            new RecordMemberAttritionCommand(accountId, request.Status, request.Cause),
+            cancellationToken));
 }

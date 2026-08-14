@@ -3,6 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Options;
 using Refactor.Nexus.Api.Infrastructure.Persistence;
+using Refactor.Nexus.Api.Journal.Application.Ports.Out.Mandates;
+using Refactor.Nexus.Api.Journal.Application.UseCases.Administrator.Queries;
+using Refactor.Nexus.Api.Journal.Infrastructure.Mandates;
 using Refactor.Nexus.Api.Journal.Services;
 using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Journal.Storage;
@@ -63,6 +66,8 @@ public static class JournalServiceCollectionExtensions
 
         services.TryAddScoped<IJournalRepository, JournalRepository>();
         services.TryAddScoped<IJournalReader, JournalReader>();
+        services.TryAddScoped<IJournalAccess, JournalAccessAdapter>();
+        services.TryAddScoped<IListJournalEntriesUseCase, ListJournalEntriesHandler>();
         services.TryAddScoped<IJournalDatabaseInitializer, JournalDatabaseInitializer>();
         services.TryAddSingleton<JournalHealthCheck>();
 

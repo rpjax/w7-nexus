@@ -12,7 +12,9 @@ public sealed record HopBundleItem(
     Guid OriginChargeId,
     Guid LocationAccountId,
     string Kind,
-    string Currency);
+    string Currency,
+    decimal BirthAmount,
+    string BirthCurrency);
 
 public sealed record HopDestSpec(Guid AccountId, decimal Amount, string Currency);
 
@@ -25,7 +27,9 @@ public sealed record HopNewClaimSpec(
     Guid OriginChargeId,
     Guid LocationAccountId,
     string Kind,
-    Guid? ParentClaimId);
+    Guid? ParentClaimId,
+    decimal BirthAmount,
+    string BirthCurrency);
 
 public sealed record HopPlan(
     IReadOnlyList<(Guid ClaimId, decimal Amount, string Currency, Guid Location)> Adjustments,
@@ -39,7 +43,8 @@ public static class HopAllocator
     public static IResult<HopPlan> Plan(
         IReadOnlyList<HopBundleItem> bundle,
         IReadOnlyList<HopDestSpec> destinations,
-        HopCutSpec? cut)
+        HopCutSpec? cut,
+        bool keepRemainderAtOrigin = false)
     {
         if (bundle.Count == 0)
             return Fail("Bundle vazio.");
@@ -55,7 +60,6 @@ public static class HopAllocator
         var working = bundle.Select(c => (Item: c, Remaining: c.Amount)).ToList();
         var newClaims = new List<HopNewClaimSpec>();
         var world = new List<(Guid AccountId, decimal Amount, string Currency, bool Credit)>();
-        var loss = 0m;
         var originId = bundle[0].LocationAccountId;
 
         var extraOriginDebit = 0m;
@@ -79,7 +83,9 @@ public static class HopAllocator
                     working[0].Item.OriginChargeId,
                     cutLocation,
                     "PathCut",
-                    null));
+                    null,
+                    cutAmount,
+                    originCurrency));
 
                 if (!cut.InPlace)
                 {
@@ -115,7 +121,16 @@ public static class HopAllocator
 
         if (sameCurrency)
         {
-            loss = remainingTotal - s;
+            if (keepRemainderAtOrigin && remainingTotal > s)
+            {
+                world.Add((originId, s + extraOriginDebit, originCurrency, false));
+                foreach (var dest in dests)
+                    world.Add((dest.AccountId, dest.Amount, destCurrency, true));
+                return Result<HopPlan>.Success(
+                    SplitKeepingRemainder(working, dests, destCurrency, originId, originCurrency, newClaims, world, s));
+            }
+
+            var loss = remainingTotal - s;
             working = Scale(working, s, remainingTotal);
             world.Add((originId, remainingTotal + extraOriginDebit, originCurrency, false));
             foreach (var dest in dests)
@@ -146,7 +161,9 @@ public static class HopAllocator
                     row.Item.OriginChargeId,
                     dest.AccountId,
                     row.Item.Kind,
-                    row.Item.ClaimId));
+                    row.Item.ClaimId,
+                    row.Item.BirthAmount,
+                    row.Item.BirthCurrency));
             }
         }
 
@@ -169,6 +186,40 @@ public static class HopAllocator
             .ToList();
         var archives = working.Where(w => w.Remaining <= 0).Select(w => w.Item.ClaimId).ToList();
         return new HopPlan(adjustments, archives, newClaims, world, loss);
+    }
+
+    private static HopPlan SplitKeepingRemainder(
+        List<(HopBundleItem Item, decimal Remaining)> working,
+        List<HopDestSpec> dests,
+        string destCurrency,
+        Guid originId,
+        string originCurrency,
+        List<HopNewClaimSpec> newClaims,
+        List<(Guid, decimal, string, bool)> world,
+        decimal destTotal)
+    {
+        var originalTotal = working.Sum(w => w.Remaining);
+        var destShares = Scale(working, destTotal, originalTotal);
+        var leftovers = working
+            .Select((w, i) => (w.Item, Leftover: Round(w.Remaining - destShares[i].Remaining)))
+            .ToList();
+
+        var remainderClaims = leftovers
+            .Where(row => row.Leftover > 0)
+            .Select(row => new HopNewClaimSpec(
+                row.Item.BeneficiaryId,
+                row.Leftover,
+                originCurrency,
+                row.Item.OriginChargeId,
+                originId,
+                row.Item.Kind,
+                row.Item.ClaimId,
+                row.Item.BirthAmount,
+                row.Item.BirthCurrency))
+            .ToList();
+
+        var destPlan = SplitToDestinations(destShares, dests, destCurrency, [.. newClaims, .. remainderClaims], world, 0);
+        return destPlan;
     }
 
     private static HopPlan SplitToDestinations(
@@ -207,7 +258,9 @@ public static class HopAllocator
                     row.Item.OriginChargeId,
                     dests[i].AccountId,
                     row.Item.Kind,
-                    row.Item.ClaimId));
+                    row.Item.ClaimId,
+                    row.Item.BirthAmount,
+                    row.Item.BirthCurrency));
             }
         }
 

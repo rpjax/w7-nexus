@@ -35,9 +35,8 @@ public sealed class MartenMandateRepositories :
         MemberId memberId,
         CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var mandate = await session.Events.AggregateStreamAsync<MemberMandateAggregate>(
-            EventStoreStreams.Mandate(memberId.Value), token: cancellationToken);
+        var mandate = await MartenLiveQuery.LoadAsync<MemberMandateAggregate>(
+            _store, EventStoreStreams.Mandate(memberId.Value), cancellationToken);
         if (mandate is null || mandate.MemberId.Value == Guid.Empty)
             return null;
         return mandate;
@@ -65,7 +64,7 @@ public sealed class MartenMandateRepositories :
         CancellationToken cancellationToken)
     {
         await using var session = _store.QuerySession();
-        var items = await session.Query<MemberMandateAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<MemberMandateAggregate>(_store, "mandate-", cancellationToken);
         return items.Where(m => m.MemberId.Value != Guid.Empty).ToList();
     }
 
@@ -79,9 +78,8 @@ public sealed class MartenMandateRepositories :
 
     public async Task<AgencyDealAggregate?> GetByIdAsync(Guid dealId, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var deal = await session.Events.AggregateStreamAsync<AgencyDealAggregate>(
-            EventStoreStreams.Deal(dealId), token: cancellationToken);
+        var deal = await MartenLiveQuery.LoadAsync<AgencyDealAggregate>(
+            _store, EventStoreStreams.Deal(dealId), cancellationToken);
         if (deal is null || deal.Id == Guid.Empty)
             return null;
         return deal;
@@ -118,9 +116,8 @@ public sealed class MartenMandateRepositories :
         MemberId accountId,
         CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var stake = await session.Events.AggregateStreamAsync<ShareholderStakeAggregate>(
-            EventStoreStreams.Stake(accountId.Value), token: cancellationToken);
+        var stake = await MartenLiveQuery.LoadAsync<ShareholderStakeAggregate>(
+            _store, EventStoreStreams.Stake(accountId.Value), cancellationToken);
         if (stake is null || stake.AccountId.Value == Guid.Empty || stake.IsRemoved)
             return null;
         return stake;
@@ -149,7 +146,7 @@ public sealed class MartenMandateRepositories :
         CancellationToken cancellationToken)
     {
         await using var session = _store.QuerySession();
-        var items = await session.Query<ShareholderStakeAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<ShareholderStakeAggregate>(_store, "stake-", cancellationToken);
         return items.Where(s => s.AccountId.Value != Guid.Empty && !s.IsRemoved).ToList();
     }
 
@@ -174,13 +171,6 @@ public sealed class MartenMandateRepositories :
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<MemberMandateAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<MemberMandateAggregate>().Identity(x => x.PersistenceId);
-        options.Projections.Snapshot<AgencyDealAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<AgencyDealAggregate>().Identity(x => x.Id);
-        options.Projections.Snapshot<ShareholderStakeAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<ShareholderStakeAggregate>().Identity(x => x.PersistenceId);
-
         options.Events.AddEventTypes(
         [
             typeof(MandateOpened),
@@ -190,6 +180,8 @@ public sealed class MartenMandateRepositories :
             typeof(MandateCapabilityGranted),
             typeof(MandateCapabilityRevoked),
             typeof(MandateGrantsPruned),
+            typeof(MandateGrantsReparented),
+            typeof(MemberAttritionRecorded),
             typeof(AgencyDealOpened),
             typeof(AgencyDealBackfilled),
             typeof(AgencyDealRatesChanged),
@@ -202,7 +194,7 @@ public sealed class MartenMandateRepositories :
     private async Task<IReadOnlyList<AgencyDealAggregate>> ListDealsAsync(CancellationToken cancellationToken)
     {
         await using var session = _store.QuerySession();
-        var items = await session.Query<AgencyDealAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<AgencyDealAggregate>(_store, "deal-", cancellationToken);
         return items.Where(d => d.Id != Guid.Empty).ToList();
     }
 

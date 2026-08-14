@@ -1,6 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Charging.Application.Journal;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Charging.Application.UseCases.Shared;
@@ -24,26 +26,29 @@ public sealed class BindEmissionRailHandler : IBindEmissionRailUseCase
     private readonly IWorldAccountRepository _accounts;
     private readonly IOperationEmissionSetRepository _sets;
     private readonly Ports.Out.Operations.IOperationChargingDirectory _operations;
+    private readonly IJournalWriter _journal;
 
     public BindEmissionRailHandler(
         IRequestContext requestContext,
         IChargingMandateSnapshot mandates,
         IWorldAccountRepository accounts,
         IOperationEmissionSetRepository sets,
-        Ports.Out.Operations.IOperationChargingDirectory operations)
+        Ports.Out.Operations.IOperationChargingDirectory operations,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _mandates = mandates;
         _accounts = accounts;
         _sets = sets;
         _operations = operations;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<BindEmissionRailResult>> HandleAsync(
         BindEmissionRailCommand command,
         CancellationToken cancellationToken = default)
     {
-        var access = await ChargingGuards.AuthorizeAdminAsync<BindEmissionRailResult>(_requestContext, _mandates, cancellationToken);
+        var access = await ChargingGuards.AuthorizeRailsAsync<BindEmissionRailResult>(_requestContext, _mandates, cancellationToken);
         if (access.Failure is not null)
             return access.Failure;
 
@@ -73,6 +78,7 @@ public sealed class BindEmissionRailHandler : IBindEmissionRailUseCase
         }
 
         await _sets.BindAsync(operationId, accountId, cancellationToken);
+        _journal.RecordRailBound(operationId, Guid.Parse(access.Requester!.AccountId));
         return OperationResult<BindEmissionRailResult>.Success(new BindEmissionRailResult());
     }
 }
@@ -89,22 +95,25 @@ public sealed class UnbindEmissionRailHandler : IUnbindEmissionRailUseCase
     private readonly IRequestContext _requestContext;
     private readonly IChargingMandateSnapshot _mandates;
     private readonly IOperationEmissionSetRepository _sets;
+    private readonly IJournalWriter _journal;
 
     public UnbindEmissionRailHandler(
         IRequestContext requestContext,
         IChargingMandateSnapshot mandates,
-        IOperationEmissionSetRepository sets)
+        IOperationEmissionSetRepository sets,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _mandates = mandates;
         _sets = sets;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<UnbindEmissionRailResult>> HandleAsync(
         UnbindEmissionRailCommand command,
         CancellationToken cancellationToken = default)
     {
-        var access = await ChargingGuards.AuthorizeAdminAsync<UnbindEmissionRailResult>(_requestContext, _mandates, cancellationToken);
+        var access = await ChargingGuards.AuthorizeRailsAsync<UnbindEmissionRailResult>(_requestContext, _mandates, cancellationToken);
         if (access.Failure is not null)
             return access.Failure;
 
@@ -112,6 +121,7 @@ public sealed class UnbindEmissionRailHandler : IUnbindEmissionRailUseCase
             return OperationResult<UnbindEmissionRailResult>.Failure(ChargingGuards.BodyRequired());
 
         await _sets.UnbindAsync(operationId, accountId, cancellationToken);
+        _journal.RecordRailUnbound(operationId, Guid.Parse(access.Requester!.AccountId));
         return OperationResult<UnbindEmissionRailResult>.Success(new UnbindEmissionRailResult());
     }
 }

@@ -16,8 +16,8 @@ export type Charge = {
   grossAmount: number;
   currency: string;
   emissionRailId: string;
-  orangeMemberId: string;
-  splitIntent: { lines: Array<{ order: number; kind: string; percentOfRemainder: number }> };
+  orangeMemberId?: string | null;
+  splitIntent?: { lines: Array<{ order: number; kind: string; percentOfRemainder: number }> } | null;
   status: string;
   externalReference: string | null;
   netAmount: number | null;

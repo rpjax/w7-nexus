@@ -41,8 +41,8 @@ Ver também: [00-principles.md](./00-principles.md).
 | 5 | [05-contas-livro-mundo.md](./05-contas-livro-mundo.md) | Contas multi-moeda, saldo, transações, quotas (conceito) | **feito** | 1 |
 | 6 | [06-materializacao-claims.md](./06-materializacao-claims.md) | Materialização → Claims; waterfall; invariante nascimento | **feito** | 4, 5 |
 | 7 | [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md) | Hops 1→N, cut mid-path, bundle, `repassado`, cut in-place | **feito** | 6 |
-| 8 | [08-visibilidade-extrato.md](./08-visibilidade-extrato.md) | Estimativa → pendente; relatório controlado; matriz need-to-know | pendente | 6, 7 |
-| 9 | [09-attrition-reconciliacao.md](./09-attrition-reconciliacao.md) | Estados Conta/Laranja, write-off, reconciliação, causa | pendente | 5, 6, 7 |
+| 8 | [08-visibilidade-extrato.md](./08-visibilidade-extrato.md) | Estimativa → pendente; relatório controlado; matriz need-to-know | **feito** | 6, 7 |
+| 9 | [09-attrition-reconciliacao.md](./09-attrition-reconciliacao.md) | Estados Conta/Laranja, write-off, reconciliação, causa | **feito** | 5, 6, 7 |
 
 Etapas **5** pode avançar em paralelo com **2–4** (Contas não dependem de Cobrança). Etapas **8** e **9** podem fatiar; **9** não bloqueia um MVP de hops se write-off/reconciliação vierem logo depois.
 
@@ -59,8 +59,13 @@ Etapas **5** pode avançar em paralelo com **2–4** (Contas não dependem de Co
 | [domain/open-gaps.md](../domain/open-gaps.md) | Decisões G1–G13 (histórico; canônico = money/actors/…) |
 | [domain/auditability.md](../domain/auditability.md) | ES + log (G12) |
 
+## Gaps
+
+Inventário domínio × código (Refactor API + web), independente do mapa de etapas: [gaps.md](./gaps.md) (14 ago 2026). Não altera os status `feito` acima. Planos paralelos por fatia: [gap-attack-plans.md](./gap-attack-plans.md). Polish UX `Refactor/web` (sem domínio novo): [frontend-polish-plans.md](./frontend-polish-plans.md).
+
 ## Fora deste folder
 
+- Passe humano coordenado (browser): [`docs/qa/human-pass/README.md`](../qa/human-pass/README.md). Fixes paralelos: [`docs/qa/human-pass/fix-plans.md`](../qa/human-pass/fix-plans.md).
 - Specs de UX fina / design system → `docs/frontend-*` quando couber.
 - Playbooks de infra/deploy → outro lugar (ex. `dockup/`).
 - Decisões de produto novas → `docs/domain/`, não aqui.

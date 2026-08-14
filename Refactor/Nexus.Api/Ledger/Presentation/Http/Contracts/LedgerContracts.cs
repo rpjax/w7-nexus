@@ -30,6 +30,13 @@ public sealed class RegisterHopRequest
     public List<string>? ClaimIds { get; set; }
     public List<HopDestinationRequest>? Destinations { get; set; }
     public HopCutRequest? Cut { get; set; }
+    public bool KeepRemainderAtOrigin { get; set; }
+    public string? LossCause { get; set; }
+}
+
+public sealed class ReverseChargeRequest
+{
+    public string Cause { get; set; } = "";
 }
 
 public sealed class RepassClaimsRequest
@@ -37,4 +44,22 @@ public sealed class RepassClaimsRequest
     public string OriginAccountId { get; set; } = "";
     public List<string>? ClaimIds { get; set; }
     public string PayoutAccountId { get; set; } = "";
+}
+
+public sealed class RevealClaimRequest
+{
+    public string Summary { get; set; } = "";
+}
+
+public sealed class MarkAccountLostRequest
+{
+    public string Cause { get; set; } = "";
+}
+
+public sealed class ReconcileAccountRequest
+{
+    public string Currency { get; set; } = "BRL";
+    public decimal ObservedBalance { get; set; }
+    public string Cause { get; set; } = "";
+    public string? ClaimId { get; set; }
 }

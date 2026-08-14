@@ -5,11 +5,14 @@ using Refactor.Nexus.Api.Charging.Application.Ports.Out.Issuing;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Operations;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
+using Refactor.Nexus.Api.Charging.Application.UseCases.Administrator.Commands;
+using Refactor.Nexus.Api.Charging.Application.UseCases.Administrator.Queries;
 using Refactor.Nexus.Api.Charging.Application.UseCases.Authenticated.Commands;
 using Refactor.Nexus.Api.Charging.Domain.Aggregates.Charge;
 using Refactor.Nexus.Api.Charging.Domain.Errors;
 using Refactor.Nexus.Api.Charging.Domain.Events;
 using Refactor.Nexus.Api.Charging.Domain.Services;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Tests.Fakes;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.WorldAccounts.Domain.Aggregates.WorldAccount;
@@ -38,6 +41,38 @@ public sealed class ChargeUseCaseTests
             fixture.OperationId.ToString(), 50, "BRL", null, fixture.OperatorId.ToString()));
         Assert.True(result.IsFailure);
         Assert.Equal(ChargingErrorCodes.OperatorNotAssigned, result.Errors.First().Code);
+        Assert.Contains("associado", result.Errors.First().Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Admin_create_without_operator_member_fails()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var result = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 50, "BRL", null, null));
+        Assert.True(result.IsFailure);
+        Assert.Equal(ChargingErrorCodes.OperatorNotAssigned, result.Errors.First().Code);
+        Assert.Contains("escolha", result.Errors.First().Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Mark_paid_succeeds_when_journal_throws_after_save()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var created = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 20, "BRL", null, fixture.OperatorId.ToString()));
+        Assert.True(created.IsSuccess);
+
+        var result = await new MarkChargePaidHandler(
+            new AdminRequestContext(fixture.AdminId),
+            fixture.Charges,
+            new ThrowingJournalWriter()).HandleAsync(
+            new MarkChargePaidCommand(created.Value!.ChargeId.ToString(), null));
+
+        Assert.True(result.IsSuccess);
+        Assert.Equal("Paid", result.Value!.Status);
+        var reloaded = await fixture.Charges.GetByIdAsync(created.Value.ChargeId);
+        Assert.Equal(ChargeStatus.Paid, reloaded!.Status);
     }
 
     [Fact]
@@ -125,6 +160,109 @@ public sealed class ChargeUseCaseTests
         Assert.Equal(ChargingErrorCodes.NoQuota, result.Errors.First().Code);
     }
 
+    [Fact]
+    public async Task Operator_list_omits_split_and_orange()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var created = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 20, "BRL", null, fixture.OperatorId.ToString()));
+        Assert.True(created.IsSuccess);
+
+        var listed = await new ListChargesHandler(
+            new MemberRequestContext(fixture.OperatorId),
+            new StubMandates(fixture),
+            fixture.Charges).HandleAsync(new ListChargesQuery(null, null));
+        var view = Assert.Single(listed.Value!.Items);
+        Assert.Null(view.SplitIntent);
+        Assert.Null(view.OrangeMemberId);
+        Assert.Equal(20, view.GrossAmount);
+
+        var adminListed = await new ListChargesHandler(
+            new AdminRequestContext(fixture.AdminId),
+            new StubMandates(fixture),
+            fixture.Charges).HandleAsync(new ListChargesQuery(null, null));
+        var adminView = Assert.Single(adminListed.Value!.Items);
+        Assert.NotNull(adminView.SplitIntent);
+        Assert.Equal(fixture.OrangeId, adminView.OrangeMemberId);
+    }
+
+    [Fact]
+    public async Task Operator_get_omits_split_and_orange()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var created = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 20, "BRL", null, fixture.OperatorId.ToString()));
+        Assert.True(created.IsSuccess);
+
+        var got = await new GetChargeHandler(
+            new MemberRequestContext(fixture.OperatorId),
+            new StubMandates(fixture),
+            fixture.Charges).HandleAsync(new GetChargeQuery(created.Value!.ChargeId.ToString()));
+        Assert.True(got.IsSuccess);
+        Assert.Null(got.Value!.SplitIntent);
+        Assert.Null(got.Value.OrangeMemberId);
+        Assert.Equal(20, got.Value.GrossAmount);
+    }
+
+    [Fact]
+    public async Task Operator_cannot_get_another_operators_charge()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var created = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 20, "BRL", null, fixture.OperatorId.ToString()));
+        Assert.True(created.IsSuccess);
+
+        var got = await new GetChargeHandler(
+            new MemberRequestContext(Guid.NewGuid()),
+            new StubMandates(fixture),
+            fixture.Charges).HandleAsync(new GetChargeQuery(created.Value!.ChargeId.ToString()));
+        Assert.False(got.IsAuthorized);
+    }
+
+    [Fact]
+    public async Task Accountant_get_includes_split()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var created = await fixture.Handler.HandleAsync(new CreateChargeCommand(
+            fixture.OperationId.ToString(), 20, "BRL", null, fixture.OperatorId.ToString()));
+        var accountant = Guid.NewGuid();
+
+        var got = await new GetChargeHandler(
+            new MemberRequestContext(accountant),
+            new StubMandates(fixture, splitViewerId: accountant),
+            fixture.Charges).HandleAsync(new GetChargeQuery(created.Value!.ChargeId.ToString()));
+        Assert.True(got.IsSuccess);
+        Assert.NotNull(got.Value!.SplitIntent);
+        Assert.Equal(fixture.OrangeId, got.Value.OrangeMemberId);
+    }
+
+    [Fact]
+    public async Task Gateways_can_bind_rail_without_admin_role()
+    {
+        var fixture = Fixture.Create(active: true, assigned: true);
+        var gatewayUser = Guid.NewGuid();
+        var mandates = new StubMandates(fixture, railManagerId: gatewayUser);
+        var bind = await new BindEmissionRailHandler(
+            new MemberRequestContext(gatewayUser),
+            mandates,
+            fixture.Accounts,
+            fixture.Sets,
+            new StubOperations(fixture.OperationId, true, true),
+            new RecordingJournalWriter()).HandleAsync(
+            new BindEmissionRailCommand(fixture.OperationId.ToString(), fixture.GatewayId.ToString()));
+        Assert.True(bind.IsSuccess);
+
+        var denied = await new BindEmissionRailHandler(
+            new MemberRequestContext(fixture.OperatorId),
+            mandates,
+            fixture.Accounts,
+            fixture.Sets,
+            new StubOperations(fixture.OperationId, true, true),
+            new RecordingJournalWriter()).HandleAsync(
+            new BindEmissionRailCommand(fixture.OperationId.ToString(), fixture.GatewayId.ToString()));
+        Assert.False(denied.IsAuthorized);
+    }
+
     private sealed class Fixture
     {
         public Guid OperationId { get; } = Guid.NewGuid();
@@ -164,7 +302,8 @@ public sealed class ChargeUseCaseTests
                 Accounts,
                 Sets,
                 Charges,
-                Issuer);
+                Issuer,
+                new RecordingJournalWriter());
         }
 
         public static Fixture Create(
@@ -201,10 +340,26 @@ public sealed class ChargeUseCaseTests
     private sealed class StubMandates : IChargingMandateSnapshot
     {
         private readonly Fixture _fixture;
-        public StubMandates(Fixture fixture) => _fixture = fixture;
+        private readonly Guid? _railManagerId;
+        private readonly Guid? _splitViewerId;
+        public StubMandates(Fixture fixture, Guid? railManagerId = null, Guid? splitViewerId = null)
+        {
+            _fixture = fixture;
+            _railManagerId = railManagerId;
+            _splitViewerId = splitViewerId;
+        }
 
         public Task<bool> IsAdministratorAsync(Guid accountId, CancellationToken cancellationToken = default) =>
             Task.FromResult(accountId == _fixture.AdminId);
+
+        public Task<bool> CanManageRailsAsync(Guid accountId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(accountId == _fixture.AdminId || accountId == _railManagerId);
+
+        public Task<bool> CanSeeChargeSplitAsync(Guid accountId, CancellationToken cancellationToken = default) =>
+            Task.FromResult(accountId == _fixture.AdminId || accountId == _splitViewerId);
+
+        public Task<bool> CanManageOperationsAsync(Guid accountId, CancellationToken cancellationToken = default) =>
+            IsAdministratorAsync(accountId, cancellationToken);
 
         public Task<bool> IsEligibleOrangeAsync(Guid accountId, CancellationToken cancellationToken = default) =>
             Task.FromResult(accountId == _fixture.OrangeId);
@@ -215,6 +370,16 @@ public sealed class ChargeUseCaseTests
                 [new ShareholderSlice(Guid.NewGuid(), 15)]));
     }
 
+    private sealed class MemberRequestContext : IRequestContext
+    {
+        private readonly Guid _id;
+        public MemberRequestContext(Guid id) => _id = id;
+
+        public Task<IResult<RequesterContext>> GetCurrentAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult<IResult<RequesterContext>>(Result<RequesterContext>.Success(
+                new RequesterContext(_id.ToString(), [], [])));
+    }
+
     private sealed class AdminRequestContext : IRequestContext
     {
         private readonly Guid _id;
@@ -223,6 +388,12 @@ public sealed class ChargeUseCaseTests
         public Task<IResult<RequesterContext>> GetCurrentAsync(CancellationToken cancellationToken = default) =>
             Task.FromResult<IResult<RequesterContext>>(Result<RequesterContext>.Success(
                 new RequesterContext(_id.ToString(), [Roles.Administrator], [])));
+    }
+
+    private sealed class ThrowingJournalWriter : IJournalWriter
+    {
+        public void Append<T>(T payload) =>
+            throw new InvalidOperationException("Journal fact 'Charging.ChargeTransitioned' requires index key 'member'.");
     }
 
     private sealed class RecordingIssuer : IPaymentIssuer

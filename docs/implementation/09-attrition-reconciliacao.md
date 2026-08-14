@@ -1,6 +1,6 @@
 # 09 — Attrition, write-off e reconciliação
 
-**Status:** pendente  
+**Status:** feito  
 **Depende de:** [05-contas-livro-mundo.md](./05-contas-livro-mundo.md), [06-materializacao-claims.md](./06-materializacao-claims.md), [07-hops-cuts-repasse.md](./07-hops-cuts-repasse.md)
 
 ## Objetivo
@@ -34,7 +34,16 @@ Estados de Conta/Laranja/Operador, claim preso, write-off com causa, reconcilia�
 
 ## Critérios de pronto
 
-- [ ] Pós-write-off e pós-reconciliação: `soma claims ativos == saldo`.
-- [ ] Sobra cria/credita Residual da Org — nunca “desconhecida”.
-- [ ] Incidência mecânica: perda cai em quem tinha claim `ativo` na Conta.
-- [ ] Causa obrigatória nos eventos relevantes (incl. `estorno`).
+- [x] Pós-write-off e pós-reconciliação: `soma claims ativos == saldo`.
+- [x] Sobra cria/credita Residual da Org — nunca “desconhecida”.
+- [x] Incidência mecânica: perda cai em quem tinha claim `ativo` na Conta.
+- [x] Causa obrigatória nos eventos relevantes (incl. `estorno`).
+
+## Entrega (Refactor)
+
+- `MarkAccountLost`: `Lost` + write-off de claims `ativo` + débito até zerar; configure recusa `BalanceStatus=Lost`.
+- `ReconcileAccount`: falta proporcional (ou claim indicado) / sobra → claim Residual Org; causa obrigatória.
+- `ReverseCharge`: claims `ativo` da Cobrança → `Reversed`; débito nas Contas; `ChargeReversed`.
+- `GET .../exposure`: claims ativos em Contas Frozen/Lost.
+- Mandato: `RecordMemberAttrition` (`burned|left|betrayed`) só sinaliza; sem cascata de Contas.
+- UI: Livro-mundo (congelar/perdido/reconciliar/exposição), Cobranças/Claims (estorno), Contas (attrition).

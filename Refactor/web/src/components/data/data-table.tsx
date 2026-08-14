@@ -24,6 +24,7 @@ type DataTableProps<TData, TValue> = {
   onRowClick?: (row: TData) => void;
   getRowId?: (row: TData) => string;
   emptyMessage?: string;
+  errorMessage?: string | null;
   loading?: boolean;
   loadingRows?: number;
 };
@@ -37,6 +38,7 @@ export function DataTable<TData, TValue>({
   onRowClick,
   getRowId,
   emptyMessage = 'Sem resultados.',
+  errorMessage,
   loading = false,
   loadingRows = 8,
 }: DataTableProps<TData, TValue>) {
@@ -81,6 +83,15 @@ export function DataTable<TData, TValue>({
                 ))}
               </TableRow>
             ))
+          ) : errorMessage ? (
+            <TableRow className="hover:bg-transparent">
+              <TableCell
+                colSpan={columns.length}
+                className="h-28 text-center text-sm text-destructive"
+              >
+                {errorMessage}
+              </TableCell>
+            </TableRow>
           ) : table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => {
               const id = getRowId?.(row.original);

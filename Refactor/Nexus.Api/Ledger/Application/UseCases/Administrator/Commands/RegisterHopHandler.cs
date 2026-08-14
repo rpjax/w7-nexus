@@ -1,11 +1,13 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.UseCases.Shared;
-using Refactor.Nexus.Api.Ledger.Domain.Aggregates.Claim;
+using Refactor.Nexus.Api.Ledger.Domain;
 using Refactor.Nexus.Api.Ledger.Domain.Errors;
 using Refactor.Nexus.Api.Ledger.Domain.Events;
 using Refactor.Nexus.Api.Ledger.Domain.Services;
@@ -26,7 +28,9 @@ public sealed record RegisterHopCommand(
     string Currency,
     IReadOnlyList<string>? ClaimIds,
     IReadOnlyList<HopDestinationInput> Destinations,
-    HopCutInput? Cut);
+    HopCutInput? Cut,
+    bool KeepRemainderAtOrigin = false,
+    string? LossCause = null);
 
 public sealed record RegisterHopResult(Guid HopId, decimal LossAmount, IReadOnlyList<Guid> ClaimIds);
 
@@ -45,6 +49,7 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
     private readonly IWorldAccountRepository _accounts;
     private readonly IClaimRepository _claims;
     private readonly ILedgerCommit _commit;
+    private readonly IJournalWriter _journal;
 
     public RegisterHopHandler(
         IRequestContext requestContext,
@@ -52,7 +57,8 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
         IChargeRepository charges,
         IWorldAccountRepository accounts,
         IClaimRepository claims,
-        ILedgerCommit commit)
+        ILedgerCommit commit,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
@@ -60,6 +66,7 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
         _accounts = accounts;
         _claims = claims;
         _commit = commit;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<RegisterHopResult>> HandleAsync(
@@ -74,7 +81,7 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
             return auth.Failure;
 
         if (!Guid.TryParse(command.OriginAccountId, out var originId))
-            return Fail(LedgerErrorCodes.AccountNotFound, "Conta de origem invalida.");
+            return Fail(LedgerErrorCodes.AccountNotFound, "Conta de origem inválida.");
 
         var currency = (command.Currency ?? "BRL").Trim().ToUpperInvariant();
         var origin = await _accounts.GetByIdAsync(originId, cancellationToken);
@@ -153,6 +160,8 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
         {
             if (!Guid.TryParse(dest.AccountId, out var destId))
                 return Fail(LedgerErrorCodes.AccountNotFound, "Conta de destino invalida.");
+            if (destId == originId)
+                return Fail(LedgerErrorCodes.HopInvalid, "Origem e destino não podem ser a mesma conta.");
             destSpecs.Add(new HopDestSpec(destId, dest.Amount, dest.Currency));
         }
 
@@ -163,13 +172,17 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
             c.OriginChargeId,
             c.LocationAccountId,
             c.Kind,
-            c.Currency)).ToList();
+            c.Currency,
+            c.BirthAmount,
+            c.BirthCurrency)).ToList();
 
-        var planned = HopAllocator.Plan(bundle, destSpecs, cut);
+        var planned = HopAllocator.Plan(bundle, destSpecs, cut, command.KeepRemainderAtOrigin);
         if (planned.IsFailure)
             return OperationResult<RegisterHopResult>.Failure(planned.Errors);
 
         var plan = planned.Value!;
+        if (plan.LossAmount > 0 && !AttritionCause.TryNormalize(command.LossCause, out _))
+            return Fail(LedgerErrorCodes.CauseRequired, "Hop com perda exige causa. Informe a causa ou mantenha o resto na origem.");
         var accountsById = new Dictionary<Guid, WorldAccountAggregate> { [origin.Id] = origin };
         var claimsById = bundleClaims.ToDictionary(c => c.Id);
         var touchedClaims = new List<ClaimAggregate>();
@@ -227,7 +240,9 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
                 spec.OriginChargeId,
                 spec.LocationAccountId,
                 spec.Kind,
-                spec.ParentClaimId);
+                spec.ParentClaimId,
+                spec.BirthAmount,
+                spec.BirthCurrency);
             if (opened.IsFailure)
                 return OperationResult<RegisterHopResult>.Failure(opened.Errors);
             claimsById[opened.Value!.Id] = opened.Value;
@@ -266,6 +281,7 @@ public sealed class RegisterHopHandler : IRegisterHopUseCase
             plan.LossAmount);
 
         await _commit.SaveAsync(accountsById.Values.ToList(), touchedClaims.DistinctBy(c => c.Id).ToList(), hop, null, cancellationToken);
+        _journal.RecordHopRegistered(hop.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<RegisterHopResult>.Success(
             new RegisterHopResult(hop.Id, plan.LossAmount, touchedClaims.Select(c => c.Id).Distinct().ToList()));
     }

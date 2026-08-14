@@ -1,12 +1,16 @@
 import type { ReactNode } from 'react';
 import { AuthProvider } from '@/auth/AuthContext';
-import { Toaster } from '@/components/ui/sonner';
+import { MandateProvider } from '@/auth/MandateContext';
+import { FeedbackProvider } from '@/feedback';
 
 export function AppProviders({ children }: { children: ReactNode }) {
   return (
-    <AuthProvider>
-      {children}
-      <Toaster richColors closeButton position="top-right" />
-    </AuthProvider>
+    <FeedbackProvider>
+      <AuthProvider>
+        <MandateProvider>
+          {children}
+        </MandateProvider>
+      </AuthProvider>
+    </FeedbackProvider>
   );
 }

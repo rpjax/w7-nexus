@@ -6,6 +6,7 @@ using Refactor.Nexus.Api.Mandates.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.CloseAgencyDeal;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.GrantCapability;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.GrantPreset;
+using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RecordMemberAttrition;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RemoveShareholderStake;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RevokeCapability;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Commands.RevokePreset;
@@ -15,6 +16,7 @@ using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Queries.Get
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Queries.ListAgencyDeals;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Administrator.Queries.ListShareholders;
 using Refactor.Nexus.Api.Mandates.Application.UseCases.Authenticated.Queries.GetMyCarteira;
+using Refactor.Nexus.Api.Mandates.Application.UseCases.Authenticated.Queries.GetMyMandate;
 using Refactor.Nexus.Api.Mandates.Infrastructure.Identity;
 using Refactor.Nexus.Api.Mandates.Infrastructure.Operations;
 using Refactor.Nexus.Api.Mandates.Infrastructure.Persistence;
@@ -50,9 +52,11 @@ public static class MandatesServiceCollectionExtensions
         services.AddScoped<IUpsertShareholderStakeUseCase, UpsertShareholderStakeHandler>();
         services.AddScoped<IRemoveShareholderStakeUseCase, RemoveShareholderStakeHandler>();
         services.AddScoped<IGetMemberMandateUseCase, GetMemberMandateHandler>();
+        services.AddScoped<IRecordMemberAttritionUseCase, RecordMemberAttritionHandler>();
         services.AddScoped<IListAgencyDealsUseCase, ListAgencyDealsHandler>();
         services.AddScoped<IListShareholdersUseCase, ListShareholdersHandler>();
         services.AddScoped<IGetMyCarteiraUseCase, GetMyCarteiraHandler>();
+        services.AddScoped<IGetMyMandateUseCase, GetMyMandateHandler>(); // plan A
 
         services.AddScoped<IMandatesDatabaseInitializer, MandatesDatabaseInitializer>();
 

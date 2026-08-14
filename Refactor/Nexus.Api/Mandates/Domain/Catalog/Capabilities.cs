@@ -12,6 +12,7 @@ public static class Capabilities
     public const string VerFinanceiroAmplo = "ver_financeiro_amplo";
     public const string AtuarComoOperador = "atuar_como_operador";
     public const string AtuarComoLaranja = "atuar_como_laranja";
+    public const string LerLogAuditoria = "ler_log_auditoria";
 
     private static readonly HashSet<string> All = new(StringComparer.Ordinal)
     {
@@ -24,7 +25,8 @@ public static class Capabilities
         RegistrarMovimentoFinanceiro,
         VerFinanceiroAmplo,
         AtuarComoOperador,
-        AtuarComoLaranja
+        AtuarComoLaranja,
+        LerLogAuditoria
     };
 
     public static bool IsKnown(string? capability) =>

@@ -71,7 +71,7 @@ public sealed class UpsertShareholderStakeHandler : IUpsertShareholderStakeUseCa
 
         if (existing is null)
         {
-            var created = ShareholderStakeAggregate.Create(accountId, command.Percentage);
+            var created = ShareholderStakeAggregate.Open(accountId, command.Percentage);
             if (created.IsFailure)
                 return OperationResult<UpsertShareholderStakeResult>.Failure(created.Errors);
 

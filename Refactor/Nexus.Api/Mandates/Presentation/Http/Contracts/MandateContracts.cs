@@ -32,3 +32,9 @@ public sealed class UpsertShareholderRequest
     public string AccountId { get; set; } = string.Empty;
     public decimal Percentage { get; set; }
 }
+
+public sealed class MemberAttritionRequest
+{
+    public string Status { get; set; } = string.Empty;
+    public string Cause { get; set; } = string.Empty;
+}

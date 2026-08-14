@@ -1,6 +1,8 @@
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Authorization;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Mandates.Application.Journal;
 using Refactor.Nexus.Api.Mandates.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Mandates.Domain.Aggregates;
 
@@ -23,13 +25,16 @@ public sealed class GetMyCarteiraHandler : IGetMyCarteiraUseCase
 {
     private readonly IRequestContext _requestContext;
     private readonly IAgencyDealReadRepository _dealReadRepository;
+    private readonly IJournalWriter _journal;
 
     public GetMyCarteiraHandler(
         IRequestContext requestContext,
-        IAgencyDealReadRepository dealReadRepository)
+        IAgencyDealReadRepository dealReadRepository,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _dealReadRepository = dealReadRepository;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<GetMyCarteiraResult>> HandleAsync(CancellationToken cancellationToken = default)
@@ -40,6 +45,7 @@ public sealed class GetMyCarteiraHandler : IGetMyCarteiraUseCase
 
         var recruiterId = new MemberId(Guid.Parse(requester.AccountId));
         var deals = await _dealReadRepository.ListActiveByRecruiterAsync(recruiterId, cancellationToken);
+        _journal.RecordCarteiraRead(recruiterId.Value);
         return OperationResult<GetMyCarteiraResult>.Success(new GetMyCarteiraResult(
             deals.Select(d => new CarteiraDealView(
                 d.Id,

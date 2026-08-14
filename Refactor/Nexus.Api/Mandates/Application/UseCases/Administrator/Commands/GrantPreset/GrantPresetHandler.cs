@@ -50,8 +50,8 @@ public sealed class GrantPresetHandler : IGrantPresetUseCase
         if (command is null)
             return OperationResult<GrantPresetResult>.Failure(MandateAdministratorGuards.RequestBodyRequired());
 
-        var (requester, failure) = await MandateAdministratorGuards.AuthorizeAdminWithRequesterAsync<GrantPresetResult>(
-            _requestContext, _accessPolicy, cancellationToken);
+        var (requester, failure) = await MandateAdministratorGuards.AuthorizeGrantorAsync<GrantPresetResult>(
+            _requestContext, _accountDirectory, _mandateReadRepository, cancellationToken);
         if (failure is not null)
             return failure;
 
@@ -67,7 +67,7 @@ public sealed class GrantPresetHandler : IGrantPresetUseCase
         {
             return OperationResult<GrantPresetResult>.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.OperatorRequiresDeal)
-                .WithMessage("Preset Operator exige um AgencyDeal ativo (Recrutador-raiz Admin com pct=0 e valido).")
+                .WithMessage("Para conceder Operador, abra Deals e cadastre um deal ativo para este membro (recrutador raiz Admin com percentual 0).")
                 .Build());
         }
 

@@ -4,6 +4,7 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using Refactor.Nexus.Api.Authentication.Application.Models;
 using Refactor.Nexus.Api.Authentication.Application.Ports.Out.Tokens;
+using Refactor.Nexus.Api.Authorization;
 
 namespace Refactor.Nexus.Api.Authentication.Infrastructure.Tokens;
 
@@ -13,7 +14,6 @@ public sealed class JwtTokenService : IJwtTokenService
     private const string AccessTokenType = "access";
     private const string RefreshTokenType = "refresh";
     private const string RoleClaimType = "role";
-    private const string PermissionClaimType = "permission";
 
     private readonly JwtOptions _options;
     private readonly SymmetricSecurityKey _signingKey;
@@ -66,7 +66,7 @@ public sealed class JwtTokenService : IJwtTokenService
             claims.Add(new Claim(RoleClaimType, role));
 
         foreach (var permission in subject.Permissions)
-            claims.Add(new Claim(PermissionClaimType, permission));
+            claims.Add(new Claim(Permissions.ClaimType, permission));
 
         var credentials = new SigningCredentials(_signingKey, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(

@@ -6,7 +6,7 @@
       { "name": "FRONTEND_HOST", "value": "nexus.websete.localhost" },
       { "name": "BACKEND_HOST", "value": "api.nexus.websete.localhost" },
       { "name": "HTTPS_PORT", "value": "9143" },
-      { "name": "API_BASE_URL", "value": "https://${BACKEND_HOST}:${HTTPS_PORT}" }
+      { "name": "API_BASE_URL", "value": "" }
     ],
     "containers": [
       {
@@ -81,7 +81,7 @@
     "env": [
       { "name": "FRONTEND_HOST", "value": "nexus.websete.org" },
       { "name": "BACKEND_HOST", "value": "api.nexus.websete.org" },
-      { "name": "API_BASE_URL", "value": "https://${BACKEND_HOST}" }
+      { "name": "API_BASE_URL", "value": "" }
     ],
     "containers": [
       {

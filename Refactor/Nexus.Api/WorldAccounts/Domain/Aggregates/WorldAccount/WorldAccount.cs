@@ -155,13 +155,17 @@ public sealed class WorldAccount
     public IResult SetEmissionStatus(EmissionStatus status, Guid? actedBy = null)
     {
         if (!IsGateway)
-            return Fail(WorldAccountErrorCodes.NotGateway, "Eixo de emissao so existe em Conta de Gateway.");
+            return Fail(WorldAccountErrorCodes.NotGateway, "Eixo de emissão só existe em Conta de Gateway.");
+        if (BalanceStatus == BalanceStatus.Lost)
+            return Fail(WorldAccountErrorCodes.BalanceLost, "Conta perdida não emite.");
         ApplyChange(new EmissionStatusChanged(Id, status.ToString(), DateTime.UtcNow, actedBy));
         return Result.Success();
     }
 
     public IResult SetBalanceStatus(BalanceStatus status, Guid? actedBy = null)
     {
+        if (BalanceStatus == BalanceStatus.Lost && status != BalanceStatus.Lost)
+            return Fail(WorldAccountErrorCodes.BalanceLost, "Conta perdida não muda de estado.");
         ApplyChange(new BalanceStatusChanged(Id, status.ToString(), DateTime.UtcNow, actedBy));
         return Result.Success();
     }

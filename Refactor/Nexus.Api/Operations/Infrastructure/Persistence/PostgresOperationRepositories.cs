@@ -1,4 +1,5 @@
 using Npgsql;
+using NpgsqlTypes;
 using Refactor.Nexus.Api.Infrastructure.Persistence;
 using Refactor.Nexus.Api.Operations.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Operations.Domain.Aggregates.Operation;
@@ -445,7 +446,11 @@ public sealed class PostgresStoreObjectRepository : IStoreObjectRepository
             order by last_updated_at desc
             """;
         command.Parameters.AddWithValue("key", key.Value);
-        command.Parameters.AddWithValue("type", (object?)objectType ?? DBNull.Value);
+        var typeParam = command.CreateParameter();
+        typeParam.ParameterName = "type";
+        typeParam.NpgsqlDbType = NpgsqlDbType.Varchar;
+        typeParam.Value = string.IsNullOrWhiteSpace(objectType) ? DBNull.Value : objectType;
+        command.Parameters.Add(typeParam);
         var items = new List<StoreObject>();
         await using var reader = await command.ExecuteReaderAsync(cancellationToken);
         while (await reader.ReadAsync(cancellationToken))

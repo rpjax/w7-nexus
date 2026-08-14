@@ -28,4 +28,5 @@ public static class MandateErrorCodes
     public const string StakeTotalExceedsHundred = "Mandate.STAKE_TOTAL_EXCEEDS_HUNDRED";
     public const string StakeNotFound = "Mandate.STAKE_NOT_FOUND";
     public const string Unauthorized = "Mandate.UNAUTHORIZED";
+    public const string AttritionInvalid = "Mandate.ATTRITION_INVALID";
 }

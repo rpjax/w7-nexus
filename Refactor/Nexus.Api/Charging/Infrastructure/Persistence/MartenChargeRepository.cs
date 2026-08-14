@@ -18,9 +18,8 @@ public sealed class MartenChargeRepository : IChargeRepository
 
     public async Task<ChargeAggregate?> GetByIdAsync(Guid chargeId, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var charge = await session.Events.AggregateStreamAsync<ChargeAggregate>(
-            EventStoreStreams.Charge(chargeId), token: cancellationToken);
+        var charge = await MartenLiveQuery.LoadAsync<ChargeAggregate>(
+            _store, EventStoreStreams.Charge(chargeId), cancellationToken);
         if (charge is null || charge.Id == Guid.Empty)
             return null;
         return charge;
@@ -31,8 +30,8 @@ public sealed class MartenChargeRepository : IChargeRepository
         CancellationToken cancellationToken = default)
     {
         await using var session = _store.QuerySession();
-        return await session.Query<ChargeAggregate>()
-            .FirstOrDefaultAsync(c => c.ExternalReference == externalReference, cancellationToken);
+        var all = await MartenLiveQuery.ListAsync<ChargeAggregate>(_store, "charge-", cancellationToken);
+        return all.FirstOrDefault(c => c.ExternalReference == externalReference);
     }
 
     public async Task SaveAsync(ChargeAggregate charge, CancellationToken cancellationToken = default)
@@ -57,7 +56,7 @@ public sealed class MartenChargeRepository : IChargeRepository
         CancellationToken cancellationToken = default)
     {
         await using var session = _store.QuerySession();
-        var all = await session.Query<ChargeAggregate>().ToListAsync(cancellationToken);
+        var all = await MartenLiveQuery.ListAsync<ChargeAggregate>(_store, "charge-", cancellationToken);
         IEnumerable<ChargeAggregate> items = all;
         if (operationId is not null)
             items = items.Where(c => c.OperationId == operationId.Value);
@@ -68,8 +67,6 @@ public sealed class MartenChargeRepository : IChargeRepository
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<ChargeAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<ChargeAggregate>().Identity(x => x.Id);
         options.Events.AddEventTypes(
         [
             typeof(ChargeOpened),
@@ -78,7 +75,8 @@ public sealed class MartenChargeRepository : IChargeRepository
             typeof(ChargeCancelled),
             typeof(ChargeExpired),
             typeof(ChargeFailed),
-            typeof(ChargeMaterialized)
+            typeof(ChargeMaterialized),
+            typeof(ChargeReversed)
         ]);
     }
 }

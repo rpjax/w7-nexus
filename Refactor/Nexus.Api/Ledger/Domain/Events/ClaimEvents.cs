@@ -9,7 +9,16 @@ public sealed record ClaimOpened(
     Guid LocationAccountId,
     string Kind,
     DateTime OccurredAt,
-    Guid? ParentClaimId = null);
+    Guid? ParentClaimId = null,
+    decimal? BirthAmount = null,
+    string? BirthCurrency = null);
+
+public sealed record ClaimRevealed(
+    Guid ClaimId,
+    decimal ReleasedAmount,
+    string ReleasedCurrency,
+    string Summary,
+    DateTime OccurredAt);
 
 public sealed record ClaimAdjusted(
     Guid ClaimId,
@@ -21,6 +30,10 @@ public sealed record ClaimAdjusted(
 public sealed record ClaimArchived(Guid ClaimId, DateTime OccurredAt);
 
 public sealed record ClaimRepassed(Guid ClaimId, DateTime OccurredAt);
+
+public sealed record ClaimLost(Guid ClaimId, string Cause, DateTime OccurredAt);
+
+public sealed record ClaimReversed(Guid ClaimId, string Cause, DateTime OccurredAt);
 
 public sealed record HopDestinationSnapshot(Guid AccountId, decimal Amount, string Currency);
 

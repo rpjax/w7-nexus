@@ -21,9 +21,8 @@ public sealed class MartenClaimRepository : IClaimRepository, IHopRepository, IL
 
     public async Task<ClaimAggregate?> GetByIdAsync(Guid claimId, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var claim = await session.Events.AggregateStreamAsync<ClaimAggregate>(
-            EventStoreStreams.Claim(claimId), token: cancellationToken);
+        var claim = await MartenLiveQuery.LoadAsync<ClaimAggregate>(
+            _store, EventStoreStreams.Claim(claimId), cancellationToken);
         if (claim is null || claim.Id == Guid.Empty)
             return null;
         return claim;
@@ -36,7 +35,8 @@ public sealed class MartenClaimRepository : IClaimRepository, IHopRepository, IL
         CancellationToken cancellationToken = default)
     {
         await using var session = _store.QuerySession();
-        IEnumerable<ClaimAggregate> items = await session.Query<ClaimAggregate>().ToListAsync(cancellationToken);
+        IEnumerable<ClaimAggregate> items = await MartenLiveQuery.ListAsync<ClaimAggregate>(
+            _store, "claim-", cancellationToken);
         items = items.Where(c => c.Id != Guid.Empty);
         if (originChargeId is not null)
             items = items.Where(c => c.OriginChargeId == originChargeId);
@@ -49,9 +49,8 @@ public sealed class MartenClaimRepository : IClaimRepository, IHopRepository, IL
 
     async Task<HopAggregate?> IHopRepository.GetByIdAsync(Guid hopId, CancellationToken cancellationToken)
     {
-        await using var session = _store.LightweightSession();
-        var hop = await session.Events.AggregateStreamAsync<HopAggregate>(
-            EventStoreStreams.Hop(hopId), token: cancellationToken);
+        var hop = await MartenLiveQuery.LoadAsync<HopAggregate>(
+            _store, EventStoreStreams.Hop(hopId), cancellationToken);
         if (hop is null || hop.Id == Guid.Empty)
             return null;
         return hop;
@@ -62,7 +61,8 @@ public sealed class MartenClaimRepository : IClaimRepository, IHopRepository, IL
         CancellationToken cancellationToken = default)
     {
         await using var session = _store.QuerySession();
-        IEnumerable<HopAggregate> items = await session.Query<HopAggregate>().ToListAsync(cancellationToken);
+        IEnumerable<HopAggregate> items = await MartenLiveQuery.ListAsync<HopAggregate>(
+            _store, "hop-", cancellationToken);
         items = items.Where(h => h.Id != Guid.Empty);
         if (originAccountId is not null)
             items = items.Where(h => h.OriginAccountId == originAccountId);
@@ -128,16 +128,15 @@ public sealed class MartenClaimRepository : IClaimRepository, IHopRepository, IL
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<ClaimAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<ClaimAggregate>().Identity(x => x.Id);
-        options.Projections.Snapshot<HopAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<HopAggregate>().Identity(x => x.Id);
         options.Events.AddEventTypes(
         [
             typeof(ClaimOpened),
             typeof(ClaimAdjusted),
             typeof(ClaimArchived),
             typeof(ClaimRepassed),
+            typeof(ClaimRevealed),
+            typeof(ClaimLost),
+            typeof(ClaimReversed),
             typeof(HopRegistered)
         ]);
     }

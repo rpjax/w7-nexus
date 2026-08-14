@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using IResult = Aidan.Core.Patterns.IResult;
+using Refactor.Nexus.Api.Ledger.Domain;
 using Refactor.Nexus.Api.Ledger.Domain.Errors;
 using Refactor.Nexus.Api.Ledger.Domain.Events;
 
@@ -36,6 +37,13 @@ public sealed class Claim
     public string Kind { get; private set; } = "";
     public Guid? ParentClaimId { get; private set; }
     public DateTime OpenedAt { get; private set; }
+    public decimal BirthAmount { get; private set; }
+    public string BirthCurrency { get; private set; } = "BRL";
+    public bool Visible { get; private set; }
+    public decimal? ReleasedAmount { get; private set; }
+    public string? ReleasedCurrency { get; private set; }
+    public string? ReportSummary { get; private set; }
+    public DateTime? RevealedAt { get; private set; }
 
     [JsonIgnore]
     public IReadOnlyList<object> UncommittedEvents => _uncommitted;
@@ -49,7 +57,9 @@ public sealed class Claim
         Guid originChargeId,
         Guid locationAccountId,
         string kind,
-        Guid? parentClaimId = null)
+        Guid? parentClaimId = null,
+        decimal? birthAmount = null,
+        string? birthCurrency = null)
     {
         if (amount <= 0)
         {
@@ -59,17 +69,20 @@ public sealed class Claim
                 .Build());
         }
 
+        var currencyNorm = currency.Trim().ToUpperInvariant();
         var claim = new Claim();
         claim.ApplyChange(new ClaimOpened(
             Guid.NewGuid(),
             beneficiaryId,
             amount,
-            currency.Trim().ToUpperInvariant(),
+            currencyNorm,
             originChargeId,
             locationAccountId,
             kind,
             DateTime.UtcNow,
-            parentClaimId));
+            parentClaimId,
+            birthAmount ?? amount,
+            string.IsNullOrWhiteSpace(birthCurrency) ? currencyNorm : birthCurrency.Trim().ToUpperInvariant()));
         return Result<Claim>.Success(claim);
     }
 
@@ -111,6 +124,54 @@ public sealed class Claim
         return Result.Success();
     }
 
+    public IResult Reveal(decimal releasedAmount, string releasedCurrency, string summary)
+    {
+        if (string.IsNullOrWhiteSpace(summary))
+            return Fail(LedgerErrorCodes.SummaryRequired, "Relatório controlado exige um texto.");
+
+        var currencyNorm = releasedCurrency.Trim().ToUpperInvariant();
+        var trimmed = summary.Trim();
+        if (Visible
+            && ReleasedAmount == releasedAmount
+            && string.Equals(ReleasedCurrency, currencyNorm, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(ReportSummary, trimmed, StringComparison.Ordinal))
+        {
+            return Result.Success();
+        }
+
+        if (Visible)
+            return Fail(LedgerErrorCodes.AlreadyRevealed, "Claim ja foi revelado.");
+
+        ApplyChange(new ClaimRevealed(Id, releasedAmount, currencyNorm, trimmed, DateTime.UtcNow));
+        return Result.Success();
+    }
+
+    public IResult WriteOff(string cause)
+    {
+        if (Status == ClaimStatus.Lost)
+            return Result.Success();
+        if (!IsActive)
+            return Fail(LedgerErrorCodes.ClaimNotActive, "Claim nao esta ativo.");
+        if (!AttritionCause.TryNormalize(cause, out var normalized))
+            return Fail(LedgerErrorCodes.CauseRequired, "Causa de attrition invalida.");
+
+        ApplyChange(new ClaimLost(Id, normalized, DateTime.UtcNow));
+        return Result.Success();
+    }
+
+    public IResult Reverse(string cause)
+    {
+        if (Status == ClaimStatus.Reversed)
+            return Result.Success();
+        if (!IsActive)
+            return Fail(LedgerErrorCodes.ClaimNotActive, "Claim nao esta ativo.");
+        if (!AttritionCause.TryNormalize(cause, out var normalized))
+            return Fail(LedgerErrorCodes.CauseRequired, "Causa de attrition invalida.");
+
+        ApplyChange(new ClaimReversed(Id, normalized, DateTime.UtcNow));
+        return Result.Success();
+    }
+
     public void ClearUncommitted() => _uncommitted.Clear();
 
     public void Apply(ClaimOpened e)
@@ -125,6 +186,8 @@ public sealed class Claim
         ParentClaimId = e.ParentClaimId;
         Status = ClaimStatus.Active;
         OpenedAt = e.OccurredAt;
+        BirthAmount = e.BirthAmount ?? e.Amount;
+        BirthCurrency = string.IsNullOrWhiteSpace(e.BirthCurrency) ? e.Currency : e.BirthCurrency;
     }
 
     public void Apply(ClaimAdjusted e)
@@ -137,6 +200,19 @@ public sealed class Claim
     public void Apply(ClaimArchived e) => Status = ClaimStatus.Archived;
 
     public void Apply(ClaimRepassed e) => Status = ClaimStatus.Repassed;
+
+    public void Apply(ClaimRevealed e)
+    {
+        Visible = true;
+        ReleasedAmount = e.ReleasedAmount;
+        ReleasedCurrency = e.ReleasedCurrency;
+        ReportSummary = e.Summary;
+        RevealedAt = e.OccurredAt;
+    }
+
+    public void Apply(ClaimLost e) => Status = ClaimStatus.Lost;
+
+    public void Apply(ClaimReversed e) => Status = ClaimStatus.Reversed;
 
     private static IResult Fail(string code, string message) =>
         Result.Failure(Error.Create().WithCode(code).WithMessage(message).Build());
@@ -156,6 +232,15 @@ public sealed class Claim
                 break;
             case ClaimRepassed repassed:
                 Apply(repassed);
+                break;
+            case ClaimRevealed revealed:
+                Apply(revealed);
+                break;
+            case ClaimLost lost:
+                Apply(lost);
+                break;
+            case ClaimReversed reversed:
+                Apply(reversed);
                 break;
             default:
                 throw new InvalidOperationException(@event.GetType().Name);

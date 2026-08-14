@@ -19,5 +19,7 @@ public static class WorldAccountErrorCodes
     public const string NoQuota = "WorldAccount.NO_QUOTA";
     public const string EmissionBlocked = "WorldAccount.EMISSION_BLOCKED";
     public const string BalanceLost = "WorldAccount.BALANCE_LOST";
+    public const string UseLostEndpoint = "WorldAccount.USE_LOST_ENDPOINT";
+    public const string ObservationSeedOnly = "WorldAccount.OBSERVATION_SEED_ONLY";
     public const string NotGateway = "WorldAccount.NOT_GATEWAY";
 }

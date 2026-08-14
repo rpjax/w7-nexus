@@ -1,6 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.UseCases.Shared;
@@ -18,7 +20,8 @@ public sealed record ClaimView(
     Guid LocationAccountId,
     string Status,
     string Kind,
-    DateTime OpenedAt);
+    DateTime OpenedAt,
+    bool Visible);
 
 public sealed record ListClaimsQuery(string? ChargeId, string? AccountId, string? BeneficiaryId);
 public sealed record ListClaimsResult(IReadOnlyList<ClaimView> Items);
@@ -32,12 +35,14 @@ public sealed class ListClaimsHandler : IListClaimsUseCase
     private readonly IRequestContext _requestContext;
     private readonly ILedgerAccess _access;
     private readonly IClaimRepository _claims;
+    private readonly IJournalWriter _journal;
 
-    public ListClaimsHandler(IRequestContext requestContext, ILedgerAccess access, IClaimRepository claims)
+    public ListClaimsHandler(IRequestContext requestContext, ILedgerAccess access, IClaimRepository claims, IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _claims = claims;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ListClaimsResult>> HandleAsync(
@@ -53,6 +58,7 @@ public sealed class ListClaimsHandler : IListClaimsUseCase
         Guid? beneficiaryId = Guid.TryParse(query.BeneficiaryId, out var bid) ? bid : null;
 
         var items = await _claims.ListAsync(chargeId, accountId, beneficiaryId, cancellationToken);
+        _journal.RecordClaimsListed(Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<ListClaimsResult>.Success(new ListClaimsResult(items.Select(ToView).ToList()));
     }
 
@@ -66,7 +72,8 @@ public sealed class ListClaimsHandler : IListClaimsUseCase
             claim.LocationAccountId,
             claim.Status.ToString(),
             claim.Kind,
-            claim.OpenedAt);
+            claim.OpenedAt,
+            claim.Visible);
 }
 
 public sealed record GetClaimQuery(string ClaimId);
@@ -80,12 +87,14 @@ public sealed class GetClaimHandler : IGetClaimUseCase
     private readonly IRequestContext _requestContext;
     private readonly ILedgerAccess _access;
     private readonly IClaimRepository _claims;
+    private readonly IJournalWriter _journal;
 
-    public GetClaimHandler(IRequestContext requestContext, ILedgerAccess access, IClaimRepository claims)
+    public GetClaimHandler(IRequestContext requestContext, ILedgerAccess access, IClaimRepository claims, IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _claims = claims;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ClaimView>> HandleAsync(
@@ -113,6 +122,7 @@ public sealed class GetClaimHandler : IGetClaimUseCase
                 .Build());
         }
 
+        _journal.RecordClaimRead(claim.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<ClaimView>.Success(ListClaimsHandler.ToView(claim));
     }
 }

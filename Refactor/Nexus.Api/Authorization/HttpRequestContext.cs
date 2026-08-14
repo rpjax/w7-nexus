@@ -56,6 +56,19 @@ public sealed class HttpRequestContext : IRequestContext
         return Result<RequesterContext>.Success(new RequesterContext(
             account.Id.ToString(),
             account.Roles.ToArray(),
-            account.Permissions.ToArray()));
+            MergePermissions(account.Permissions, user)));
+    }
+
+    private static string[] MergePermissions(IEnumerable<string> persisted, ClaimsPrincipal user)
+    {
+        var jwtPermissions = user.FindAll(Permissions.ClaimType)
+            .Concat(user.FindAll("permissions"))
+            .Select(claim => claim.Value)
+            .Where(value => !string.IsNullOrWhiteSpace(value));
+
+        return persisted
+            .Concat(jwtPermissions)
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .ToArray();
     }
 }

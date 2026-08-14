@@ -18,4 +18,9 @@ public static class LedgerErrorCodes
     public const string OrangeNotEligible = "Ledger.ORANGE_NOT_ELIGIBLE";
     public const string NotPayout = "Ledger.NOT_PAYOUT";
     public const string AccountLost = "Ledger.ACCOUNT_LOST";
+    public const string SummaryRequired = "Ledger.SUMMARY_REQUIRED";
+    public const string AlreadyRevealed = "Ledger.ALREADY_REVEALED";
+    public const string CauseRequired = "Ledger.CAUSE_REQUIRED";
+    public const string UseLostEndpoint = "Ledger.USE_LOST_ENDPOINT";
+    public const string UseReconcileEndpoint = "Ledger.USE_RECONCILE_ENDPOINT";
 }

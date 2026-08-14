@@ -30,6 +30,27 @@ internal static class ChargingGuards
         return (requester, null);
     }
 
+    public static async Task<(RequesterContext? Requester, IOperationResult<T>? Failure)> AuthorizeRailsAsync<T>(
+        IRequestContext requestContext,
+        IChargingMandateSnapshot mandates,
+        CancellationToken cancellationToken)
+    {
+        var requesterResult = await requestContext.GetCurrentAsync(cancellationToken);
+        if (requesterResult.IsFailure || requesterResult.Value is not RequesterContext requester)
+            return (null, OperationResult<T>.Failure(requesterResult.Errors));
+
+        if (!Guid.TryParse(requester.AccountId, out var accountId))
+            return (null, OperationResult<T>.Failure(Unauthorized("Identidade invalida.")));
+
+        if (await mandates.CanManageRailsAsync(accountId, cancellationToken)
+            || requester.Roles.Contains(Roles.Administrator, StringComparer.OrdinalIgnoreCase))
+        {
+            return (requester, null);
+        }
+
+        return (null, OperationResult<T>.Unauthorized(Unauthorized("Requer Admin ou gerir_gateways.")));
+    }
+
     public static Error Unauthorized(string message) =>
         Error.Create().WithCode(ChargingErrorCodes.Unauthorized).WithMessage(message).Build();
 

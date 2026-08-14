@@ -71,6 +71,13 @@ public sealed class AgencyDealClosed
     public required Guid OperatorId { get; init; }
 }
 
+[CanonicalFact("Mandates.CarteiraRead", schemaVersion: 1, Owner = "mandates", Name = "Carteira read")]
+public sealed class MandateCarteiraRead
+{
+    [JournalIndex("member")]
+    public required Guid MemberId { get; init; }
+}
+
 [CanonicalFact("Mandates.ShareholderStakeChanged", schemaVersion: 1, Owner = "mandates", Name = "Shareholder stake changed")]
 public sealed class ShareholderStakeChanged
 {

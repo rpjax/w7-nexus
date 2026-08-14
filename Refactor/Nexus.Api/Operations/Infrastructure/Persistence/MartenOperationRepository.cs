@@ -23,9 +23,8 @@ public sealed class MartenOperationRepository : IOperationRepository, IOperation
 
     public async Task<OperationAggregate?> GetByIdAsync(OperationId id, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var operation = await session.Events.AggregateStreamAsync<OperationAggregate>(
-            EventStoreStreams.Operation(id.Value), token: cancellationToken);
+        var operation = await MartenLiveQuery.LoadAsync<OperationAggregate>(
+            _store, EventStoreStreams.Operation(id.Value), cancellationToken);
         if (operation is null || operation.Id.Value == Guid.Empty)
             return null;
         return operation;
@@ -69,8 +68,7 @@ public sealed class MartenOperationRepository : IOperationRepository, IOperation
 
     public async Task<IReadOnlyList<OperationAggregate>> ListAsync(CancellationToken cancellationToken = default)
     {
-        await using var session = _store.QuerySession();
-        var items = await session.Query<OperationAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<OperationAggregate>(_store, "operation-", cancellationToken);
         return items.Where(o => o.Id.Value != Guid.Empty).OrderByDescending(o => o.CreatedAt).ToList();
     }
 
@@ -116,8 +114,6 @@ public sealed class MartenOperationRepository : IOperationRepository, IOperation
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<OperationAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<OperationAggregate>().Identity(x => x.PersistenceId);
         options.Events.AddEventTypes(
         [
             typeof(OperationOpened),

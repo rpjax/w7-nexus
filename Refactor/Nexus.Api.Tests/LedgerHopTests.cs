@@ -2,11 +2,16 @@ using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Authorization;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
+using Refactor.Nexus.Api.Charging.Domain.Aggregates.Charge;
 using Refactor.Nexus.Api.Charging.Domain.Services;
 using Refactor.Nexus.Api.Charging.Domain.ValueObjects;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.UseCases.Administrator.Commands;
+using Refactor.Nexus.Api.Ledger.Application.UseCases.Administrator.Queries;
+using Refactor.Nexus.Api.Ledger.Application.UseCases.Authenticated.Queries;
+using Refactor.Nexus.Api.Ledger.Domain;
 using Refactor.Nexus.Api.Ledger.Domain.Aggregates.Claim;
 using Refactor.Nexus.Api.Ledger.Domain.Errors;
 using Refactor.Nexus.Api.Ledger.Domain.Events;
@@ -51,7 +56,7 @@ public sealed class HopAllocatorTests
     }
 
     private static HopBundleItem Item(decimal amount, Guid origin, Guid charge) =>
-        new(Guid.NewGuid(), Guid.NewGuid(), amount, charge, origin, "Agency", "BRL");
+        new(Guid.NewGuid(), Guid.NewGuid(), amount, charge, origin, "Agency", "BRL", amount, "BRL");
 }
 
 public sealed class HopAndRepassTests
@@ -65,7 +70,9 @@ public sealed class HopAndRepassTests
             "BRL",
             fx.Claims.Select(c => c.Id.ToString()).ToList(),
             [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
-            null));
+            null,
+            false,
+            AttritionCause.ErroOperacional));
         Assert.True(result.IsSuccess);
         Assert.Equal(5, result.Value!.LossAmount);
 
@@ -79,6 +86,48 @@ public sealed class HopAndRepassTests
         Assert.Equal(95, atDest.Sum(c => c.Amount));
         Assert.Equal(origin.BalanceOf("BRL"), atOrigin.Sum(c => c.Amount));
         Assert.Equal(dest.BalanceOf("BRL"), atDest.Sum(c => c.Amount));
+        var hopFact = Assert.Single(fx.Journal.Facts.OfType<LedgerHopRegistered>());
+        Assert.Equal(result.Value.HopId, hopFact.HopId);
+        Assert.NotEqual(Guid.Empty, hopFact.ActedBy);
+    }
+
+    [Fact]
+    public async Task Hop_loss_without_cause_is_rejected()
+    {
+        var fx = await HopFx.CreateAsync();
+        var result = await fx.Hop.HandleAsync(new RegisterHopCommand(
+            fx.Origin.Id.ToString(),
+            "BRL",
+            fx.Claims.Select(c => c.Id.ToString()).ToList(),
+            [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
+            null));
+        Assert.True(result.IsFailure);
+        Assert.Equal(LedgerErrorCodes.CauseRequired, result.Errors.First().Code);
+    }
+
+    [Fact]
+    public async Task Hop_keep_remainder_leaves_origin_balance()
+    {
+        var fx = await HopFx.CreateAsync();
+        var result = await fx.Hop.HandleAsync(new RegisterHopCommand(
+            fx.Origin.Id.ToString(),
+            "BRL",
+            fx.Claims.Select(c => c.Id.ToString()).ToList(),
+            [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
+            null,
+            true,
+            null));
+        Assert.True(result.IsSuccess);
+        Assert.Equal(0, result.Value!.LossAmount);
+
+        var origin = await fx.Accounts.GetByIdAsync(fx.Origin.Id);
+        var dest = await fx.Accounts.GetByIdAsync(fx.Dest.Id);
+        var atDest = (await fx.ClaimStore.ListAsync(null, fx.Dest.Id, null)).Where(c => c.IsActive).ToList();
+        var atOrigin = (await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null)).Where(c => c.IsActive).ToList();
+        Assert.Equal(5, origin!.BalanceOf("BRL"));
+        Assert.Equal(95, dest!.BalanceOf("BRL"));
+        Assert.Equal(5, atOrigin.Sum(c => c.Amount));
+        Assert.Equal(95, atDest.Sum(c => c.Amount));
     }
 
     [Fact]
@@ -121,6 +170,9 @@ public sealed class HopAndRepassTests
         var claims = await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null);
         Assert.All(claims, c => Assert.Equal(ClaimStatus.Repassed, c.Status));
         Assert.Equal(0, claims.Where(c => c.IsActive).Sum(c => c.Amount));
+        var repassFact = Assert.Single(fx.Journal.Facts.OfType<LedgerClaimsRepassed>());
+        Assert.Equal(fx.Origin.Id, repassFact.OriginAccountId);
+        Assert.NotEqual(Guid.Empty, repassFact.ActedBy);
     }
 
     [Fact]
@@ -181,6 +233,198 @@ public sealed class HopAndRepassTests
         Assert.Equal(10, claims.Single(c => c.Kind == ClaimAggregate.PathCutKind).Amount);
     }
 
+    [Fact]
+    public async Task Statement_keeps_birth_estimate_after_hop_loss()
+    {
+        var fx = await HopFx.CreateAsync();
+        var slice = fx.Claims[0];
+        Assert.True((await fx.Hop.HandleAsync(new RegisterHopCommand(
+            fx.Origin.Id.ToString(),
+            "BRL",
+            fx.Claims.Select(c => c.Id.ToString()).ToList(),
+            [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
+            null,
+            false,
+            AttritionCause.ErroOperacional))).IsSuccess);
+
+        var live = await fx.ClaimStore.GetByIdAsync(slice.Id);
+        Assert.Equal(20, live!.BirthAmount);
+        Assert.Equal(19, live.Amount);
+        Assert.Equal(fx.Dest.Id, live.LocationAccountId);
+
+        var statement = await new GetMyStatementHandler(
+            new AdminContext(slice.BeneficiaryId),
+            fx.ClaimStore,
+            new AllowAll(),
+            fx.Journal).HandleAsync(new GetMyStatementQuery());
+        Assert.True(statement.IsSuccess);
+        var line = Assert.Single(statement.Value!.Items);
+        Assert.Equal("estimate", line.Phase);
+        Assert.Equal(20, line.EstimateAmount);
+        Assert.Null(line.ReleasedAmount);
+        Assert.Null(typeof(StatementLine).GetProperty("LocationAccountId"));
+        Assert.Null(typeof(StatementLine).GetProperty("Amount"));
+
+        var accountant = await new ListClaimsHandler(
+            new AdminContext(Guid.NewGuid()),
+            new AllowAll(),
+            fx.ClaimStore,
+            fx.Journal).HandleAsync(new ListClaimsQuery(fx.Charge.Id.ToString(), null, slice.BeneficiaryId.ToString()));
+        var view = Assert.Single(accountant.Value!.Items);
+        Assert.Equal(19, view.Amount);
+        Assert.Equal(fx.Dest.Id, view.LocationAccountId);
+    }
+
+    [Fact]
+    public async Task Reveal_switches_statement_to_pending_snapshot()
+    {
+        var fx = await HopFx.CreateAsync();
+        var slice = fx.Claims[0];
+        Assert.True((await fx.Hop.HandleAsync(new RegisterHopCommand(
+            fx.Origin.Id.ToString(),
+            "BRL",
+            fx.Claims.Select(c => c.Id.ToString()).ToList(),
+            [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
+            null,
+            false,
+            AttritionCause.ErroOperacional))).IsSuccess);
+
+        var first = await fx.Reveal.HandleAsync(new RevealClaimCommand(slice.Id.ToString(), "Ajuste de rota."));
+        Assert.True(first.IsSuccess);
+        var again = await fx.Reveal.HandleAsync(new RevealClaimCommand(slice.Id.ToString(), "Ajuste de rota."));
+        Assert.True(again.IsSuccess);
+        var other = await fx.Reveal.HandleAsync(new RevealClaimCommand(slice.Id.ToString(), "Outra causa."));
+        Assert.True(other.IsFailure);
+        Assert.Equal(LedgerErrorCodes.AlreadyRevealed, other.Errors.First().Code);
+
+        var statement = await new GetMyStatementHandler(
+            new AdminContext(slice.BeneficiaryId),
+            fx.ClaimStore,
+            new AllowAll(),
+            fx.Journal).HandleAsync(new GetMyStatementQuery());
+        var line = Assert.Single(statement.Value!.Items);
+        Assert.Equal("pending", line.Phase);
+        Assert.Equal(20, line.EstimateAmount);
+        Assert.Equal(19, line.ReleasedAmount);
+        Assert.Equal("BRL", line.ReleasedCurrency);
+        Assert.Equal("Ajuste de rota.", line.Summary);
+        Assert.DoesNotContain("world-account", line.Summary ?? "", StringComparison.OrdinalIgnoreCase);
+        Assert.Contains(fx.Journal.Facts, f => f is LedgerClaimRevealed);
+        Assert.Contains(fx.Journal.Facts, f => f is LedgerStatementRead);
+    }
+
+    [Fact]
+    public async Task Lost_writes_off_active_claims_and_zeros_balances()
+    {
+        var fx = await HopFx.CreateAsync();
+        var lost = new MarkAccountLostHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var result = await lost.HandleAsync(new MarkAccountLostCommand(fx.Origin.Id.ToString(), "apreensao"));
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value!.WrittenOff);
+
+        var origin = await fx.Accounts.GetByIdAsync(fx.Origin.Id);
+        Assert.Equal(BalanceStatus.Lost, origin!.BalanceStatus);
+        Assert.Equal(0, origin.BalanceOf("BRL"));
+        var claims = await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null);
+        Assert.All(claims, c => Assert.Equal(ClaimStatus.Lost, c.Status));
+        Assert.Equal(0, claims.Where(c => c.IsActive).Sum(c => c.Amount));
+
+        var again = await lost.HandleAsync(new MarkAccountLostCommand(fx.Origin.Id.ToString(), "apreensao"));
+        Assert.True(again.IsSuccess);
+        Assert.Equal(0, again.Value!.WrittenOff);
+        Assert.Equal(2, fx.Journal.Facts.OfType<LedgerAccountMarkedLost>().Count());
+    }
+
+    [Fact]
+    public async Task Frozen_keeps_claims_and_allows_hop()
+    {
+        var fx = await HopFx.CreateAsync();
+        fx.Origin.SetBalanceStatus(BalanceStatus.Frozen);
+        await fx.Accounts.SaveAsync(fx.Origin);
+        var claims = await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null);
+        Assert.All(claims, c => Assert.Equal(ClaimStatus.Active, c.Status));
+
+        var hop = await fx.Hop.HandleAsync(new RegisterHopCommand(
+            fx.Origin.Id.ToString(),
+            "BRL",
+            fx.Claims.Select(c => c.Id.ToString()).ToList(),
+            [new HopDestinationInput(fx.Dest.Id.ToString(), 95, "BRL")],
+            null,
+            false,
+            AttritionCause.ErroOperacional));
+        Assert.True(hop.IsSuccess);
+    }
+
+    [Fact]
+    public async Task Reconcile_shortage_100_to_90_scales_20_50_30()
+    {
+        var fx = await HopFx.CreateAsync();
+        var handler = new ReconcileAccountHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var result = await handler.HandleAsync(new ReconcileAccountCommand(
+            fx.Origin.Id.ToString(), "BRL", 90, "erro_operacional", null));
+        Assert.True(result.IsSuccess);
+
+        var origin = await fx.Accounts.GetByIdAsync(fx.Origin.Id);
+        var claims = (await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null)).Where(c => c.IsActive).OrderBy(c => c.Amount).ToList();
+        Assert.Equal(90, origin!.BalanceOf("BRL"));
+        Assert.Equal([18m, 27m, 45m], claims.Select(c => c.Amount).ToList());
+        Assert.Equal(90, claims.Sum(c => c.Amount));
+        Assert.Single(fx.Journal.Facts.OfType<LedgerAccountReconciled>());
+    }
+
+    [Fact]
+    public async Task Reconcile_surplus_opens_residual_org_claim()
+    {
+        var fx = await HopFx.CreateAsync();
+        var handler = new ReconcileAccountHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var result = await handler.HandleAsync(new ReconcileAccountCommand(
+            fx.Origin.Id.ToString(), "BRL", 110, "desconhecido", null));
+        Assert.True(result.IsSuccess);
+
+        var origin = await fx.Accounts.GetByIdAsync(fx.Origin.Id);
+        var claims = (await fx.ClaimStore.ListAsync(null, fx.Origin.Id, null)).Where(c => c.IsActive).ToList();
+        Assert.Equal(110, origin!.BalanceOf("BRL"));
+        Assert.Equal(110, claims.Sum(c => c.Amount));
+        var residual = Assert.Single(claims, c => c.Kind == SplitIntent.ResidualOrg);
+        Assert.Equal(10, residual.Amount);
+        Assert.Equal(OrganizationParty.Id, residual.BeneficiaryId);
+    }
+
+    [Fact]
+    public async Task Reverse_charge_marks_claims_reversed_and_debits_accounts()
+    {
+        var fx = await HopFx.CreateAsync();
+        var handler = new ReverseChargeHandler(
+            new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Charges, fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var result = await handler.HandleAsync(new ReverseChargeCommand(fx.Charge.Id.ToString(), AttritionCause.Estorno));
+        Assert.True(result.IsSuccess);
+        Assert.Equal(3, result.Value!.ReversedClaims);
+
+        var origin = await fx.Accounts.GetByIdAsync(fx.Origin.Id);
+        var charge = await fx.Charges.GetByIdAsync(fx.Charge.Id);
+        var claims = await fx.ClaimStore.ListAsync(fx.Charge.Id, null, null);
+        Assert.Equal(0, origin!.BalanceOf("BRL"));
+        Assert.Equal(ChargeStatus.Reversed, charge!.Status);
+        Assert.All(claims, c => Assert.Equal(ClaimStatus.Reversed, c.Status));
+        Assert.Single(fx.Journal.Facts.OfType<LedgerChargeReversed>());
+    }
+
+    [Fact]
+    public async Task Missing_cause_is_rejected()
+    {
+        var fx = await HopFx.CreateAsync();
+        var lost = new MarkAccountLostHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var result = await lost.HandleAsync(new MarkAccountLostCommand(fx.Origin.Id.ToString(), ""));
+        Assert.True(result.IsFailure);
+        Assert.Equal(LedgerErrorCodes.CauseRequired, result.Errors.First().Code);
+
+        var reconcile = new ReconcileAccountHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), fx.Accounts, fx.ClaimStore, fx.Commit, fx.Journal);
+        var bad = await reconcile.HandleAsync(new ReconcileAccountCommand(
+            fx.Origin.Id.ToString(), "BRL", 90, "not-a-cause", null));
+        Assert.True(bad.IsFailure);
+        Assert.Equal(LedgerErrorCodes.CauseRequired, bad.Errors.First().Code);
+    }
+
     private sealed class HopFx
     {
         public ChargeAggregate Charge { get; }
@@ -192,8 +436,11 @@ public sealed class HopAndRepassTests
         public InMemoryAccounts Accounts { get; } = new();
         public InMemoryClaims ClaimStore { get; } = new();
         public InMemoryHops Hops { get; } = new();
+        public RecordingJournalWriter Journal { get; } = new();
         public RegisterHopHandler Hop { get; }
         public RepassClaimsHandler Repass { get; }
+        public RevealClaimHandler Reveal { get; }
+        public LedgerCommit Commit { get; }
 
         private HopFx(ChargeAggregate charge, WorldAccountAggregate origin, WorldAccountAggregate dest, WorldAccountAggregate payout, List<ClaimAggregate> claims)
         {
@@ -202,9 +449,10 @@ public sealed class HopAndRepassTests
             Dest = dest;
             Payout = payout;
             Claims = claims;
-            var commit = new LedgerCommit(Charges, Accounts, ClaimStore, Hops);
-            Hop = new RegisterHopHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), Charges, Accounts, ClaimStore, commit);
-            Repass = new RepassClaimsHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), Accounts, ClaimStore, commit);
+            Commit = new LedgerCommit(Charges, Accounts, ClaimStore, Hops);
+            Hop = new RegisterHopHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), Charges, Accounts, ClaimStore, Commit, Journal);
+            Repass = new RepassClaimsHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), Accounts, ClaimStore, Commit, Journal);
+            Reveal = new RevealClaimHandler(new AdminContext(Guid.NewGuid()), new AllowAll(), ClaimStore, Commit, Journal);
         }
 
         public static async Task<HopFx> CreateAsync()
@@ -247,6 +495,11 @@ public sealed class HopAndRepassTests
 
         public Task<bool> IsEligibleOrangeAsync(Guid accountId, CancellationToken cancellationToken = default) =>
             Task.FromResult(true);
+
+        public Task<IReadOnlyList<Guid>> ListCarteiraOperatorIdsAsync(
+            Guid recruiterId,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult<IReadOnlyList<Guid>>([]);
     }
 
     private sealed class AdminContext : IRequestContext
@@ -298,7 +551,8 @@ public sealed class HopAndRepassTests
         }
 
         public Task<IReadOnlyList<WorldAccountAggregate>> ListAsync(CancellationToken cancellationToken = default) =>
-            Task.FromResult<IReadOnlyList<WorldAccountAggregate>>([]);
+            Task.FromResult<IReadOnlyList<WorldAccountAggregate>>(
+                _streams.StreamIds.Select(id => _streams.Load<WorldAccountAggregate>(id)!).ToList());
 
         public Task<IReadOnlyList<WorldAccountTransaction>> ListTransactionsAsync(
             Guid accountId,

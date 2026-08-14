@@ -22,18 +22,25 @@ public sealed class MemberMandate
     private MemberMandate(
         MemberId memberId,
         IEnumerable<MandateGrant> grants,
-        IEnumerable<string> appliedPresets)
+        IEnumerable<string> appliedPresets,
+        string attritionStatus,
+        string? attritionCause)
     {
         MemberId = memberId;
         _grants.AddRange(grants);
         foreach (var preset in appliedPresets)
             _appliedPresets.Add(preset);
+        AttritionStatus = string.IsNullOrWhiteSpace(attritionStatus) ? "active" : attritionStatus;
+        AttritionCause = attritionCause;
     }
 
     public MemberId MemberId { get; private set; }
-    public Guid PersistenceId => MemberId.Value;
+    public Guid Id => MemberId.Value;
+    public Guid PersistenceId => Id;
     public IReadOnlyList<MandateGrant> Grants => _grants;
     public IReadOnlyCollection<string> AppliedPresets => _appliedPresets;
+    public string AttritionStatus { get; private set; } = "active";
+    public string? AttritionCause { get; private set; }
 
     [JsonIgnore]
     public IReadOnlyList<object> UncommittedEvents => _uncommitted;
@@ -50,11 +57,40 @@ public sealed class MemberMandate
     public static MemberMandate Rehydrate(
         MemberId memberId,
         IEnumerable<MandateGrant> grants,
-        IEnumerable<string> appliedPresets) =>
-        new(memberId, grants, appliedPresets);
+        IEnumerable<string> appliedPresets,
+        string attritionStatus = "active",
+        string? attritionCause = null) =>
+        new(memberId, grants, appliedPresets, attritionStatus, attritionCause);
+
+    public bool IsActive =>
+        string.Equals(AttritionStatus, "active", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Unique concedente when every live grant shares one grantor; otherwise the most frequent.
+    /// Used as voluntary-exit re-parent target (G4/G11: sobe para o concedente).
+    /// </summary>
+    public bool TryGetConcedente(out MemberId concedente)
+    {
+        var ranked = _grants
+            .GroupBy(g => g.GrantedBy.Value)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .ToList();
+        if (ranked.Count == 0)
+        {
+            concedente = default;
+            return false;
+        }
+
+        concedente = new MemberId(ranked[0]);
+        return true;
+    }
 
     public bool HasCapability(string capability, MandateScope requiredScope)
     {
+        if (!IsActive)
+            return false;
+
         return _grants.Any(grant =>
             string.Equals(grant.Capability, capability, StringComparison.Ordinal)
             && grant.Scope.Covers(requiredScope));
@@ -77,12 +113,16 @@ public sealed class MemberMandate
                 .Build());
         }
 
+        var inactive = RejectIfInactive();
+        if (inactive.IsFailure)
+            return inactive;
+
         var normalized = PresetIds.Normalize(presetId);
         if (_appliedPresets.Contains(normalized))
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.PresetAlreadyGranted)
-                .WithMessage($"O preset '{normalized}' ja foi concedido a este membro.")
+                .WithMessage($"O preset '{normalized}' já foi concedido a este membro.")
                 .Build());
         }
 
@@ -132,7 +172,7 @@ public sealed class MemberMandate
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.PresetNotGranted)
-                .WithMessage($"O preset '{normalized}' nao esta concedido a este membro.")
+                .WithMessage($"O preset '{normalized}' não está concedido a este membro.")
                 .Build());
         }
 
@@ -151,7 +191,7 @@ public sealed class MemberMandate
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.CapabilityEmpty)
-                .WithMessage("Capacidade obrigatoria.")
+                .WithMessage("Capacidade obrigatória.")
                 .Build());
         }
 
@@ -164,6 +204,10 @@ public sealed class MemberMandate
                 .Build());
         }
 
+        var inactive = RejectIfInactive();
+        if (inactive.IsFailure)
+            return inactive;
+
         var attenuation = EnsureAttenuation(trimmed, scope, grantorIsAdministrator, grantorMandate);
         if (attenuation.IsFailure)
             return attenuation;
@@ -174,7 +218,7 @@ public sealed class MemberMandate
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.GrantAlreadyExists)
-                .WithMessage("Este grant ja existe no mandato do membro.")
+                .WithMessage("Este grant já existe no mandato do membro.")
                 .Build());
         }
 
@@ -198,11 +242,51 @@ public sealed class MemberMandate
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.GrantNotFound)
-                .WithMessage("Grant nao encontrado no mandato do membro.")
+                .WithMessage("Grant não encontrado no mandato do membro.")
                 .Build());
         }
 
         ApplyChange(new MandateCapabilityRevoked(MemberId.Value, trimmed, scope.ToStorageJson(), DateTime.UtcNow, null));
+        return Result.Success();
+    }
+
+    public IResult RecordAttrition(string status, string cause)
+    {
+        var normalizedStatus = (status ?? "").Trim().ToLowerInvariant();
+        if (normalizedStatus is not ("burned" or "left" or "betrayed"))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(MandateErrorCodes.AttritionInvalid)
+                .WithMessage("Estado deve ser queimado, saiu ou traiu.")
+                .Build());
+        }
+
+        var normalizedCause = (cause ?? "").Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(normalizedCause))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(MandateErrorCodes.AttritionInvalid)
+                .WithMessage("Causa obrigatória.")
+                .Build());
+        }
+
+        if (!CauseFitsStatus(normalizedStatus, normalizedCause))
+        {
+            return Result.Failure(Error.Create()
+                .WithCode(MandateErrorCodes.AttritionInvalid)
+                .WithMessage("Causa incompatível com o estado (queimado não aceita saída voluntária).")
+                .Build());
+        }
+
+        var alreadyRecorded = string.Equals(AttritionStatus, normalizedStatus, StringComparison.OrdinalIgnoreCase)
+            && string.Equals(AttritionCause, normalizedCause, StringComparison.OrdinalIgnoreCase);
+
+        if (!alreadyRecorded)
+            ApplyChange(new MemberAttritionRecorded(MemberId.Value, normalizedStatus, normalizedCause, DateTime.UtcNow, null));
+
+        if (normalizedStatus is "burned" or "betrayed")
+            StripOwnPower();
+
         return Result.Success();
     }
 
@@ -221,6 +305,75 @@ public sealed class MemberMandate
         if (toRemove.Count == 0)
             return 0;
 
+        ApplyGrantRemoval(toRemove);
+        return toRemove.Count;
+    }
+
+    /// <summary>
+    /// Event-sourced drop of every grant issued by <paramref name="grantorId"/> (queimado/traiu cascade).
+    /// </summary>
+    public int DropGrantsIssuedBy(MemberId grantorId)
+    {
+        var toRemove = _grants.Where(grant => grant.GrantedBy.Equals(grantorId)).ToList();
+        if (toRemove.Count == 0)
+            return 0;
+
+        ApplyGrantRemoval(toRemove);
+        return toRemove.Count;
+    }
+
+    /// <summary>
+    /// Voluntary exit: grants issued by the departing member now belong to the concedente.
+    /// </summary>
+    public int ReparentGrantsIssuedBy(MemberId fromGrantor, MemberId toGrantor)
+    {
+        if (fromGrantor.Equals(toGrantor))
+            return 0;
+
+        var toMove = _grants.Where(grant => grant.GrantedBy.Equals(fromGrantor)).ToList();
+        if (toMove.Count == 0)
+            return 0;
+
+        ApplyChange(new MandateGrantsReparented(
+            MemberId.Value,
+            fromGrantor.Value,
+            toGrantor.Value,
+            toMove.Select(g => g.Id).ToArray(),
+            DateTime.UtcNow,
+            null));
+        return toMove.Count;
+    }
+
+    private IResult RejectIfInactive()
+    {
+        if (IsActive)
+            return Result.Success();
+
+        return Result.Failure(Error.Create()
+            .WithCode(MandateErrorCodes.AttritionInvalid)
+            .WithMessage("Este membro está queimado, traiu ou saiu; não dá para conceder poder.")
+            .Build());
+    }
+
+    private static bool CauseFitsStatus(string status, string cause) =>
+        status switch
+        {
+            "burned" => cause is "bloqueio_bancario" or "apreensao" or "erro_operacional" or "estorno" or "desconhecido",
+            "betrayed" => cause is "traicao",
+            "left" => cause is "saida_voluntaria",
+            _ => false
+        };
+
+    private void StripOwnPower()
+    {
+        if (_grants.Count == 0 && _appliedPresets.Count == 0)
+            return;
+
+        ApplyGrantRemoval(_grants.ToList());
+    }
+
+    private void ApplyGrantRemoval(IReadOnlyList<MandateGrant> toRemove)
+    {
         var remaining = _grants.Except(toRemove).ToList();
         var remainingSources = remaining
             .Select(g => g.SourcePreset)
@@ -234,14 +387,7 @@ public sealed class MemberMandate
             remainingPresets,
             DateTime.UtcNow,
             null));
-        return toRemove.Count;
     }
-
-    /// <summary>
-    /// Removes every grant that was issued by the given grantor (full cascade drop).
-    /// </summary>
-    public int RemoveGrantsIssuedBy(MemberId grantorId) =>
-        _grants.RemoveAll(grant => grant.GrantedBy.Equals(grantorId));
 
     private static IResult EnsureAttenuation(
         string capability,
@@ -256,7 +402,7 @@ public sealed class MemberMandate
         {
             return Result.Failure(Error.Create()
                 .WithCode(MandateErrorCodes.AttenuationViolated)
-                .WithMessage("O concedente nao possui capacidade/escopo suficiente (atenuacao).")
+                .WithMessage("O concedente não possui capacidade/escopo suficiente (atenuação).")
                 .Build());
         }
 
@@ -314,6 +460,33 @@ public sealed class MemberMandate
             _appliedPresets.Add(preset);
     }
 
+    public void Apply(MandateGrantsReparented e)
+    {
+        var moved = e.GrantIds.ToHashSet();
+        var toGrantor = new MemberId(e.ToGrantorId);
+        for (var i = 0; i < _grants.Count; i++)
+        {
+            var grant = _grants[i];
+            if (!moved.Contains(grant.Id))
+                continue;
+
+            _grants[i] = new MandateGrant(
+                grant.Id,
+                grant.Capability,
+                grant.Scope,
+                toGrantor,
+                grant.GrantedAt,
+                grant.SourcePreset);
+        }
+    }
+
+    public void Apply(MemberAttritionRecorded e)
+    {
+        MemberId = new MemberId(e.MemberId);
+        AttritionStatus = e.Status;
+        AttritionCause = e.Cause;
+    }
+
     private void ApplyChange(object @event)
     {
         switch (@event)
@@ -325,6 +498,8 @@ public sealed class MemberMandate
             case MandateCapabilityGranted e: Apply(e); break;
             case MandateCapabilityRevoked e: Apply(e); break;
             case MandateGrantsPruned e: Apply(e); break;
+            case MandateGrantsReparented e: Apply(e); break;
+            case MemberAttritionRecorded e: Apply(e); break;
             default: throw new InvalidOperationException(@event.GetType().Name);
         }
 

@@ -1,6 +1,9 @@
+using System.Text.Json.Serialization;
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Charging.Application.Journal;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Authorization;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
@@ -32,24 +35,28 @@ public sealed class ListEmissionRailsHandler : IListEmissionRailsUseCase
     private readonly IRequestContext _requestContext;
     private readonly IChargingMandateSnapshot _mandates;
     private readonly IWorldAccountRepository _accounts;
+    private readonly IJournalWriter _journal;
 
     public ListEmissionRailsHandler(
         IRequestContext requestContext,
         IChargingMandateSnapshot mandates,
-        IWorldAccountRepository accounts)
+        IWorldAccountRepository accounts,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _mandates = mandates;
         _accounts = accounts;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<ListEmissionRailsResult>> HandleAsync(CancellationToken cancellationToken = default)
     {
-        var access = await ChargingGuards.AuthorizeAdminAsync<ListEmissionRailsResult>(_requestContext, _mandates, cancellationToken);
+        var access = await ChargingGuards.AuthorizeRailsAsync<ListEmissionRailsResult>(_requestContext, _mandates, cancellationToken);
         if (access.Failure is not null)
             return access.Failure;
 
         var items = await _accounts.ListAsync(cancellationToken);
+        _journal.RecordRailsListed(Guid.Parse(access.Requester!.AccountId));
         return OperationResult<ListEmissionRailsResult>.Success(new ListEmissionRailsResult(
             items.Where(a => a.Kind == WorldAccountKind.Gateway).Select(ToView).ToList()));
     }
@@ -94,7 +101,7 @@ public sealed class ListOperationEmissionSetHandler : IListOperationEmissionSetU
         ListOperationEmissionSetQuery query,
         CancellationToken cancellationToken = default)
     {
-        var access = await ChargingGuards.AuthorizeAdminAsync<ListOperationEmissionSetResult>(_requestContext, _mandates, cancellationToken);
+        var access = await ChargingGuards.AuthorizeRailsAsync<ListOperationEmissionSetResult>(_requestContext, _mandates, cancellationToken);
         if (access.Failure is not null)
             return access.Failure;
 
@@ -118,8 +125,8 @@ public sealed record ChargeView(
     decimal GrossAmount,
     string Currency,
     Guid EmissionRailId,
-    Guid OrangeMemberId,
-    SplitIntent SplitIntent,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] Guid? OrangeMemberId,
+    [property: JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)] SplitIntent? SplitIntent,
     string Status,
     string? ExternalReference,
     decimal? NetAmount,
@@ -159,15 +166,20 @@ public sealed class ListChargesHandler : IListChargesUseCase
 
         var isAdmin = await _mandates.IsAdministratorAsync(requesterId, cancellationToken)
             || requester.Roles.Contains(Roles.Administrator, StringComparer.OrdinalIgnoreCase);
+        var includeSplit = isAdmin
+            || await _mandates.CanSeeChargeSplitAsync(requesterId, cancellationToken)
+            || await _mandates.CanManageOperationsAsync(requesterId, cancellationToken);
 
         Guid? operationId = Guid.TryParse(query.OperationId, out var op) ? op : null;
-        Guid? operatorId = isAdmin && Guid.TryParse(query.OperatorMemberId, out var oid) ? oid : isAdmin ? null : requesterId;
+        Guid? operatorId = includeSplit && Guid.TryParse(query.OperatorMemberId, out var oid)
+            ? oid
+            : includeSplit ? null : requesterId;
 
         var items = await _charges.ListAsync(operationId, operatorId, cancellationToken);
-        return OperationResult<ListChargesResult>.Success(new ListChargesResult(items.Select(ToView).ToList()));
+        return OperationResult<ListChargesResult>.Success(new ListChargesResult(items.Select(c => ToView(c, includeSplit)).ToList()));
     }
 
-    internal static ChargeView ToView(ChargeAggregate charge) =>
+    internal static ChargeView ToView(ChargeAggregate charge, bool includeSplit) =>
         new(
             charge.Id,
             charge.OperationId,
@@ -175,8 +187,8 @@ public sealed class ListChargesHandler : IListChargesUseCase
             charge.GrossAmount,
             charge.Currency,
             charge.EmissionRailId,
-            charge.OrangeMemberId,
-            charge.SplitIntent,
+            includeSplit ? charge.OrangeMemberId : null,
+            includeSplit ? charge.SplitIntent : null,
             charge.Status.ToString(),
             charge.ExternalReference,
             charge.NetAmount,
@@ -231,10 +243,13 @@ public sealed class GetChargeHandler : IGetChargeUseCase
 
         var isAdmin = await _mandates.IsAdministratorAsync(requesterId, cancellationToken)
             || requester.Roles.Contains(Roles.Administrator, StringComparer.OrdinalIgnoreCase);
+        var includeSplit = isAdmin
+            || await _mandates.CanSeeChargeSplitAsync(requesterId, cancellationToken)
+            || await _mandates.CanManageOperationsAsync(requesterId, cancellationToken);
 
-        if (!isAdmin && charge.OperatorMemberId != requesterId)
+        if (!includeSplit && charge.OperatorMemberId != requesterId)
             return OperationResult<ChargeView>.Unauthorized(ChargingGuards.Unauthorized("Operador so ve as proprias Cobranças."));
 
-        return OperationResult<ChargeView>.Success(ListChargesHandler.ToView(charge));
+        return OperationResult<ChargeView>.Success(ListChargesHandler.ToView(charge, includeSplit));
     }
 }

@@ -97,7 +97,7 @@ public sealed class UpsertAgencyDealHandler : IUpsertAgencyDealUseCase
         var existing = await _dealRepository.GetActiveByOperatorIdAsync(operatorId, cancellationToken);
         if (existing is null)
         {
-            var created = AgencyDealAggregate.Create(recruiterId, operatorId, command.OperatorPercent, command.RecruiterPercent);
+            var created = AgencyDealAggregate.Open(recruiterId, operatorId, command.OperatorPercent, command.RecruiterPercent);
             if (created.IsFailure)
                 return OperationResult<UpsertAgencyDealResult>.Failure(created.Errors);
 

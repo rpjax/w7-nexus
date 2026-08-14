@@ -23,9 +23,8 @@ public sealed class MartenWorldAccountRepository : IWorldAccountRepository
 
     public async Task<WorldAccountAggregate?> GetByIdAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
-        await using var session = _store.LightweightSession();
-        var account = await session.Events.AggregateStreamAsync<WorldAccountAggregate>(
-            EventStoreStreams.WorldAccount(accountId), token: cancellationToken);
+        var account = await MartenLiveQuery.LoadAsync<WorldAccountAggregate>(
+            _store, EventStoreStreams.WorldAccount(accountId), cancellationToken);
         if (account is null || account.Id == Guid.Empty)
             return null;
         return account;
@@ -45,8 +44,7 @@ public sealed class MartenWorldAccountRepository : IWorldAccountRepository
 
     public async Task<IReadOnlyList<WorldAccountAggregate>> ListAsync(CancellationToken cancellationToken = default)
     {
-        await using var session = _store.QuerySession();
-        var items = await session.Query<WorldAccountAggregate>().ToListAsync(cancellationToken);
+        var items = await MartenLiveQuery.ListAsync<WorldAccountAggregate>(_store, "world-account-", cancellationToken);
         return items.Where(a => a.Id != Guid.Empty).OrderBy(a => a.Label).ToList();
     }
 
@@ -141,8 +139,6 @@ public sealed class MartenWorldAccountRepository : IWorldAccountRepository
 
     public static void Configure(StoreOptions options)
     {
-        options.Projections.Snapshot<WorldAccountAggregate>(SnapshotLifecycle.Inline);
-        options.Schema.For<WorldAccountAggregate>().Identity(x => x.Id);
         options.Events.AddEventTypes(
         [
             typeof(WorldAccountOpened),

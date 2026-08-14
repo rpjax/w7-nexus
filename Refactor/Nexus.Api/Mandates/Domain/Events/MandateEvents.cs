@@ -20,6 +20,17 @@ public sealed record MandateCapabilityRevoked(Guid MemberId, string Capability, 
 
 public sealed record MandateGrantsPruned(Guid MemberId, Guid[] RemovedGrantIds, string[] RemainingPresets, DateTime OccurredAt, Guid? ActedBy);
 
+/// <summary>
+/// Voluntary-exit re-parent: grants issued by the departing member now sit under the concedente.
+/// </summary>
+public sealed record MandateGrantsReparented(
+    Guid MemberId,
+    Guid FromGrantorId,
+    Guid ToGrantorId,
+    Guid[] GrantIds,
+    DateTime OccurredAt,
+    Guid? ActedBy);
+
 public sealed record MandateGrantDto(
     Guid Id,
     string Capability,
@@ -60,3 +71,10 @@ public sealed record AgencyDealClosed(Guid DealId, DateTime OccurredAt, Guid? Ac
 public sealed record ShareholderStakeSet(Guid AccountId, decimal Percentage, DateTime OccurredAt, Guid? ActedBy);
 
 public sealed record ShareholderStakeRemoved(Guid AccountId, DateTime OccurredAt, Guid? ActedBy);
+
+public sealed record MemberAttritionRecorded(
+    Guid MemberId,
+    string Status,
+    string Cause,
+    DateTime OccurredAt,
+    Guid? ActedBy);

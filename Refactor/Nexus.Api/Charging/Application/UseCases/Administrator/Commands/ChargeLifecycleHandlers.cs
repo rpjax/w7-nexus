@@ -2,6 +2,8 @@ using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using IResult = Aidan.Core.Patterns.IResult;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Charging.Application.Journal;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Charging.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Charging.Application.UseCases.Shared;
@@ -23,12 +25,14 @@ public sealed class TransitionChargeHandler : ITransitionChargeUseCase
     private readonly IRequestContext _requestContext;
     private readonly IChargingMandateSnapshot _mandates;
     private readonly IChargeRepository _charges;
+    private readonly IJournalWriter _journal;
 
-    public TransitionChargeHandler(IRequestContext requestContext, IChargingMandateSnapshot mandates, IChargeRepository charges)
+    public TransitionChargeHandler(IRequestContext requestContext, IChargingMandateSnapshot mandates, IChargeRepository charges, IJournalWriter journal)
     {
         _requestContext = requestContext;
         _mandates = mandates;
         _charges = charges;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<TransitionChargeResult>> HandleAsync(
@@ -51,6 +55,7 @@ public sealed class TransitionChargeHandler : ITransitionChargeUseCase
             return OperationResult<TransitionChargeResult>.Failure(result.Errors);
 
         await _charges.SaveAsync(charge, cancellationToken);
+        ChargingJournal.TryRecordChargeTransitioned(_journal, charge.Id, Guid.Parse(access.Requester!.AccountId));
         return OperationResult<TransitionChargeResult>.Success(new TransitionChargeResult(charge.Id, charge.Status.ToString()));
     }
 
@@ -93,11 +98,15 @@ public interface IMarkChargePaidUseCase
 
 public sealed class MarkChargePaidHandler : IMarkChargePaidUseCase
 {
+    private readonly IRequestContext _requestContext;
     private readonly IChargeRepository _charges;
+    private readonly IJournalWriter _journal;
 
-    public MarkChargePaidHandler(IChargeRepository charges)
+    public MarkChargePaidHandler(IRequestContext requestContext, IChargeRepository charges, IJournalWriter journal)
     {
+        _requestContext = requestContext;
         _charges = charges;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<MarkChargePaidResult>> HandleAsync(
@@ -124,6 +133,17 @@ public sealed class MarkChargePaidHandler : IMarkChargePaidUseCase
             return OperationResult<MarkChargePaidResult>.Failure(paid.Errors);
 
         await _charges.SaveAsync(charge, cancellationToken);
+
+        var actedBy = Guid.Empty;
+        var requester = await _requestContext.GetCurrentAsync(cancellationToken);
+        if (requester.IsSuccess
+            && requester.Value is RequesterContext context
+            && Guid.TryParse(context.AccountId, out var accountId))
+        {
+            actedBy = accountId;
+        }
+
+        ChargingJournal.TryRecordChargeTransitioned(_journal, charge.Id, actedBy);
         return OperationResult<MarkChargePaidResult>.Success(new MarkChargePaidResult(charge.Id, charge.Status.ToString()));
     }
 }

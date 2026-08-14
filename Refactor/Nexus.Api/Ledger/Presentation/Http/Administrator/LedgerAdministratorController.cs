@@ -17,6 +17,12 @@ public sealed class LedgerAdministratorController : ApiControllerBase
     private readonly IListClaimsUseCase _list;
     private readonly IGetClaimUseCase _get;
     private readonly IListHopsUseCase _listHops;
+    private readonly IRevealClaimUseCase _reveal;
+    private readonly IMarkAccountLostUseCase _markLost;
+    private readonly IReconcileAccountUseCase _reconcile;
+    private readonly IReverseChargeUseCase _reverse;
+    private readonly IListExposureUseCase _exposure;
+    private readonly IArchiveClaimUseCase _archive;
 
     public LedgerAdministratorController(
         IMaterializeChargeUseCase materialize,
@@ -24,7 +30,13 @@ public sealed class LedgerAdministratorController : ApiControllerBase
         IRepassClaimsUseCase repass,
         IListClaimsUseCase list,
         IGetClaimUseCase get,
-        IListHopsUseCase listHops)
+        IListHopsUseCase listHops,
+        IRevealClaimUseCase reveal,
+        IMarkAccountLostUseCase markLost,
+        IReconcileAccountUseCase reconcile,
+        IReverseChargeUseCase reverse,
+        IListExposureUseCase exposure,
+        IArchiveClaimUseCase archive)
     {
         _materialize = materialize;
         _registerHop = registerHop;
@@ -32,6 +44,12 @@ public sealed class LedgerAdministratorController : ApiControllerBase
         _list = list;
         _get = get;
         _listHops = listHops;
+        _reveal = reveal;
+        _markLost = markLost;
+        _reconcile = reconcile;
+        _reverse = reverse;
+        _exposure = exposure;
+        _archive = archive;
     }
 
     [HttpPost("materializations")]
@@ -74,7 +92,9 @@ public sealed class LedgerAdministratorController : ApiControllerBase
                         request.Cut.OrangeMemberId,
                         request.Cut.Percent,
                         request.Cut.InPlace,
-                        request.Cut.OrangeAccountId)),
+                        request.Cut.OrangeAccountId),
+                request.KeepRemainderAtOrigin,
+                request.LossCause),
             cancellationToken));
 
     [HttpPost("repasse")]
@@ -90,4 +110,53 @@ public sealed class LedgerAdministratorController : ApiControllerBase
         [FromQuery] string? accountId,
         CancellationToken cancellationToken) =>
         ToOperationResult(await _listHops.HandleAsync(new ListHopsQuery(accountId), cancellationToken));
+
+    [HttpPost("claims/{claimId}/reveal")]
+    public async Task<ActionResult> RevealAsync(
+        string claimId,
+        [FromBody] RevealClaimRequest request,
+        CancellationToken cancellationToken) =>
+        ToOperationResult(await _reveal.HandleAsync(
+            new RevealClaimCommand(claimId, request.Summary),
+            cancellationToken));
+
+    [HttpPost("accounts/{accountId}/lost")]
+    public async Task<ActionResult> MarkLostAsync(
+        string accountId,
+        [FromBody] MarkAccountLostRequest request,
+        CancellationToken cancellationToken) =>
+        ToOperationResult(await _markLost.HandleAsync(
+            new MarkAccountLostCommand(accountId, request.Cause),
+            cancellationToken));
+
+    [HttpPost("accounts/{accountId}/reconcile")]
+    public async Task<ActionResult> ReconcileAsync(
+        string accountId,
+        [FromBody] ReconcileAccountRequest request,
+        CancellationToken cancellationToken) =>
+        ToOperationResult(await _reconcile.HandleAsync(
+            new ReconcileAccountCommand(
+                accountId,
+                request.Currency,
+                request.ObservedBalance,
+                request.Cause,
+                request.ClaimId),
+            cancellationToken));
+
+    [HttpPost("charges/{chargeId}/reverse")]
+    public async Task<ActionResult> ReverseAsync(
+        string chargeId,
+        [FromBody] ReverseChargeRequest? request,
+        CancellationToken cancellationToken) =>
+        ToOperationResult(await _reverse.HandleAsync(
+            new ReverseChargeCommand(chargeId, request?.Cause ?? ""),
+            cancellationToken));
+
+    [HttpPost("claims/{claimId}/archive")]
+    public async Task<ActionResult> ArchiveAsync(string claimId, CancellationToken cancellationToken) =>
+        ToOperationResult(await _archive.HandleAsync(new ArchiveClaimCommand(claimId), cancellationToken));
+
+    [HttpGet("exposure")]
+    public async Task<ActionResult> ExposureAsync(CancellationToken cancellationToken) =>
+        ToOperationResult(await _exposure.HandleAsync(new ListExposureQuery(), cancellationToken));
 }

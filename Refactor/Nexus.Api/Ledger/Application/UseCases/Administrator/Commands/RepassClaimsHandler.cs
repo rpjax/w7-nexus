@@ -1,6 +1,8 @@
 using Aidan.Core.Errors;
 using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
+using Refactor.Nexus.Api.Journal.Services.Contracts;
+using Refactor.Nexus.Api.Ledger.Application.Journal;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.Ledger.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.Ledger.Application.UseCases.Shared;
@@ -32,19 +34,22 @@ public sealed class RepassClaimsHandler : IRepassClaimsUseCase
     private readonly IWorldAccountRepository _accounts;
     private readonly IClaimRepository _claims;
     private readonly ILedgerCommit _commit;
+    private readonly IJournalWriter _journal;
 
     public RepassClaimsHandler(
         IRequestContext requestContext,
         ILedgerAccess access,
         IWorldAccountRepository accounts,
         IClaimRepository claims,
-        ILedgerCommit commit)
+        ILedgerCommit commit,
+        IJournalWriter journal)
     {
         _requestContext = requestContext;
         _access = access;
         _accounts = accounts;
         _claims = claims;
         _commit = commit;
+        _journal = journal;
     }
 
     public async Task<IOperationResult<RepassClaimsResult>> HandleAsync(
@@ -136,6 +141,7 @@ public sealed class RepassClaimsHandler : IRepassClaimsUseCase
         }
 
         await _commit.SaveAsync([origin], bundle, hop: null, charge: null, cancellationToken);
+        _journal.RecordClaimsRepassed(origin.Id, Guid.Parse(auth.Requester!.AccountId));
         return OperationResult<RepassClaimsResult>.Success(
             new RepassClaimsResult(bundle.Sum(c => c.Amount), bundle.Select(c => c.Id).ToList()));
     }

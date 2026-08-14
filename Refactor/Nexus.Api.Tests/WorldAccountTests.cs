@@ -2,6 +2,7 @@ using Aidan.Core.Patterns;
 using Refactor.Nexus.Api.Accounts.Application.Ports.Out.Identity;
 using Refactor.Nexus.Api.Authorization;
 using Refactor.Nexus.Api.Tests.Fakes;
+using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Ledger;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Mandates;
 using Refactor.Nexus.Api.WorldAccounts.Application.Ports.Out.Persistence;
 using Refactor.Nexus.Api.WorldAccounts.Application.UseCases.Administrator.Commands;
@@ -67,6 +68,16 @@ public sealed class WorldAccountDomainTests
     }
 
     [Fact]
+    public void Lost_account_cannot_change_emission_or_unfreeze()
+    {
+        var account = OpenGateway(100);
+        Assert.True(account.SetBalanceStatus(BalanceStatus.Lost).IsSuccess);
+        Assert.Equal(WorldAccountErrorCodes.BalanceLost, account.SetEmissionStatus(EmissionStatus.Blocked).Errors.First().Code);
+        Assert.Equal(WorldAccountErrorCodes.BalanceLost, account.SetBalanceStatus(BalanceStatus.Frozen).Errors.First().Code);
+        Assert.Equal(WorldAccountErrorCodes.BalanceLost, account.SetBalanceStatus(BalanceStatus.Accessible).Errors.First().Code);
+    }
+
+    [Fact]
     public void Consume_quota_persists_on_replay()
     {
         var live = OpenGateway(50);
@@ -91,7 +102,8 @@ public sealed class WorldAccountUseCaseTests
         var handler = new OpenWorldAccountHandler(
             new AdminContext(Guid.NewGuid()),
             new Access(eligibleOrange: false),
-            new Store());
+            new Store(),
+            new RecordingJournalWriter());
 
         var result = await handler.HandleAsync(new OpenWorldAccountCommand(
             "Gateway", "gw", Guid.NewGuid().ToString(), 10, "BRL", 100));
@@ -108,7 +120,8 @@ public sealed class WorldAccountUseCaseTests
         var handler = new OpenWorldAccountHandler(
             new AdminContext(Guid.NewGuid()),
             new Access(eligibleOrange: true),
-            store);
+            store,
+            new RecordingJournalWriter());
 
         var result = await handler.HandleAsync(new OpenWorldAccountCommand(
             "Gateway", "gw", orange.ToString(), 12, "BRL", 80));
@@ -119,6 +132,161 @@ public sealed class WorldAccountUseCaseTests
         Assert.Equal(WorldAccountKind.Gateway, loaded!.Kind);
         Assert.Equal(80, loaded.QuotaOf("BRL"));
         Assert.Equal(0, loaded.BalanceOf("BRL"));
+    }
+
+    [Fact]
+    public async Task Configure_lost_is_rejected()
+    {
+        var orange = Guid.NewGuid();
+        var store = new Store();
+        var opened = await new OpenWorldAccountHandler(
+            new AdminContext(Guid.NewGuid()),
+            new Access(eligibleOrange: true),
+            store,
+            new RecordingJournalWriter()).HandleAsync(new OpenWorldAccountCommand(
+            "Gateway", "gw", orange.ToString(), 12, "BRL", 80));
+        Assert.True(opened.IsSuccess);
+
+        var result = await new ConfigureWorldAccountHandler(
+            new AdminContext(Guid.NewGuid()),
+            new Access(eligibleOrange: true),
+            store,
+            new RecordingJournalWriter()).HandleAsync(new ConfigureWorldAccountCommand(
+            opened.Value!.AccountId.ToString(),
+            null, null, null, null, null, "Lost"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal(WorldAccountErrorCodes.UseLostEndpoint, result.Errors.First().Code);
+    }
+
+    [Fact]
+    public async Task Observation_on_lost_account_is_rejected()
+    {
+        var store = new Store();
+        var opened = await OpenBankAsync(store);
+        var account = await store.GetByIdAsync(opened);
+        Assert.True(account!.SetBalanceStatus(BalanceStatus.Lost).IsSuccess);
+        await store.SaveAsync(account);
+
+        var result = await Observe(store, opened, new EmptyLedger(), "credit", "BRL", 10);
+        Assert.False(result.Ok);
+        Assert.Equal(WorldAccountErrorCodes.BalanceLost, result.Code);
+    }
+
+    [Fact]
+    public async Task Observation_seed_without_claims_succeeds()
+    {
+        var store = new Store();
+        var opened = await OpenBankAsync(store);
+        var result = await Observe(store, opened, new EmptyLedger(), "credit", "BRL", 40);
+        Assert.True(result.Ok);
+        var loaded = await store.GetByIdAsync(opened);
+        Assert.Equal(40, loaded!.BalanceOf("BRL"));
+    }
+
+    [Fact]
+    public async Task Observation_with_active_claims_is_rejected()
+    {
+        var store = new Store();
+        var opened = await OpenBankAsync(store);
+        var result = await Observe(store, opened, new StubLedger(hasAny: true, hasActive: true), "credit", "BRL", 10);
+        Assert.False(result.Ok);
+        Assert.Equal(WorldAccountErrorCodes.ObservationSeedOnly, result.Code);
+        var loaded = await store.GetByIdAsync(opened);
+        Assert.Equal(0, loaded!.BalanceOf("BRL"));
+    }
+
+    [Fact]
+    public async Task Observation_after_terminal_claims_is_still_rejected()
+    {
+        var store = new Store();
+        var opened = await OpenBankAsync(store);
+        var result = await Observe(store, opened, new StubLedger(hasAny: true, hasActive: false), "debit", "BRL", 5);
+        Assert.False(result.Ok);
+        Assert.Equal(WorldAccountErrorCodes.ObservationSeedOnly, result.Code);
+    }
+
+    [Fact]
+    public async Task Observation_is_allowed_when_claims_exist_only_in_another_currency()
+    {
+        var store = new Store();
+        var opened = await OpenBankAsync(store);
+        var ledger = new CurrencyLedger("USD");
+        var result = await Observe(store, opened, ledger, "credit", "BRL", 15);
+        Assert.True(result.Ok);
+        Assert.Equal("BRL", ledger.LastCurrency);
+        Assert.Equal(opened, ledger.LastAccountId);
+        var loaded = await store.GetByIdAsync(opened);
+        Assert.Equal(15, loaded!.BalanceOf("BRL"));
+    }
+
+    private static async Task<Guid> OpenBankAsync(Store store)
+    {
+        var opened = await new OpenWorldAccountHandler(
+            new AdminContext(Guid.NewGuid()),
+            new Access(eligibleOrange: true),
+            store,
+            new RecordingJournalWriter()).HandleAsync(new OpenWorldAccountCommand("Bank", "bank", null, null, null, null));
+        Assert.True(opened.IsSuccess);
+        return opened.Value!.AccountId;
+    }
+
+    private static async Task<(bool Ok, string? Code)> Observe(
+        Store store,
+        Guid accountId,
+        ILedgerClaimObservationPort ledger,
+        string direction,
+        string currency,
+        decimal amount)
+    {
+        var result = await new RecordWorldAccountObservationHandler(
+            new AdminContext(Guid.NewGuid()),
+            new Access(eligibleOrange: true),
+            store,
+            ledger,
+            new RecordingJournalWriter()).HandleAsync(new RecordWorldAccountObservationCommand(
+            accountId.ToString(), direction, currency, amount, "seed"));
+        return (result.IsSuccess, result.Errors.FirstOrDefault()?.Code);
+    }
+
+    private sealed class EmptyLedger : ILedgerClaimObservationPort
+    {
+        public Task<LedgerClaimPresence> GetPresenceAsync(
+            Guid worldAccountId,
+            string currency,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new LedgerClaimPresence(false, false));
+    }
+
+    private sealed class StubLedger : ILedgerClaimObservationPort
+    {
+        private readonly LedgerClaimPresence _presence;
+        public StubLedger(bool hasAny, bool hasActive) => _presence = new LedgerClaimPresence(hasAny, hasActive);
+
+        public Task<LedgerClaimPresence> GetPresenceAsync(
+            Guid worldAccountId,
+            string currency,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(_presence);
+    }
+
+    private sealed class CurrencyLedger : ILedgerClaimObservationPort
+    {
+        private readonly string _blockedCurrency;
+        public CurrencyLedger(string blockedCurrency) => _blockedCurrency = blockedCurrency;
+        public string? LastCurrency { get; private set; }
+        public Guid LastAccountId { get; private set; }
+
+        public Task<LedgerClaimPresence> GetPresenceAsync(
+            Guid worldAccountId,
+            string currency,
+            CancellationToken cancellationToken = default)
+        {
+            LastCurrency = currency;
+            LastAccountId = worldAccountId;
+            var blocked = string.Equals(currency, _blockedCurrency, StringComparison.OrdinalIgnoreCase);
+            return Task.FromResult(new LedgerClaimPresence(blocked, blocked));
+        }
     }
 
     private sealed class Access : IWorldAccountAccess

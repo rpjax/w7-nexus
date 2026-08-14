@@ -54,8 +54,8 @@ cd out/dev
 docker compose up -d
 ```
 
-URLs (dev): **https://nexus.websete.localhost:9143** (API em `https://api.nexus.websete.localhost:9143`).
-Portas `9180`/`9143` evitam conflito com outros stacks na máquina. Certificado local é self-signed — aceite o aviso do browser.
+URLs (dev): **https://nexus.websete.localhost:9143** (o browser chama `/api` no mesmo host; `https://api.nexus.websete.localhost:9143` continua no Traefik).
+Portas `9180`/`9143` evitam conflito com outros stacks. Certificado local é self-signed.
 
 Rebuild só de um serviço:
 

@@ -30,6 +30,48 @@ public sealed class ChargingMandateSnapshotAdapter : IChargingMandateSnapshot
     public Task<bool> IsAdministratorAsync(Guid accountId, CancellationToken cancellationToken = default) =>
         _accounts.IsAdministratorAsync(new MemberId(accountId), cancellationToken);
 
+    public async Task<bool> CanManageRailsAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        if (await IsAdministratorAsync(accountId, cancellationToken))
+            return true;
+
+        var mandate = await _mandates.GetByMemberIdAsync(new MemberId(accountId), cancellationToken);
+        if (mandate is null)
+            return false;
+
+        return mandate.HasCapability(Capabilities.GerirGateways, MandateScope.Organization())
+            || mandate.AppliedPresets.Contains(PresetIds.Gateways, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public async Task<bool> CanSeeChargeSplitAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        if (await IsAdministratorAsync(accountId, cancellationToken))
+            return true;
+
+        var mandate = await _mandates.GetByMemberIdAsync(new MemberId(accountId), cancellationToken);
+        if (mandate is null)
+            return false;
+
+        return mandate.HasCapability(Capabilities.VerFinanceiroAmplo, MandateScope.Organization())
+            || mandate.HasCapability(Capabilities.RegistrarMovimentoFinanceiro, MandateScope.Organization())
+            || mandate.AppliedPresets.Contains(PresetIds.Accountant, StringComparer.OrdinalIgnoreCase);
+    }
+
+    public async Task<bool> CanManageOperationsAsync(Guid accountId, CancellationToken cancellationToken = default)
+    {
+        if (await IsAdministratorAsync(accountId, cancellationToken))
+            return true;
+
+        var mandate = await _mandates.GetByMemberIdAsync(new MemberId(accountId), cancellationToken);
+        if (mandate is null)
+            return false;
+
+        return mandate.HasCapability(Capabilities.GerirOperacao, MandateScope.Organization())
+            || mandate.HasCapability(Capabilities.GerirOperacao, MandateScope.OperationAll())
+            || mandate.AppliedPresets.Contains(PresetIds.OperationsManager, StringComparer.OrdinalIgnoreCase)
+            || mandate.Grants.Any(g => string.Equals(g.Capability, Capabilities.GerirOperacao, StringComparison.Ordinal));
+    }
+
     public async Task<bool> IsEligibleOrangeAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         var memberId = new MemberId(accountId);

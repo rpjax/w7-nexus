@@ -65,7 +65,7 @@ public sealed class EventSourcingReplayTests
         Assert.Equal(live.MemberId, replayed.MemberId);
         Assert.Equal(live.AppliedPresets.OrderBy(x => x), replayed.AppliedPresets.OrderBy(x => x));
 
-        var deal = AgencyDeal.Create(admin, member, 80, 0).Value!;
+        var deal = AgencyDeal.Open(admin, member, 80, 0).Value!;
         Assert.True(deal.Close().IsSuccess);
         var replayedDeal = EventFold.Replay<AgencyDeal>(deal.UncommittedEvents);
         Assert.Equal(AgencyDealStatus.Closed, replayedDeal.Status);
@@ -112,6 +112,7 @@ public sealed class EventSourcingReplayTests
         var replayed = EventFold.Replay<ClaimAggregate>(live.UncommittedEvents);
         Assert.Equal(live.Id, replayed.Id);
         Assert.Equal(12, replayed.Amount);
+        Assert.Equal(12, replayed.BirthAmount);
         Assert.Equal(ClaimStatus.Active, replayed.Status);
     }
 

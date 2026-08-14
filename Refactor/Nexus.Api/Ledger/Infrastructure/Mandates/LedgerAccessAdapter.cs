@@ -11,11 +11,16 @@ public sealed class LedgerAccessAdapter : ILedgerAccess
 {
     private readonly IAccountDirectory _accounts;
     private readonly IMemberMandateReadRepository _mandates;
+    private readonly IAgencyDealReadRepository _deals;
 
-    public LedgerAccessAdapter(IAccountDirectory accounts, IMemberMandateReadRepository mandates)
+    public LedgerAccessAdapter(
+        IAccountDirectory accounts,
+        IMemberMandateReadRepository mandates,
+        IAgencyDealReadRepository deals)
     {
         _accounts = accounts;
         _mandates = mandates;
+        _deals = deals;
     }
 
     public async Task<bool> CanMaterializeAsync(Guid accountId, CancellationToken cancellationToken = default)
@@ -43,5 +48,13 @@ public sealed class LedgerAccessAdapter : ILedgerAccess
 
         return mandate.AppliedPresets.Contains(PresetIds.Orange, StringComparer.OrdinalIgnoreCase)
             || mandate.HasCapability(Capabilities.AtuarComoLaranja, MandateScope.Organization());
+    }
+
+    public async Task<IReadOnlyList<Guid>> ListCarteiraOperatorIdsAsync(
+        Guid recruiterId,
+        CancellationToken cancellationToken = default)
+    {
+        var deals = await _deals.ListActiveByRecruiterAsync(new MemberId(recruiterId), cancellationToken);
+        return deals.Select(d => d.OperatorId.Value).Distinct().ToList();
     }
 }

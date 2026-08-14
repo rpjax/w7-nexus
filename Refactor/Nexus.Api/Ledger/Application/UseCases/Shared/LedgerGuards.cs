@@ -30,6 +30,20 @@ internal static class LedgerGuards
         return (requester, null);
     }
 
+    public static async Task<(RequesterContext? Requester, Guid AccountId, IOperationResult<T>? Failure)> RequireIdentityAsync<T>(
+        IRequestContext requestContext,
+        CancellationToken cancellationToken)
+    {
+        var requesterResult = await requestContext.GetCurrentAsync(cancellationToken);
+        if (requesterResult.IsFailure || requesterResult.Value is not RequesterContext requester)
+            return (null, Guid.Empty, OperationResult<T>.Failure(requesterResult.Errors));
+
+        if (!Guid.TryParse(requester.AccountId, out var accountId))
+            return (null, Guid.Empty, OperationResult<T>.Failure(Unauthorized("Identidade invalida.")));
+
+        return (requester, accountId, null);
+    }
+
     public static Error Unauthorized(string message) =>
         Error.Create().WithCode(LedgerErrorCodes.Unauthorized).WithMessage(message).Build();
 
